@@ -1,0 +1,56 @@
+{
+  "subsystem": "hiviewdfx",
+  "parts": {
+    "hilog": {
+      "module_list": [
+        "//base/hiviewdfx/hilog:hilog_target",
+        "//base/hiviewdfx/hilog/frameworks/native/hilog_ndk:hilog_ndk",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+        "//base/hiviewdfx/hilog/services/hilogtool:hilog",
+        "//base/hiviewdfx/hilog/services/hilogd:hilogd"
+      ],
+      "inner_kits": [
+        {
+          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+          "header": {
+            "header_files": [
+              "hilog/log.h",
+              "hilog/log_c.h",
+              "hilog/log_cpp.h"
+            ],
+            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
+          }
+        }
+      ],
+      "test_list": [
+        "//base/hiviewdfx/hilog/test:moduletest"
+      ]
+    },
+    "hiviewdfx_hilog_native": {
+      "variants": [
+        "phone",
+        "wearable"
+      ],
+      "module_list": [
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_native",
+        "//base/hiviewdfx/hilog/frameworks/native:libhilogutil_native",
+        "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter_native",
+        "//base/hiviewdfx/hilog/services/hilogtool:hilog_native",
+        "//base/hiviewdfx/hilog/services/hilogd:hilogd_native"
+      ],
+      "inner_kits": [
+        {
+          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+          "header": {
+            "header_files": [
+              "hilog/log.h",
+              "hilog/log_c.h",
+              "hilog/log_cpp.h"
+            ],
+            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
+          }
+        }
+      ]
+    }
+  }
+}

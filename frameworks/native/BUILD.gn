@@ -1,0 +1,111 @@
+# Copyright (c) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+declare_args() {
+  ohos_hilog_default_privacy = true
+}
+
+config("libhilog_config") {
+  visibility = [ "*:*" ]
+
+  include_dirs = [ "include" ]
+}
+
+ohos_source_set("libhilog_source") {
+  include_dirs = [
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+    "//base/hiviewdfx/hilog/frameworks/native/include",
+    "//utils/native/base/include",
+  ]
+
+  sources = [
+    "hilog.cpp",
+    "hilog_input_socket_client.cpp",
+    "hilog_input_socket_server.cpp",
+    "hilog_printf.cpp",
+  ]
+
+  defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_default_privacy" ]
+
+  public_configs = [ ":libhilog_config" ]
+  configs = [ ":libhilog_config" ]
+  deps = [
+    "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
+    "//utils/native/base:utilsecurec_shared",
+  ]
+}
+
+config("libhilogutil_config") {
+  visibility = [ ":*" ]
+
+  include_dirs = [
+    "include",
+    "//base/hiviewdfx/hilog/adapter",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  ]
+}
+
+ohos_shared_library("libhilogutil") {
+  sources = [
+    "dgram_socket_client.cpp",
+    "dgram_socket_server.cpp",
+    "format.cpp",
+    "seq_packet_socket_client.cpp",
+    "seq_packet_socket_server.cpp",
+    "socket.cpp",
+    "socket_client.cpp",
+    "socket_server.cpp",
+  ]
+  public_configs = [ ":libhilogutil_config" ]
+  configs = [ ":libhilogutil_config" ]
+
+  deps = [
+    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
+    "//utils/native/base:utilsecurec_shared",
+  ]
+
+  output_extension = "so"
+  install_enable = true
+
+  part_name = "hilog"
+  subsystem_name = "hiviewdfx"
+}
+
+ohos_shared_library("libhilogutil_native") {
+  sources = [
+    "dgram_socket_client.cpp",
+    "dgram_socket_server.cpp",
+    "format.cpp",
+    "seq_packet_socket_client.cpp",
+    "seq_packet_socket_server.cpp",
+    "socket.cpp",
+    "socket_client.cpp",
+    "socket_server.cpp",
+  ]
+  public_configs = [ ":libhilogutil_config" ]
+  configs = [ ":libhilogutil_config" ]
+
+  deps = [
+    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter_native",
+    "//utils/native/base:utilsecurec_shared",
+  ]
+
+  output_name = "libhilogutil"
+  output_extension = "so"
+  install_enable = true
+
+  part_name = "hiviewdfx_hilog_native"
+  subsystem_name = "hiviewdfx"
+}
