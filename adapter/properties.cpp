@@ -112,7 +112,7 @@ std::string GetProgName()
     const std::string tmpName = processName;
     int pos = tmpName.find_last_of("/");
     if (pos != -1) {
-	std::string rst = tmpName.substr(pos + 1, tmpName.length());
+	    std::string rst = tmpName.substr(pos + 1, tmpName.length());
         return rst;
     }
     return processName;  

@@ -17,11 +17,12 @@
 
 #include <cstring>
 #include <iostream>
-#include <securec.h>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <securec.h>
 #include <error.h>
+
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -371,8 +372,8 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 ->compressTypeStr);
             pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB : stoi(
                 logPersistParam->compressAlgStr);
-            pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : stoi(logPersistParam
-                ->fileSizeStr);
+            pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : stoi(
+                logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
             if (logPersistParam->filePathStr == "") {

@@ -19,11 +19,12 @@
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
-#include <sstream>
 #include <string>
 #include <vector>
+#include <sstream>
 #include <error.h>
 #include <securec.h>
+
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
