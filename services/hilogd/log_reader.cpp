@@ -34,12 +34,12 @@ LogReader::LogReader()
     queryCondition.types = 0;
     queryCondition.timeBegin = 0;
     queryCondition.timeEnd = 0;
-    waitForNewData = false;
     isNotified = false;
 }
 
 LogReader::~LogReader()
 {
+    hilogBuffer->logReaderListMutex.lock();
     const auto findIter = std::find_if(hilogBuffer->logReaderList.begin(), hilogBuffer->logReaderList.end(),
         [this](const std::weak_ptr<LogReader>& ptr0) {
         return ptr0.lock() == weak_from_this().lock();
@@ -47,17 +47,7 @@ LogReader::~LogReader()
     if (findIter != hilogBuffer->logReaderList.end()) {
         hilogBuffer->logReaderList.erase(findIter);
     }
-}
-
-bool LogReader::SetWaitForNewData(bool flag)
-{
-    waitForNewData = flag;
-    return true;
-}
-
-bool LogReader::GetWaitForNewData() const
-{
-    return waitForNewData;
+    hilogBuffer->logReaderListMutex.unlock();
 }
 
 void LogReader::NotifyReload()
