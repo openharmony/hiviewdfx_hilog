@@ -64,7 +64,6 @@ int HilogdEntry(int argc, char* argv[])
     std::signal(SIGINT, SigHandler);
 
     InitDomainFlowCtrl();
-    InitProcessFlowCtrl();
 
     // Start log_collector
     LogCollector logCollector(&hilogBuffer);
