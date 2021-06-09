@@ -20,17 +20,7 @@
 #include <cstdlib>
 #include <string>
 
-#ifdef USING_AOSP_PROPERTY
-#include <sys/system_properties.h>
-#define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
-#include <sys/_system_properties.h>
-#endif
-
-#ifdef USING_AOSP_PROPERTY
-static const int HILOG_PROP_VALUE_MAX = PROP_VALUE_MAX;
-#else
 static const int HILOG_PROP_VALUE_MAX = 92;
-#endif
 
 using PropType = enum {
     PROP_PRIVATE = 0x01,
