@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
+#include "properties.h"
 
 #include <cstdarg>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -23,13 +25,11 @@
 #include <cerrno>
 #include <securec_p.h>
 
-#include "properties.h"
 #include "hilog_trace.h"
 #include "hilog_inner.h"
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilog_input_socket_client.h"
-#include "properties.h"
 
 using namespace std;
 static RegisterFunc g_registerFunc = nullptr;
@@ -39,7 +39,9 @@ static const char P_LIMIT_TAG[] = "LOGLIMITP";
 #ifdef DEBUG
 static const int MAX_PATH_LEN = 1024;
 #endif
-
+static const int DEFAULT_ONE_QUOTA = 2610;
+static const int DEFAULT_QUOTA = 5;
+static const int LOG_FLOWCTRL_QUOTA_STR_LEN = 2;
 int HiLogRegisterGetIdFun(RegisterFunc registerFunc)
 {
     if (g_registerFunc != nullptr) {
@@ -70,27 +72,88 @@ static long long HiLogTimespecSub(struct timespec a, struct timespec b)
     ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
     return ret;
 }
+static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
+{
+    uint16_t domainLevel = GetDomainLevel(domain);
+    uint16_t tagLevel = GetTagLevel(tag);
+    uint16_t globalLevel = GetGlobalLevel();
+    uint16_t maxLevel = LOG_LEVEL_MIN;
+    maxLevel = (maxLevel < domainLevel) ? domainLevel : maxLevel;
+    maxLevel = (maxLevel < tagLevel) ? tagLevel : maxLevel;
+    maxLevel = (maxLevel < globalLevel) ? globalLevel : maxLevel;
+    return maxLevel;
+}
 
+static uint32_t ParseProcessQuota()
+{
+    uint32_t proQuota = DEFAULT_QUOTA;
+    std::string proName = GetProgName();
+    static constexpr char flowCtrlQuotaFile[] = "/system/etc/hilog_flowcontrol_quota.conf";
+    std::ifstream ifs(flowCtrlQuotaFile, std::ifstream::in);
+    if (!ifs.is_open()) {
+        return proQuota;
+    }
+    std::string line;
+    while (!ifs.eof()) {
+        getline(ifs, line);
+        if (line.empty() || line.at(0) == '#') {
+            continue;
+        }
+        std::string processName;
+        std::string processHashName;
+        std::string processQuotaValue;
+        std::size_t processNameEnd = line.find_first_of(" ");
+        if (processNameEnd == std::string::npos) {
+            continue;
+        }
+        processName = line.substr(0, processNameEnd);
+        if (++processNameEnd >= line.size()) {
+            continue;
+        }
+        std::size_t processHashNameEnd = line.find_first_of(" ", processNameEnd);
+        if (processHashNameEnd == std::string::npos) {
+            continue;
+        }
+        processHashName = line.substr(processNameEnd, processHashNameEnd - processNameEnd);
+        if (++processHashNameEnd >= line.size()) {
+            continue;
+        }
+        if (proName == processName) {
+            processQuotaValue = line.substr(processHashNameEnd, 1);
+            char quotaValue[LOG_FLOWCTRL_QUOTA_STR_LEN];
+            strcpy_s(quotaValue, LOG_FLOWCTRL_QUOTA_STR_LEN, processQuotaValue.c_str());
+            sscanf_s(quotaValue, "%x", &proQuota);
+            ifs.close();
+            return proQuota * DEFAULT_ONE_QUOTA;
+        }          
+    }
+    ifs.close();
+    return proQuota * DEFAULT_ONE_QUOTA;
+}
 
 static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
 {
     if (logType == LOG_APP || !IsProcessSwitchOn() || debug) {
         return 0;
     }
+    static uint32_t processQuota = DEFAULT_ONE_QUOTA * DEFAULT_QUOTA;
     static atomic_int gSumLen = 0;
     static atomic_int gDropped = 0;
     static atomic<struct timespec> gStartTime = atomic<struct timespec>({
         .tv_sec = 0, .tv_nsec = 0
     });
+    static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    if (!isFirstFlag.test_and_set()) {
+        processQuota = ParseProcessQuota();
+    }
+    
     struct timespec tsNow = { 0, 0 };
     struct timespec tsStart = atomic_load(&gStartTime);
-    clock_gettime(CLOCK_REALTIME, &tsNow);
-
+    clock_gettime(CLOCK_MONOTONIC, &tsNow);
     long long ns = HiLogTimespecSub(tsStart, tsNow);
     /* in statistic period(1 second) */
     if (ns <= NSEC_PER_SEC) {
         uint32_t sumLen = (uint32_t)atomic_load(&gSumLen);
-        uint32_t processQuota = GetProcessQuota();
         if (sumLen > processQuota) { /* over quota, -1 means don't print */
             atomic_fetch_add_explicit(&gDropped, 1, memory_order_relaxed);
             return -1;
@@ -224,5 +287,11 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
 
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
+    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || tag == nullptr) {
+        return false;
+    }
+    if (level < GetFinalLevel(domain, tag)) {
+        return false;
+    }
     return true;
 }
