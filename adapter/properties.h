@@ -20,8 +20,34 @@
 #include <cstdlib>
 #include <string>
 
-static const int HILOG_PROP_VALUE_MAX = 92;
+#define USING_AOSP_PROPERTY
 
+#ifdef USING_AOSP_PROPERTY
+#include <sys/system_properties.h>
+#define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
+#include <sys/_system_properties.h>
+#endif
+
+#ifdef USING_AOSP_PROPERTY
+static const int HILOG_PROP_VALUE_MAX = PROP_VALUE_MAX;
+#else
+static const int HILOG_PROP_VALUE_MAX = 92;
+#endif
+
+using PropType = enum {
+    PROP_PRIVATE = 0x01,
+    PROP_PROCESS_FLOWCTRL,
+    PROP_DOMAIN_FLOWCTRL,
+    PROP_GLOBAL_LOG_LEVEL,
+    PROP_DOMAIN_LOG_LEVEL,
+    PROP_TAG_LOG_LEVEL,
+    PROP_SINGLE_DEBUG,
+    PROP_PERSIST_DEBUG,
+};
+
+std::string GetPropertyName(uint32_t propType);
+std::string GetProgName();
+uint16_t GetTagLevel(const std::string& tag);
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,10 +59,9 @@ bool IsPersistDebugOn();
 bool IsPrivateSwitchOn();
 bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
-bool IsLevelLoggable(unsigned int domain, const char *tag, uint16_t level);
-int32_t GetProcessQuota();
+uint16_t GetGlobalLevel();
+uint16_t GetDomainLevel(uint32_t domain);
 #ifdef __cplusplus
 }
 #endif
 #endif
-
