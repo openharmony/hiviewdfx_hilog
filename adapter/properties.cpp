@@ -47,11 +47,7 @@ static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
 
 
 using PropertyCache = struct {
-#ifdef USING_AOSP_PROPERTY
-    const prop_info* pinfo;
-#else
     const void* pinfo;
-#endif
     uint32_t serial;
     char propertyValue[HILOG_PROP_VALUE_MAX];
 };
@@ -89,36 +85,19 @@ void PropertyGet(const std::string &key, char *value, int len)
     if (len < HILOG_PROP_VALUE_MAX) {
         return;
     }
-#ifdef USING_AOSP_PROPERTY
-    __system_property_get(key.c_str(), value);
-#else
-/* use OHOS interface */
-#endif
 }
 
 void PropertySet(const std::string &key, const char* value)
 {
-#ifdef USING_AOSP_PROPERTY
-    __system_property_set(key.c_str(), value);
-#else
+
 /* use OHOS interface */
-#endif
+
 }
 
 std::string GetProgName()
 {
-#ifdef USING_AOSP_PROPERTY
-    std::string processName = getprogname();
-    const std::string tmpName = processName;
-    int pos = tmpName.find_last_of("/");
-    if (pos != -1) {
-        std::string rst = tmpName.substr(pos + 1, tmpName.length());
-        return rst;
-    }
-    return processName;  
-#else
     return nullptr; /* use HOS interface */
-#endif
+
 }
 
 std::string GetPropertyName(uint32_t propType) 
@@ -214,28 +193,13 @@ static void UnlockByProp(uint32_t propType)
 
 static void RefreshCacheBuf(PropertyCache *cache, const char *key)
 {
-#ifdef USING_AOSP_PROPERTY
-    if (cache->pinfo == nullptr) {
-        cache->pinfo = __system_property_find(key);
-        if (!cache->pinfo) {
-            return;
-        }
-    }
-    cache->serial = __system_property_serial(cache->pinfo);
-    __system_property_read(cache->pinfo, nullptr, cache->propertyValue);
-#else
 /* use OHOS interface */
-#endif
 }
 
 static bool CheckCache(const PropertyCache *cache)
 {
-#ifdef USING_AOSP_PROPERTY
-    return cache->pinfo && __system_property_serial(cache->pinfo) != cache->serial;
-#else
     return true;
 /* use OHOS interface */
-#endif
 }
 
 static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
