@@ -20,8 +20,6 @@
 #include <cstdlib>
 #include <string>
 
-#define USING_AOSP_PROPERTY
-
 #ifdef USING_AOSP_PROPERTY
 #include <sys/system_properties.h>
 #define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
