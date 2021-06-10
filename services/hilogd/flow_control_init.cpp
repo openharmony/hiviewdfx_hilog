@@ -40,7 +40,6 @@ using DomainInfo = struct {
     struct timespec startTime;
 };
 
-
 static std::unordered_map<uint32_t, DomainInfo*> g_domainMap;
 
 static int32_t g_typeDropped[LOG_TYPE_MAX];
@@ -87,7 +86,6 @@ int32_t GetDroppedByDomain(uint32_t domainId)
     }
     return 0;
 }
-
 
 void ParseDomainQuota(std::string &domainStr)
 {
