@@ -36,9 +36,6 @@ using PropType = enum {
 std::string GetPropertyName(uint32_t propType);
 std::string GetProgName();
 uint16_t GetTagLevel(const std::string& tag);
-#ifdef __cplusplus
-extern "C" {
-#endif
 void PropertyGet(const std::string &key, char *value, int len);
 void PropertySet(const std::string &key, const char* value);
 bool IsDebugOn();
@@ -49,7 +46,5 @@ bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
 uint16_t GetGlobalLevel();
 uint16_t GetDomainLevel(uint32_t domain);
-#ifdef __cplusplus
-}
-#endif
+
 #endif

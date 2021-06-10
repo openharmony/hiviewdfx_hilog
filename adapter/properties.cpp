@@ -89,15 +89,12 @@ void PropertyGet(const std::string &key, char *value, int len)
 
 void PropertySet(const std::string &key, const char* value)
 {
-
 /* use OHOS interface */
-
 }
 
 std::string GetProgName()
 {
     return nullptr; /* use HOS interface */
-
 }
 
 std::string GetPropertyName(uint32_t propType) 
