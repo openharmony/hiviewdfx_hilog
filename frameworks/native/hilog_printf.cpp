@@ -39,9 +39,8 @@ static const char P_LIMIT_TAG[] = "LOGLIMITP";
 #ifdef DEBUG
 static const int MAX_PATH_LEN = 1024;
 #endif
-static const int DEFAULT_ONE_QUOTA = 2610;
-static const int DEFAULT_QUOTA = 5;
-static const int LOG_FLOWCTRL_QUOTA_STR_LEN = 2;
+static const int DEFAULT_QUOTA = 13050;
+static const int LOG_FLOWCTRL_QUOTA_STR_LEN = 6;
 int HiLogRegisterGetIdFun(RegisterFunc registerFunc)
 {
     if (g_registerFunc != nullptr) {
@@ -100,7 +99,6 @@ static uint32_t ParseProcessQuota()
             continue;
         }
         std::string processName;
-        std::string processHashName;
         std::string processQuotaValue;
         std::size_t processNameEnd = line.find_first_of(" ");
         if (processNameEnd == std::string::npos) {
@@ -110,25 +108,17 @@ static uint32_t ParseProcessQuota()
         if (++processNameEnd >= line.size()) {
             continue;
         }
-        std::size_t processHashNameEnd = line.find_first_of(" ", processNameEnd);
-        if (processHashNameEnd == std::string::npos) {
-            continue;
-        }
-        processHashName = line.substr(processNameEnd, processHashNameEnd - processNameEnd);
-        if (++processHashNameEnd >= line.size()) {
-            continue;
-        }
         if (proName == processName) {
-            processQuotaValue = line.substr(processHashNameEnd, 1);
+            processQuotaValue = line.substr(processNameEnd, LOG_FLOWCTRL_QUOTA_STR_LEN);
             char quotaValue[LOG_FLOWCTRL_QUOTA_STR_LEN];
             strcpy_s(quotaValue, LOG_FLOWCTRL_QUOTA_STR_LEN, processQuotaValue.c_str());
-            sscanf_s(quotaValue, "%x", &proQuota);
+            sscanf_s(quotaValue, "%d", &proQuota);
             ifs.close();
-            return proQuota * DEFAULT_ONE_QUOTA;
+            return proQuota;
         }          
     }
     ifs.close();
-    return proQuota * DEFAULT_ONE_QUOTA;
+    return proQuota;
 }
 
 static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
@@ -136,7 +126,7 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
     if (logType == LOG_APP || !IsProcessSwitchOn() || debug) {
         return 0;
     }
-    static uint32_t processQuota = DEFAULT_ONE_QUOTA * DEFAULT_QUOTA;
+    static uint32_t processQuota = DEFAULT_QUOTA;
     static atomic_int gSumLen = 0;
     static atomic_int gDropped = 0;
     static atomic<struct timespec> gStartTime = atomic<struct timespec>({
