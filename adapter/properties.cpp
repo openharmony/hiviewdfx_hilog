@@ -45,7 +45,6 @@ static pthread_mutex_t g_privateLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
 
-
 using PropertyCache = struct {
     const void* pinfo;
     uint32_t serial;
@@ -187,7 +186,6 @@ static void UnlockByProp(uint32_t propType)
     }
 }
 
-
 static void RefreshCacheBuf(PropertyCache *cache, const char *key)
 {
 /* use OHOS interface */
@@ -254,7 +252,6 @@ bool IsPersistDebugOn()
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, switchCache, PROP_PERSIST_DEBUG, false);
 }
-
 
 bool IsPrivateSwitchOn()
 {

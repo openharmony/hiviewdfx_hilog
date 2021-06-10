@@ -58,7 +58,6 @@ int ColorFromLevel(uint16_t level)
     }
 }
 
-
 int HilogShowTimeBuffer(char* buffer, int bufLen, HilogShowFormat showFormat,
     const HilogShowFormatBuffer& contentOut)
 {
