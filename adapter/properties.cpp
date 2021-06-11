@@ -199,7 +199,7 @@ static bool CheckCache(const PropertyCache *cache)
 
 static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
 {
-    int notLocked;
+    int notLocked = 0;
     std::string key = GetPropertyName(propType);
 
     if (isFirst || CheckCache(&switchCache.cache)) {
@@ -282,7 +282,7 @@ uint16_t GetGlobalLevel()
     std::string key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
     static LogLevelCache levelCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    int notLocked;
+    int notLocked = 0;
 
     if (!isFirstFlag.test_and_set() || CheckCache(&levelCache.cache)) {
         notLocked = PropLock(&g_globalLevelLock);
@@ -312,7 +312,7 @@ uint16_t GetDomainLevel(uint32_t domain)
     static std::unordered_map<uint32_t, LogLevelCache*> domainMap;
     std::unordered_map<uint32_t, LogLevelCache*>::iterator it;
     std::string key = GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + std::to_string(domain);
-    int notLocked;
+    int notLocked = 0;
 
     it = domainMap.find(domain);
     if (it == domainMap.end()) { // new domain
@@ -356,7 +356,7 @@ uint16_t GetTagLevel(const std::string& tag)
     std::unordered_map<std::string, LogLevelCache*>::iterator it;
     std::string tagStr = tag;
     std::string key = GetPropertyName(PROP_TAG_LOG_LEVEL) + tagStr;
-    int notLocked;
+    int notLocked = 0;
 
     it = tagMap.find(tagStr);
     if (it == tagMap.end()) {
