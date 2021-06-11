@@ -357,8 +357,9 @@ void LogPersister::Exit()
     toExit = true;
     condVariable.notify_all();
     unique_lock<mutex> lk(mutexForhasExited);
-    if (!isExited())
+    if (!isExited()) {
         cvhasExited.wait(lk);
+    }
     delete rotator;
     this->rotator = nullptr;
     munmap(buffer, MAX_PERSISTER_BUFFER_SIZE);
