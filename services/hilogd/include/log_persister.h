@@ -37,7 +37,7 @@ const uint16_t MAX_PERSISTER_BUFFER_SIZE = 4096;
 
 class LogPersister : public LogReader {
 public:
-    LogPersister(std::string name, std::string path, uint16_t compressType,
+    LogPersister(uint32_t id, std::string path, uint16_t compressType,
                  uint16_t compressAlg, int sleepTime, LogPersisterRotator *rotator,
                  HilogBuffer *buffer);
     ~LogPersister();
@@ -45,22 +45,22 @@ public:
     void NotifyForNewData();
     int WriteData(HilogData *data);
     int ThreadFunc();
-    static int Kill(const std::string &name);
+    static int Kill(uint32_t id);
     void Exit();
     static int Query(uint16_t logType,
                      std::list<LogPersistQueryResult> &results);
     int Init();
-    int Start();
-    bool Identify(const std::string &name, const std::string &path = "");
+    void Start();
+    bool Identify(uint32_t id);
     void FillInfo(LogPersistQueryResult *response);
-    std::string GetName();
     int MkDirPath(const char *p_cMkdir);
     bool writeUnCompressedBuffer(HilogData *data);
     uint8_t getType() const;
+    std::string getPath();
     LogPersisterBuffer *buffer;
 
 private:
-    std::string name;
+    uint32_t id;
     std::string path;
     std::string mmapPath;
     uint16_t compressType;
@@ -71,8 +71,10 @@ private:
     std::mutex mutexForhasExited;
     std::condition_variable cvhasExited;
     LogPersisterRotator *rotator;
+    bool toExit;
     bool hasExited;
     inline void WriteFile();
+    bool isExited();
     FILE *fdinfo;
     int fd = -1;
 

@@ -18,10 +18,13 @@
 #include <cstring>
 #include <getopt.h>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
+#include <sstream>
 #include <error.h>
 #include <securec.h>
+
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -82,7 +85,7 @@ static void Helper()
     "  -n <number>, --number<number>\n"
     "                     set max log file numbers.\n"
     "  -j <jobid>, --jobid<jobid>\n"
-    "                     stop the log file writing task of <jobid>.\n"
+    "                     start/stop the log file writing task of <jobid>.\n"
     "  -w <control>,--write=<control>\n"
     "                     query      log file writing task query.\n"
     "                     start      start a log file writing task, see -F -l -n -c for to set more configs,\n"
@@ -91,7 +94,9 @@ static void Helper()
     "                      multiple conditions query\n"
     "  -v <format>, --format=<format> options:\n"
     "                     time       display local time.\n"
-    "                     color      display colorful logs by log level.\n"
+    "                     color      display colorful logs by log level.i.e. \x1B[38;5;231mVERBOSE\n"
+    "                     \x1B[38;5;75mDEBUG \x1B[38;5;40mINFO \x1B[38;5;166mWARN"
+    "                     \x1B[38;5;196mERROR \x1B[38;5;226mFATAL\x1B[0m\n"
     "                     epoch      display the time from 1970/1/1.\n"
     "                     monotonic  display the cpu time from bootup.\n"
     "                     usec       display time by usec.\n"
@@ -101,59 +106,19 @@ static void Helper()
     );
 }
 
-static int Str2Time(const std::string &dateStr, time_t &timeData)
+static std::time_t Str2Time(const std::string& str, bool isDst = false,
+    const std::string& format = "%Y-%m-%d_%H:%M:%S")
 {
-    timeData = 0;
-    if (dateStr == "") {
+    if (str == "") {
         return 0;
+    } else {
+        std::tm t = {0};
+        t.tm_isdst = isDst ? 1 : 0;
+        std::istringstream ss(str);
+        ss >> std::get_time(&t, format.c_str());
+        return mktime(&t);
     }
-
-    const char *pData = strdup(dateStr.c_str());
-    if (pData == nullptr) {
-        return -1;
-    }
-
-    const char *pos = strstr(pData, "-");
-    if (pos == nullptr) {
-        free((void *)pData);
-        return -1;
-    }
-    int year = atoi(pData);
-    int month = atoi(pos + 1);
-    pos = strstr(pos + 1, "-");
-    if (pos == nullptr) {
-        free((void *)pData);
-        return -1;
-    }
-    int day = atoi(pos + 1);
-    int hour = 0;
-    int min = 0;
-    int sec = 0;
-    pos = strstr(pos + 1, "_");
-    if (pos != nullptr) {
-        hour = atoi(pos + 1);
-        pos = strstr(pos + 1, ":");
-        if (pos != nullptr) {
-            min = atoi(pos + 1);
-            pos = strstr(pos + 1, ":");
-            if (pos != nullptr) {
-                sec = atoi(pos + 1);
-            }
-        }
-    }
-    struct tm originData = { 0 };
-    bzero(static_cast<void*>(&originData), sizeof(originData));
-    originData.tm_sec = sec;
-    originData.tm_min = min;
-    originData.tm_hour = hour;
-    originData.tm_mday = day;
-    originData.tm_mon = month - 1;
-    originData.tm_year = year - 1900;
-    timeData = mktime(&originData);
-    free((void *)pData);
-    return 0;
 }
-
 static int GetTypes(HilogArgs context, string typesArgs)
 {
     uint16_t types = context.types;
@@ -262,8 +227,14 @@ int HilogEntry(int argc, char* argv[])
                 break;
             case 'z':
                 context.tailLines = atoi(optarg);
+                context.noBlockMode = 1;
                 break;
             case 't':
+                context.logTypeArgs = optarg;
+                if (context.logTypeArgs.find("all") != context.logTypeArgs.npos ||
+                    context.logTypeArgs.find(" ") != context.logTypeArgs.npos) {
+                    break;
+                }
                 indexType = optind - 1;
                 while (indexType < argc) {
                     string types(argv[indexType]);
@@ -306,12 +277,12 @@ int HilogEntry(int argc, char* argv[])
                             idex++;
                         }
                     }
-                    if (vecSrc.size() != MULARGS) {
+                    if (vecSrc.size() > MULARGS) {
                         std::cout<<"Invalid parameter"<<endl;
                         exit(1);
                     }
-                    Str2Time(vecSrc[0], context.beginTime);
-                    Str2Time(vecSrc[1], context.endTime);
+                    context.beginTime = Str2Time(vecSrc[0]);
+                    context.endTime = Str2Time(vecSrc[1]);
                     context.domain = vecSrc[2];
                     context.tag = vecSrc[3];
                     levelsArgs = vecSrc[4];
@@ -485,16 +456,6 @@ int HilogEntry(int argc, char* argv[])
                 exit(-1);
             }
             exit(0);
-        } else if (context.flowQuotaArgs != "") {
-            SetPropertyParam propertyParam;
-            propertyParam.flowQuotaStr = context.flowQuotaArgs;
-            propertyParam.pidStr = context.pidArgs;
-            propertyParam.domainStr = context.domainArgs;
-            ret = SetPropertiesOp(controller, OT_FLOW_QUOTA, &propertyParam);
-            if (ret == RET_FAIL) {
-                cout << "flowctrl quota operation error!" << endl;
-                exit(-1);
-            }
         }
     } else {
         LogQueryRequestOp(controller, &context);

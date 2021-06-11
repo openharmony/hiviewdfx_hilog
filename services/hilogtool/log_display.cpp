@@ -271,11 +271,11 @@ int32_t ControlCmdResult(const char* message)
                 (LogPersistStartResult*)&pLogPersistStartRsp->logPersistStartRst;
             while (pLogPersistStartRst && resultLen < msgLen) {
                 if (pLogPersistStartRst->result == RET_FAIL) {
-                    outputStr += pLogPersistStartRst->jobId;
+                    outputStr += to_string(pLogPersistStartRst->jobId);
                     outputStr += " log file task start fail";
                     outputStr += "\n";
                 } else {
-                    outputStr += pLogPersistStartRst->jobId;
+                    outputStr += to_string(pLogPersistStartRst->jobId);
                     outputStr += " log file task start success";
                     outputStr += "\n";
                 }
@@ -292,11 +292,11 @@ int32_t ControlCmdResult(const char* message)
             LogPersistStopResult* pLogPersistStopRst = (LogPersistStopResult*)&pLogPersistStopRsp->logPersistStopRst;
             while (pLogPersistStopRst && resultLen < msgLen) {
                 if (pLogPersistStopRst->result == RET_FAIL) {
-                    outputStr += pLogPersistStopRst->jobId;
+                    outputStr += to_string(pLogPersistStopRst->jobId);
                     outputStr += " log file task stop fail";
                     outputStr += "\n";
                 } else {
-                    outputStr += pLogPersistStopRst->jobId;
+                    outputStr += to_string(pLogPersistStopRst->jobId);
                     outputStr += " log file task stop success";
                     outputStr += "\n";
                 }
@@ -318,7 +318,7 @@ int32_t ControlCmdResult(const char* message)
                     outputStr = " log file task query fail";
                     outputStr += "\n";
                 } else {
-                    outputStr += pLogPersistQueryRst->jobId;
+                    outputStr += to_string(pLogPersistQueryRst->jobId);
                     outputStr += " ";
                     outputStr += GetOrigType(pLogPersistQueryRst->logType);
                     outputStr += " ";
@@ -451,8 +451,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
         tailBuffer.emplace_back(buffer);
         return;
     }
-
-    cout << buffer <<endl;
+    cout << buffer << endl;
     return;
 }
 } // namespace HiviewDFX

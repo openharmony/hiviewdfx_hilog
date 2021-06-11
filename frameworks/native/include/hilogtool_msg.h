@@ -22,9 +22,7 @@
 #include <time.h>
 #include "hilog_common.h"
 
-#define DOMAIN_MAX_LEN 11
-#define FILE_PATH_MAX_LEN 1024
-#define JOB_ID_MAX_LEN 10
+#define FILE_PATH_MAX_LEN 100
 
 typedef enum {
     LOG_QUERY_REQUEST = 0x01,
@@ -59,7 +57,6 @@ typedef enum {
     OT_PRIVATE_SWITCH = 0x01,
     OT_LOG_LEVEL,
     OT_FLOW_SWITCH,
-    OT_FLOW_QUOTA,
 } OperateType;
 
 typedef enum {
@@ -251,7 +248,7 @@ typedef struct {
     char filePath[FILE_PATH_MAX_LEN];
     uint32_t fileSize;
     uint32_t fileNum;
-    char jobId[JOB_ID_MAX_LEN];
+    uint32_t jobId;
 } LogPersistStartMsg;
 typedef struct {
     MessageHeader msgHeader;
@@ -260,7 +257,7 @@ typedef struct {
 
 typedef struct {
     int32_t result;
-    char jobId[JOB_ID_MAX_LEN];
+    uint32_t jobId;
 } LogPersistStartResult;
 
 typedef struct {
@@ -269,7 +266,7 @@ typedef struct {
 } LogPersistStartResponse;
 
 typedef struct {
-    char jobId[JOB_ID_MAX_LEN];
+    uint32_t jobId;
 } LogPersistStopMsg;
 typedef struct {
     MessageHeader msgHeader;
@@ -278,7 +275,7 @@ typedef struct {
 
 typedef struct {
     int32_t result;
-    char jobId[JOB_ID_MAX_LEN];
+    uint32_t jobId;
 } LogPersistStopResult;
 typedef struct {
     MessageHeader msgHeader;
@@ -290,12 +287,12 @@ typedef struct {
 } LogPersistQueryMsg;
 typedef struct {
     MessageHeader msgHeader;
-    LogPersistQueryMsg logPersistQueryMsg[];
+    LogPersistQueryMsg logPersistQueryMsg;
 } LogPersistQueryRequest;
 
 typedef struct {
     int32_t result;
-    char jobId[JOB_ID_MAX_LEN];
+    uint32_t jobId;
     uint16_t logType;
     uint16_t compressType;
     uint16_t compressAlg;
@@ -315,28 +312,8 @@ typedef struct {
     std::string domainStr;
     std::string tagStr;
     std::string pidStr;
-    std::string flowQuotaStr;
 } SetPropertyParam;
 
-typedef struct {
-    char domain[DOMAIN_MAX_LEN];
-    uint32_t flowQuota;
-} FlowCtrlMsg;
-typedef struct {
-    MessageHeader msgHeader;
-    FlowCtrlMsg flowCtrlMsg[];
-} FlowCtrlRequest;
-
-typedef struct {
-    char domain[DOMAIN_MAX_LEN];
-    uint32_t flowQuota;
-} FlowCtrlResult;
-
-typedef struct {
-    MessageHeader msgHeader;
-    int32_t result;
-    FlowCtrlResult flowCtrlRst[];
-} FlowCtrlResponse;
 
 typedef struct {
     uint16_t noBlockMode;
@@ -371,4 +348,3 @@ typedef struct {
 }  HilogArgs;
 
 #endif /* HILOGTOOL_MSG_H */
-

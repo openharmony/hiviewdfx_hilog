@@ -43,6 +43,7 @@ using QueryCondition = struct QueryCondition {
 class LogReader : public std::enable_shared_from_this<LogReader> {
 public:
     std::list<HilogData>::iterator readPos;
+    std::list<HilogData>::iterator lastPos;
     std::list<HilogData> oldData;
     QueryCondition queryCondition;
     std::unique_ptr<Socket> hilogtoolConnectSocket;
@@ -50,8 +51,6 @@ public:
 
     LogReader();
     virtual ~LogReader();
-    bool SetWaitForNewData(bool);
-    bool GetWaitForNewData() const;
     bool GetReload() const;
     void SetReload(bool);
     virtual void NotifyForNewData() = 0;
@@ -67,7 +66,6 @@ protected:
     static HilogBuffer* hilogBuffer;
 
 private:
-    bool waitForNewData = false;
     bool isReload = true;
 };
 } // namespace HiviewDFX

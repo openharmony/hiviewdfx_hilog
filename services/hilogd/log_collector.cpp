@@ -84,23 +84,13 @@ size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
     if (result <= 0) {
         return result;
     }
-    hilogBuffer->GetBufferLock();
+    hilogBuffer->logReaderListMutex.lock_shared();
     auto it = hilogBuffer->logReaderList.begin();
     while (it != hilogBuffer->logReaderList.end()) {
-        if ((*it).expired()) {
-            it = hilogBuffer->logReaderList.erase(it);
-#ifdef DEBUG
-            cout << "removed expired reader!" << endl;
-#endif
-            continue;
-        }
-        if ((*it).lock()->GetWaitForNewData() &&
-            static_cast<uint8_t>((1 << msg.type) & (*it).lock()->queryCondition.types) != 0) {
-            (*it).lock()->NotifyForNewData();
-        }
+        (*it).lock()->NotifyForNewData();
         ++it;
     }
-    hilogBuffer->ReleaseBufferLock();
+    hilogBuffer->logReaderListMutex.unlock_shared();
     return result;
 }
 } // namespace HiviewDFX
