@@ -67,12 +67,13 @@ string GenPersistLogHeader(const HilogData *data)
     return buffer;
 }
 
-LogPersister::LogPersister(string name, string path, uint16_t compressType,
+LogPersister::LogPersister(uint32_t id, string path, uint16_t compressType,
                            uint16_t compressAlg, int sleepTime,
                            LogPersisterRotator *rotator, HilogBuffer *_buffer)
-    : name(name), path(path), compressType(compressType), compressAlg(compressAlg),
+    : id(id), path(path), compressType(compressType), compressAlg(compressAlg),
       sleepTime(sleepTime), rotator(rotator)
 {
+    toExit = false;
     hasExited = false;
     hilogBuffer = _buffer;
     LogCompress = nullptr;
@@ -93,21 +94,30 @@ int LogPersister::Init()
     if (realPath == nullptr) {
         return RET_FAIL;
     }
-
     path = std::string(cPath);
     if (path.rfind(g_logPersisterDir, 0) != 0) {
         return RET_FAIL;
     }
-
     int nPos = path.find_last_of('/');
     if (nPos == RET_FAIL) {
         return RET_FAIL;
     }
-    mmapPath = path.substr(0, nPos) + "/." + name;
+    mmapPath = path.substr(0, nPos) + "/." + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
             MkDirPath(path.substr(0, nPos).c_str());
         }
+    }
+    bool hit = false;
+    const lock_guard<mutex> lock(g_listMutex);
+    for (auto it = logPersisters.begin(); it != logPersisters.end(); ++it)
+        if ((*it)->getPath() == path || (*it)->Identify(id)) {
+            std::cout << path << std::endl;
+            hit = true;
+            break;
+        }
+    if (hit) {
+        return RET_FAIL;
     }
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
     bool restore = false;
@@ -124,14 +134,12 @@ int LogPersister::Init()
         lseek(fd, MAX_PERSISTER_BUFFER_SIZE - 1, SEEK_SET);
         write(fd, "", 1);
     }
-
     if (fd < 0) {
 #ifdef DEBUG
         cout << "open log file(" << mmapPath << ") failed: " << strerror(errno) << endl;
 #endif
         return RET_FAIL;
     }
-
     fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
     if (fdinfo == nullptr) {
         fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
@@ -166,13 +174,13 @@ int LogPersister::Init()
     } else {
         SetBufferOffset(0);
     }
+    logPersisters.push_back(std::static_pointer_cast<LogPersister>(shared_from_this()));
     return 0;
 }
 
 void LogPersister::NotifyForNewData()
 {
-    condVariable.notify_one();
-    SetWaitForNewData(false);
+    condVariable.notify_one();  
     isNotified = true;
 }
 
@@ -247,26 +255,12 @@ int LogPersister::WriteData(HilogData *data)
     return writeUnCompressedBuffer(data) ? 0 : -1;
 }
 
-int LogPersister::Start()
+void LogPersister::Start()
 {
-    bool hit = false;
-    std::lock_guard<mutex> guard(g_listMutex);
-
-    for (auto it = logPersisters.begin(); it != logPersisters.end(); ++it) {
-        if ((*it)->Identify(name, path)) {
-            hit = true;
-            break;
-        }
-    }
-
-    if (!hit) {
-        logPersisters.push_back(static_pointer_cast<LogPersister>(shared_from_this()));
-        std::cout << "PERSISTER CREATION SUCCESS" << std::endl;
-        auto newThread =
-            thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
-        newThread.detach();
-    }
-    return hit ? -1 : 0;
+    auto newThread =
+        thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
+    newThread.detach();
+    return;
 }
 
 inline void LogPersister::WriteFile()
@@ -283,14 +277,14 @@ int LogPersister::ThreadFunc()
     std::thread::id tid = std::this_thread::get_id();
     cout << __func__ << " " << tid << endl;
     while (true) {
-        if (hasExited) {
+        if (toExit) {
             break;
         }
         if (!hilogBuffer->Query(shared_from_this())) {
             unique_lock<mutex> lk(cvMutex);
             if (condVariable.wait_for(lk, sleepTime * 1s) ==
                 cv_status::timeout) {
-                if (hasExited) {
+                if (toExit) {
                     break;
                 }
                 WriteFile();
@@ -299,6 +293,10 @@ int LogPersister::ThreadFunc()
         cout << "running! " << compressAlg << endl;
     }
     WriteFile();
+    {
+        std::lock_guard<mutex> guard(mutexForhasExited);
+        hasExited = true;
+    }
     cvhasExited.notify_all();
     return 0;
 }
@@ -322,9 +320,7 @@ int LogPersister::Query(uint16_t logType, list<LogPersistQueryResult> &results)
 
 void LogPersister::FillInfo(LogPersistQueryResult *response)
 {
-    if (strcpy_s(response->jobId, JOB_ID_MAX_LEN, name.c_str())) {
-        return;
-    }
+    response->jobId = id;
     if (strcpy_s(response->filePath, FILE_PATH_MAX_LEN, path.c_str())) {
         return;
     }
@@ -334,13 +330,13 @@ void LogPersister::FillInfo(LogPersistQueryResult *response)
     return;
 }
 
-int LogPersister::Kill(const string &name)
+int LogPersister::Kill(const uint32_t id)
 {
     bool found = false;
     std::lock_guard<mutex> guard(g_listMutex);
     for (auto it = logPersisters.begin(); it != logPersisters.end(); ) {
-        cout << "find a persister" << endl;
-        if ((*it)->Identify(name)) {
+        if ((*it)->Identify(id)) {
+            cout << "find a persister" << endl;
             (*it)->Exit();
             it = logPersisters.erase(it);
             found = true;
@@ -351,16 +347,21 @@ int LogPersister::Kill(const string &name)
     return found ? 0 : -1;
 }
 
+bool LogPersister::isExited()
+{
+    return hasExited;
+}
+
 void LogPersister::Exit()
 {
-    hasExited = true;
-    condVariable.notify_one();
-
+    toExit = true;
+    condVariable.notify_all();
     unique_lock<mutex> lk(mutexForhasExited);
-    cvhasExited.wait(lk);
+    if (!isExited()) {
+        cvhasExited.wait(lk);
+    }
     delete rotator;
     this->rotator = nullptr;
-
     munmap(buffer, MAX_PERSISTER_BUFFER_SIZE);
     cout << "removed mmap file" << endl;
     remove(mmapPath.c_str());
@@ -368,18 +369,14 @@ void LogPersister::Exit()
     fclose(fdinfo);
     return;
 }
-bool LogPersister::Identify(const string &name, const string &path)
+bool LogPersister::Identify(uint32_t id)
 {
-    if (path.empty()) {
-        return this->name.compare(name) == 0;
-    } else {
-        return this->name.compare(name) == 0 && this->path.compare(path) == 0;
-    }
+    return this->id == id;
 }
 
-std::string LogPersister::GetName()
+string LogPersister::getPath()
 {
-    return name;
+    return path;
 }
 
 uint8_t LogPersister::getType() const

@@ -29,7 +29,6 @@ namespace OHOS {
 namespace HiviewDFX {
 static const int DOMAIN_FILTER  = 0x00fffff;
 static const int DOMAIN_FILTER_SUBSYSTEM = 8;
-static const int SINGLE_PROCESS_VALUE_LEN = 9;
 static const long long  NSEC_PER_SEC = 1000000000LL;
 
 using DomainInfo = struct {
@@ -40,16 +39,6 @@ using DomainInfo = struct {
     uint32_t dropped;
     struct timespec startTime;
 };
-
-namespace {
-    constexpr char FIRST_FLOW_CTRL_ATTR_NAME[] = "hilog.flowctrl.1";
-    constexpr char SECOND_FLOW_CTRL_ATTR_NAME[] = "hilog.flowctrl.2";
-    constexpr char THIRD_FLOW_CTRL_ATTR_NAME[] = "hilog.flowctrl.3";
-}
-
-static std::string g_firstFlowCtrQuotaValue;
-static std::string g_secondFlowCtrQuotaValue;
-static std::string g_thirdFlowCtrQuotaValue;
 
 static std::unordered_map<uint32_t, DomainInfo*> g_domainMap;
 
@@ -97,70 +86,6 @@ int32_t GetDroppedByDomain(uint32_t domainId)
     }
     return 0;
 }
-
-void ParseProcessQuota(const std::string line)
-{
-    if (line.empty() || line.at(0) == '#') {
-        return;
-    }
-    std::string processName;
-    std::string processHashName;
-    std::string processQuotaValue;
-    std::size_t processNameEnd = line.find_first_of(" ");
-    if (processNameEnd == std::string::npos) {
-        return;
-    }
-    processName = line.substr(0, processNameEnd);
-    if (++processNameEnd >= line.size()) {
-        return;
-    }
-    std::size_t processHashNameEnd = line.find_first_of(" ", processNameEnd);
-    if (processHashNameEnd == std::string::npos) {
-        return;
-    }
-    processHashName = line.substr(processNameEnd, processHashNameEnd - processNameEnd);
-    if (++processHashNameEnd >= line.size()) {
-        return;
-    }
-    processQuotaValue = line.substr(processHashNameEnd, 1);
-    if ((HILOG_PROP_VALUE_MAX - g_firstFlowCtrQuotaValue.length()) / SINGLE_PROCESS_VALUE_LEN  > 0) {
-        g_firstFlowCtrQuotaValue += (processHashName + processQuotaValue);
-    } else if ((HILOG_PROP_VALUE_MAX - g_secondFlowCtrQuotaValue.length()) / SINGLE_PROCESS_VALUE_LEN > 0) {
-        g_secondFlowCtrQuotaValue += (processHashName + processQuotaValue);
-    } else if ((HILOG_PROP_VALUE_MAX - g_thirdFlowCtrQuotaValue.length()) / SINGLE_PROCESS_VALUE_LEN > 0) {
-        g_thirdFlowCtrQuotaValue += (processHashName + processQuotaValue);
-    }
-
-    return;
-}
-
-
-int32_t InitProcessFlowCtrl()
-{
-    static constexpr char flowCtrlQuotaFile[] = "/system/etc/hilog_flowcontrol_quota.conf";
-    std::ifstream ifs(flowCtrlQuotaFile, std::ifstream::in);
-    if (!ifs.is_open()) {
-        return -1;
-    }
-    std::string line;
-    while (!ifs.eof()) {
-        getline(ifs, line);
-        ParseProcessQuota(line);
-    }
-    ifs.close();
-    if (!g_firstFlowCtrQuotaValue.empty()) {
-        PropertySet(FIRST_FLOW_CTRL_ATTR_NAME, g_firstFlowCtrQuotaValue.c_str());
-    }
-    if (!g_secondFlowCtrQuotaValue.empty()) {
-        PropertySet(SECOND_FLOW_CTRL_ATTR_NAME, g_secondFlowCtrQuotaValue.c_str());
-    }
-    if (!g_thirdFlowCtrQuotaValue.empty()) {
-        PropertySet(THIRD_FLOW_CTRL_ATTR_NAME, g_thirdFlowCtrQuotaValue.c_str());
-    }
-
-    return 0;
-}
-
 
 void ParseDomainQuota(std::string &domainStr)
 {
@@ -254,7 +179,7 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
     int ret = 0;
     it = g_domainMap.find(domainId);
     if (it != g_domainMap.end()) {
-        clock_gettime(CLOCK_REALTIME, &tsNow);
+        clock_gettime(CLOCK_MONOTONIC, &tsNow);
         /* in statistic period(1 second) */
         if (TimespecSub(it->second->startTime, tsNow) < NSEC_PER_SEC) {
             if (it->second->sumLen <= it->second->domainQuota) { /* under quota */

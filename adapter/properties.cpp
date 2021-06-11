@@ -16,7 +16,6 @@
 #include "properties.h"
 #include "hilog/log.h"
 #include <securec.h>
-
 #include <string>
 #include <ctime>
 #include <fstream>
@@ -29,7 +28,6 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
-
 #include <unistd.h>
 #include <sys/uio.h>
 #include <unordered_map>
@@ -46,23 +44,21 @@ static pthread_mutex_t g_persistDebugLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_privateLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_processQuotaLock = PTHREAD_MUTEX_INITIALIZER;
-
-static const int DEFAULT_ONE_QUOTA = 2610;
-static const int DEFAULT_QUOTA = 5;
-static const int PROCESS_HASH_OFFSET = 24;
-static const int PROCESS_HASH_NUM = 8;
-static const int PROCESS_HASH_NAME_BEGIN_POS = 2;
-static const int PROCESS_HASH_NAME_LEN = 8;
-static const int LOG_FLOWCTRL_QUOTA_STR_LEN = 2;
-static const int LOG_FLOWCTRL_LIST_NUM = 3;
-static const int LOG_LEVEL_LEN = 2;
-static const int PROP_SWITCH_LEN = 6;
 
 using PropertyCache = struct {
     const void* pinfo;
     uint32_t serial;
     char propertyValue[HILOG_PROP_VALUE_MAX];
+};
+
+using SwitchCache = struct {
+    PropertyCache cache;
+    bool isOn;
+};
+
+using LogLevelCache = struct {
+    PropertyCache cache;
+    uint16_t logLevel;
 };
 
 using ProcessInfo = struct {
@@ -92,70 +88,148 @@ void PropertyGet(const std::string &key, char *value, int len)
 
 void PropertySet(const std::string &key, const char* value)
 {
+/* use OHOS interface */
 }
 
-static const char* GetProgName()
+std::string GetProgName()
 {
     return nullptr; /* use HOS interface */
 }
+
+std::string GetPropertyName(uint32_t propType) 
+{
+    std::string key;
+    switch (propType) {
+        case PROP_PRIVATE:
+            key = "hilog.private.on";
+            break;
+        case PROP_PROCESS_FLOWCTRL:
+            key = "hilog.flowctrl.pid.on";
+            break;
+        case PROP_DOMAIN_FLOWCTRL:
+            key = "hilog.flowctrl.domain.on";
+            break;
+        case PROP_GLOBAL_LOG_LEVEL:
+            key = "hilog.loggable.global";
+            break;
+        case PROP_DOMAIN_LOG_LEVEL:
+            key = "hilog.loggable.domain.";
+            break;
+        case PROP_TAG_LOG_LEVEL:
+            key = "hilog.loggable.tag.";
+            break;
+        case PROP_SINGLE_DEBUG:
+            key = "hilog.debug.on";
+            break;
+        case PROP_PERSIST_DEBUG:
+            key = "persist.sys.hilog.debug.on";
+            break;
+        default:
+            break;
+    }
+    return key;
+}
+
+static int LockByProp(uint32_t propType)
+{
+    switch (propType) {
+        case PROP_PRIVATE:
+            return pthread_mutex_trylock(&g_privateLock);
+        case PROP_PROCESS_FLOWCTRL:
+            return pthread_mutex_trylock(&g_processFlowLock);
+        case PROP_DOMAIN_FLOWCTRL:
+            return pthread_mutex_trylock(&g_domainFlowLock);
+        case PROP_GLOBAL_LOG_LEVEL:
+            return pthread_mutex_trylock(&g_globalLevelLock);
+        case PROP_DOMAIN_LOG_LEVEL:
+            return pthread_mutex_trylock(&g_domainLevelLock);
+        case PROP_TAG_LOG_LEVEL:
+            return pthread_mutex_trylock(&g_tagLevelLock);
+        case PROP_SINGLE_DEBUG:
+            return pthread_mutex_trylock(&g_debugLock);
+        case PROP_PERSIST_DEBUG:
+            return pthread_mutex_trylock(&g_persistDebugLock);
+        default:
+            return -1;
+    }
+}
+
+static void UnlockByProp(uint32_t propType)
+{
+    switch (propType) {
+        case PROP_PRIVATE:
+            pthread_mutex_unlock(&g_privateLock);
+            break;
+        case PROP_PROCESS_FLOWCTRL:
+            pthread_mutex_unlock(&g_processFlowLock);
+            break;
+        case PROP_DOMAIN_FLOWCTRL:
+            pthread_mutex_unlock(&g_domainFlowLock);
+            break;
+        case PROP_GLOBAL_LOG_LEVEL:
+            pthread_mutex_unlock(&g_globalLevelLock);
+            break;
+        case PROP_DOMAIN_LOG_LEVEL:
+            pthread_mutex_unlock(&g_domainLevelLock);
+            break;
+        case PROP_TAG_LOG_LEVEL:
+            pthread_mutex_unlock(&g_tagLevelLock);
+            break;
+        case PROP_SINGLE_DEBUG:
+            pthread_mutex_unlock(&g_debugLock);
+            break;
+        case PROP_PERSIST_DEBUG:
+            pthread_mutex_unlock(&g_persistDebugLock);
+            break;
+        default:
+            break;
+    }
+}
+
 static void RefreshCacheBuf(PropertyCache *cache, const char *key)
 {
+/* use OHOS interface */
 }
 
 static bool CheckCache(const PropertyCache *cache)
 {
     return true;
+/* use OHOS interface */
 }
 
-static unsigned int GetHashValue(const char *buf, unsigned int len)
+static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
 {
-    unsigned int crc32 = 0;
-    int i;
-    while (len-- != 0) {
-        crc32 ^= ((*buf++) << PROCESS_HASH_OFFSET);
-        for (i = 0; i < PROCESS_HASH_NUM; i++) {
-            if (crc32 & 0x80000000) {
-                crc32 <<= 1;
-                crc32 ^= 0x04C11DB7;
+    int notLocked;
+    std::string key = GetPropertyName(propType);
+
+    if (isFirst || CheckCache(&switchCache.cache)) {
+        notLocked = LockByProp(propType);
+        if (!notLocked) {
+            RefreshCacheBuf(&switchCache.cache, key.c_str());
+            if (strcmp(switchCache.cache.propertyValue, "true") == 0) {
+                switchCache.isOn = true;
+            } else if (strcmp(switchCache.cache.propertyValue, "false") == 0) {
+                switchCache.isOn = false;
             } else {
-                crc32 <<= 1;
+                switchCache.isOn = defaultValue;
             }
+            UnlockByProp(propType);
+            return switchCache.isOn;
+        } else {
+            SwitchCache tmpCache = {{nullptr, 0xffffffff, ""}, defaultValue};
+            RefreshCacheBuf(&tmpCache.cache, key.c_str());
+            if (strcmp(tmpCache.cache.propertyValue, "true") == 0) {
+                tmpCache.isOn = true;
+            } else if (strcmp(tmpCache.cache.propertyValue, "false") == 0) {
+                tmpCache.isOn = false;
+            } else {
+                tmpCache.isOn = defaultValue;
+            }
+            return tmpCache.isOn;
         }
+    } else {
+        return switchCache.isOn;
     }
-    return crc32;
-}
-
-static void UnsignedToHex(unsigned int value, std::string &hexStr)
-{
-    std::stringstream buffer;
-    buffer.setf(std::ios::hex, std::ios::basefield);
-    buffer.setf(std::ios::showbase);
-    buffer << std::hex << value;
-    buffer >> hexStr;
-}
-
-static std::string GetProcessHashName(const char *processNameStr)
-{
-    std::string result;
-
-    if (processNameStr == nullptr) {
-        return result;
-    }
-
-    unsigned int processNameLen = strlen(processNameStr);
-    unsigned int crc = GetHashValue(processNameStr, processNameLen);
-    std::string tmp;
-    UnsignedToHex(crc, tmp);
-    std::size_t len = tmp.length();
-    if ((len <= PROCESS_HASH_NAME_BEGIN_POS)
-        || (len > PROCESS_HASH_NAME_BEGIN_POS + PROCESS_HASH_NAME_LEN)) {
-        return result;
-    } else if (len < PROCESS_HASH_NAME_BEGIN_POS + PROCESS_HASH_NAME_LEN) {
-        tmp.insert(PROCESS_HASH_NAME_BEGIN_POS, PROCESS_HASH_NAME_BEGIN_POS + PROCESS_HASH_NAME_LEN - len, '0');
-    }
-
-    result = tmp.substr(PROCESS_HASH_NAME_BEGIN_POS, PROCESS_HASH_NAME_LEN);
-    return result;
 }
 
 bool IsDebugOn()
@@ -165,393 +239,157 @@ bool IsDebugOn()
 
 bool IsSingleDebugOn()
 {
-    static PropertyCache switchCache = {nullptr, 0xffffffff, ""};
+    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char ctrlSwitch[PROP_SWITCH_LEN] = {0};
-    int notLocked;
-    std::string key = "hilog.debug.on";
-
-    if (!isFirstFlag.test_and_set() || CheckCache(&switchCache)) {
-        notLocked = PropLock(&g_debugLock);
-        if (!notLocked) {
-            RefreshCacheBuf(&switchCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                PropUnlock(&g_debugLock);
-                return false;
-            }
-            PropUnlock(&g_debugLock);
-        } else {
-            PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-            RefreshCacheBuf(&tmpCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, tmpCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                return false;
-            }
-        }
-    } else {
-        if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-            return false;
-        }
-    }
-
-    std::string result = ctrlSwitch;
-    return result == "true";
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, switchCache, PROP_SINGLE_DEBUG, false);
 }
 
 bool IsPersistDebugOn()
 {
-    static PropertyCache switchCache = {nullptr, 0xffffffff, ""};
+    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char ctrlSwitch[PROP_SWITCH_LEN] = {0};
-    int notLocked;
-    std::string key = "persist.sys.hilog.debug.on";
-
-    if (!isFirstFlag.test_and_set() || CheckCache(&switchCache)) {
-        notLocked = PropLock(&g_persistDebugLock);
-        if (!notLocked) {
-            RefreshCacheBuf(&switchCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                PropUnlock(&g_persistDebugLock);
-                return false;
-            }
-            PropUnlock(&g_persistDebugLock);
-        } else {
-            PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-            RefreshCacheBuf(&tmpCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, tmpCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                return false;
-            }
-        }
-    } else {
-        if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-            return false;
-        }
-    }
-
-    std::string result = ctrlSwitch;
-    return result == "true";
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, switchCache, PROP_PERSIST_DEBUG, false);
 }
-
 
 bool IsPrivateSwitchOn()
 {
-    static PropertyCache switchCache = {nullptr, 0xffffffff, ""};
+    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, true};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char ctrlSwitch[PROP_SWITCH_LEN] = {0};
-    int notLocked;
-    std::string key = "hilog.private.on";
-
-    if (!isFirstFlag.test_and_set() || CheckCache(&switchCache)) {
-        notLocked = PropLock(&g_privateLock);
-        if (!notLocked) {
-            RefreshCacheBuf(&switchCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                PropUnlock(&g_privateLock);
-                return false;
-            }
-            PropUnlock(&g_privateLock);
-        } else {
-            PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-            RefreshCacheBuf(&tmpCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, tmpCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                return false;
-            }
-        }
-    } else {
-        if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-            return false;
-        }
-    }
-
-    std::string result = ctrlSwitch;
-    return (result == "false") ? false : true;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, switchCache, PROP_PRIVATE, true);
 }
 
 bool IsProcessSwitchOn()
 {
-    static PropertyCache switchCache = {nullptr, 0xffffffff, ""};
+    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char ctrlSwitch[PROP_SWITCH_LEN];
-    int notLocked;
-    std::string key = "hilog.flowctrl.pid";
-
-    if (!isFirstFlag.test_and_set() || CheckCache(&switchCache)) {
-        notLocked = PropLock(&g_processFlowLock);
-        if (!notLocked) {
-            RefreshCacheBuf(&switchCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                PropUnlock(&g_processFlowLock);
-                return false;
-            }
-            PropUnlock(&g_processFlowLock);
-        } else {
-            PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-            RefreshCacheBuf(&tmpCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, tmpCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                return false;
-            }
-        }
-    } else {
-        if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-            return false;
-        }
-    }
-
-    std::string result = ctrlSwitch;
-    return result == "on";
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, switchCache, PROP_PROCESS_FLOWCTRL, false);
 }
 
 bool IsDomainSwitchOn()
 {
-    static PropertyCache switchCache = {nullptr, 0xffffffff, ""};
+    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char ctrlSwitch[PROP_SWITCH_LEN];
-    int notLocked;
-    std::string key = "hilog.flowctrl.domain";
-
-    if (!isFirstFlag.test_and_set() || CheckCache(&switchCache)) {
-        notLocked = PropLock(&g_domainFlowLock);
-        if (!notLocked) {
-            RefreshCacheBuf(&switchCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                PropUnlock(&g_domainFlowLock);
-                return false;
-            }
-            PropUnlock(&g_domainFlowLock);
-        } else {
-            PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-            RefreshCacheBuf(&tmpCache, key.c_str());
-            if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, tmpCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-                return false;
-            }
-        }
-    } else {
-        if (strncpy_s(ctrlSwitch, PROP_SWITCH_LEN, switchCache.propertyValue, PROP_SWITCH_LEN - 1) != EOK) {
-            return false;
-        }
-    }
-
-    std::string result = ctrlSwitch;
-    return result == "on";
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, switchCache, PROP_DOMAIN_FLOWCTRL, false);
 }
 
-int32_t GetProcessQuota()
+uint16_t GetGlobalLevel()
 {
+    std::string key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
+    static LogLevelCache levelCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char propertyValue[HILOG_PROP_VALUE_MAX];
-    const char* quotaPos = nullptr;
-    int i;
-    uint32_t processQuota;
-    int notLocked;
-    static bool isFirst = true;
-    static ProcessInfo processInfo = {{nullptr, 0xffffffff, ""}, "", "", "", 0};
-
-    if (isFirst) {
-        isFirst = false;
-        const char* processName = GetProgName();
-        processInfo.process = processName;
-        processInfo.processHashPre = GetProcessHashName(processName).c_str();
-    }
-
-    if (!isFirstFlag.test_and_set() || CheckCache(&processInfo.cache)) {
-        for (i = 0; i < LOG_FLOWCTRL_LIST_NUM; i++) {
-            std::string propertyKey = "hilog.flowctrl." + std::to_string(i);
-            PropertyGet(propertyKey, propertyValue, HILOG_PROP_VALUE_MAX);
-            quotaPos = strstr(propertyValue, (processInfo.processHashPre).c_str());
-            if (quotaPos) {
-                char quotaValueStr[LOG_FLOWCTRL_QUOTA_STR_LEN] = {""};
-                if (strncpy_s(quotaValueStr, LOG_FLOWCTRL_QUOTA_STR_LEN, quotaPos + PROCESS_HASH_NAME_LEN, 1) != EOK) {
-                    processInfo.processQuota = DEFAULT_QUOTA;
-                    return DEFAULT_ONE_QUOTA * DEFAULT_QUOTA;
-                }
-                if (sscanf_s(quotaValueStr, "%x", &processQuota) <= 0) {
-                    processInfo.processQuota = DEFAULT_QUOTA;
-                    return DEFAULT_ONE_QUOTA * DEFAULT_QUOTA;
-                }
-                std::cout << processQuota << std::endl;
-                notLocked = PropLock(&g_processQuotaLock);
-                if (!notLocked) {
-                    processInfo.processQuota = processQuota;
-                    processInfo.propertyKey = propertyKey;
-                    RefreshCacheBuf(&processInfo.cache, processInfo.propertyKey.c_str());
-                }
-                break;
-            }
-        }
-        if (!quotaPos) {
-            notLocked = PropLock(&g_processQuotaLock);
-            if (!notLocked) {
-                processInfo.propertyKey = "";
-                processInfo.processQuota = DEFAULT_QUOTA;
-            }
-            processQuota = DEFAULT_QUOTA;
-        }
-        if (!notLocked) {
-            PropUnlock(&g_processQuotaLock);
-        }
-    } else {
-        processQuota = processInfo.processQuota;
-    }
-    return DEFAULT_ONE_QUOTA * processQuota;
-}
-
-static uint16_t GetGlobalLevel()
-{
-    std::string key = "hilog.loggable.global";
-    static PropertyCache levelCache = {nullptr, 0xffffffff, ""};
-    uint16_t logLevel;
-    static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
-    char level[LOG_LEVEL_LEN];
     int notLocked;
 
-    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache)) {
+    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache.cache)) {
         notLocked = PropLock(&g_globalLevelLock);
         if (!notLocked) {
-            RefreshCacheBuf(&levelCache, key.c_str());
-            if (strncpy_s(level, LOG_LEVEL_LEN, levelCache.propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+            RefreshCacheBuf(&levelCache.cache, key.c_str());
+            if (sscanf_s(levelCache.cache.propertyValue, "%d", &levelCache.logLevel) <= 0) {
                 PropUnlock(&g_globalLevelLock);
                 return HILOG_LEVEL_MIN;
             }
             PropUnlock(&g_globalLevelLock);
+            return levelCache.logLevel;
         } else {
-            PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-            RefreshCacheBuf(&tmpCache, key.c_str());
-            if (strncpy_s(level, LOG_LEVEL_LEN, tmpCache.propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+            LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+            RefreshCacheBuf(&tmpCache.cache, key.c_str());
+            if (sscanf_s(tmpCache.cache.propertyValue, "%d", &tmpCache.logLevel) <= 0) {
                 return HILOG_LEVEL_MIN;
             }
+            return tmpCache.logLevel;
         }
     } else {
-        if (strncpy_s(level, LOG_LEVEL_LEN, levelCache.propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
-            return HILOG_LEVEL_MIN;
-        }
+        return levelCache.logLevel;
     }
-
-    if (sscanf_s(level, "%x", &logLevel) <= 0) {
-        return HILOG_LEVEL_MIN;
-    }
-
-    return logLevel;
 }
 
-static uint16_t GetDomainLevel(uint32_t domain)
+uint16_t GetDomainLevel(uint32_t domain)
 {
-    static std::unordered_map<uint32_t, PropertyCache*> domainMap;
-    std::unordered_map<uint32_t, PropertyCache*>::iterator it;
-    std::string key = "hilog.loggable.domain." + std::to_string(domain);
-    char level[LOG_LEVEL_LEN];
-    uint16_t logLevel;
+    static std::unordered_map<uint32_t, LogLevelCache*> domainMap;
+    std::unordered_map<uint32_t, LogLevelCache*>::iterator it;
+    std::string key = GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + std::to_string(domain);
     int notLocked;
 
     it = domainMap.find(domain);
-    if (it == domainMap.end()) {
-        std::unique_ptr<PropertyCache> levelCache = std::make_unique<PropertyCache>();
-        levelCache->pinfo = nullptr;
-        levelCache->serial = 0xffffffff;
-        RefreshCacheBuf(levelCache.get(), key.c_str());
-        if (strncpy_s(level, LOG_LEVEL_LEN, levelCache->propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+    if (it == domainMap.end()) { // new domain
+        LogLevelCache* levelCache = new(LogLevelCache);
+        levelCache->cache.pinfo = nullptr;
+        levelCache->cache.serial = 0xffffffff;
+        RefreshCacheBuf(&levelCache->cache, key.c_str()); 
+        if (sscanf_s(levelCache->cache.propertyValue, "%d", &levelCache->logLevel) <= 0) {
             return HILOG_LEVEL_MIN;
         }
-        domainMap.insert(std::make_pair(domain, levelCache.get()));
-    } else {
-        if (CheckCache(it->second)) {
+        domainMap.insert({ domain, levelCache });
+        return levelCache->logLevel;
+    } else { // exist domain
+        if (CheckCache(&it->second->cache)) { // change
             notLocked = PropLock(&g_domainLevelLock);
             if (!notLocked) {
-                RefreshCacheBuf(it->second, key.c_str());
-                if (strncpy_s(level, LOG_LEVEL_LEN, it->second->propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+                RefreshCacheBuf(&it->second->cache, key.c_str());
+                if (sscanf_s(it->second->cache.propertyValue, "%d", &it->second->logLevel) <= 0) {
                     PropUnlock(&g_domainLevelLock);
                     return HILOG_LEVEL_MIN;
                 }
                 PropUnlock(&g_domainLevelLock);
+                return it->second->logLevel;
             } else {
-                PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-                RefreshCacheBuf(&tmpCache, key.c_str());
-                if (strncpy_s(level, LOG_LEVEL_LEN, tmpCache.propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+                LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+                RefreshCacheBuf(&tmpCache.cache, key.c_str());
+                if (sscanf_s(tmpCache.cache.propertyValue, "%d", &tmpCache.logLevel) <= 0) {
                     return HILOG_LEVEL_MIN;
                 }
-            }
-        } else {
-            if (strncpy_s(level, LOG_LEVEL_LEN, it->second->propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
-                return HILOG_LEVEL_MIN;
-            }
-        }
+                return tmpCache.logLevel;
+            }     
+        } else { // not change
+            return it->second->logLevel;
+        }       
     }
-
-    if (sscanf_s(level, "%x", &logLevel) <= 0) {
-        return HILOG_LEVEL_MIN;
-    }
-
-    return logLevel;
 }
 
-static uint16_t GetTagLevel(const char* tag)
+uint16_t GetTagLevel(const std::string& tag)
 {
-    static std::unordered_map<std::string, PropertyCache*> tagMap;
-    std::unordered_map<std::string, PropertyCache*>::iterator it;
+    static std::unordered_map<std::string, LogLevelCache*> tagMap;
+    std::unordered_map<std::string, LogLevelCache*>::iterator it;
     std::string tagStr = tag;
-    std::string key = "hilog.loggable.tag." + tagStr;
-    uint32_t logLevel;
-    char level[LOG_LEVEL_LEN];
+    std::string key = GetPropertyName(PROP_TAG_LOG_LEVEL) + tagStr;
     int notLocked;
 
     it = tagMap.find(tagStr);
     if (it == tagMap.end()) {
-        std::unique_ptr<PropertyCache> levelCache = std::make_unique<PropertyCache>();
-        levelCache->pinfo = nullptr;
-        levelCache->serial = 0xffffffff;
-        RefreshCacheBuf(levelCache.get(), key.c_str());
-        if (strncpy_s(level, LOG_LEVEL_LEN, levelCache->propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+        LogLevelCache* levelCache = new(LogLevelCache);
+        levelCache->cache.pinfo = nullptr;
+        levelCache->cache.serial = 0xffffffff;
+        RefreshCacheBuf(&levelCache->cache, key.c_str());    
+        if (sscanf_s(levelCache->cache.propertyValue, "%d", &levelCache->logLevel) <= 0) {
             return HILOG_LEVEL_MIN;
         }
-        tagMap.insert(std::make_pair(tagStr, levelCache.get()));
+        tagMap.insert({ tagStr, levelCache });
+        return levelCache->logLevel;
     } else {
-        if (CheckCache(it->second)) {
+        if (CheckCache(&it->second->cache)) {
             notLocked = PropLock(&g_tagLevelLock);
             if (!notLocked) {
-                RefreshCacheBuf(it->second, key.c_str());
-                if (strncpy_s(level, LOG_LEVEL_LEN, it->second->propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+                RefreshCacheBuf(&it->second->cache, key.c_str());
+                if (sscanf_s(it->second->cache.propertyValue, "%d", &it->second->logLevel) <= 0) {
                     PropUnlock(&g_tagLevelLock);
                     return HILOG_LEVEL_MIN;
                 }
                 PropUnlock(&g_tagLevelLock);
+                return it->second->logLevel;
             } else {
-                PropertyCache tmpCache = {nullptr, 0xffffffff, ""};
-                RefreshCacheBuf(&tmpCache, key.c_str());
-                if (strncpy_s(level, LOG_LEVEL_LEN, tmpCache.propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
+                LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+                RefreshCacheBuf(&tmpCache.cache, key.c_str());
+                if (sscanf_s(tmpCache.cache.propertyValue, "%d", &tmpCache.logLevel) <= 0) {
                     return HILOG_LEVEL_MIN;
                 }
+                return tmpCache.logLevel;
             }
         } else {
-            if (strncpy_s(level, LOG_LEVEL_LEN, it->second->propertyValue, LOG_LEVEL_LEN - 1) != EOK) {
-                return HILOG_LEVEL_MIN;
-            }
+            return it->second->logLevel;
         }
-    }
-
-    if (sscanf_s(level, "%x", &logLevel) <= 0) {
-        return HILOG_LEVEL_MIN;
-    }
-
-    return logLevel;
-}
-
-static uint16_t GetFinalLevel(unsigned int domain, const char *tag)
-{
-    uint16_t domainLevel = GetDomainLevel(domain);
-    uint16_t tagLevel = GetTagLevel(tag);
-    uint16_t globalLevel = GetGlobalLevel();
-    uint16_t maxLevel = HILOG_LEVEL_MIN;
-    maxLevel = (maxLevel < domainLevel) ? domainLevel : maxLevel;
-    maxLevel = (maxLevel < tagLevel) ? tagLevel : maxLevel;
-    maxLevel = (maxLevel < globalLevel) ? globalLevel : maxLevel;
-    return maxLevel;
-}
-
-bool IsLevelLoggable(unsigned int domain, const char *tag, uint16_t level)
-{
-    if ((level <= HILOG_LEVEL_MIN) || (level >= HILOG_LEVEL_MAX) || tag == nullptr) {
-        return false;
-    }
-    if (level < GetFinalLevel(domain, tag)) {
-        return false;
-    }
-    return true;
+    } 
 }

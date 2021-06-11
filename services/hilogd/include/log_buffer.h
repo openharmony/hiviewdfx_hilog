@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <vector>
 
 #include "log_reader.h"
@@ -33,6 +34,7 @@ public:
     ~HilogBuffer();
 
     std::vector<std::weak_ptr<LogReader>> logReaderList;
+    std::shared_mutex logReaderListMutex;
     size_t Insert(const HilogMsg& msg);
     bool Query(LogReader* reader);
     bool Query(std::shared_ptr<LogReader> reader);

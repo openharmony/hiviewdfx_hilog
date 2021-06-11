@@ -17,10 +17,12 @@
 
 #include <cstring>
 #include <iostream>
-#include <securec.h>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <securec.h>
 #include <error.h>
+
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -33,6 +35,9 @@ namespace HiviewDFX {
 using namespace std;
 
 const int MSG_MAX_LEN = 2048;
+const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
+const int LOG_PERSIST_FILE_NUM = 10;
+
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
@@ -78,7 +83,7 @@ uint16_t GetLogType(const string& logTypeStr)
     } else if (logTypeStr == "app") {
         logType = LOG_APP;
     } else {
-        logType = LOG_TYPE_MAX;
+        return 0xffff;
     }
     return logType;
 }
@@ -102,7 +107,7 @@ uint64_t GetBuffSize(const string& buffSizeStr)
     }
     return buffSize;
 }
-int16_t GetLogLevel(const string &logLevelStr)
+uint16_t GetLogLevel(const string& logLevelStr)
 {
     if (logLevelStr == "debug" || logLevelStr == "DEBUG") {
         return LOG_DEBUG;
@@ -112,10 +117,10 @@ int16_t GetLogLevel(const string &logLevelStr)
         return LOG_WARN;
     } else if (logLevelStr == "error" || logLevelStr == "ERROR") {
         return LOG_ERROR;
-    } else if (logLevelStr == "fatal" || logLevelStr == "DEBUG") {
+    } else if (logLevelStr == "fatal" || logLevelStr == "FATAL") {
         return LOG_FATAL;
     } else {
-        return RET_FAIL;
+        return 0xffff;
     }
 }
 
@@ -147,7 +152,11 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
     if (context->domainArgs != "") {
-        logQueryRequest.domain = std::stoi(context->domainArgs, 0, DOMAIN_NUMBER_BASE);
+        std::istringstream(context->domainArgs) >> std::hex >> logQueryRequest.domain;
+        if (logQueryRequest.domain == 0) {
+            std::cout << "Invalid parameter" << std::endl;
+            return;
+        }
     }
     logQueryRequest.timeBegin = context->beginTime;
     logQueryRequest.timeEnd = context->endTime;
@@ -179,21 +188,19 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
                     if (context->noBlockMode) {
                         if (context->tailLines) {
                             while (context->tailLines-- && !tailBuffer.empty()) {
-                                cout << tailBuffer.back() <<endl;
+                                cout << tailBuffer.back() << endl;
                                 tailBuffer.pop_back();
                             }
                         }
                         NextRequestOp(controller, SENDIDN);
                         exit(1);
-                    } else {
-                        NextRequestOp(controller, SENDIDS);
                     }
                     break;
                 case SENDIDA:
                     HilogShowLog(format, data, context, tailBuffer);
                     NextRequestOp(controller, SENDIDA);
                     break;
-                default:
+                default:                    
                     NextRequestOp(controller, SENDIDA);
                     break;
             }
@@ -267,7 +274,11 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
             return RET_FAIL;
         }
     } else {
-        domain = stoi(domainStr);
+        std::istringstream(domainStr) >> domain;
+        if (domain == 0) {
+            std::cout << "Invalid parameter" << std::endl;
+            return RET_FAIL;
+        }
     }
     switch (msgCmd) {
         case MC_REQ_STATISTIC_INFO_QUERY:
@@ -330,18 +341,13 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
     uint32_t jobIdNum;
     uint32_t iter;
     int ret = 0;
+    uint32_t fileSizeDefault = LOG_PERSIST_FILE_SIZE;
+    uint32_t fileNumDefault = LOG_PERSIST_FILE_NUM;
     string logType = SetDefaultLogType(logPersistParam->logTypeStr);
     Split(logType, " ", vecLogType);
     Split(logPersistParam->jobIdStr, " ", vecJobId);
     logTypeNum = vecLogType.size();
     jobIdNum = vecJobId.size();
-    if (msgCmd == MC_REQ_LOG_PERSIST_START &&
-        (logPersistParam->compressTypeStr == "" || logPersistParam->fileSizeStr == "" ||
-        logPersistParam->filePathStr == "" || logPersistParam->fileNumStr == "" ||
-        logPersistParam->compressAlgStr == "" || logPersistParam->jobIdStr == "" ||
-        jobIdNum != 1)) { // all param need, start only one job each time,logType support union
-        return RET_FAIL;
-    }
     if (msgCmd == MC_REQ_LOG_PERSIST_STOP && logPersistParam->jobIdStr == "") { // support stop several jobs each time
         return RET_FAIL;
     }
@@ -360,17 +366,23 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 }
                 pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
             }
-            pLogPersistStartMsg->compressType = stoi(logPersistParam->compressTypeStr);
-            pLogPersistStartMsg->compressAlg =
-                (pLogPersistStartMsg->compressType != 1) ? 0 : stoi(logPersistParam->compressAlgStr);
-            pLogPersistStartMsg->fileSize = stoi(logPersistParam->fileSizeStr);
-            pLogPersistStartMsg->fileNum = stoi(logPersistParam->fileNumStr);
-            if (logPersistParam->filePathStr.size() > FILE_PATH_MAX_LEN ||
-                logPersistParam->jobIdStr.size() > JOB_ID_MAX_LEN) {
+            pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? time(nullptr)
+            : stoi(logPersistParam->jobIdStr);
+            pLogPersistStartMsg->compressType = (logPersistParam->compressTypeStr == "") ? STREAM : stoi(logPersistParam
+                ->compressTypeStr);
+            pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB : stoi(
+                logPersistParam->compressAlgStr);
+            pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : stoi(
+                logPersistParam->fileSizeStr);
+            pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
+                : stoi(logPersistParam->fileNumStr);
+            if (logPersistParam->filePathStr == "") {
+                logPersistParam->filePathStr = "/data/misc/logd/log_" + to_string(time(nullptr));
+            }
+            if (logPersistParam->filePathStr.size() > FILE_PATH_MAX_LEN) {
                 return RET_FAIL;
             }
             ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->filePathStr.c_str());
-            ret += strcpy_s(pLogPersistStartMsg->jobId, JOB_ID_MAX_LEN, logPersistParam->jobIdStr.c_str());
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;
@@ -385,11 +397,10 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 return RET_FAIL;
             }
             for (iter = 0; iter < jobIdNum; iter++) {
-                ret += strcpy_s(pLogPersistStopMsg->jobId, JOB_ID_MAX_LEN, vecJobId[iter].c_str());
+                pLogPersistStopMsg->jobId = stoi(vecJobId[iter]);
                 pLogPersistStopMsg++;
             }
             SetMsgHead(&pLogPersistStopReq->msgHeader, msgCmd, sizeof(LogPersistStopMsg) * jobIdNum);
-
             controller.WriteAll(msgToSend, sizeof(LogPersistStopMsg) * jobIdNum + sizeof(MessageHeader));
             break;
         }
@@ -399,19 +410,16 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 reinterpret_cast<LogPersistQueryRequest*>(msgToSend);
             LogPersistQueryMsg* pLogPersistQueryMsg =
                 reinterpret_cast<LogPersistQueryMsg*>(&pLogPersistQueryReq->logPersistQueryMsg);
-            if (logTypeNum * sizeof(LogPersistQueryMsg) + sizeof(MessageHeader) > MSG_MAX_LEN) {
-                return RET_FAIL;
-            }
+
             for (iter = 0; iter < logTypeNum; iter++) {
                 uint16_t tmpType = GetLogType(vecLogType[iter]);
                 if (tmpType == 0xffff) {
                     return RET_FAIL;
                 }
-                pLogPersistQueryMsg->logType = tmpType;
-                pLogPersistQueryMsg++;
+                pLogPersistQueryMsg->logType = (0b01 << tmpType) | pLogPersistQueryMsg->logType;
             }
-            SetMsgHead(&pLogPersistQueryReq->msgHeader, msgCmd, sizeof(LogPersistQueryMsg) * logTypeNum);
-            controller.WriteAll(msgToSend, sizeof(LogPersistQueryMsg) * logTypeNum + sizeof(MessageHeader));
+            SetMsgHead(&pLogPersistQueryReq->msgHeader, msgCmd, sizeof(LogPersistQueryMsg));
+            controller.WriteAll(msgToSend, sizeof(LogPersistQueryRequest));
             break;
         }
 
@@ -439,36 +447,39 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
     tagNum = vecTag.size();
     switch (operationType) {
         case OT_PRIVATE_SWITCH:
+            key = GetPropertyName(PROP_PRIVATE);
             if (propertyParm->privateSwitchStr == "on") {
-                PropertySet("hilog.private.on", "true");
+                PropertySet(key.c_str(), "true");
                 cout << "hilog private formatter is enabled" << endl;
             }
             if (propertyParm->privateSwitchStr == "off") {
-                PropertySet("hilog.private.on", "false");
+                PropertySet(key.c_str(), "false");
                 cout << "hilog private formatter is disabled" << endl;
             }
             break;
 
         case OT_LOG_LEVEL:
             if ((propertyParm->tagStr != "" && propertyParm->domainStr != "") || GetLogLevel(propertyParm->logLevelStr)
-                == RET_FAIL) {
+                == 0xffff) {
                 return RET_FAIL;
             } else if (propertyParm->domainStr != "") { // by domain
+                std::string keyPre = GetPropertyName(PROP_DOMAIN_LOG_LEVEL);
                 for (iter = 0; iter < domainNum; iter++) {
-                    key = "hilog.loggable.domain." + vecDomain[iter];
+                    key = keyPre + vecDomain[iter];
                     value = to_string(GetLogLevel(propertyParm->logLevelStr));
                     PropertySet(key.c_str(), value.c_str());
                     cout << "domain " << vecDomain[iter] << " level is set to " << propertyParm->logLevelStr << endl;
                 }
             } else if (propertyParm->tagStr != "") { // by tag
+                std::string keyPre = GetPropertyName(PROP_TAG_LOG_LEVEL);
                 for (iter = 0; iter < tagNum; iter++) {
-                        key = "hilog.loggable.tag." + vecTag[iter];
-                        value = to_string(GetLogLevel(propertyParm->logLevelStr));
-                        PropertySet(key.c_str(), value.c_str());
+                    key = keyPre + vecTag[iter];
+                    value = to_string(GetLogLevel(propertyParm->logLevelStr));
+                    PropertySet(key.c_str(), value.c_str());
                     cout << "tag " << vecTag[iter] << " level is set to " << propertyParm->logLevelStr << endl;
                 }
             } else {
-                    key = "hilog.loggable.global";
+                    key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
                     value = to_string(GetLogLevel(propertyParm->logLevelStr));
                     PropertySet(key.c_str(), value.c_str());
                     cout << "global log level is set to " << propertyParm->logLevelStr << endl;
@@ -477,19 +488,23 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
 
         case OT_FLOW_SWITCH:
             if (propertyParm->flowSwitchStr == "pidon") {
-                PropertySet("hilog.flowctrl.pid", "on");
+                key = GetPropertyName(PROP_PROCESS_FLOWCTRL);
+                PropertySet(key.c_str(), "true");
                 cout << "flow control by process is enabled" << endl;
             }
             if (propertyParm->flowSwitchStr == "pidoff") {
-                PropertySet("hilog.flowctrl.pid", "off");
+                key = GetPropertyName(PROP_PROCESS_FLOWCTRL);
+                PropertySet(key.c_str(), "false");
                 cout << "flow control by process is disabled" << endl;
             }
             if (propertyParm->flowSwitchStr == "domainon") {
-                PropertySet("hilog.flowctrl.domain", "on");
+                key = GetPropertyName(PROP_DOMAIN_FLOWCTRL);
+                PropertySet(key.c_str(), "true");
                 cout << "flow control by domain is enabled" << endl;
             }
             if (propertyParm->flowSwitchStr == "domainoff") {
-                PropertySet("hilog.flowctrl.domain", "off");
+                key = GetPropertyName(PROP_DOMAIN_FLOWCTRL);
+                PropertySet(key.c_str(), "false");
                 cout << "flow control by domain is disabled" << endl;
             }
             break;

@@ -22,9 +22,20 @@
 
 static const int HILOG_PROP_VALUE_MAX = 92;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+using PropType = enum {
+    PROP_PRIVATE = 0x01,
+    PROP_PROCESS_FLOWCTRL,
+    PROP_DOMAIN_FLOWCTRL,
+    PROP_GLOBAL_LOG_LEVEL,
+    PROP_DOMAIN_LOG_LEVEL,
+    PROP_TAG_LOG_LEVEL,
+    PROP_SINGLE_DEBUG,
+    PROP_PERSIST_DEBUG,
+};
+
+std::string GetPropertyName(uint32_t propType);
+std::string GetProgName();
+uint16_t GetTagLevel(const std::string& tag);
 void PropertyGet(const std::string &key, char *value, int len);
 void PropertySet(const std::string &key, const char* value);
 bool IsDebugOn();
@@ -33,10 +44,7 @@ bool IsPersistDebugOn();
 bool IsPrivateSwitchOn();
 bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
-bool IsLevelLoggable(unsigned int domain, const char *tag, uint16_t level);
-int32_t GetProcessQuota();
-#ifdef __cplusplus
-}
-#endif
-#endif
+uint16_t GetGlobalLevel();
+uint16_t GetDomainLevel(uint32_t domain);
 
+#endif
