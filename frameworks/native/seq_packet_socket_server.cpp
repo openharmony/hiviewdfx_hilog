@@ -16,6 +16,7 @@
 #include "seq_packet_socket_server.h"
 
 #include <thread>
+#include <iostream>
 
 namespace OHOS {
 namespace HiviewDFX {
