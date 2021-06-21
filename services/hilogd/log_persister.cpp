@@ -40,7 +40,7 @@ namespace HiviewDFX {
 using namespace std::literals::chrono_literals;
 using namespace std;
 
-constexpr auto& g_logPersisterDir = "/data/misc/logd/";
+
 static std::list<shared_ptr<LogPersister>> logPersisters;
 static std::mutex g_listMutex;
 
@@ -89,19 +89,7 @@ LogPersister::~LogPersister()
 
 int LogPersister::Init()
 {
-    char cPath[PATH_MAX];
-    char *realPath = realpath(path.c_str(), cPath);
-    if (realPath == nullptr) {
-        return RET_FAIL;
-    }
-    path = std::string(cPath);
-    if (path.rfind(g_logPersisterDir, 0) != 0) {
-        return RET_FAIL;
-    }
     int nPos = path.find_last_of('/');
-    if (nPos == RET_FAIL) {
-        return RET_FAIL;
-    }
     mmapPath = path.substr(0, nPos) + "/." + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
