@@ -90,6 +90,9 @@ LogPersister::~LogPersister()
 int LogPersister::Init()
 {
     int nPos = path.find_last_of('/');
+    if (nPos == RET_FAIL) {
+        return RET_FAIL;
+    }
     mmapPath = path.substr(0, nPos) + "/." + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
@@ -168,7 +171,7 @@ int LogPersister::Init()
 
 void LogPersister::NotifyForNewData()
 {
-    condVariable.notify_one();  
+    condVariable.notify_one();
     isNotified = true;
 }
 
