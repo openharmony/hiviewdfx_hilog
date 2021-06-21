@@ -78,8 +78,8 @@ static void Helper()
     "  -e <expr>, --regex=<expr>\n"
     "                     show the logs which match the regular expression,\n"
     "                     <expr> is a regular expression.\n"
-    "  -F <filename>, --filename=<filename>\n"
-    "                     set log file name.\n"
+    "  -F <path>, --path=<path>\n"
+    "                     set log file path.\n"
     "  -l <length>, --length=<length>\n"
     "                     set single log file size.\n"
     "  -n <number>, --number<number>\n"
@@ -197,7 +197,7 @@ int HilogEntry(int argc, char* argv[])
             { "compress",    required_argument, nullptr, 'c' },
             { "stream",      required_argument, nullptr, 'm' },
             { "number",      required_argument, nullptr, 'n' },
-            { "filename",    required_argument, nullptr, 'F' },
+            { "path",        required_argument, nullptr, 'F' },
             { "private",     required_argument, nullptr, 'p' },
             { "domain",      required_argument, nullptr, 'D' },
             { "tag",         required_argument, nullptr, 'T' },
@@ -316,7 +316,7 @@ int HilogEntry(int argc, char* argv[])
                 context.fileNumArgs = optarg;
                 break;
             case 'F':
-                context.fileNameArgs = optarg;
+                context.filePathArgs = optarg;
                 break;
             case 'j':
                 context.jobIdArgs = optarg;
@@ -395,7 +395,7 @@ int HilogEntry(int argc, char* argv[])
             logPersistParam.compressAlgStr = context.algorithmArgs;
             logPersistParam.fileSizeStr = context.fileSizeArgs;
             logPersistParam.fileNumStr = context.fileNumArgs;
-            logPersistParam.fileNameStr = context.fileNameArgs;
+            logPersistParam.filePathStr = context.filePathArgs;
             logPersistParam.jobIdStr = context.jobIdArgs;
             if (context.logFileCtrlArgs == "start") {
                 ret = LogPersistOp(controller, MC_REQ_LOG_PERSIST_START, &logPersistParam);
