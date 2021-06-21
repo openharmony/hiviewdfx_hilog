@@ -203,11 +203,9 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     uint16_t sendMsgLen = 0;
     int32_t rst = 0;
     list<LogPersistQueryResult>::iterator it;
-
     if (msgLen > sizeof(LogPersistQueryMsg) * LOG_TYPE_MAX) {
         return;
     }
-
     while (pLogPersistQueryMsg && recvMsgLen < msgLen) {
         list<LogPersistQueryResult> resultList;
         cout << pLogPersistQueryMsg->logType << endl;
@@ -220,7 +218,6 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
                 pLogPersistQueryRst->compressType = (*it).compressType;
                 pLogPersistQueryRst->compressAlg = (*it).compressAlg;
                 if (strcpy_s(pLogPersistQueryRst->filePath, FILE_PATH_MAX_LEN, (*it).filePath)) {
-                    cout << "path" << pLogPersistQueryRst->filePath << endl;
                     return;
                 }
                 pLogPersistQueryRst->fileSize = (*it).fileSize;
