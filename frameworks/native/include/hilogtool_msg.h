@@ -238,7 +238,7 @@ typedef struct {
     std::string compressAlgStr;
     std::string fileSizeStr;
     std::string fileNumStr;
-    std::string fileNameStr;
+    std::string filePathStr;
     std::string jobIdStr;
 } LogPersistParam;
 typedef struct {
