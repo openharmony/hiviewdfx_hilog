@@ -376,13 +376,13 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
-            if (logPersistParam->filePathStr == "") {
-                logPersistParam->filePathStr = "/data/misc/logd/log_" + to_string(time(nullptr));
+            if (logPersistParam->fileNameStr == "") {
+                logPersistParam->fileNameStr = to_string(time(nullptr));
             }
-            if (logPersistParam->filePathStr.size() > FILE_PATH_MAX_LEN) {
+            if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 return RET_FAIL;
             }
-            ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->filePathStr.c_str());
+            ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->fileNameStr.c_str());
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;

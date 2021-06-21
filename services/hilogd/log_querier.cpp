@@ -42,7 +42,7 @@ namespace HiviewDFX {
 using namespace std;
 
 constexpr int MAX_DATA_LEN = 2048;
-char g_logPersisterDir[] = "/data/misc/logd/";
+string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
 constexpr int SLEEP_TIME = 5;
 
@@ -123,6 +123,8 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst == nullptr) {
         return;
     }
+    string logPersisterPath = g_logPersisterDir + string(pLogPersistStartMsg->filePath) ;
+    strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
     rotator = MakeRotator(*pLogPersistStartMsg);
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
         pLogPersistStartMsg->jobId,
@@ -135,7 +137,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     pLogPersistStartRst->result = persister->Init();
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    if (pLogPersistStartRst->result == RET_FAIL) {    
+    if (pLogPersistStartRst->result == RET_FAIL) {
         persister.reset();
     } else {
         persister->Start();
@@ -217,15 +219,14 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
                 pLogPersistQueryRst->logType = (*it).logType;
                 pLogPersistQueryRst->compressType = (*it).compressType;
                 pLogPersistQueryRst->compressAlg = (*it).compressAlg;
-                strcat_s(g_logPersisterDir, FILE_PATH_MAX_LEN, (*it).filePath);
-                if (strcpy_s(pLogPersistQueryRst->filePath, FILE_PATH_MAX_LEN, g_logPersisterDir)) {
-                    cout << pLogPersistQueryRst->filePath << endl;
+                if (strcpy_s(pLogPersistQueryRst->filePath, FILE_PATH_MAX_LEN, (*it).filePath)) {
+                    cout << "path" << pLogPersistQueryRst->filePath << endl;
                     return;
                 }
                 pLogPersistQueryRst->fileSize = (*it).fileSize;
                 pLogPersistQueryRst->fileNum = (*it).fileNum;
                 pLogPersistQueryRst++;
-                msgNum++;                
+                msgNum++;
                 if (msgNum * sizeof(LogPersistQueryResult) + sizeof(MessageHeader) > MAX_DATA_LEN) {
                     msgNum--;
                     break;
