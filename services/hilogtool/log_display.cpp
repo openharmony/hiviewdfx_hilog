@@ -405,10 +405,10 @@ void Stringsplit(const string& str, const char split, vector<string>& res)
 	string strs = str + split;
 	size_t pos = strs.find(split);
 	while (pos != strs.npos) {
-		string temp = strs.substr(0, pos);
-		res.push_back(temp);
-		strs = strs.substr(pos + 1, strs.size());
-		pos = strs.find(split);
+        string temp = strs.substr(0, pos);
+        res.push_back(temp);
+        strs = strs.substr(pos + 1, strs.size());
+        pos = strs.find(split);
 	}
 }
 void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, vector<string>& tailBuffer)
