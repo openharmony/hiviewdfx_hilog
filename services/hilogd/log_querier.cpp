@@ -390,7 +390,16 @@ void HandleBufferClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
-void setExclusion(std::shared_ptr<LogReader> logReader, const LogQueryRequest* qRstMsg)
+inline void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryRequest* qRstMsg)
+{
+    logReader->queryCondition.levels = qRstMsg->levels;
+    logReader->queryCondition.types = qRstMsg->types;
+    logReader->queryCondition.domain = qRstMsg->domain;
+    logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
+    logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
+}
+
+inline void SetExclusion(std::shared_ptr<LogReader> logReader, const LogQueryRequest* qRstMsg)
 {
     logReader->queryCondition.exclude = 1;
     logReader->queryCondition.noLevels = qRstMsg->noLevels;
@@ -411,13 +420,9 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
         switch (header->msgType) {
             case LOG_QUERY_REQUEST:
                 qRstMsg = (LogQueryRequest*) g_tempBuffer;
-                logReader->queryCondition.levels = qRstMsg->levels;
-                logReader->queryCondition.types = qRstMsg->types;
-                logReader->queryCondition.domain = qRstMsg->domain;
-                logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
-                logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
+                SetCondition(logReader, qRstMsg);
                 if (qRstMsg->exclude == 1) {
-                    setExclusion(logReader, qRstMsg);
+                    SetExclusion(logReader, qRstMsg);
                 } else {
                     logReader->queryCondition.exclude = 0;
                 }
