@@ -398,6 +398,19 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
+void Stringsplit(const string& str, const char split, vector<string>& res)
+{
+	if (str == "")		
+        return;
+	string strs = str + split;
+	size_t pos = strs.find(split);
+	while (pos != strs.npos) {
+		string temp = strs.substr(0, pos);
+		res.push_back(temp);
+		strs = strs.substr(pos + 1, strs.size());
+		pos = strs.find(split);
+	}
+}
 void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {
@@ -444,9 +457,27 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     showBuffer.tag_len = data->tag_len;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
+    string conOutStr(data->data + data->tag_len);
+    if(conOutStr[conOutStr.length()-1] == '\n') {
+        conOutStr[conOutStr.length()-1] = 0;
+    }
+    vector<string> conOutStrList;
+    Stringsplit(conOutStr, '\n', conOutStrList);
+    if (!conOutStrList.empty()) {
+        for (auto con : conOutStrList) {
+            strncpy_s(data->data + data->tag_len, MAX_LOG_LEN, const_cast<char*>(con.c_str()), MAX_LOG_LEN);  
+            showBuffer.data = data->data;
+            HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
+            if (context->tailLines) {
+                tailBuffer.emplace_back(buffer);
+                return;
+            }    
+            cout << buffer << endl;
+        }
+        return;
+    } 
     showBuffer.data = data->data;
     HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
-
     if (context->tailLines) {
         tailBuffer.emplace_back(buffer);
         return;
