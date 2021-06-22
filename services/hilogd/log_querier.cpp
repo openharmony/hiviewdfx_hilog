@@ -135,7 +135,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     pLogPersistStartRst->result = persister->Init();
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    if (pLogPersistStartRst->result == RET_FAIL) {    
+    if (pLogPersistStartRst->result == RET_FAIL) { 
         persister.reset();
     } else {
         persister->Start();
@@ -284,7 +284,7 @@ void HandleBufferSizeRequest(char* reqMsg, std::shared_ptr<LogReader> logReader,
     uint32_t msgNum = 0;
     uint16_t msgLen = pBufferSizeReq->msgHeader.msgLen;
     uint16_t sendMsgLen = 0;
-    uint64_t buffLen;
+    int64_t buffLen;
 
     if (msgLen > sizeof(BuffSizeMsg) * LOG_TYPE_MAX) {
         return;

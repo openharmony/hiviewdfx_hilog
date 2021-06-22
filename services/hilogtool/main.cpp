@@ -103,6 +103,8 @@ static void Helper()
     "                     nsec       display time by nano sec.\n"
     "                     year       display the year.\n"
     "                     zone       display the time zone.\n"
+    "  -b <loglevel>, --baselevel=<loglevel>\n"
+    "                     set loggable level.\n"
     );
 }
 
