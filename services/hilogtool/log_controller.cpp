@@ -161,6 +161,19 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     }
     logQueryRequest.timeBegin = context->beginTime;
     logQueryRequest.timeEnd = context->endTime;
+    if (context->exclude == 1) {
+        logQueryRequest.noLevels = context->noLevels;
+        logQueryRequest.noTypes = context->noTypes;
+        std::istringstream(context->noDomain) >> std::hex >> logQueryRequest.noDomain;
+        if (context->noTag.length() >= MAX_TAG_LEN) {
+            strncpy_s(logQueryRequest.noTag, MAX_TAG_LEN, context->noTag.c_str(), MAX_TAG_LEN - 1);
+        } else {
+            strncpy_s(logQueryRequest.noTag, context->noTag.length() + 1, context->noTag.c_str(), context->noTag.length());
+        }
+        logQueryRequest.exclude = 1;
+    } else {
+        logQueryRequest.exclude = 0;
+    }
     SetMsgHead(&logQueryRequest.header, LOG_QUERY_REQUEST, sizeof(LogQueryRequest)-sizeof(MessageHeader));
     logQueryRequest.header.version = 0;
     controller.WriteAll((char*)&logQueryRequest, sizeof(LogQueryRequest));

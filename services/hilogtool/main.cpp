@@ -24,7 +24,7 @@
 #include <sstream>
 #include <error.h>
 #include <securec.h>
-
+#include <regex>
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -121,9 +121,14 @@ static std::time_t Str2Time(const std::string& str, bool isDst = false,
         return mktime(&t);
     }
 }
-static int GetTypes(HilogArgs context, string typesArgs)
+static int GetTypes(HilogArgs context, string typesArgs, bool exclude = false)
 {
-    uint16_t types = context.types;
+    uint16_t types = 0;
+    if (exclude) {
+        types = context.noTypes;
+    } else {
+        types = context.types;
+    }
     if (typesArgs ==  "init") {
         types |= 1<<LOG_INIT;
     } else if (typesArgs ==  "app") {
@@ -137,9 +142,14 @@ static int GetTypes(HilogArgs context, string typesArgs)
     return types;
 }
 
-static int GetLevels(HilogArgs context, string levelsArgs)
+static int GetLevels(HilogArgs context, string levelsArgs, bool exclude = false)
 {
-    uint16_t levels = context.levels;
+    uint16_t levels = 0;
+    if (exclude) {
+        levels = context.noLevels;
+    } else {
+        levels = context.levels;
+    }
     if (levelsArgs == "D") {
         levels |= 1<<LOG_DEBUG;
     } else if (levelsArgs == "I") {
@@ -242,8 +252,18 @@ int HilogEntry(int argc, char* argv[])
                     string types(argv[indexType]);
                     indexType++;
                     if (!strstr(types.c_str(), "-")) {
-                        typesArgs += types;
-                        context.types = GetTypes(context, types);
+                        if (types.front() == '^') {
+                            context.exclude = 1;
+                            std::regex ws_re(","); // whitespace
+                            std::vector<std::string> v(std::sregex_token_iterator(types.begin()+1, types.end(), ws_re, -1),
+                            std::sregex_token_iterator());
+                            for(auto&& s: v){
+                                context.noTypes = GetTypes(context, s, true);
+                            }
+                        } else {
+                            typesArgs += types;
+                            context.types = GetTypes(context, types);
+                        }
                     } else {
                         break;
                     }
@@ -255,8 +275,18 @@ int HilogEntry(int argc, char* argv[])
                     string levels(argv[indexLevel]);
                     indexLevel++;
                     if (!strstr(levels.c_str(), "-")) {
-                        levelsArgs += levels;
-                        context.levels = GetLevels(context, levels);
+                        if (levels.front() == '^') {
+                            context.exclude = 1;
+                            std::regex ws_re(","); // whitespace
+                            std::vector<std::string> v(std::sregex_token_iterator(levels.begin()+1, levels.end(), ws_re, -1),
+                            std::sregex_token_iterator());
+                            for(auto&& s: v){
+                                context.noLevels = GetLevels(context, s, true);
+                            }
+                        } else {
+                            levelsArgs += levels;
+                            context.levels = GetLevels(context, levels);
+                        }
                     } else {
                         break;
                     }
@@ -330,7 +360,18 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'D':
-                context.domainArgs = optarg;
+                if (optarg[0] == '^') {
+                    std::string domain(optarg);
+                    context.exclude = 1;
+                    std::regex ws_re(","); // whitespace
+                    std::vector<std::string> v(std::sregex_token_iterator(domain.begin()+1, domain.end(), ws_re, -1),
+                    std::sregex_token_iterator());
+                    for(auto&& s: v){
+                        context.noDomain = s;
+                    }
+                } else {
+                    context.domainArgs = optarg;
+                }
                 break;
             case 's':
                 context.statisticArgs = "query";
@@ -341,7 +382,13 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'T':
-                context.tagArgs = optarg;
+                if (optarg[0] == '^') {
+                    context.exclude = 1;
+                    context.tagArgs = "";
+                    context.noTag = &optarg[1];
+                } else {
+                    context.tagArgs = optarg;
+                }
                 break;
             case 'b':
                 context.logLevelArgs = optarg;
