@@ -402,21 +402,21 @@ void Stringsplit(const string& str, const char split, vector<string>& res)
 {
 	if (str == "")		
         return;
-	string strs = str + split;
-	size_t pos = strs.find(split);
-	while (pos != strs.npos) {
+    string strs = str + split;
+    size_t pos = strs.find(split);
+    while (pos != strs.npos) {
         string temp = strs.substr(0, pos);
         res.push_back(temp);
         strs = strs.substr(pos + 1, strs.size());
         pos = strs.find(split);
-	}
+    }
 }
-void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, vector<string>& tailBuffer)
+void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, 
+    vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {
         return;
     }
-
     if (data->length == 0) {
 #ifdef DEBUG
         cout << "Log content null" << endl;
@@ -458,7 +458,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
     string conOutStr(data->data + data->tag_len);
-    if(conOutStr[conOutStr.length()-1] == '\n') {
+    if (conOutStr[conOutStr.length()-1] == '\n') {
         conOutStr[conOutStr.length()-1] = 0;
     }
     vector<string> conOutStrList;
