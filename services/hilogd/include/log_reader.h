@@ -38,6 +38,11 @@ using QueryCondition = struct QueryCondition {
     uint32_t domain = 0;
     uint32_t timeBegin = 0;
     uint32_t timeEnd = 0;
+    uint8_t exclude = 0;
+    uint8_t noLevels = 0;
+    uint16_t noTypes = 0;
+    uint32_t noDomain = 0;
+    std::string noTag;
 };
 
 class LogReader : public std::enable_shared_from_this<LogReader> {
@@ -46,6 +51,7 @@ public:
     std::list<HilogData>::iterator lastPos;
     std::list<HilogData> oldData;
     QueryCondition queryCondition;
+    bool exclude = false;
     std::unique_ptr<Socket> hilogtoolConnectSocket;
     bool isNotified;
 

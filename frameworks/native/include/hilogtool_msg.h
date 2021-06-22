@@ -107,6 +107,11 @@ typedef struct {
     uint32_t timeBegin;
     uint32_t timeEnd;
     uint16_t logCount;
+    uint8_t exclude;
+    uint8_t noLevels;
+    uint16_t noTypes;
+    uint32_t noDomain;
+    char noTag[MAX_TAG_LEN];
 } LogQueryRequest;
 
 typedef struct {
@@ -325,6 +330,11 @@ typedef struct {
     time_t endTime;
     std::string domain;
     std::string tag;
+    uint8_t exclude;
+    uint16_t noTypes;
+    uint16_t noLevels;
+    std::string noDomain;
+    std::string noTag;
     std::string regexArgs;
     std::string buffSizeArgs;
     std::string logFileCtrlArgs;
