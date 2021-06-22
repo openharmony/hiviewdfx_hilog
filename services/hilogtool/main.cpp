@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <regex>
 #include <error.h>
 #include <securec.h>
-#include <regex>
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -254,10 +254,10 @@ int HilogEntry(int argc, char* argv[])
                     if (!strstr(types.c_str(), "-")) {
                         if (types.front() == '^') {
                             context.exclude = 1;
-                            std::regex ws_re(","); // whitespace
-                            std::vector<std::string> v(std::sregex_token_iterator(types.begin()+1, types.end(), ws_re, -1),
-                            std::sregex_token_iterator());
-                            for(auto&& s: v){
+                            regex delimiter(","); // whitespace
+                            vector<string> v(sregex_token_iterator(types.begin() + 1, types.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto&& s : v) {
                                 context.noTypes = GetTypes(context, s, true);
                             }
                         } else {
@@ -277,10 +277,10 @@ int HilogEntry(int argc, char* argv[])
                     if (!strstr(levels.c_str(), "-")) {
                         if (levels.front() == '^') {
                             context.exclude = 1;
-                            std::regex ws_re(","); // whitespace
-                            std::vector<std::string> v(std::sregex_token_iterator(levels.begin()+1, levels.end(), ws_re, -1),
-                            std::sregex_token_iterator());
-                            for(auto&& s: v){
+                            regex delimiter(","); // whitespace
+                            vector<string> v(sregex_token_iterator(levels.begin() + 1, levels.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto&& s : v) {
                                 context.noLevels = GetLevels(context, s, true);
                             }
                         } else {
@@ -361,12 +361,12 @@ int HilogEntry(int argc, char* argv[])
                 break;
             case 'D':
                 if (optarg[0] == '^') {
-                    std::string domain(optarg);
+                    string domain(optarg);
                     context.exclude = 1;
-                    std::regex ws_re(","); // whitespace
-                    std::vector<std::string> v(std::sregex_token_iterator(domain.begin()+1, domain.end(), ws_re, -1),
-                    std::sregex_token_iterator());
-                    for(auto&& s: v){
+                    regex delimiter(","); // whitespace
+                    vector<string> v(sregex_token_iterator(domain.begin() + 1, domain.end(), delimiter, -1),
+                                     sregex_token_iterator());
+                    for (auto&& s : v) {
                         context.noDomain = s;
                     }
                 } else {

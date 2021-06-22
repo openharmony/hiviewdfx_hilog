@@ -166,9 +166,11 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
         logQueryRequest.noTypes = context->noTypes;
         std::istringstream(context->noDomain) >> std::hex >> logQueryRequest.noDomain;
         if (context->noTag.length() >= MAX_TAG_LEN) {
-            strncpy_s(logQueryRequest.noTag, MAX_TAG_LEN, context->noTag.c_str(), MAX_TAG_LEN - 1);
+            strncpy_s(logQueryRequest.noTag, MAX_TAG_LEN,
+                      context->noTag.c_str(), MAX_TAG_LEN - 1);
         } else {
-            strncpy_s(logQueryRequest.noTag, context->noTag.length() + 1, context->noTag.c_str(), context->noTag.length());
+            strncpy_s(logQueryRequest.noTag, context->noTag.length() + 1,
+                      context->noTag.c_str(), context->noTag.length());
         }
         logQueryRequest.exclude = 1;
     } else {

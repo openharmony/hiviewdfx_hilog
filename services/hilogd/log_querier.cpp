@@ -390,6 +390,15 @@ void HandleBufferClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
+void setExclusion(std::shared_ptr<LogReader> logReader, const LogQueryRequest* qRstMsg)
+{
+    logReader->queryCondition.exclude = 1;
+    logReader->queryCondition.noLevels = qRstMsg->noLevels;
+    logReader->queryCondition.noTypes = qRstMsg->noTypes;
+    logReader->queryCondition.noDomain = qRstMsg->noDomain;
+    logReader->queryCondition.noTag = qRstMsg->noTag;
+}
+
 void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
 {
     cout << "Start log_querier thread!\n" << std::endl;
@@ -408,11 +417,7 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
                 logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
                 logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
                 if (qRstMsg->exclude == 1) {
-                    logReader->queryCondition.exclude = 1;
-                    logReader->queryCondition.noLevels = qRstMsg->noLevels;
-                    logReader->queryCondition.noTypes = qRstMsg->noTypes;
-                    logReader->queryCondition.noDomain = qRstMsg->noDomain;
-                    logReader->queryCondition.noTag = qRstMsg->noTag;
+                    setExclusion(logReader, qRstMsg);
                 } else {
                     logReader->queryCondition.exclude = 0;
                 }
