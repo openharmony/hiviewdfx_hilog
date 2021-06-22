@@ -400,7 +400,7 @@ bool HilogMatchByRegex(string context, string regExpArg)
 
 void Stringsplit(const string& str, const char split, vector<string>& res)
 {
-	if (str == "")		
+    if (str == "")		
         return;
     string strs = str + split;
     size_t pos = strs.find(split);
