@@ -285,7 +285,7 @@ void HandleBufferSizeRequest(char* reqMsg, std::shared_ptr<LogReader> logReader,
     uint32_t msgNum = 0;
     uint16_t msgLen = pBufferSizeReq->msgHeader.msgLen;
     uint16_t sendMsgLen = 0;
-    int64_t buffLen;
+    uint64_t buffLen;
 
     if (msgLen > sizeof(BuffSizeMsg) * LOG_TYPE_MAX) {
         return;

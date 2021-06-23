@@ -236,7 +236,7 @@ bool HilogBuffer::Query(LogReader* reader)
 size_t HilogBuffer::GetBuffLen(uint16_t logType)
 {
     if (logType >= LOG_TYPE_MAX) {
-        return -1;
+        return 0;
     }
     uint64_t buffSize = g_maxBufferSizeByType[logType];
     return buffSize;
