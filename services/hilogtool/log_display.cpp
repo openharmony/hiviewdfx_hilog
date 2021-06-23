@@ -398,19 +398,6 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
-void Stringsplit(const string& str, const char split, vector<string>& res)
-{
-    if (str == "")		
-        return;
-    string strs = str + split;
-    size_t pos = strs.find(split);
-    while (pos != strs.npos) {
-        string temp = strs.substr(0, pos);
-        res.push_back(temp);
-        strs = strs.substr(pos + 1, strs.size());
-        pos = strs.find(split);
-    }
-}
 void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, 
     vector<string>& tailBuffer)
 {
@@ -429,7 +416,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     char* tag = data->data;
     char* content = data->data + data->tag_len;
     char *pStrtol = nullptr;
-
+    int logContentPos = 0;
     if (context->headLines) {
         if (printHeadCnt++ >= context->headLines) {
             exit(1);
@@ -448,7 +435,6 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
             return;
         }
     }
-
     char buffer[MAX_LOG_LEN * 2];
     showBuffer.level = data->level;
     showBuffer.pid = data->pid;
@@ -457,32 +443,24 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     showBuffer.tag_len = data->tag_len;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-    string conOutStr(data->data + data->tag_len);
-    if (conOutStr[conOutStr.length()-1] == '\n') {
-        conOutStr[conOutStr.length()-1] = 0;
+    string logContent(data->data + data->tag_len);        
+    if (logContent[logContent.length()-1] != '\n') {
+        logContent += '\n';
     }
-    vector<string> conOutStrList;
-    Stringsplit(conOutStr, '\n', conOutStrList);
-    if (!conOutStrList.empty()) {
-        for (auto con : conOutStrList) {
-            strncpy_s(data->data + data->tag_len, MAX_LOG_LEN, const_cast<char*>(con.c_str()), MAX_LOG_LEN);  
-            showBuffer.data = data->data;
-            HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
-            if (context->tailLines) {
-                tailBuffer.emplace_back(buffer);
-                return;
-            }    
-            cout << buffer << endl;
+    std::replace(logContent.begin(), logContent.end(),'\n','\0');
+    while (logContent.find_first_of('\0') != size_t(-1)) {   
+        strncpy_s(data->data + data->tag_len, MAX_LOG_LEN, 
+            const_cast<char*>(logContent.c_str()), MAX_LOG_LEN);
+        showBuffer.data = data->data;
+        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
+        if (context->tailLines) {
+            tailBuffer.emplace_back(buffer);
+            return;
         }
-        return;
-    } 
-    showBuffer.data = data->data;
-    HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
-    if (context->tailLines) {
-        tailBuffer.emplace_back(buffer);
-        return;
+        cout << buffer << endl;
+        logContentPos = logContent.find_first_of('\0');
+        logContent.erase(0, logContentPos + 1);
     }
-    cout << buffer << endl;
     return;
 }
 } // namespace HiviewDFX
