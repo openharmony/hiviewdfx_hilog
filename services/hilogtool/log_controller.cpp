@@ -22,6 +22,7 @@
 #include <vector>
 #include <securec.h>
 #include <error.h>
+#include <regex>
 
 #include "hilog/log.h"
 #include "hilog_common.h"
@@ -48,6 +49,14 @@ void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t m
     msgHeader->msgType = msgCmd;
     msgHeader->msgLen = msgLen;
 }
+
+inline bool IsValidFileName(const std::string& strFileName)
+{
+    // 文件名中不能包含\/:*?"<>|这些字符
+    std::regex regExpress("[\\/:*?\"<>|]");
+    bool bValid = !std::regex_search(strFileName, regExpress);
+    return bValid;
+} 
 
 void Split(const std::string& src, const std::string& separator, std::vector<std::string>& dest)
 {
@@ -377,10 +386,16 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
+            if (IsValidFileName(logPersistParam->fileNameStr) == false) {
+                cout << "FileName is not valid!" << endl;
+                return RET_FAIL;
+            }
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 return RET_FAIL;
             }
-            ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->fileNameStr.c_str());
+           if(logPersistParam->fileNameStr != " ") {
+                ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->fileNameStr.c_str());
+           }
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;

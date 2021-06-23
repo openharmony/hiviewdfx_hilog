@@ -26,7 +26,6 @@
 #include <thread>
 #include <unistd.h>
 #include <sstream>
-#include <regex>
 #include <algorithm>
 #include <securec.h>
 #include "compressing_rotator.h"
@@ -54,13 +53,7 @@ inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen
     msgHeader->msgType = msgCmd;
     msgHeader->msgLen = msgLen;
 }
-inline bool IsValidFileName(const std::string& strFileName)
-{
-    // 文件名中不能包含\/:*?"<>|这些字符
-    std::regex regExpress("[\\/:*?\"<>|]");
-    bool bValid = !std::regex_search(strFileName, regExpress);
-    return bValid;
-}
+
 LogPersisterRotator* MakeRotator(LogPersistStartMsg& pLogPersistStartMsg)
 {
     string fileSuffix = "";
@@ -130,15 +123,8 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst == nullptr) {
         return;
     }
-    bool bRet = IsValidFileName(string(pLogPersistStartMsg->filePath));
-    string logPersisterPath;
-    if(bRet == true) {
-        logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? g_logPersisterDir + "hilog"
+    string logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? g_logPersisterDir + "hilog"
             :g_logPersisterDir + string(pLogPersistStartMsg->filePath);
-    } else {
-        cout << "FileName is not valid!" << endl;
-        return;
-    }
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
     rotator = MakeRotator(*pLogPersistStartMsg);
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
