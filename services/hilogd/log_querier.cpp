@@ -123,8 +123,8 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst == nullptr) {
         return;
     }
-    string logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? g_logPersisterDir + "hilog"
-            : g_logPersisterDir + string(pLogPersistStartMsg->filePath);
+    string logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? (g_logPersisterDir + "hilog")
+            : (g_logPersisterDir + string(pLogPersistStartMsg->filePath));
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
     rotator = MakeRotator(*pLogPersistStartMsg);
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
