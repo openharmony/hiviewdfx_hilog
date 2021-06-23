@@ -447,7 +447,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     if (logContent[logContent.length()-1] != '\n') {
         logContent += '\n';
     }
-    std::replace(logContent.begin(), logContent.end(),'\n','\0');
+    std::replace(logContent.begin(), logContent.end(), '\n', '\0');
     while (logContent.find_first_of('\0') != size_t(-1)) {   
         strncpy_s(data->data + data->tag_len, MAX_LOG_LEN, 
             const_cast<char*>(logContent.c_str()), MAX_LOG_LEN);
