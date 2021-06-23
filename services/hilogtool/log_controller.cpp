@@ -393,9 +393,9 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 return RET_FAIL;
             }
-           if(logPersistParam->fileNameStr != " ") {
+            if (logPersistParam->fileNameStr != " ") {
                 ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->fileNameStr.c_str());
-           }
+            }
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;

@@ -416,7 +416,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     char* tag = data->data;
     char* content = data->data + data->tag_len;
     char *pStrtol = nullptr;
-    int logContentPos = 0;
+
     if (context->headLines) {
         if (printHeadCnt++ >= context->headLines) {
             exit(1);
@@ -448,6 +448,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
         logContent += '\n';
     }
     std::replace(logContent.begin(), logContent.end(), '\n', '\0');
+    int logContentPos = 0;
     while (logContent.find_first_of('\0') != size_t(-1)) {   
         strncpy_s(data->data + data->tag_len, MAX_LOG_LEN, 
             const_cast<char*>(logContent.c_str()), MAX_LOG_LEN);
