@@ -38,7 +38,6 @@ using namespace std;
 const int MSG_MAX_LEN = 2048;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
-const uint32_t DEFAULT_JOBID = 1;
 
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
@@ -376,7 +375,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 }
                 pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
             }
-            pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
+            pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? time(nullptr)
             : stoi(logPersistParam->jobIdStr);
             pLogPersistStartMsg->compressType = (logPersistParam->compressTypeStr == "") ? STREAM : stoi(logPersistParam
                 ->compressTypeStr);
