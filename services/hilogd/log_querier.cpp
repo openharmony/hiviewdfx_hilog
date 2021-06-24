@@ -131,12 +131,12 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         return;
     }
     string logPersisterPath;
-    if(IsValidFileName(string(pLogPersistStartMsg->filePath)) == true) {
-        logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? g_logPersisterDir + "hilog"
-            :g_logPersisterDir + string(pLogPersistStartMsg->filePath);
+    if (IsValidFileName(string(pLogPersistStartMsg->filePath)) == true) {
+        logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? (g_logPersisterDir + "hilog")
+            : (g_logPersisterDir + string(pLogPersistStartMsg->filePath));
     } else {
         cout << "FileName is not valid!" << endl;
-	    pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+        pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
         pLogPersistStartRst->result = RET_FAIL;
         SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
         logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
