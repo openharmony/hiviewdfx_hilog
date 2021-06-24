@@ -375,7 +375,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 }
                 pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
             }
-            pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? time(nullptr)
+            pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
             : stoi(logPersistParam->jobIdStr);
             pLogPersistStartMsg->compressType = (logPersistParam->compressTypeStr == "") ? STREAM : stoi(logPersistParam
                 ->compressTypeStr);
