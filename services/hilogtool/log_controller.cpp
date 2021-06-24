@@ -38,7 +38,7 @@ using namespace std;
 const int MSG_MAX_LEN = 2048;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
-
+const uint32_t DEFAULT_JOBID = 1;
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
