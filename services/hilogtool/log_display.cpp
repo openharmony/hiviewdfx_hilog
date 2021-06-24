@@ -448,9 +448,9 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     
     char *dataBegin = data->data + offset;
     char *dataPos = data->data + offset;
-    while(*dataPos != 0) {
-        if(*dataPos == '\n') {
-            if(dataPos != dataBegin) {
+    while (*dataPos != 0) {
+        if (*dataPos == '\n') {
+            if (dataPos != dataBegin) {
                 *dataPos = 0;
                 showBuffer.tag_len = offset;
                 showBuffer.data = data->data;
@@ -468,7 +468,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
         }
         dataPos++;
     }
-    if(dataPos != dataBegin) {
+    if (dataPos != dataBegin) {
         showBuffer.data = data->data;
         HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
         if (context->tailLines) {
