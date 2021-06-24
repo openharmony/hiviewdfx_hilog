@@ -385,10 +385,6 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
-            if (IsValidFileName(logPersistParam->fileNameStr) == false) {
-                cout << "FileName is not valid!" << endl;
-                return RET_FAIL;
-            }
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 return RET_FAIL;
             }
