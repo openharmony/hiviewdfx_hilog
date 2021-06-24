@@ -56,7 +56,7 @@ inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen
 }
 inline bool IsValidFileName(const std::string& strFileName)
 {
-    // 文件名中不能包含\/:*?"<>|这些字符
+    // File name shouldn't contain "[\\/:*?\"<>|]"
     std::regex regExpress("[\\/:*?\"<>|]");
     bool bValid = !std::regex_search(strFileName, regExpress);
     return bValid;
@@ -130,11 +130,16 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst == nullptr) {
         return;
     }
-    if(IsValidFileName(string(pLogPersistStartMsg->filePath) == true) {
-        string logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? g_logPersisterDir + "hilog"
+    string logPersisterPath;
+    if(IsValidFileName(string(pLogPersistStartMsg->filePath)) == true) {
+        logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? g_logPersisterDir + "hilog"
             :g_logPersisterDir + string(pLogPersistStartMsg->filePath);
     } else {
         cout << "FileName is not valid!" << endl;
+	    pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+        pLogPersistStartRst->result = RET_FAIL;
+        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
+        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
         return;
     }
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
