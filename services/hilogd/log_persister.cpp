@@ -59,12 +59,30 @@ string GenPersistLogHeader(const HilogData *data)
     showBuffer.tid = data->tid;
     showBuffer.domain = data->domain;
     showBuffer.tag_len = data->tag_len;
-    showBuffer.data = data->content;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-    showBuffer.data = data->tag;
-    HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
-    return buffer;
+    char *dataBegin = data->content;
+    char *dataPos = data->content;
+    while (*dataPos != 0) {
+        if (*dataPos == '\n') {
+            if (dataPos != dataBegin) {
+                *dataPos = 0;
+                showBuffer.data = data->content;
+                showBuffer.data = data->tag;
+                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
+                return buffer;
+            }
+            dataBegin = dataPos + 1;
+        }
+        dataPos++;
+    }
+    if (dataPos != dataBegin) {
+        showBuffer.data = data->content;
+        showBuffer.data = data->tag;
+        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
+        return buffer;
+    }
+    return NULL;
 }
 
 LogPersister::LogPersister(uint32_t id, string path, uint16_t compressType,
