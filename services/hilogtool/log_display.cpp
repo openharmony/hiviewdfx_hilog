@@ -457,9 +457,11 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
                 HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
                 if (context->tailLines) {
                     tailBuffer.emplace_back(buffer);
+                    //清空否
                     return;
+                } else {
+                    cout << buffer << endl;
                 }
-                cout << buffer << endl;
                 offset += dataPos - dataBegin + 1;
             } else {
                 offset++;
@@ -474,8 +476,9 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
         if (context->tailLines) {
             tailBuffer.emplace_back(buffer);
             return;
+        } else {
+            cout << buffer << endl;
         }
-        cout << buffer << endl;
     }
     return;
 }

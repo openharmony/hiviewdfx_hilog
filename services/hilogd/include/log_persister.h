@@ -28,6 +28,7 @@
 #include "log_compress.h"
 namespace OHOS {
 namespace HiviewDFX {
+using namespace std;
 typedef struct {
     uint16_t offset;
     char content[];
@@ -77,11 +78,10 @@ private:
     bool isExited();
     FILE *fdinfo;
     int fd = -1;
-
     LogCompress *LogCompress;
 };
 
-std::string GenPersistLogHeader(const HilogData *data);
+int GenPersistLogHeader(HilogData *data, list<string>& persistList);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
