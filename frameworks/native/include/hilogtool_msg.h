@@ -101,18 +101,20 @@ typedef struct {
 
 typedef struct {
     MessageHeader header;
-    uint8_t nDomain : 4;
+    uint8_t exclude : 2;
+    uint8_t nDomain : 3;
+    uint8_t nNoDomain: 3;
     uint8_t nTag : 4;
+    uint8_t nNoTag: 4;
     uint8_t levels;
     uint16_t types;
     uint32_t domains[MAX_DOMAINS];
     uint32_t timeBegin;
     uint32_t timeEnd;
     uint16_t logCount;
-    uint8_t exclude;
     uint8_t noLevels;
     uint16_t noTypes;
-    uint32_t noDomain;
+    uint32_t noDomains[MAX_DOMAINS];
     char noTag[MAX_TAG_LEN];
 } LogQueryRequest;
 
@@ -324,8 +326,11 @@ typedef struct {
 
 typedef struct {
     uint16_t noBlockMode;
-    uint8_t nDomain : 4;
+    uint8_t exclude : 2;
+    uint8_t nDomain : 3;
+    uint8_t nNoDomain: 3;
     uint8_t nTag : 4;
+    uint8_t nNoTag: 4;
     uint16_t types;
     uint16_t levels;
     uint16_t headLines;
@@ -334,10 +339,9 @@ typedef struct {
     time_t endTime;
     std::string domain;
     std::string tag;
-    uint8_t exclude;
     uint16_t noTypes;
     uint16_t noLevels;
-    std::string noDomain;
+    std::string noDomains[MAX_DOMAINS];
     std::string noTag;
     std::string regexArgs;
     std::string buffSizeArgs;

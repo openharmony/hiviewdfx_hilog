@@ -341,11 +341,13 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
     
     // domain exclusion
     int ret = 0;
-    if ((reader->queryCondition.exclude == 1) && (reader->queryCondition.noDomain != 0) &&
-        ((reader->queryCondition.noDomain >= DOMAIN_STRICT_MASK && reader->queryCondition.noDomain == reader->readPos->domain) ||
-        (reader->queryCondition.noDomain <= DOMAIN_FUZZY_MASK && reader->queryCondition.noDomain == (reader->readPos->domain >> DOMAIN_MODULE_BITS)))
-    ) {
-        return false;
+    if ((reader->queryCondition.exclude == 1) && (reader->queryCondition.nNoDomain != 0)) {
+        for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
+            if (((reader->queryCondition.noDomains[i] >= 0xd000000 && reader->queryCondition.noDomains[i] == reader->readPos->domain) ||
+                (reader->queryCondition.noDomains[i] <= 0xdffff && reader->queryCondition.noDomains[i] == (reader->readPos->domain >> 8)))) {
+                return false;
+            }
+        }
     }
     if (reader->queryCondition.nDomain > 0) {
         for (int i = 0; i < reader->queryCondition.nDomain; i++) {
