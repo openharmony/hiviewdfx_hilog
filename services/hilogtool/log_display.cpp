@@ -457,7 +457,6 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
                 HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
                 if (context->tailLines) {
                     tailBuffer.emplace_back(buffer);
-                    //清空否
                     return;
                 } else {
                     cout << buffer << endl;
