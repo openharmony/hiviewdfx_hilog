@@ -22,7 +22,6 @@
 #include <vector>
 #include <securec.h>
 #include <error.h>
-#include <regex>
 
 #include "hilog/log.h"
 #include "hilog_common.h"
