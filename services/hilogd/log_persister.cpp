@@ -175,7 +175,7 @@ void LogPersister::SetBufferOffset(int off)
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 {
-    char buffer[MAX_LOG_LEN];
+    char buffer[MAX_LOG_LEN*2];
     HilogShowFormatBuffer showBuffer;
     showBuffer.level = data->level;
     showBuffer.pid = data->pid;
@@ -183,6 +183,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     showBuffer.domain = data->domain;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
+    showBuffer.data = data->tag;
     int offset = data->tag_len;
     char *dataBegin = data->content;
     char *dataPos = data->content;
@@ -191,22 +192,18 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
             if (dataPos != dataBegin) {
                 *dataPos = 0;
                 showBuffer.tag_len = offset;
-                showBuffer.data = dataBegin;
-                showBuffer.data = data->tag;
                 HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
                 persistList.push_back(buffer);
                 offset += dataPos - dataBegin + 1;
-                } else {
-                    offset++;
-                }
+            } else {
+                offset++;
+            }
             dataBegin = dataPos + 1;
         }
         dataPos++;
     }
     if (dataPos != dataBegin) {
         showBuffer.tag_len = data->tag_len;
-        showBuffer.data = data->content;
-        showBuffer.data = data->tag;
         HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
         persistList.push_back(buffer);
     }
