@@ -50,41 +50,6 @@ static std::mutex g_listMutex;
         (x) = nullptr; \
     } while (0)
 
-string GenPersistLogHeader(const HilogData *data)
-{
-    char buffer[MAX_LOG_LEN * 2];
-    HilogShowFormatBuffer showBuffer;
-    showBuffer.level = data->level;
-    showBuffer.pid = data->pid;
-    showBuffer.tid = data->tid;
-    showBuffer.domain = data->domain;
-    showBuffer.tag_len = data->tag_len;
-    showBuffer.tv_sec = data->tv_sec;
-    showBuffer.tv_nsec = data->tv_nsec;
-    char *dataBegin = data->content;
-    char *dataPos = data->content;
-    while (*dataPos != 0) {
-        if (*dataPos == '\n') {
-            if (dataPos != dataBegin) {
-                *dataPos = 0;
-                showBuffer.data = data->content;
-                showBuffer.data = data->tag;
-                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
-                return buffer;
-            }
-            dataBegin = dataPos + 1;
-        }
-        dataPos++;
-    }
-    if (dataPos != dataBegin) {
-        showBuffer.data = data->content;
-        showBuffer.data = data->tag;
-        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
-        return buffer;
-    }
-    return NULL;
-}
-
 LogPersister::LogPersister(uint32_t id, string path, uint16_t compressType,
                            uint16_t compressAlg, int sleepTime,
                            LogPersisterRotator *rotator, HilogBuffer *_buffer)
@@ -208,25 +173,69 @@ void LogPersister::SetBufferOffset(int off)
     fprintf(fdinfo, "%04x\n", off);
 }
 
+int GenPersistLogHeader(HilogData *data, list<string>& persistList)
+{
+    char buffer[MAX_LOG_LEN];
+    HilogShowFormatBuffer showBuffer;
+    showBuffer.level = data->level;
+    showBuffer.pid = data->pid;
+    showBuffer.tid = data->tid;
+    showBuffer.domain = data->domain;
+    showBuffer.tv_sec = data->tv_sec;
+    showBuffer.tv_nsec = data->tv_nsec;
+    int offset = data->tag_len;
+    char *dataBegin = data->content;
+    char *dataPos = data->content;
+    while (*dataPos != 0) {
+        if (*dataPos == '\n') {
+            if (dataPos != dataBegin) {
+                *dataPos = 0;
+                showBuffer.tag_len = offset;
+                showBuffer.data = dataBegin;
+                showBuffer.data = data->tag;
+                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
+                persistList.push_back(buffer);
+                offset += dataPos-dataBegin+1;
+                } else {
+                    offset++;
+                }
+            dataBegin = dataPos + 1;
+        }
+        dataPos++;
+    }
+    if (dataPos != dataBegin) {
+        showBuffer.tag_len = data->tag_len;
+        showBuffer.data = data->content;
+        showBuffer.data = data->tag;
+        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
+        persistList.push_back(buffer);
+    }
+    return persistList.size();
+}
+
 bool LogPersister::writeUnCompressedBuffer(HilogData *data)
 {
-    string header = GenPersistLogHeader(data);
-    uint16_t headerLen = header.length();
-    uint16_t size = headerLen + 1;
-    uint16_t orig_offset = buffer->offset;
-    int r = 0;
-    if (buffer->offset + size > MAX_PERSISTER_BUFFER_SIZE)
-        return false;
-
-    r = memcpy_s(buffer->content + buffer->offset, MAX_PERSISTER_BUFFER_SIZE - buffer->offset,
-        header.c_str(), headerLen);
-    if (r != 0) {
-        SetBufferOffset(orig_offset);
-        return true;
+    list<string> persistList;
+    int listSize = GenPersistLogHeader(data, persistList);
+    while(listSize--) {
+        string header = persistList.front();
+        persistList.pop_front();
+        uint16_t headerLen = header.length();
+        uint16_t size = headerLen + 1;
+        uint16_t orig_offset = buffer->offset;
+        int r = 0;
+        if (buffer->offset + size > MAX_PERSISTER_BUFFER_SIZE)
+            return false;
+        r = memcpy_s(buffer->content + buffer->offset, MAX_PERSISTER_BUFFER_SIZE - buffer->offset,
+            header.c_str(), headerLen);
+        if (r != 0) {
+            SetBufferOffset(orig_offset);
+            return true;
+        }
+        SetBufferOffset(buffer->offset + headerLen);
+        buffer->content[buffer->offset] = '\n';
+        SetBufferOffset(buffer->offset + 1);
     }
-    SetBufferOffset(buffer->offset + headerLen);
-    buffer->content[buffer->offset] = '\n';
-    SetBufferOffset(buffer->offset + 1);
     return true;
 }
 
@@ -242,6 +251,7 @@ int LogPersister::WriteData(HilogData *data)
             break;
         case COMPRESS_TYPE_ZLIB: {
             LogCompress = new ZlibCompress();
+            cout << buffer->content << endl;
             LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
             rotator->Input((char *)LogCompress->zdata, LogCompress->zdlen);
             rotator->FinishInput();
