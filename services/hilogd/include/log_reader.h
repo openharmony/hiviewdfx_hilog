@@ -33,9 +33,11 @@ class HilogBuffer;
 #define TYPE_PERSISTER 2
 
 using QueryCondition = struct QueryCondition {
+    uint8_t nDomain : 4;
+    uint8_t nTag : 4;
     uint16_t levels = 0;
     uint16_t types = 0;
-    uint32_t domain = 0;
+    uint32_t domains[MAX_DOMAINS];
     uint32_t timeBegin = 0;
     uint32_t timeEnd = 0;
     uint8_t exclude = 0;

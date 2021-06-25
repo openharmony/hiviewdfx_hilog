@@ -101,9 +101,11 @@ typedef struct {
 
 typedef struct {
     MessageHeader header;
+    uint8_t nDomain : 4;
+    uint8_t nTag : 4;
     uint8_t levels;
     uint16_t types;
-    uint32_t domain;
+    uint32_t domains[MAX_DOMAINS];
     uint32_t timeBegin;
     uint32_t timeEnd;
     uint16_t logCount;
@@ -322,6 +324,8 @@ typedef struct {
 
 typedef struct {
     uint16_t noBlockMode;
+    uint8_t nDomain : 4;
+    uint8_t nTag : 4;
     uint16_t types;
     uint16_t levels;
     uint16_t headLines;
