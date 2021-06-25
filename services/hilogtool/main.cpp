@@ -364,7 +364,7 @@ int HilogEntry(int argc, char* argv[])
             case 'D':
                 indexDomain = optind - 1;
                 while (indexDomain < argc) {
-                    if(context.nDomain >= MAX_DOMAINS) {
+                    if((context.nDomain >= MAX_DOMAINS) || (context.nNoDomain >= MAX_DOMAINS)) {
                         break;
                     }
                     std::string domains(argv[indexDomain]);
@@ -398,7 +398,7 @@ int HilogEntry(int argc, char* argv[])
             case 'T':
                 indexTag = optind - 1;
                 while (indexTag < argc) {
-                    if(context.nTag >= MAX_DOMAINS) {
+                    if((context.nTag >= MAX_TAGS) || (context.nNoTag >= MAX_TAGS)) {
                         break;
                     }
                     std::string tags(argv[indexTag]);
