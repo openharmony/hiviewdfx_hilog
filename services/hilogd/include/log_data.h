@@ -52,7 +52,6 @@ struct HilogData {
         tag = tmp;
         content = tmp + mtagLen;
         if (strncpy_s(tag, mtagLen + 1, mtag, mtagLen - 1)) {
-            tag[mtagLen - 1] = '\0';
             return;
         }
         if (strncpy_s(content, mfmtLen + 1, mfmt, mfmtLen - 1)) {

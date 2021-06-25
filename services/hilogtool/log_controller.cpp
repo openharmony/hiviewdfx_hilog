@@ -49,14 +49,6 @@ void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t m
     msgHeader->msgLen = msgLen;
 }
 
-inline bool IsValidFileName(const std::string& strFileName)
-{
-    // 文件名中不能包含\/:*?"<>|这些字符
-    std::regex regExpress("[\\/:*?\"<>|]");
-    bool bValid = !std::regex_search(strFileName, regExpress);
-    return bValid;
-} 
-
 void Split(const std::string& src, const std::string& separator, std::vector<std::string>& dest)
 {
     string str = src;
