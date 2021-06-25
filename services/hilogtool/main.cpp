@@ -364,7 +364,7 @@ int HilogEntry(int argc, char* argv[])
             case 'D':
                 indexDomain = optind - 1;
                 while (indexDomain < argc) {
-                    if((context.nDomain >= MAX_DOMAINS) || (context.nNoDomain >= MAX_DOMAINS)) {
+                    if ((context.nDomain >= MAX_DOMAINS) || (context.nNoDomain >= MAX_DOMAINS)) {
                         break;
                     }
                     std::string domains(argv[indexDomain]);
@@ -373,9 +373,9 @@ int HilogEntry(int argc, char* argv[])
                         if (domains.front() == '^') {
                             context.exclude = 1;
                             std::regex delimiter(","); // whitespace
-                            std::vector<std::string> v(std::sregex_token_iterator(domains.begin()+1, domains.end(), delimiter, -1),
+                            std::vector<std::string> v(std::sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
                                                        std::sregex_token_iterator());
-                            for(auto&& s: v){
+                            for (auto&& s: v) {
                                 context.noDomains[context.nNoDomain++] = s;
                             }
                         } else {
@@ -385,8 +385,8 @@ int HilogEntry(int argc, char* argv[])
                     } else {
                         break;
                     }
-                 }
-                 break;
+                }
+                break;
             case 's':
                 context.statisticArgs = "query";
                 noLogOption = true;
@@ -398,7 +398,7 @@ int HilogEntry(int argc, char* argv[])
             case 'T':
                 indexTag = optind - 1;
                 while (indexTag < argc) {
-                    if((context.nTag >= MAX_TAGS) || (context.nNoTag >= MAX_TAGS)) {
+                    if ((context.nTag >= MAX_TAGS) || (context.nNoTag >= MAX_TAGS)) {
                         break;
                     }
                     std::string tags(argv[indexTag]);
@@ -407,9 +407,9 @@ int HilogEntry(int argc, char* argv[])
                         if (tags.front() == '^') {
                             context.exclude = 1;
                             std::regex delimiter(","); // whitespace
-                            std::vector<std::string> v(std::sregex_token_iterator(tags.begin()+1, tags.end(), delimiter, -1),
+                            std::vector<std::string> v(std::sregex_token_iterator(tags.begin() + 1, tags.end(), delimiter, -1),
                                                        std::sregex_token_iterator());
-                            for(auto&& s: v){
+                            for (auto&& s: v) {
                                 context.noTags[context.nNoTag++] = s;
                             }
                         } else {
