@@ -195,7 +195,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
                 showBuffer.data = data->tag;
                 HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
                 persistList.push_back(buffer);
-                offset += dataPos-dataBegin+1;
+                offset += dataPos - dataBegin + 1;
                 } else {
                     offset++;
                 }
@@ -217,7 +217,7 @@ bool LogPersister::writeUnCompressedBuffer(HilogData *data)
 {
     list<string> persistList;
     int listSize = GenPersistLogHeader(data, persistList);
-    while(listSize--) {
+    while (listSize--) {
         string header = persistList.front();
         persistList.pop_front();
         uint16_t headerLen = header.length();
@@ -251,7 +251,9 @@ int LogPersister::WriteData(HilogData *data)
             break;
         case COMPRESS_TYPE_ZLIB: {
             LogCompress = new ZlibCompress();
+#ifdef DEBUG
             cout << buffer->content << endl;
+#endif
             LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
             rotator->Input((char *)LogCompress->zdata, LogCompress->zdlen);
             rotator->FinishInput();
