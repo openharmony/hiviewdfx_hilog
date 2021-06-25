@@ -35,9 +35,9 @@ class HilogBuffer;
 using QueryCondition = struct QueryCondition {
     uint8_t exclude : 2;
     uint8_t nDomain : 3;
-    uint8_t nNoDomain: 3;
+    uint8_t nNoDomain : 3;
     uint8_t nTag : 4;
-    uint8_t nNoTag: 4;
+    uint8_t nNoTag : 4;
     uint16_t levels = 0;
     uint16_t types = 0;
     uint32_t domains[MAX_DOMAINS];
