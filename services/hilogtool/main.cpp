@@ -376,7 +376,7 @@ int HilogEntry(int argc, char* argv[])
                             std::vector<std::string> v(std::sregex_token_iterator(domains.begin()+1, domains.end(), delimiter, -1),
                                                        std::sregex_token_iterator());
                             for(auto&& s: v){
-                                context.noDomain = s;
+                                context.noDomains[context.nNoDomain++] = s;
                             }
                         } else {
                             context.domainArgs += (domains + " ");
@@ -522,7 +522,9 @@ int HilogEntry(int argc, char* argv[])
     } else {
         LogQueryRequestOp(controller, &context);
         context.nDomain = 0;
+        context.nNoDomain = 0;
         context.nTag = 0;
+        context.nNoTag = 0;
     }
 
     memset_s(recvBuffer, sizeof(recvBuffer), 0, sizeof(recvBuffer));

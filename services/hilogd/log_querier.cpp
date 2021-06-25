@@ -407,7 +407,10 @@ inline void SetExclusion(std::shared_ptr<LogReader> logReader, const LogQueryReq
     logReader->queryCondition.exclude = 1;
     logReader->queryCondition.noLevels = qRstMsg->noLevels;
     logReader->queryCondition.noTypes = qRstMsg->noTypes;
-    logReader->queryCondition.noDomain = qRstMsg->noDomain;
+    logReader->queryCondition.nNoDomain = qRstMsg->nNoDomain;
+    for (int i = 0; i < qRstMsg->nNoDomain; i++) {
+        logReader->queryCondition.noDomains[i] = qRstMsg->noDomains[i];
+    }
     logReader->queryCondition.noTag = qRstMsg->noTag;
 }
 
