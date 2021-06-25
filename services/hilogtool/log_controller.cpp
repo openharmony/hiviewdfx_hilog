@@ -152,11 +152,14 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     memset_s(&logQueryRequest, sizeof(LogQueryRequest), 0, sizeof(LogQueryRequest));
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
+    logQueryRequest.nDomain = context->nDomain;
     if (context->domainArgs != "") {
-        std::istringstream(context->domainArgs) >> std::hex >> logQueryRequest.domain;
-        if (logQueryRequest.domain == 0) {
-            std::cout << "Invalid parameter" << std::endl;
-            return;
+        vector<string> vecLogDomain;
+        Split(context->domainArgs, " ", vecLogDomain);
+        int nDomain = 0;
+        for (auto s : vecLogDomain) {
+            if (s == " ") continue;
+            std::istringstream(s) >> std::hex >> logQueryRequest.domains[nDomain++];
         }
     }
     logQueryRequest.timeBegin = context->beginTime;

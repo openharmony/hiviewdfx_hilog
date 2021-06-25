@@ -340,20 +340,23 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
     const int DOMAIN_MODULE_BITS = 8;
     
     // domain exclusion
+    int ret = 0;
     if ((reader->queryCondition.exclude == 1) && (reader->queryCondition.noDomain != 0) &&
         ((reader->queryCondition.noDomain >= DOMAIN_STRICT_MASK && reader->queryCondition.noDomain == reader->readPos->domain) ||
         (reader->queryCondition.noDomain <= DOMAIN_FUZZY_MASK && reader->queryCondition.noDomain == (reader->readPos->domain >> DOMAIN_MODULE_BITS)))
     ) {
         return false;
     }
-    if ((reader->queryCondition.domain != 0) &&
-        ((reader->queryCondition.domain >= DOMAIN_STRICT_MASK &&
-        reader->queryCondition.domain != reader->readPos->domain) ||
-        (reader->queryCondition.domain <= DOMAIN_FUZZY_MASK &&
-        reader->queryCondition.domain != (reader->readPos->domain >> DOMAIN_MODULE_BITS)))
-    ) {
-        return false;
-    }
+    if (reader->queryCondition.nDomain > 0) {
+        for (int i = 0; i < reader->queryCondition.nDomain; i++) {
+            if (!((reader->queryCondition.domains[i] >= 0xd000000 && reader->queryCondition.domains[i] != reader->readPos->domain) ||
+                (reader->queryCondition.domains[i] <= 0xdffff && reader->queryCondition.domains[i] != (reader->readPos->domain >> 8)))) {
+                ret = 1;
+                break;
+            }
+        }
+        if (ret == 0) return false;
+        ret = 0;
 
     // time condition
     if ((reader->queryCondition.timeBegin == 0 && reader->queryCondition.timeEnd == 0) ||

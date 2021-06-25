@@ -177,6 +177,8 @@ int HilogEntry(int argc, char* argv[])
     int optIndex = 0;
     int indexLevel = 0;
     int indexType = 0;
+    int indexDomain = 0;
+    int indexTag = 0;
     bool noLogOption = false;
 
     context.noBlockMode = 0;
@@ -360,19 +362,30 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'D':
-                if (optarg[0] == '^') {
-                    string domain(optarg);
-                    context.exclude = 1;
-                    regex delimiter(","); // whitespace
-                    vector<string> v(sregex_token_iterator(domain.begin() + 1, domain.end(), delimiter, -1),
-                                     sregex_token_iterator());
-                    for (auto&& s : v) {
-                        context.noDomain = s;
+                indexDomain = optind - 1;
+                while (indexDomain < argc) {
+                    if(context.nDomain++ >= MAX_DOMAINS) {
+                        break;
                     }
-                } else {
-                    context.domainArgs = optarg;
-                }
-                break;
+                    std::string domains(argv[indexDomain]);
+                    indexDomain++;
+                    if (!strstr(domains.c_str(), "-")) {
+                        if (domains.front() == '^') {
+                            context.exclude = 1;
+                            std::regex delimiter(","); // whitespace
+                            std::vector<std::string> v(std::sregex_token_iterator(domains.begin()+1, domains.end(), delimiter, -1),
+                                                       std::sregex_token_iterator());
+                            for(auto&& s: v){
+                                context.noDomain = s;
+                            }
+                        } else {
+                            context.domainArgs += (domains + " ");
+                        }
+                    } else {
+                        break;
+                    }
+                 }
+                 break;
             case 's':
                 context.statisticArgs = "query";
                 noLogOption = true;
@@ -508,6 +521,8 @@ int HilogEntry(int argc, char* argv[])
         }
     } else {
         LogQueryRequestOp(controller, &context);
+        context.nDomain = 0;
+        context.nTag = 0;
     }
 
     memset_s(recvBuffer, sizeof(recvBuffer), 0, sizeof(recvBuffer));

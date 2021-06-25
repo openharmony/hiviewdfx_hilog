@@ -394,7 +394,10 @@ inline void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryReq
 {
     logReader->queryCondition.levels = qRstMsg->levels;
     logReader->queryCondition.types = qRstMsg->types;
-    logReader->queryCondition.domain = qRstMsg->domain;
+    logReader->queryCondition.nDomain = qRstMsg->nDomain;
+    for (int i = 0; i < qRstMsg->nDomain; i++) {
+        logReader->queryCondition.domains[i] = qRstMsg->domains[i];
+    }
     logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
     logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
 }
