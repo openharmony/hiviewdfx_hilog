@@ -46,7 +46,7 @@ using QueryCondition = struct QueryCondition {
     uint8_t noLevels = 0;
     uint16_t noTypes = 0;
     uint32_t noDomains[MAX_DOMAINS];
-    std::string noTag;
+    std::string noTags[MAX_TAGS];
 };
 
 class LogReader : public std::enable_shared_from_this<LogReader> {

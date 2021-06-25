@@ -115,7 +115,7 @@ typedef struct {
     uint8_t noLevels;
     uint16_t noTypes;
     uint32_t noDomains[MAX_DOMAINS];
-    char noTag[MAX_TAG_LEN];
+    char noTags[MAX_TAGS][MAX_TAG_LEN];
 } LogQueryRequest;
 
 typedef struct {
@@ -342,7 +342,7 @@ typedef struct {
     uint16_t noTypes;
     uint16_t noLevels;
     std::string noDomains[MAX_DOMAINS];
-    std::string noTag;
+    std::string noTags[MAX_TAGS];
     std::string regexArgs;
     std::string buffSizeArgs;
     std::string logFileCtrlArgs;

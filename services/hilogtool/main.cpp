@@ -364,7 +364,7 @@ int HilogEntry(int argc, char* argv[])
             case 'D':
                 indexDomain = optind - 1;
                 while (indexDomain < argc) {
-                    if(context.nDomain++ >= MAX_DOMAINS) {
+                    if(context.nDomain >= MAX_DOMAINS) {
                         break;
                     }
                     std::string domains(argv[indexDomain]);
@@ -380,6 +380,7 @@ int HilogEntry(int argc, char* argv[])
                             }
                         } else {
                             context.domainArgs += (domains + " ");
+                            context.nDomain++;
                         }
                     } else {
                         break;
@@ -395,12 +396,29 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'T':
-                if (optarg[0] == '^') {
-                    context.exclude = 1;
-                    context.tagArgs = "";
-                    context.noTag = &optarg[1];
-                } else {
-                    context.tagArgs = optarg;
+                indexTag = optind - 1;
+                while (indexTag < argc) {
+                    if(context.nTag >= MAX_DOMAINS) {
+                        break;
+                    }
+                    std::string tags(argv[indexTag]);
+                    indexTag++;
+                    if (!strstr(tags.c_str(), "-")) {
+                        if (tags.front() == '^') {
+                            context.exclude = 1;
+                            std::regex delimiter(","); // whitespace
+                            std::vector<std::string> v(std::sregex_token_iterator(tags.begin()+1, tags.end(), delimiter, -1),
+                                                       std::sregex_token_iterator());
+                            for(auto&& s: v){
+                                context.noTags[context.nNoTag++] = s;
+                            }
+                        } else {
+                            context.tagArgs += (tags + " ");
+                            context.nTag++;
+                        }
+                    } else {
+                        break;
+                    }
                 }
                 break;
             case 'b':

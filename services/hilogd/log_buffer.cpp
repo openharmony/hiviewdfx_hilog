@@ -368,11 +368,17 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
         // exclusion check first
         if ((reader->queryCondition.exclude == 1) &&
             ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.noTypes)) != 0) ||
-            (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0) ||
-            reader->readPos->tag == reader->queryCondition.noTag)
+            (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0))
         ) {
             return false;
         }
+        
+        if ((reader->queryCondition.exclude == 1) && (reader->queryCondition.nNoTag > 0)) {
+            for (int i = 0; i < reader->queryCondition.nNoTag; i++) {
+                if (reader->readPos->tag == reader->queryCondition.noTags[i]) return false;
+            }
+        }
+        
         if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) != 0) &&
             (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) != 0)) {
                 return true;
