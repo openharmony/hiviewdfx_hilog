@@ -69,26 +69,17 @@ using ProcessInfo = struct {
     uint32_t processQuota;
 };
 
-static int PropLock(pthread_mutex_t *propLock)
-{
-    return pthread_mutex_trylock(propLock);
-}
-
-static void PropUnlock(pthread_mutex_t *propLock)
-{
-    pthread_mutex_unlock(propLock);
-}
-
 void PropertyGet(const std::string &key, char *value, int len)
 {
     if (len < HILOG_PROP_VALUE_MAX) {
         return;
     }
+    /* use OHOS interface */
 }
 
 void PropertySet(const std::string &key, const char* value)
 {
-/* use OHOS interface */
+    /* use OHOS interface */
 }
 
 std::string GetProgName()
@@ -188,13 +179,13 @@ static void UnlockByProp(uint32_t propType)
 
 static void RefreshCacheBuf(PropertyCache *cache, const char *key)
 {
-/* use OHOS interface */
+    /* use OHOS interface */
 }
 
 static bool CheckCache(const PropertyCache *cache)
 {
     return true;
-/* use OHOS interface */
+    /* use OHOS interface */
 }
 
 static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
@@ -285,14 +276,14 @@ uint16_t GetGlobalLevel()
     int notLocked;
 
     if (!isFirstFlag.test_and_set() || CheckCache(&levelCache.cache)) {
-        notLocked = PropLock(&g_globalLevelLock);
+        notLocked = LockByProp(PROP_GLOBAL_LOG_LEVEL);
         if (!notLocked) {
             RefreshCacheBuf(&levelCache.cache, key.c_str());
             if (sscanf_s(levelCache.cache.propertyValue, "%d", &levelCache.logLevel) <= 0) {
-                PropUnlock(&g_globalLevelLock);
+                UnlockByProp(PROP_GLOBAL_LOG_LEVEL);
                 return HILOG_LEVEL_MIN;
             }
-            PropUnlock(&g_globalLevelLock);
+            UnlockByProp(PROP_GLOBAL_LOG_LEVEL);
             return levelCache.logLevel;
         } else {
             LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
@@ -327,14 +318,14 @@ uint16_t GetDomainLevel(uint32_t domain)
         return levelCache->logLevel;
     } else { // exist domain
         if (CheckCache(&it->second->cache)) { // change
-            notLocked = PropLock(&g_domainLevelLock);
+            notLocked = LockByProp(PROP_DOMAIN_LOG_LEVEL);
             if (!notLocked) {
                 RefreshCacheBuf(&it->second->cache, key.c_str());
                 if (sscanf_s(it->second->cache.propertyValue, "%d", &it->second->logLevel) <= 0) {
-                    PropUnlock(&g_domainLevelLock);
+                    UnlockByProp(PROP_DOMAIN_LOG_LEVEL);
                     return HILOG_LEVEL_MIN;
                 }
-                PropUnlock(&g_domainLevelLock);
+                UnlockByProp(PROP_DOMAIN_LOG_LEVEL);
                 return it->second->logLevel;
             } else {
                 LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
@@ -371,14 +362,14 @@ uint16_t GetTagLevel(const std::string& tag)
         return levelCache->logLevel;
     } else {
         if (CheckCache(&it->second->cache)) {
-            notLocked = PropLock(&g_tagLevelLock);
+            notLocked = LockByProp(PROP_TAG_LOG_LEVEL);
             if (!notLocked) {
                 RefreshCacheBuf(&it->second->cache, key.c_str());
                 if (sscanf_s(it->second->cache.propertyValue, "%d", &it->second->logLevel) <= 0) {
-                    PropUnlock(&g_tagLevelLock);
+                    UnlockByProp(PROP_TAG_LOG_LEVEL);
                     return HILOG_LEVEL_MIN;
                 }
-                PropUnlock(&g_tagLevelLock);
+                UnlockByProp(PROP_TAG_LOG_LEVEL);
                 return it->second->logLevel;
             } else {
                 LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
