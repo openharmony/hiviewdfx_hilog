@@ -177,16 +177,18 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 {
     char buffer[MAX_LOG_LEN*2];
     HilogShowFormatBuffer showBuffer;
-    showBuffer.level = data->level;
-    showBuffer.pid = data->pid;
-    showBuffer.tid = data->tid;
-    showBuffer.domain = data->domain;
-    showBuffer.tv_sec = data->tv_sec;
-    showBuffer.tv_nsec = data->tv_nsec;
-    showBuffer.data = data->tag;
-    int offset = data->tag_len;
-    char *dataBegin = data->content;
-    char *dataPos = data->content;
+    HilogData* dataDeepCopy = new HilogData[MAX_LOG_LEN*2];
+    memcpy_s(dataDeepCopy, MAX_LOG_LEN*2, data, MAX_LOG_LEN*2);
+    showBuffer.level = dataDeepCopy->level;
+    showBuffer.pid = dataDeepCopy->pid;
+    showBuffer.tid = dataDeepCopy->tid;
+    showBuffer.domain = dataDeepCopy->domain;
+    showBuffer.tv_sec = dataDeepCopy->tv_sec;
+    showBuffer.tv_nsec = dataDeepCopy->tv_nsec;
+    showBuffer.data = dataDeepCopy->tag;
+    int offset = dataDeepCopy->tag_len;
+    char *dataBegin = dataDeepCopy->content;
+    char *dataPos = dataDeepCopy->content;
     while (*dataPos != 0) {
         if (*dataPos == '\n') {
             if (dataPos != dataBegin) {
@@ -203,7 +205,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
         dataPos++;
     }
     if (dataPos != dataBegin) {
-        showBuffer.tag_len = data->tag_len;
+        showBuffer.tag_len = dataDeepCopy->tag_len;
         HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
         persistList.push_back(buffer);
     }
