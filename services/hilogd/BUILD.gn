@@ -35,7 +35,7 @@ ohos_executable("hilogd") {
   ]
  
   configs = [ ":hilogd_config" ]
-  defines = [ "DEBUG" ]
+
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
@@ -67,7 +67,7 @@ ohos_executable("hilogd_native") {
   ]
   
   configs = [ ":hilogd_config" ]
-  defines = [ "DEBUG" ]
+
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter_native",
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
