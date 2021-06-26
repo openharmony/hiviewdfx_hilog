@@ -33,7 +33,7 @@ ohos_executable("hilogd") {
     "log_reader.cpp",
     "main.cpp",
   ]
- 
+
   configs = [ ":hilogd_config" ]
 
   deps = [
@@ -65,7 +65,7 @@ ohos_executable("hilogd_native") {
     "log_reader.cpp",
     "main.cpp",
   ]
-  
+
   configs = [ ":hilogd_config" ]
 
   deps = [
