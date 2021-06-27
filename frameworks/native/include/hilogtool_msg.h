@@ -323,47 +323,4 @@ typedef struct {
     std::string pidStr;
 } SetPropertyParam;
 
-
-typedef struct {
-    uint16_t noBlockMode;
-    uint8_t nDomain;
-    uint8_t nNoDomain;
-    uint8_t nTag;
-    uint8_t nNoTag;
-    uint16_t types;
-    uint16_t levels;
-    uint16_t headLines;
-    uint16_t tailLines;
-    time_t beginTime;
-    time_t endTime;
-    std::string domain; // domain recv
-    std::string tag; // tag recv
-    std::string domains[MAX_DOMAINS]; // domains send
-    std::string tags[MAX_TAGS]; // tags send
-    uint16_t noTypes;
-    uint16_t noLevels;
-    std::string noDomains[MAX_DOMAINS];
-    std::string noTags[MAX_TAGS];
-    std::string regexArgs;
-    std::string buffSizeArgs;
-    std::string logFileCtrlArgs;
-    std::string compressArgs;
-    std::string fileSizeArgs;
-    std::string fileNumArgs;
-    std::string filePathArgs;
-    std::string fileNameArgs;
-    std::string jobIdArgs;
-    std::string personalArgs;
-    std::string logClearArgs;
-    std::string logTypeArgs;
-    std::string domainArgs;
-    std::string statisticArgs;
-    std::string tagArgs;
-    std::string logLevelArgs;
-    std::string flowSwitchArgs;
-    std::string flowQuotaArgs;
-    std::string pidArgs;
-    std::string algorithmArgs;
-}  HilogArgs;
-
 #endif /* HILOGTOOL_MSG_H */
