@@ -394,6 +394,11 @@ inline void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryReq
     logReader->queryCondition.levels = qRstMsg->levels;
     logReader->queryCondition.types = qRstMsg->types;
     logReader->queryCondition.nDomain = qRstMsg->nDomain;
+    logReader->queryCondition.nTag = qRstMsg->nTag;
+    logReader->queryCondition.noLevels = qRstMsg->noLevels;
+    logReader->queryCondition.noTypes = qRstMsg->noTypes;
+    logReader->queryCondition.nNoDomain = qRstMsg->nNoDomain;
+    logReader->queryCondition.nNoTag = qRstMsg->nNoTag;
     for (int i = 0; i < qRstMsg->nDomain; i++) {
         logReader->queryCondition.domains[i] = qRstMsg->domains[i];
     }
@@ -402,14 +407,6 @@ inline void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryReq
     }
     logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
     logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
-}
-
-inline void SetExclusion(std::shared_ptr<LogReader> logReader, const LogQueryRequest* qRstMsg)
-{
-    logReader->queryCondition.noLevels = qRstMsg->noLevels;
-    logReader->queryCondition.noTypes = qRstMsg->noTypes;
-    logReader->queryCondition.nNoDomain = qRstMsg->nNoDomain;
-    logReader->queryCondition.nNoTag = qRstMsg->nNoTag;
     for (int i = 0; i < qRstMsg->nNoDomain; i++) {
         logReader->queryCondition.noDomains[i] = qRstMsg->noDomains[i];
     }
@@ -431,7 +428,6 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
             case LOG_QUERY_REQUEST:
                 qRstMsg = (LogQueryRequest*) g_tempBuffer;
                 SetCondition(logReader, qRstMsg);
-                SetExclusion(logReader, qRstMsg);
                 HandleLogQueryRequest(logReader, hilogBuffer);
                 break;
             case NEXT_REQUEST:
