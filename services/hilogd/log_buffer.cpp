@@ -35,6 +35,9 @@ using namespace std;
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
 static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {1048576, 1048576, 1048576, 1048576};
+const int DOMAIN_STRICT_MASK = 0xd000000;
+const int DOMAIN_FUZZY_MASK = 0xdffff;
+const int DOMAIN_MODULE_BITS = 8;
 
 HilogBuffer::HilogBuffer()
 {
@@ -52,6 +55,7 @@ HilogBuffer::~HilogBuffer() {}
 
 size_t HilogBuffer::Insert(const HilogMsg& msg)
 {
+    printf("insert: %s\n", CONTENT_PTR((&msg)));
     size_t eleSize = CONTENT_LEN((&msg)); /* include '\0' */
 
     if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || eleSize > MAX_LOG_LEN || eleSize <= 0)) {
@@ -335,26 +339,22 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
      * strict mode: 0xdxxxxxx   (full)
      * fuzzy mode: 0xdxxxx      (using last 2 digits of full domain as mask)
      */
-    const int DOMAIN_STRICT_MASK = 0xd000000;
-    const int DOMAIN_FUZZY_MASK = 0xdffff;
-    const int DOMAIN_MODULE_BITS = 8;
     
     // domain exclusion
     if (reader->queryCondition.nNoDomain != 0) {
         for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
-            if (((reader->queryCondition.noDomains[i] >= DOMAIN_STRICT_MASK && reader->queryCondition.noDomains[i] == reader->readPos->domain) ||
-                (reader->queryCondition.noDomains[i] <= DOMAIN_FUZZY_MASK &&
-                reader->queryCondition.noDomains[i] == (reader->readPos->domain >> DOMAIN_MODULE_BITS)))) {
+            uint32_t noDomains = reader->queryCondition.noDomains[i];
+            if (((noDomains >= DOMAIN_STRICT_MASK && noDomains == reader->readPos->domain) ||
+                (noDomains <= DOMAIN_FUZZY_MASK && noDomains == (reader->readPos->domain >> DOMAIN_MODULE_BITS))))
                 return false;
-            }
         }
     }
     int ret = 0;
     if (reader->queryCondition.nDomain > 0) {
         for (int i = 0; i < reader->queryCondition.nDomain; i++) {
-            if (!((reader->queryCondition.domains[i] >= DOMAIN_STRICT_MASK && reader->queryCondition.domains[i] != reader->readPos->domain) ||
-                (reader->queryCondition.domains[i] <= DOMAIN_FUZZY_MASK &&
-                reader->queryCondition.domains[i] != (reader->readPos->domain >> DOMAIN_MODULE_BITS)))) {
+            uint32_t domains = reader->queryCondition.domains[i];
+            if (!((domains >= DOMAIN_STRICT_MASK && domains != reader->readPos->domain) ||
+                (domains <= DOMAIN_FUZZY_MASK && domains != (reader->readPos->domain >> DOMAIN_MODULE_BITS)))) {
                 ret = 1;
                 break;
             }
@@ -370,9 +370,7 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
         // exclusion check first
         if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.noTypes)) != 0) ||
             (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0))
-        ) {
-            return false;
-        }
+        ) return false;
         
         if (reader->queryCondition.nNoTag > 0) {
             for (int i = 0; i < reader->queryCondition.nNoTag; i++) {

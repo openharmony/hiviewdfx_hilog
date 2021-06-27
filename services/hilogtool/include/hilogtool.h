@@ -12,13 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef HILOGTOOL_H
 #define HILOGTOOL_H
 
 namespace OHOS {
 namespace HiviewDFX {
-
 typedef struct {
     uint16_t noBlockMode;
     uint8_t nDomain;
@@ -60,7 +58,6 @@ typedef struct {
     std::string pidArgs;
     std::string algorithmArgs;
 }  HilogArgs;
-
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif 
