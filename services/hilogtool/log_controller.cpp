@@ -154,23 +154,11 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     logQueryRequest.types = context->types;
     logQueryRequest.nDomain = context->nDomain;
     logQueryRequest.nTag = context->nTag;
-    if (context->domainArgs != "") {
-        vector<string> vecLogDomain;
-        Split(context->domainArgs, " ", vecLogDomain);
-        int nDomain = 0;
-        for (auto s : vecLogDomain) {
-            if (s == " ") continue;
-            std::istringstream(s) >> std::hex >> logQueryRequest.domains[nDomain++];
-        }
+    for (int i = 0; i < context->nDomain; i++) {
+        std::istringstream(context->domains[i]) >> std::hex >> logQueryRequest.domains[i];
     }
-    if (context->tagArgs != "") {
-        vector<string> vecTagDomain;
-        Split(context->tagArgs, " ", vecTagDomain);
-        int nTag = 0;
-        for (auto s : vecTagDomain) {
-            if (s == " ") continue;
-            std::istringstream(s) >> std::hex >> logQueryRequest.tags[nTag++];
-        }
+    for (int i = 0; i < context->nTag; i++) {
+        std::istringstream(context->tags[i]) >> std::hex >> logQueryRequest.tags[i];
     }
     logQueryRequest.timeBegin = context->beginTime;
     logQueryRequest.timeEnd = context->endTime;

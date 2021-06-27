@@ -376,8 +376,8 @@ int HilogEntry(int argc, char* argv[])
                                 context.noDomains[context.nNoDomain++] = s;
                             }
                         } else {
+                            context.domains[context.nDomain++] = domains;
                             context.domainArgs += (domains + " ");
-                            context.nDomain++;
                         }
                     } else {
                         break;
@@ -409,8 +409,8 @@ int HilogEntry(int argc, char* argv[])
                                 context.noTags[context.nNoTag++] = s;
                             }
                         } else {
+                            context.tags[context.nTag++] = tags;
                             context.tagArgs += (tags + " ");
-                            context.nTag++;
                         }
                     } else {
                         break;
