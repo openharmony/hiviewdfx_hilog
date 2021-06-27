@@ -33,7 +33,6 @@ class HilogBuffer;
 #define TYPE_PERSISTER 2
 
 using QueryCondition = struct QueryCondition {
-    uint8_t exclude = 0;
     uint8_t nDomain = 0;
     uint8_t nNoDomain = 0;
     uint8_t nTag = 0;
@@ -56,7 +55,6 @@ public:
     std::list<HilogData>::iterator lastPos;
     std::list<HilogData> oldData;
     QueryCondition queryCondition;
-    bool exclude = false;
     std::unique_ptr<Socket> hilogtoolConnectSocket;
     bool isNotified;
 

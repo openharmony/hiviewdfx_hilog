@@ -255,7 +255,6 @@ int HilogEntry(int argc, char* argv[])
                     indexType++;
                     if (!strstr(types.c_str(), "-")) {
                         if (types.front() == '^') {
-                            context.exclude = 1;
                             regex delimiter(","); // whitespace
                             vector<string> v(sregex_token_iterator(types.begin() + 1, types.end(), delimiter, -1),
                                              sregex_token_iterator());
@@ -278,7 +277,6 @@ int HilogEntry(int argc, char* argv[])
                     indexLevel++;
                     if (!strstr(levels.c_str(), "-")) {
                         if (levels.front() == '^') {
-                            context.exclude = 1;
                             regex delimiter(","); // whitespace
                             vector<string> v(sregex_token_iterator(levels.begin() + 1, levels.end(), delimiter, -1),
                                              sregex_token_iterator());
@@ -371,7 +369,6 @@ int HilogEntry(int argc, char* argv[])
                     indexDomain++;
                     if (!strstr(domains.c_str(), "-")) {
                         if (domains.front() == '^') {
-                            context.exclude = 1;
                             std::regex delimiter(","); // whitespace
                             std::vector<std::string> v(std::sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
                                                        std::sregex_token_iterator());
@@ -405,7 +402,6 @@ int HilogEntry(int argc, char* argv[])
                     indexTag++;
                     if (!strstr(tags.c_str(), "-")) {
                         if (tags.front() == '^') {
-                            context.exclude = 1;
                             std::regex delimiter(","); // whitespace
                             std::vector<std::string> v(std::sregex_token_iterator(tags.begin() + 1, tags.end(), delimiter, -1),
                                                        std::sregex_token_iterator());
