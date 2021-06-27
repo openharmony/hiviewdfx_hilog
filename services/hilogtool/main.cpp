@@ -105,6 +105,10 @@ static void Helper()
     "                     zone       display the time zone.\n"
     "  -b <loglevel>, --baselevel=<loglevel>\n"
     "                     set loggable level.\n"
+    "  \n  Types, levels, domains, tags support exclusion query.\n"
+    "  Exclusion query can be done with parameters starting with \"^\" and delimiter \",\".\n"
+    "  Example: \"-t ^core,app\" excludes logs with types core and app.\n"
+    "  Could be used along with other parameters.\n"
     );
 }
 
