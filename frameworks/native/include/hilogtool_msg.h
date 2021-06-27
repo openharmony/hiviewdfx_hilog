@@ -101,7 +101,6 @@ typedef struct {
 
 typedef struct {
     MessageHeader header;
-    uint8_t exclude;
     uint8_t nDomain;
     uint8_t nNoDomain;
     uint8_t nTag;
@@ -327,7 +326,6 @@ typedef struct {
 
 typedef struct {
     uint16_t noBlockMode;
-    uint8_t exclude;
     uint8_t nDomain;
     uint8_t nNoDomain;
     uint8_t nTag;

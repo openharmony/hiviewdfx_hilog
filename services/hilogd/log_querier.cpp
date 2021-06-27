@@ -94,10 +94,9 @@ LogPersisterRotator* MakeRotator(LogPersistStartMsg& pLogPersistStartMsg)
     };
 }
 
-void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer* buffer, bool exclude = false)
+void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
 {
     logReader->SetCmd(LOG_QUERY_RESPONSE);
-    logReader->exclude = exclude;
     buffer->AddLogReader(logReader);
     buffer->Query(logReader);
 }
@@ -407,7 +406,6 @@ inline void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryReq
 
 inline void SetExclusion(std::shared_ptr<LogReader> logReader, const LogQueryRequest* qRstMsg)
 {
-    logReader->queryCondition.exclude = 1;
     logReader->queryCondition.noLevels = qRstMsg->noLevels;
     logReader->queryCondition.noTypes = qRstMsg->noTypes;
     logReader->queryCondition.nNoDomain = qRstMsg->nNoDomain;
@@ -433,12 +431,8 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
             case LOG_QUERY_REQUEST:
                 qRstMsg = (LogQueryRequest*) g_tempBuffer;
                 SetCondition(logReader, qRstMsg);
-                if (qRstMsg->exclude == 1) {
-                    SetExclusion(logReader, qRstMsg);
-                } else {
-                    logReader->queryCondition.exclude = 0;
-                }
-                HandleLogQueryRequest(logReader, hilogBuffer, logReader->queryCondition.exclude);
+                SetExclusion(logReader, qRstMsg);
+                HandleLogQueryRequest(logReader, hilogBuffer);
                 break;
             case NEXT_REQUEST:
                 nRstMsg = (NextRequest*) g_tempBuffer;
