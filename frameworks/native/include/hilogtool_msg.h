@@ -101,14 +101,15 @@ typedef struct {
 
 typedef struct {
     MessageHeader header;
-    uint8_t exclude : 2;
-    uint8_t nDomain : 3;
-    uint8_t nNoDomain : 3;
-    uint8_t nTag : 4;
-    uint8_t nNoTag : 4;
+    uint8_t exclude;
+    uint8_t nDomain;
+    uint8_t nNoDomain;
+    uint8_t nTag;
+    uint8_t nNoTag;
     uint8_t levels;
     uint16_t types;
     uint32_t domains[MAX_DOMAINS];
+    char tags[MAX_TAGS][MAX_TAG_LEN];
     uint32_t timeBegin;
     uint32_t timeEnd;
     uint16_t logCount;
@@ -326,11 +327,11 @@ typedef struct {
 
 typedef struct {
     uint16_t noBlockMode;
-    uint8_t exclude : 2;
-    uint8_t nDomain : 3;
-    uint8_t nNoDomain: 3;
-    uint8_t nTag : 4;
-    uint8_t nNoTag: 4;
+    uint8_t exclude;
+    uint8_t nDomain;
+    uint8_t nNoDomain;
+    uint8_t nTag;
+    uint8_t nNoTag;
     uint16_t types;
     uint16_t levels;
     uint16_t headLines;

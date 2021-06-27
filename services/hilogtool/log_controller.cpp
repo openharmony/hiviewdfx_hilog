@@ -153,6 +153,7 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
     logQueryRequest.nDomain = context->nDomain;
+    logQueryRequest.nTag = context->nTag;
     if (context->domainArgs != "") {
         vector<string> vecLogDomain;
         Split(context->domainArgs, " ", vecLogDomain);
@@ -160,6 +161,15 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
         for (auto s : vecLogDomain) {
             if (s == " ") continue;
             std::istringstream(s) >> std::hex >> logQueryRequest.domains[nDomain++];
+        }
+    }
+    if (context->tagArgs != "") {
+        vector<string> vecTagDomain;
+        Split(context->tagArgs, " ", vecTagDomain);
+        int nTag = 0;
+        for (auto s : vecTagDomain) {
+            if (s == " ") continue;
+            std::istringstream(s) >> std::hex >> logQueryRequest.tags[nTag++];
         }
     }
     logQueryRequest.timeBegin = context->beginTime;
