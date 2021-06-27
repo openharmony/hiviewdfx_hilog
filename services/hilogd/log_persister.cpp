@@ -175,10 +175,10 @@ void LogPersister::SetBufferOffset(int off)
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 {
-    char buffer[MAX_LOG_LEN*2];
+    char buffer[MAX_LOG_LEN * 2];
     HilogShowFormatBuffer showBuffer;
-    HilogData* dataDeepCopy = new HilogData[MAX_LOG_LEN*2];
-    memcpy_s(dataDeepCopy, MAX_LOG_LEN*2, data, MAX_LOG_LEN*2);
+    HilogData* dataDeepCopy = new HilogData[MAX_LOG_LEN * 2];
+    memcpy_s(dataDeepCopy, MAX_LOG_LEN*2, data, MAX_LOG_LEN * 2);
     showBuffer.level = dataDeepCopy->level;
     showBuffer.pid = dataDeepCopy->pid;
     showBuffer.tid = dataDeepCopy->tid;
@@ -214,23 +214,27 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 
 bool LogPersister::writeUnCompressedBuffer(HilogData *data)
 {
-    list<string> persistList;
-    int listSize = GenPersistLogHeader(data, persistList);
+    int listSize = persistList.size();
+
+    if (persistList.empty()) {
+        listSize = GenPersistLogHeader(data, persistList);    
+    }
     while (listSize--) {
         string header = persistList.front();
-        persistList.pop_front();
         uint16_t headerLen = header.length();
         uint16_t size = headerLen + 1;
         uint16_t orig_offset = buffer->offset;
         int r = 0;
         if (buffer->offset + size > MAX_PERSISTER_BUFFER_SIZE)
             return false;
+        
         r = memcpy_s(buffer->content + buffer->offset, MAX_PERSISTER_BUFFER_SIZE - buffer->offset,
             header.c_str(), headerLen);
         if (r != 0) {
             SetBufferOffset(orig_offset);
             return true;
         }
+        persistList.pop_front();
         SetBufferOffset(buffer->offset + headerLen);
         buffer->content[buffer->offset] = '\n';
         SetBufferOffset(buffer->offset + 1);
