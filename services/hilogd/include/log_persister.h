@@ -79,6 +79,7 @@ private:
     FILE *fdinfo;
     int fd = -1;
     LogCompress *LogCompress;
+    list<string> persistList;
 };
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList);

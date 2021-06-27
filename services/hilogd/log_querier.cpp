@@ -132,7 +132,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     }
     string logPersisterPath;
     if (IsValidFileName(string(pLogPersistStartMsg->filePath)) == true) {
-        logPersisterPath = strlen(pLogPersistStartMsg->filePath) == 0 ? (g_logPersisterDir + "hilog")
+        logPersisterPath = (strlen(pLogPersistStartMsg->filePath) == 0) ? (g_logPersisterDir + "hilog")
             : (g_logPersisterDir + string(pLogPersistStartMsg->filePath));
     } else {
         cout << "FileName is not valid!" << endl;
