@@ -398,6 +398,9 @@ inline void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryReq
     for (int i = 0; i < qRstMsg->nDomain; i++) {
         logReader->queryCondition.domains[i] = qRstMsg->domains[i];
     }
+    for (int i = 0; i < qRstMsg->nTag; i++) {
+        logReader->queryCondition.tags[i] = qRstMsg->tags[i];
+    }
     logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
     logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
 }

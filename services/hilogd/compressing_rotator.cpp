@@ -17,7 +17,7 @@
 
 #include <unistd.h>
 #include <zlib.h>
-
+#include <memory>
 #include <iostream>
 #include <sstream>
 namespace OHOS {

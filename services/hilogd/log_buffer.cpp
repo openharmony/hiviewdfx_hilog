@@ -340,7 +340,6 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
     const int DOMAIN_MODULE_BITS = 8;
     
     // domain exclusion
-    int ret = 0;
     if ((reader->queryCondition.exclude == 1) && (reader->queryCondition.nNoDomain != 0)) {
         for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
             if (((reader->queryCondition.noDomains[i] >= DOMAIN_STRICT_MASK && reader->queryCondition.noDomains[i] == reader->readPos->domain) ||
@@ -350,6 +349,7 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
             }
         }
     }
+    int ret = 0;
     if (reader->queryCondition.nDomain > 0) {
         for (int i = 0; i < reader->queryCondition.nDomain; i++) {
             if (!((reader->queryCondition.domains[i] >= DOMAIN_STRICT_MASK && reader->queryCondition.domains[i] != reader->readPos->domain) ||
@@ -383,6 +383,15 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
         
         if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) != 0) &&
             (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) != 0)) {
+                if (reader->queryCondition.nTag > 0) {
+                    for (int i = 0; i < reader->queryCondition.nTag; i++) {
+                        if (reader->readPos->tag == reader->queryCondition.tags[i]) {
+                            ret = 1;
+                            break;
+                        }
+                    }
+                    if (ret == 0) return false;
+                }
                 return true;
             }
     }
