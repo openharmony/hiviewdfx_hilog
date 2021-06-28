@@ -173,7 +173,7 @@ void LogPersister::SetBufferOffset(int off)
     fprintf(fdinfo, "%04x\n", off);
 }
 
-int GenPersistLogHeader(HilogData *data, list<string>&persistList)
+int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 {
     char buffer[MAX_LOG_SIZE];
     hilogShowFormatBuffer showBuffer;
@@ -200,7 +200,7 @@ int GenPersistLogHeader(HilogData *data, list<string>&persistList)
                 persistList.push_back(buffer);
                 offset += dataPos - dataBegin + 1;
             } else {
-                    offset++;
+                offset++;
             }
             dataBegin = dataPos + 1;
         }
