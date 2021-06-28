@@ -173,22 +173,24 @@ void LogPersister::SetBufferOffset(int off)
     fprintf(fdinfo, "%04x\n", off);
 }
 
-int GenPersistLogHeader(HilogData *data, list<string>& persistList)
+int GenPersistLogHeader(HilogData *data, list<string>&persistList)
 {
-    char buffer[MAX_LOG_LEN * 2];
-    HilogShowFormatBuffer showBuffer;
-    HilogData* dataDeepCopy = new HilogData[MAX_LOG_LEN * 2];
-    memcpy_s(dataDeepCopy, MAX_LOG_LEN*2, data, MAX_LOG_LEN * 2);
-    showBuffer.level = dataDeepCopy->level;
-    showBuffer.pid = dataDeepCopy->pid;
-    showBuffer.tid = dataDeepCopy->tid;
-    showBuffer.domain = dataDeepCopy->domain;
-    showBuffer.tv_sec = dataDeepCopy->tv_sec;
-    showBuffer.tv_nsec = dataDeepCopy->tv_nsec;
-    showBuffer.data = dataDeepCopy->tag;
-    int offset = dataDeepCopy->tag_len;
-    char *dataBegin = dataDeepCopy->content;
-    char *dataPos = dataDeepCopy->content;
+    char buffer[MAX_LOG_SIZE];
+    hilogShowFormatBuffer showBuffer;
+    showBuffer.level = data->level;
+    showBuffer.pid = data->pid;
+    showBuffer.tid = data->tid;
+    showBuffer.domain = data->domain;
+    showBuffer.tv_sec = data->tv_sec;
+    showBuffer.tv_nsec = data->tv_nsec;
+    showBuffer.data = data->tag;
+    int offset = data->tag_len;
+    
+    static char *dataCopy;
+    memcpy_s(&dataCopy, data->len, &data->content, data->len);
+    char *dataBegin = dataCopy;
+    char *dataPos = dataCopy;
+  
     while (*dataPos != 0) {
         if (*dataPos == '\n') {
             if (dataPos != dataBegin) {
@@ -198,14 +200,14 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
                 persistList.push_back(buffer);
                 offset += dataPos - dataBegin + 1;
             } else {
-                offset++;
+                    offset++;
             }
             dataBegin = dataPos + 1;
         }
         dataPos++;
     }
     if (dataPos != dataBegin) {
-        showBuffer.tag_len = dataDeepCopy->tag_len;
+        showBuffer.tag_len = offset;
         HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
         persistList.push_back(buffer);
     }
