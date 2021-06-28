@@ -185,7 +185,7 @@ int HilogEntry(int argc, char* argv[])
     int indexDomain = 0;
     int indexTag = 0;
     bool noLogOption = false;
-
+    regex delimiter(",");
     context.noBlockMode = 0;
     int32_t ret = 0;
     HilogShowFormat showFormat = OFF_SHOWFORMAT;
@@ -260,15 +260,18 @@ int HilogEntry(int argc, char* argv[])
                     indexType++;
                     if (!strstr(types.c_str(), "-")) {
                         if (types.front() == '^') {
-                            regex delimiter(","); // whitespace
                             vector<string> v(sregex_token_iterator(types.begin() + 1, types.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s : v) {
                                 context.noTypes = GetTypes(context, s, true);
                             }
                         } else {
+                            vector<string> v(sregex_token_iterator(types.begin(), types.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s : v) {
+                                context.types = GetTypes(context, s);
+                            }
                             typesArgs += types;
-                            context.types = GetTypes(context, types);
                         }
                     } else {
                         break;
@@ -282,15 +285,18 @@ int HilogEntry(int argc, char* argv[])
                     indexLevel++;
                     if (!strstr(levels.c_str(), "-")) {
                         if (levels.front() == '^') {
-                            regex delimiter(","); // whitespace
                             vector<string> v(sregex_token_iterator(levels.begin() + 1, levels.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s : v) {
                                 context.noLevels = GetLevels(context, s, true);
                             }
                         } else {
+                            vector<string> v(sregex_token_iterator(levels.begin(), levels.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s : v) {
+                                context.levels = GetLevels(context, s);
+                            }
                             levelsArgs += levels;
-                            context.levels = GetLevels(context, levels);
                         }
                     } else {
                         break;
@@ -374,15 +380,18 @@ int HilogEntry(int argc, char* argv[])
                     indexDomain++;
                     if (!strstr(domains.c_str(), "-")) {
                         if (domains.front() == '^') {
-                            regex delimiter(","); // whitespace
                             vector<string> v(sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
                                 context.noDomains[context.nNoDomain++] = s;
                             }
                         } else {
-                            context.domains[context.nDomain++] = domains;
-                            context.domainArgs += (domains + " ");
+                            vector<string> v(sregex_token_iterator(domains.begin(), domains.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s: v) {
+                                context.domains[context.nDomain++] = s;
+                                context.domainArgs += (s + " ");
+                            }
                         }
                     } else {
                         break;
@@ -407,15 +416,18 @@ int HilogEntry(int argc, char* argv[])
                     indexTag++;
                     if (!strstr(tags.c_str(), "-")) {
                         if (tags.front() == '^') {
-                            regex delimiter(","); // whitespace
                             vector<std::string> v(sregex_token_iterator(tags.begin() + 1, tags.end(), delimiter, -1),
                                                   sregex_token_iterator());
                             for (auto s: v) {
                                 context.noTags[context.nNoTag++] = s;
                             }
                         } else {
-                            context.tags[context.nTag++] = tags;
-                            context.tagArgs += (tags + " ");
+                            vector<std::string> v(sregex_token_iterator(tags.begin(), tags.end(), delimiter, -1),
+                                                  sregex_token_iterator());
+                            for (auto s: v) {
+                                context.tags[context.nTag++] = s;
+                                context.tagArgs += (s + " ");
+                            }
                         }
                     } else {
                         break;
