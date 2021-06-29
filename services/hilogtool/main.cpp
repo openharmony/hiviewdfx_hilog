@@ -258,6 +258,11 @@ int HilogEntry(int argc, char* argv[])
                         break;
                     }
                 }
+                if (context.types != 0 && context.noTypes != 0) {
+                    std::cout << "Query condition on both types and excluded types is undefined." << std::endl;
+                    std::cout << "Please remove types or excluded types condition, and try again." << std::endl;
+                    exit(RET_FAIL);
+                }
                 break;
             case 'L':
                 indexLevel = optind - 1;
@@ -281,6 +286,11 @@ int HilogEntry(int argc, char* argv[])
                     } else {
                         break;
                     }
+                }
+                if (context.levels != 0 && context.noLevels != 0) {
+                    std::cout << "Query condition on both levels and excluded levels is undefined." << std::endl;
+                    std::cout << "Please remove levels or excluded levels condition, and try again." << std::endl;
+                    exit(RET_FAIL);
                 }
                 break;
             case 'v':
@@ -383,6 +393,11 @@ int HilogEntry(int argc, char* argv[])
                     } else {
                         break;
                     }
+                }
+                if (context.nTag != 0 && context.nNoTag != 0) {
+                    std::cout << "Query condition on both tags and excluded tags is undefined." << std::endl;
+                    std::cout << "Please remove tags or excluded tags condition, and try again." << std::endl;
+                    exit(RET_FAIL);
                 }
                 break;
             case 'b':
