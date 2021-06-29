@@ -111,19 +111,6 @@ static void Helper()
     );
 }
 
-static std::time_t Str2Time(const std::string& str, bool isDst = false,
-    const std::string& format = "%Y-%m-%d_%H:%M:%S")
-{
-    if (str == "") {
-        return 0;
-    } else {
-        std::tm t = {0};
-        t.tm_isdst = isDst ? 1 : 0;
-        std::istringstream ss(str);
-        ss >> std::get_time(&t, format.c_str());
-        return mktime(&t);
-    }
-}
 static int GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
 {
     uint16_t types = 0;
