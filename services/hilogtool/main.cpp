@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <regex>
 #include <error.h>
 #include <securec.h>
 
@@ -90,8 +91,6 @@ static void Helper()
     "                     query      log file writing task query.\n"
     "                     start      start a log file writing task, see -F -l -n -c for to set more configs,\n"
     "                     stop       stop a log file writing task.\n"
-    "  -M begintime/endtime/domain/tag/level,--multi-query begintime/endtime/domain/tag/level\n"
-    "                      multiple conditions query\n"
     "  -v <format>, --format=<format> options:\n"
     "                     time       display local time.\n"
     "                     color      display colorful logs by log level.i.e. \x1B[38;5;231mVERBOSE\n"
@@ -103,25 +102,23 @@ static void Helper()
     "                     nsec       display time by nano sec.\n"
     "                     year       display the year.\n"
     "                     zone       display the time zone.\n"
+    "  -b <loglevel>, --baselevel=<loglevel>\n"
+    "                     set loggable level.\n"
+    "  \n  Types, levels, domains, tags support exclusion query.\n"
+    "  Exclusion query can be done with parameters starting with \"^\" and delimiter \",\".\n"
+    "  Example: \"-t ^core,app\" excludes logs with types core and app.\n"
+    "  Could be used along with other parameters.\n"
     );
 }
 
-static std::time_t Str2Time(const std::string& str, bool isDst = false,
-    const std::string& format = "%Y-%m-%d_%H:%M:%S")
+static int GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
 {
-    if (str == "") {
-        return 0;
+    uint16_t types = 0;
+    if (exclude) {
+        types = context.noTypes;
     } else {
-        std::tm t = {0};
-        t.tm_isdst = isDst ? 1 : 0;
-        std::istringstream ss(str);
-        ss >> std::get_time(&t, format.c_str());
-        return mktime(&t);
+        types = context.types;
     }
-}
-static int GetTypes(HilogArgs context, string typesArgs)
-{
-    uint16_t types = context.types;
     if (typesArgs ==  "init") {
         types |= 1<<LOG_INIT;
     } else if (typesArgs ==  "app") {
@@ -135,9 +132,14 @@ static int GetTypes(HilogArgs context, string typesArgs)
     return types;
 }
 
-static int GetLevels(HilogArgs context, string levelsArgs)
+static int GetLevels(HilogArgs context, const string& levelsArgs, bool exclude = false)
 {
-    uint16_t levels = context.levels;
+    uint16_t levels = 0;
+    if (exclude) {
+        levels = context.noLevels;
+    } else {
+        levels = context.levels;
+    }
     if (levelsArgs == "D") {
         levels |= 1<<LOG_DEBUG;
     } else if (levelsArgs == "I") {
@@ -159,14 +161,14 @@ int HilogEntry(int argc, char* argv[])
 {
     std::vector<std::string> args;
     HilogArgs context = {sizeof(HilogArgs), 0};
-    string typesArgs;
-    string levelsArgs;
     char recvBuffer[RECV_BUF_LEN] = {0};
     int optIndex = 0;
     int indexLevel = 0;
     int indexType = 0;
+    int indexDomain = 0;
+    int indexTag = 0;
     bool noLogOption = false;
-
+    regex delimiter(",");
     context.noBlockMode = 0;
     int32_t ret = 0;
     HilogShowFormat showFormat = OFF_SHOWFORMAT;
@@ -189,7 +191,6 @@ int HilogEntry(int argc, char* argv[])
             { "tail",        required_argument, nullptr, 'z' },
             { "format",      required_argument, nullptr, 'v' },
             { "buffer-size", required_argument, nullptr, 'G' },
-            { "multi-query", required_argument, nullptr, 'M' },
             { "jobid",       required_argument, nullptr, 'j' },
             { "flowctrl",    required_argument, nullptr, 'Q' },
             { "compress",    required_argument, nullptr, 'c' },
@@ -240,11 +241,27 @@ int HilogEntry(int argc, char* argv[])
                     string types(argv[indexType]);
                     indexType++;
                     if (!strstr(types.c_str(), "-")) {
-                        typesArgs += types;
-                        context.types = GetTypes(context, types);
+                        if (types.front() == '^') {
+                            vector<string> v(sregex_token_iterator(types.begin() + 1, types.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s : v) {
+                                context.noTypes = GetTypes(context, s, true);
+                            }
+                        } else {
+                            vector<string> v(sregex_token_iterator(types.begin(), types.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s : v) {
+                                context.types = GetTypes(context, s);
+                            }
+                        }
                     } else {
                         break;
                     }
+                }
+                if (context.types != 0 && context.noTypes != 0) {
+                    std::cout << "Query condition on both types and excluded types is undefined." << std::endl;
+                    std::cout << "Please remove types or excluded types condition, and try again." << std::endl;
+                    exit(RET_FAIL);
                 }
                 break;
             case 'L':
@@ -253,44 +270,31 @@ int HilogEntry(int argc, char* argv[])
                     string levels(argv[indexLevel]);
                     indexLevel++;
                     if (!strstr(levels.c_str(), "-")) {
-                        levelsArgs += levels;
-                        context.levels = GetLevels(context, levels);
+                        if (levels.front() == '^') {
+                            vector<string> v(sregex_token_iterator(levels.begin() + 1, levels.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s : v) {
+                                context.noLevels = GetLevels(context, s, true);
+                            }
+                        } else {
+                            vector<string> v(sregex_token_iterator(levels.begin(), levels.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s : v) {
+                                context.levels = GetLevels(context, s);
+                            }
+                        }
                     } else {
                         break;
                     }
                 }
+                if (context.levels != 0 && context.noLevels != 0) {
+                    std::cout << "Query condition on both levels and excluded levels is undefined." << std::endl;
+                    std::cout << "Please remove levels or excluded levels condition, and try again." << std::endl;
+                    exit(RET_FAIL);
+                }
                 break;
             case 'v':
                 showFormat = HilogFormat(optarg);
-                break;
-            case 'M':{
-                std::vector<std::string> vecSrc;
-                std::vector<std::string> vecSplit;
-                vecSplit.push_back(optarg);
-                for (auto src : vecSplit) {
-                    vecSplit.clear();
-                    int iRet = MultiQuerySplit(src, '/', vecSplit);
-                    if (iRet == 0) {
-                        int idex = 0;
-                        for (auto it : vecSplit) {
-                            vecSrc.push_back(it.c_str());
-                            idex++;
-                        }
-                    }
-                    if (vecSrc.size() > MULARGS) {
-                        std::cout<<"Invalid parameter"<<endl;
-                        exit(1);
-                    }
-                    context.beginTime = Str2Time(vecSrc[0]);
-                    context.endTime = Str2Time(vecSrc[1]);
-                    context.domain = vecSrc[2];
-                    context.tag = vecSrc[3];
-                    levelsArgs = vecSrc[4];
-                    if (levelsArgs != "") {
-                        context.levels = GetLevels(context, levelsArgs);
-                    }
-                }
-            }
                 break;
             case 'g':
                 context.buffSizeArgs = "query";
@@ -328,7 +332,32 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'D':
-                context.domainArgs = optarg;
+                indexDomain = optind - 1;
+                while (indexDomain < argc) {
+                    if ((context.nDomain >= MAX_DOMAINS) || (context.nNoDomain >= MAX_DOMAINS)) {
+                        break;
+                    }
+                    std::string domains(argv[indexDomain]);
+                    indexDomain++;
+                    if (!strstr(domains.c_str(), "-")) {
+                        if (domains.front() == '^') {
+                            vector<string> v(sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s: v) {
+                                context.noDomains[context.nNoDomain++] = s;
+                            }
+                        } else {
+                            vector<string> v(sregex_token_iterator(domains.begin(), domains.end(), delimiter, -1),
+                                             sregex_token_iterator());
+                            for (auto s: v) {
+                                context.domains[context.nDomain++] = s;
+                                context.domainArgs += (s + " ");
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                }
                 break;
             case 's':
                 context.statisticArgs = "query";
@@ -339,7 +368,37 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'T':
-                context.tagArgs = optarg;
+                indexTag = optind - 1;
+                while (indexTag < argc) {
+                    if ((context.nTag >= MAX_TAGS) || (context.nNoTag >= MAX_TAGS)) {
+                        break;
+                    }
+                    std::string tags(argv[indexTag]);
+                    indexTag++;
+                    if (!strstr(tags.c_str(), "-")) {
+                        if (tags.front() == '^') {
+                            vector<std::string> v(sregex_token_iterator(tags.begin() + 1, tags.end(), delimiter, -1),
+                                                  sregex_token_iterator());
+                            for (auto s: v) {
+                                context.noTags[context.nNoTag++] = s;
+                            }
+                        } else {
+                            vector<std::string> v(sregex_token_iterator(tags.begin(), tags.end(), delimiter, -1),
+                                                  sregex_token_iterator());
+                            for (auto s: v) {
+                                context.tags[context.nTag++] = s;
+                                context.tagArgs += (s + " ");
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                if (context.nTag != 0 && context.nNoTag != 0) {
+                    std::cout << "Query condition on both tags and excluded tags is undefined." << std::endl;
+                    std::cout << "Please remove tags or excluded tags condition, and try again." << std::endl;
+                    exit(RET_FAIL);
+                }
                 break;
             case 'b':
                 context.logLevelArgs = optarg;
@@ -369,10 +428,10 @@ int HilogEntry(int argc, char* argv[])
         exit(-1);
     }
 
-    if (typesArgs == "") {
+    if (context.types == 0) {
         context.types = DEFAULT_LOG_TYPE;
     }
-    if (levelsArgs == "") {
+    if (context.levels == 0) {
         context.levels = DEFAULT_LOG_LEVEL;
     }
     if (noLogOption) {
@@ -459,6 +518,10 @@ int HilogEntry(int argc, char* argv[])
         }
     } else {
         LogQueryRequestOp(controller, &context);
+        context.nDomain = 0;
+        context.nNoDomain = 0;
+        context.nTag = 0;
+        context.nNoTag = 0;
     }
 
     memset_s(recvBuffer, sizeof(recvBuffer), 0, sizeof(recvBuffer));

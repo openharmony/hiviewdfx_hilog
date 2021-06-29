@@ -101,12 +101,19 @@ typedef struct {
 
 typedef struct {
     MessageHeader header;
+    uint8_t nDomain;
+    uint8_t nNoDomain;
+    uint8_t nTag;
+    uint8_t nNoTag;
     uint8_t levels;
     uint16_t types;
-    uint32_t domain;
-    uint32_t timeBegin;
-    uint32_t timeEnd;
+    uint32_t domains[MAX_DOMAINS];
+    char tags[MAX_TAGS][MAX_TAG_LEN];
     uint16_t logCount;
+    uint8_t noLevels;
+    uint16_t noTypes;
+    uint32_t noDomains[MAX_DOMAINS];
+    char noTags[MAX_TAGS][MAX_TAG_LEN];
 } LogQueryRequest;
 
 typedef struct {
@@ -313,38 +320,5 @@ typedef struct {
     std::string tagStr;
     std::string pidStr;
 } SetPropertyParam;
-
-
-typedef struct {
-    uint16_t noBlockMode;
-    uint16_t types;
-    uint16_t levels;
-    uint16_t headLines;
-    uint16_t tailLines;
-    time_t beginTime;
-    time_t endTime;
-    std::string domain;
-    std::string tag;
-    std::string regexArgs;
-    std::string buffSizeArgs;
-    std::string logFileCtrlArgs;
-    std::string compressArgs;
-    std::string fileSizeArgs;
-    std::string fileNumArgs;
-    std::string filePathArgs;
-    std::string fileNameArgs;
-    std::string jobIdArgs;
-    std::string personalArgs;
-    std::string logClearArgs;
-    std::string logTypeArgs;
-    std::string domainArgs;
-    std::string statisticArgs;
-    std::string tagArgs;
-    std::string logLevelArgs;
-    std::string flowSwitchArgs;
-    std::string flowQuotaArgs;
-    std::string pidArgs;
-    std::string algorithmArgs;
-}  HilogArgs;
 
 #endif /* HILOGTOOL_MSG_H */

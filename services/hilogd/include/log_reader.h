@@ -33,11 +33,18 @@ class HilogBuffer;
 #define TYPE_PERSISTER 2
 
 using QueryCondition = struct QueryCondition {
+    uint8_t nDomain = 0;
+    uint8_t nNoDomain = 0;
+    uint8_t nTag = 0;
+    uint8_t nNoTag = 0;
     uint16_t levels = 0;
     uint16_t types = 0;
-    uint32_t domain = 0;
-    uint32_t timeBegin = 0;
-    uint32_t timeEnd = 0;
+    uint32_t domains[MAX_DOMAINS];
+    std::string tags[MAX_TAGS];
+    uint8_t noLevels = 0;
+    uint16_t noTypes = 0;
+    uint32_t noDomains[MAX_DOMAINS];
+    std::string noTags[MAX_TAGS];
 };
 
 class LogReader : public std::enable_shared_from_this<LogReader> {
