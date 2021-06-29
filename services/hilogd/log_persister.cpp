@@ -213,6 +213,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
         HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
         persistList.push_back(buffer);
     }
+    free(dataCopy);
     return persistList.size();
 }
 
