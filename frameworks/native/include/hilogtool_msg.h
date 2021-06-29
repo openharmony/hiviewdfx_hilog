@@ -109,8 +109,6 @@ typedef struct {
     uint16_t types;
     uint32_t domains[MAX_DOMAINS];
     char tags[MAX_TAGS][MAX_TAG_LEN];
-    uint32_t timeBegin;
-    uint32_t timeEnd;
     uint16_t logCount;
     uint8_t noLevels;
     uint16_t noTypes;

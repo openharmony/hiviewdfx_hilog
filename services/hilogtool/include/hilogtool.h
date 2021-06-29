@@ -27,8 +27,6 @@ typedef struct {
     uint16_t levels;
     uint16_t headLines;
     uint16_t tailLines;
-    time_t beginTime;
-    time_t endTime;
     std::string domain; // domain recv
     std::string tag; // tag recv
     std::string domains[MAX_DOMAINS]; // domains send

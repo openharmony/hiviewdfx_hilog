@@ -332,7 +332,6 @@ int32_t HilogBuffer::ClearStatisticInfoByDomain(uint32_t domain)
 
 bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
 {
-    // domain, timeBegin & timeEnd are zero when not indicated
     // domain condition
 
     /* patterns:
@@ -362,35 +361,29 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
         if (ret == 0) return false;
         ret = 0;
     }
-    // time condition
-    if ((reader->queryCondition.timeBegin == 0 && reader->queryCondition.timeEnd == 0) ||
-        ((reader->readPos->tv_sec >= reader->queryCondition.timeBegin) &&
-        (reader->readPos->tv_sec <= reader->queryCondition.timeEnd))) {
-        // type and level condition
-        // exclusion check first
-        if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.noTypes)) != 0) ||
-            (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0))
-        ) return false;
-        
-        if (reader->queryCondition.nNoTag > 0) {
-            for (int i = 0; i < reader->queryCondition.nNoTag; i++) {
-                if (reader->readPos->tag == reader->queryCondition.noTags[i]) return false;
-            }
+    
+    // type and level condition
+    // exclusion check first
+    if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.noTypes)) != 0) ||
+        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0)))
+        return false;
+    if (reader->queryCondition.nNoTag > 0) {
+        for (int i = 0; i < reader->queryCondition.nNoTag; i++) {
+            if (reader->readPos->tag == reader->queryCondition.noTags[i]) return false;
         }
-        
-        if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) != 0) &&
-            (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) != 0)) {
-                if (reader->queryCondition.nTag > 0) {
-                    for (int i = 0; i < reader->queryCondition.nTag; i++) {
-                        if (reader->readPos->tag == reader->queryCondition.tags[i]) {
-                            ret = 1;
-                            break;
-                        }
-                    }
-                    if (ret == 0) return false;
+    }
+    if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) != 0) &&
+        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) != 0)) {
+        if (reader->queryCondition.nTag > 0) {
+            for (int i = 0; i < reader->queryCondition.nTag; i++) {
+                if (reader->readPos->tag == reader->queryCondition.tags[i]) {
+                    ret = 1;
+                    break;
                 }
-                return true;
             }
+            if (ret == 0) return false;
+        }
+        return true;
     }
     return false;
 }
