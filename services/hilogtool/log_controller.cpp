@@ -38,7 +38,6 @@ const int MSG_MAX_LEN = 2048;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
 const uint32_t DEFAULT_JOBID = 1;
-
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
@@ -391,13 +390,12 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
-            if (logPersistParam->filePathStr == "") {
-                logPersistParam->filePathStr = "/data/misc/logd/log_" + to_string(time(nullptr));
-            }
-            if (logPersistParam->filePathStr.size() > FILE_PATH_MAX_LEN) {
+            if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 return RET_FAIL;
             }
-            ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->filePathStr.c_str());
+            if (logPersistParam->fileNameStr != " ") {
+                ret += strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersistParam->fileNameStr.c_str());
+            }
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;

@@ -20,7 +20,6 @@
 #include <cstdlib>
 #include <string>
 
-
 static const int HILOG_PROP_VALUE_MAX = 92;
 
 using PropType = enum {

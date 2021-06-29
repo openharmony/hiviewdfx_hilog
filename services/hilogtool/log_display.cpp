@@ -398,12 +398,12 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
-void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, vector<string>& tailBuffer)
+void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, 
+    vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {
         return;
     }
-
     if (data->length == 0) {
 #ifdef DEBUG
         cout << "Log content null" << endl;
@@ -435,7 +435,6 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
             return;
         }
     }
-
     char buffer[MAX_LOG_LEN * 2];
     showBuffer.level = data->level;
     showBuffer.pid = data->pid;
@@ -444,14 +443,42 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     showBuffer.tag_len = data->tag_len;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-    showBuffer.data = data->data;
-    HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
 
-    if (context->tailLines) {
-        tailBuffer.emplace_back(buffer);
-        return;
+    int offset = data->tag_len;
+    
+    char *dataBegin = data->data + offset;
+    char *dataPos = data->data + offset;
+    while (*dataPos != 0) {
+        if (*dataPos == '\n') {
+            if (dataPos != dataBegin) {
+                *dataPos = 0;
+                showBuffer.tag_len = offset;
+                showBuffer.data = data->data;
+                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
+                if (context->tailLines) {
+                    tailBuffer.emplace_back(buffer);
+                    return;
+                } else {
+                    cout << buffer << endl;
+                }
+                offset += dataPos - dataBegin + 1;
+            } else {
+                offset++;
+            }
+            dataBegin = dataPos + 1;
+        }
+        dataPos++;
     }
-    cout << buffer << endl;
+    if (dataPos != dataBegin) {
+        showBuffer.data = data->data;
+        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
+        if (context->tailLines) {
+            tailBuffer.emplace_back(buffer);
+            return;
+        } else {
+            cout << buffer << endl;
+        }
+    }
     return;
 }
 } // namespace HiviewDFX
