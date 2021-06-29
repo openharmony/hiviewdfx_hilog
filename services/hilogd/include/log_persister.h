@@ -59,7 +59,7 @@ public:
     uint8_t getType() const;
     std::string getPath();
     LogPersisterBuffer *buffer;
-
+    
 private:
     uint32_t id;
     std::string path;
