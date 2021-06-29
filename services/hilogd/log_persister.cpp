@@ -175,8 +175,8 @@ void LogPersister::SetBufferOffset(int off)
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 {
-    char buffer[MAX_LOG_SIZE];
-    hilogShowFormatBuffer showBuffer;
+    char buffer[MAX_LOG_LEN];
+    HilogShowFormatBuffer showBuffer;
     showBuffer.level = data->level;
     showBuffer.pid = data->pid;
     showBuffer.tid = data->tid;
