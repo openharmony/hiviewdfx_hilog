@@ -30,10 +30,6 @@ HilogBuffer* LogReader::hilogBuffer = nullptr;
 LogReader::LogReader()
 {
     oldData = {};
-    queryCondition.levels = 0;
-    queryCondition.types = 0;
-    queryCondition.timeBegin = 0;
-    queryCondition.timeEnd = 0;
     isNotified = false;
 }
 

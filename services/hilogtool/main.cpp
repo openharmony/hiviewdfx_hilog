@@ -91,8 +91,6 @@ static void Helper()
     "                     query      log file writing task query.\n"
     "                     start      start a log file writing task, see -F -l -n -c for to set more configs,\n"
     "                     stop       stop a log file writing task.\n"
-    "  -M begintime/endtime/domain/tag/level,--multi-query begintime/endtime/domain/tag/level\n"
-    "                      multiple conditions query\n"
     "  -v <format>, --format=<format> options:\n"
     "                     time       display local time.\n"
     "                     color      display colorful logs by log level.i.e. \x1B[38;5;231mVERBOSE\n"
@@ -208,7 +206,6 @@ int HilogEntry(int argc, char* argv[])
             { "tail",        required_argument, nullptr, 'z' },
             { "format",      required_argument, nullptr, 'v' },
             { "buffer-size", required_argument, nullptr, 'G' },
-            { "multi-query", required_argument, nullptr, 'M' },
             { "jobid",       required_argument, nullptr, 'j' },
             { "flowctrl",    required_argument, nullptr, 'Q' },
             { "compress",    required_argument, nullptr, 'c' },
@@ -305,35 +302,6 @@ int HilogEntry(int argc, char* argv[])
                 break;
             case 'v':
                 showFormat = HilogFormat(optarg);
-                break;
-            case 'M':{
-                std::vector<std::string> vecSrc;
-                std::vector<std::string> vecSplit;
-                vecSplit.push_back(optarg);
-                for (auto src : vecSplit) {
-                    vecSplit.clear();
-                    int iRet = MultiQuerySplit(src, '/', vecSplit);
-                    if (iRet == 0) {
-                        int idex = 0;
-                        for (auto it : vecSplit) {
-                            vecSrc.push_back(it.c_str());
-                            idex++;
-                        }
-                    }
-                    if (vecSrc.size() > MULARGS) {
-                        std::cout<<"Invalid parameter"<<endl;
-                        exit(1);
-                    }
-                    context.beginTime = Str2Time(vecSrc[0]);
-                    context.endTime = Str2Time(vecSrc[1]);
-                    context.domain = vecSrc[2];
-                    context.tag = vecSrc[3];
-                    levelsArgs = vecSrc[4];
-                    if (levelsArgs != "") {
-                        context.levels = GetLevels(context, levelsArgs);
-                    }
-                }
-            }
                 break;
             case 'g':
                 context.buffSizeArgs = "query";

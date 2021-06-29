@@ -41,8 +41,6 @@ using QueryCondition = struct QueryCondition {
     uint16_t types = 0;
     uint32_t domains[MAX_DOMAINS];
     std::string tags[MAX_TAGS];
-    uint32_t timeBegin = 0;
-    uint32_t timeEnd = 0;
     uint8_t noLevels = 0;
     uint16_t noTypes = 0;
     uint32_t noDomains[MAX_DOMAINS];
