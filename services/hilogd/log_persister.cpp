@@ -183,19 +183,20 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     showBuffer.domain = data->domain;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-    showBuffer.data = data->tag;
-    int offset = data->tag_len;
-    
-    static char *dataCopy;
-    memcpy_s(&dataCopy, data->len, &data->content, data->len);
-    char *dataBegin = dataCopy;
-    char *dataPos = dataCopy;
   
+    int offset = data->tag_len;
+    char *dataCopy= (char*)calloc(MAX_LOG_LEN, sizeof(char));
+    memcpy_s(dataCopy, offset, data->tag, offset);
+    memcpy_s(dataCopy + offset, data->len, data->content, data->len);
+    showBuffer.data = dataCopy;
+    char *dataBegin = dataCopy + offset;
+    char *dataPos = dataCopy + offset;
     while (*dataPos != 0) {
         if (*dataPos == '\n') {
             if (dataPos != dataBegin) {
                 *dataPos = 0;
                 showBuffer.tag_len = offset;
+                showBuffer.data = dataCopy;
                 HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
                 persistList.push_back(buffer);
                 offset += dataPos - dataBegin + 1;
@@ -208,6 +209,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     }
     if (dataPos != dataBegin) {
         showBuffer.tag_len = offset;
+        showBuffer.data = dataCopy;
         HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
         persistList.push_back(buffer);
     }
