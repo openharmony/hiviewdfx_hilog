@@ -151,15 +151,29 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     memset_s(&logQueryRequest, sizeof(LogQueryRequest), 0, sizeof(LogQueryRequest));
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
-    if (context->domainArgs != "") {
-        std::istringstream(context->domainArgs) >> std::hex >> logQueryRequest.domain;
-        if (logQueryRequest.domain == 0) {
-            std::cout << "Invalid parameter" << std::endl;
-            return;
+    logQueryRequest.nDomain = context->nDomain;
+    logQueryRequest.nTag = context->nTag;
+    for (int i = 0; i < context->nDomain; i++) {
+        std::istringstream(context->domains[i]) >> std::hex >> logQueryRequest.domains[i];
+    }
+    for (int i = 0; i < context->nTag; i++) {
+        std::istringstream(context->tags[i]) >> std::hex >> logQueryRequest.tags[i];
+    }
+    logQueryRequest.noLevels = context->noLevels;
+    logQueryRequest.noTypes = context->noTypes;
+    logQueryRequest.nNoDomain = context->nNoDomain;
+    for (int i = 0; i < context->nNoDomain; i++) {
+        std::istringstream(context->noDomains[i]) >> std::hex >> logQueryRequest.noDomains[i];
+    }
+    for (int i = 0; i < context->nNoTag; i++) {
+        if (context->noTags[i].length() >= MAX_TAG_LEN) {
+            strncpy_s(logQueryRequest.noTags[i], MAX_TAG_LEN,
+                      context->noTags[i].c_str(), MAX_TAG_LEN - 1);
+        } else {
+            strncpy_s(logQueryRequest.noTags[i], context->noTags[i].length() + 1,
+                      context->noTags[i].c_str(), context->noTags[i].length());
         }
     }
-    logQueryRequest.timeBegin = context->beginTime;
-    logQueryRequest.timeEnd = context->endTime;
     SetMsgHead(&logQueryRequest.header, LOG_QUERY_REQUEST, sizeof(LogQueryRequest)-sizeof(MessageHeader));
     logQueryRequest.header.version = 0;
     controller.WriteAll((char*)&logQueryRequest, sizeof(LogQueryRequest));

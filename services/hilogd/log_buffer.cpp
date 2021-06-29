@@ -35,6 +35,9 @@ using namespace std;
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
 static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {1048576, 1048576, 1048576, 1048576};
+const int DOMAIN_STRICT_MASK = 0xd000000;
+const int DOMAIN_FUZZY_MASK = 0xdffff;
+const int DOMAIN_MODULE_BITS = 8;
 
 HilogBuffer::HilogBuffer()
 {
@@ -52,6 +55,7 @@ HilogBuffer::~HilogBuffer() {}
 
 size_t HilogBuffer::Insert(const HilogMsg& msg)
 {
+    printf("insert: %s\n", CONTENT_PTR((&msg)));
     size_t eleSize = CONTENT_LEN((&msg)); /* include '\0' */
 
     if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || eleSize > MAX_LOG_LEN || eleSize <= 0)) {
@@ -328,36 +332,56 @@ int32_t HilogBuffer::ClearStatisticInfoByDomain(uint32_t domain)
 
 bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
 {
-    // domain, timeBegin & timeEnd are zero when not indicated
-    // domain condition
-
-    /* patterns:
+    /* domain patterns:
      * strict mode: 0xdxxxxxx   (full)
      * fuzzy mode: 0xdxxxx      (using last 2 digits of full domain as mask)
      */
-    const int DOMAIN_STRICT_MASK = 0xd000000;
-    const int DOMAIN_FUZZY_MASK = 0xdffff;
-    const int DOMAIN_MODULE_BITS = 8;
-    if ((reader->queryCondition.domain != 0) &&
-        ((reader->queryCondition.domain >= DOMAIN_STRICT_MASK &&
-        reader->queryCondition.domain != reader->readPos->domain) ||
-        (reader->queryCondition.domain <= DOMAIN_FUZZY_MASK &&
-        reader->queryCondition.domain != (reader->readPos->domain >> DOMAIN_MODULE_BITS)))
-    ) {
+    
+    if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) == 0) ||
+        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.types)) == 0)))
+        return false;
+    
+    int ret = 0;
+    if (reader->queryCondition.nDomain > 0) {
+        for (int i = 0; i < reader->queryCondition.nDomain; i++) {
+            uint32_t domains = reader->queryCondition.domains[i];
+            if (!((domains >= DOMAIN_STRICT_MASK && domains != reader->readPos->domain) ||
+                (domains <= DOMAIN_FUZZY_MASK && domains != (reader->readPos->domain >> DOMAIN_MODULE_BITS)))) {
+                ret = 1;
+                break;
+            }
+        }
+        if (ret == 0) return false;
+        ret = 0;
+    }
+    if (reader->queryCondition.nTag > 0) {
+        for (int i = 0; i < reader->queryCondition.nTag; i++) {
+            if (reader->readPos->tag == reader->queryCondition.tags[i]) {
+                ret = 1;
+                break;
+            }
+        }
+        if (ret == 0) return false;
+    }
+    // domain exclusion
+    if (reader->queryCondition.nNoDomain != 0) {
+        for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
+            uint32_t noDomains = reader->queryCondition.noDomains[i];
+            if (((noDomains >= DOMAIN_STRICT_MASK && noDomains == reader->readPos->domain) ||
+                (noDomains <= DOMAIN_FUZZY_MASK && noDomains == (reader->readPos->domain >> DOMAIN_MODULE_BITS))))
+                return false;
+        }
+    }
+    if (reader->queryCondition.nNoTag > 0) {
+        for (int i = 0; i < reader->queryCondition.nNoTag; i++) {
+            if (reader->readPos->tag == reader->queryCondition.noTags[i]) return false;
+        }
+    }
+    if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.noTypes)) != 0) ||
+        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0)) {
         return false;
     }
-
-    // time condition
-    if ((reader->queryCondition.timeBegin == 0 && reader->queryCondition.timeEnd == 0) ||
-        ((reader->readPos->tv_sec >= reader->queryCondition.timeBegin) &&
-        (reader->readPos->tv_sec <= reader->queryCondition.timeEnd))) {
-        // type and level condition
-        if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) != 0) &&
-            (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) != 0)) {
-                return true;
-            }
-    }
-    return false;
+    return true;
 }
 
 void HilogBuffer::ReturnNoLog(std::shared_ptr<LogReader> reader)

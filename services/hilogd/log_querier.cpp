@@ -101,17 +101,17 @@ LogPersisterRotator* MakeRotator(LogPersistStartMsg& pLogPersistStartMsg)
     };
 }
 
-void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
+void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)
 {
     logReader->SetCmd(LOG_QUERY_RESPONSE);
-    buffer->AddLogReader(logReader);
-    buffer->Query(logReader);
+    buffer.AddLogReader(logReader);
+    buffer.Query(logReader);
 }
 
-void HandleNextRequest(std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
+void HandleNextRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)
 {
     logReader->SetCmd(NEXT_RESPONSE);
-    buffer->Query(logReader);
+    buffer.Query(logReader);
 }
 
 void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
@@ -407,6 +407,30 @@ void HandleBufferClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
+void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryRequest& qRstMsg)
+{
+    logReader->queryCondition.levels = qRstMsg.levels;
+    logReader->queryCondition.types = qRstMsg.types;
+    logReader->queryCondition.nDomain = qRstMsg.nDomain;
+    logReader->queryCondition.nTag = qRstMsg.nTag;
+    logReader->queryCondition.noLevels = qRstMsg.noLevels;
+    logReader->queryCondition.noTypes = qRstMsg.noTypes;
+    logReader->queryCondition.nNoDomain = qRstMsg.nNoDomain;
+    logReader->queryCondition.nNoTag = qRstMsg.nNoTag;
+    for (int i = 0; i < qRstMsg.nDomain; i++) {
+        logReader->queryCondition.domains[i] = qRstMsg.domains[i];
+    }
+    for (int i = 0; i < qRstMsg.nTag; i++) {
+        logReader->queryCondition.tags[i] = qRstMsg.tags[i];
+    }
+    for (int i = 0; i < qRstMsg.nNoDomain; i++) {
+        logReader->queryCondition.noDomains[i] = qRstMsg.noDomains[i];
+    }
+    for (int i = 0; i < qRstMsg.nNoTag; i++) {
+        logReader->queryCondition.noTags[i] = qRstMsg.noTags[i];
+    }
+}
+
 void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
 {
     cout << "Start log_querier thread!\n" << std::endl;
@@ -419,17 +443,13 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
         switch (header->msgType) {
             case LOG_QUERY_REQUEST:
                 qRstMsg = (LogQueryRequest*) g_tempBuffer;
-                logReader->queryCondition.levels = qRstMsg->levels;
-                logReader->queryCondition.types = qRstMsg->types;
-                logReader->queryCondition.domain = qRstMsg->domain;
-                logReader->queryCondition.timeBegin = qRstMsg->timeBegin;
-                logReader->queryCondition.timeEnd = qRstMsg->timeEnd;
-                HandleLogQueryRequest(logReader, hilogBuffer);
+                SetCondition(logReader, *qRstMsg);
+                HandleLogQueryRequest(logReader, *hilogBuffer);
                 break;
             case NEXT_REQUEST:
                 nRstMsg = (NextRequest*) g_tempBuffer;
                 if (nRstMsg->sendId == SENDIDA) {
-                    HandleNextRequest(logReader, hilogBuffer);
+                    HandleNextRequest(logReader, *hilogBuffer);
                 }
                 break;
             case MC_REQ_LOG_PERSIST_START:
