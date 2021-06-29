@@ -174,8 +174,6 @@ int HilogEntry(int argc, char* argv[])
 {
     std::vector<std::string> args;
     HilogArgs context = {sizeof(HilogArgs), 0};
-    string typesArgs;
-    string levelsArgs;
     char recvBuffer[RECV_BUF_LEN] = {0};
     int optIndex = 0;
     int indexLevel = 0;
@@ -268,7 +266,6 @@ int HilogEntry(int argc, char* argv[])
                             for (auto s : v) {
                                 context.types = GetTypes(context, s);
                             }
-                            typesArgs += types;
                         }
                     } else {
                         break;
@@ -293,7 +290,6 @@ int HilogEntry(int argc, char* argv[])
                             for (auto s : v) {
                                 context.levels = GetLevels(context, s);
                             }
-                            levelsArgs += levels;
                         }
                     } else {
                         break;
@@ -430,10 +426,10 @@ int HilogEntry(int argc, char* argv[])
         exit(-1);
     }
 
-    if (typesArgs == "") {
+    if (context.types == 0) {
         context.types = DEFAULT_LOG_TYPE;
     }
-    if (levelsArgs == "") {
+    if (context.levels == 0) {
         context.levels = DEFAULT_LOG_LEVEL;
     }
     if (noLogOption) {
