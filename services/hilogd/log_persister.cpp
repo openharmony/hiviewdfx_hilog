@@ -185,7 +185,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     showBuffer.tv_nsec = data->tv_nsec;
   
     int offset = data->tag_len;
-    char *dataCopy = (char*)calloc(MAX_LOG_LEN, sizeof(char));
+    char *dataCopy= (char*)calloc(data->len + offset, sizeof(char));
     memcpy_s(dataCopy, offset, data->tag, offset);
     memcpy_s(dataCopy + offset, data->len, data->content, data->len);
     showBuffer.data = dataCopy;

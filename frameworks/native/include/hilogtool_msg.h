@@ -22,7 +22,7 @@
 #include <time.h>
 #include "hilog_common.h"
 
-#define FILE_PATH_MAX_LEN 100
+#define FILE_PATH_MAX_LEN 1024
 
 typedef enum {
     LOG_QUERY_REQUEST = 0x01,
