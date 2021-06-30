@@ -413,21 +413,12 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
 
     static int printHeadCnt = 0;
     HilogShowFormatBuffer showBuffer;
-    char* tag = data->data;
     char* content = data->data + data->tag_len;
-    char *pStrtol = nullptr;
 
     if (context->headLines) {
         if (printHeadCnt++ >= context->headLines) {
             exit(1);
         }
-    }
-    if ((context->tag != "") && strcmp(tag, context->tag.c_str())) {
-        return;
-    }
-    if ((context->domain != "") && (data->domain & 0xFFFFF) !=
-        std::strtol(context->domain.c_str(), &pStrtol, DOMAIN_NUMBER_BASE)) {
-        return;
     }
     if (context->regexArgs != "") {
         string str = content;
