@@ -107,21 +107,26 @@ uint64_t GetBuffSize(const string& buffSizeStr)
     }
     return buffSize;
 }
-uint16_t GetLogLevel(const string& logLevelStr)
+
+uint16_t GetLogLevel(const std::string& logLevelStr, std::string& logLevel)
 {
-    if (logLevelStr == "debug" || logLevelStr == "DEBUG") {
+    if (logLevelStr == "debug" || logLevelStr == "DEBUG" || logLevelStr == "d" || logLevelStr == "D") {
+        logLevel = "D";
         return LOG_DEBUG;
-    } else if (logLevelStr == "info" || logLevelStr == "INFO") {
+    } else if (logLevelStr == "info" || logLevelStr == "INFO" || logLevelStr == "i" || logLevelStr == "I") {
+        logLevel = "I";
         return LOG_INFO;
-    } else if (logLevelStr == "warn" || logLevelStr == "WARN") {
+    } else if (logLevelStr == "warn" || logLevelStr == "WARN" || logLevelStr == "w" || logLevelStr == "W") {
+        logLevel = "W";
         return LOG_WARN;
-    } else if (logLevelStr == "error" || logLevelStr == "ERROR") {
+    } else if (logLevelStr == "error" || logLevelStr == "ERROR" || logLevelStr == "e" || logLevelStr == "E") {
+        logLevel = "E";
         return LOG_ERROR;
-    } else if (logLevelStr == "fatal" || logLevelStr == "FATAL") {
+    } else if (logLevelStr == "fatal" || logLevelStr == "FATAL" || logLevelStr == "f" || logLevelStr == "F") {
+        logLevel = "F";
         return LOG_FATAL;
-    } else {
-        return 0xffff;
-    }
+    } 
+    return 0xffff;
 }
 
 string SetDefaultLogType(const std::string& logTypeStr)
@@ -464,22 +469,23 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
             if (propertyParm->privateSwitchStr == "on") {
                 PropertySet(key.c_str(), "true");
                 cout << "hilog private formatter is enabled" << endl;
-            }
-            if (propertyParm->privateSwitchStr == "off") {
+            } else if (propertyParm->privateSwitchStr == "off") {
                 PropertySet(key.c_str(), "false");
                 cout << "hilog private formatter is disabled" << endl;
+            } else {
+                return RET_FAIL;
             }
             break;
-
         case OT_LOG_LEVEL:
-            if ((propertyParm->tagStr != "" && propertyParm->domainStr != "") || GetLogLevel(propertyParm->logLevelStr)
-                == 0xffff) {
+            if (propertyParm->tagStr != "" && propertyParm->domainStr != "") {
                 return RET_FAIL;
             } else if (propertyParm->domainStr != "") { // by domain
                 std::string keyPre = GetPropertyName(PROP_DOMAIN_LOG_LEVEL);
                 for (iter = 0; iter < domainNum; iter++) {
                     key = keyPre + vecDomain[iter];
-                    value = to_string(GetLogLevel(propertyParm->logLevelStr));
+                    if (GetLogLevel(propertyParm->logLevelStr, value) == 0xffff) {
+                        continue;
+                    }
                     PropertySet(key.c_str(), value.c_str());
                     cout << "domain " << vecDomain[iter] << " level is set to " << propertyParm->logLevelStr << endl;
                 }
@@ -487,41 +493,42 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 std::string keyPre = GetPropertyName(PROP_TAG_LOG_LEVEL);
                 for (iter = 0; iter < tagNum; iter++) {
                     key = keyPre + vecTag[iter];
-                    value = to_string(GetLogLevel(propertyParm->logLevelStr));
+                    if (GetLogLevel(propertyParm->logLevelStr, value) == 0xffff) {
+                        continue;
+                    }
                     PropertySet(key.c_str(), value.c_str());
                     cout << "tag " << vecTag[iter] << " level is set to " << propertyParm->logLevelStr << endl;
                 }
             } else {
                     key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
-                    value = to_string(GetLogLevel(propertyParm->logLevelStr));
+                    if (GetLogLevel(propertyParm->logLevelStr, value) == 0xffff) {
+                        return RET_FAIL;
+                    }
                     PropertySet(key.c_str(), value.c_str());
                     cout << "global log level is set to " << propertyParm->logLevelStr << endl;
             }
             break;
-
         case OT_FLOW_SWITCH:
             if (propertyParm->flowSwitchStr == "pidon") {
                 key = GetPropertyName(PROP_PROCESS_FLOWCTRL);
                 PropertySet(key.c_str(), "true");
                 cout << "flow control by process is enabled" << endl;
-            }
-            if (propertyParm->flowSwitchStr == "pidoff") {
+            } else if (propertyParm->flowSwitchStr == "pidoff") {
                 key = GetPropertyName(PROP_PROCESS_FLOWCTRL);
                 PropertySet(key.c_str(), "false");
                 cout << "flow control by process is disabled" << endl;
-            }
-            if (propertyParm->flowSwitchStr == "domainon") {
+            } else if (propertyParm->flowSwitchStr == "domainon") {
                 key = GetPropertyName(PROP_DOMAIN_FLOWCTRL);
                 PropertySet(key.c_str(), "true");
                 cout << "flow control by domain is enabled" << endl;
-            }
-            if (propertyParm->flowSwitchStr == "domainoff") {
+            } else if (propertyParm->flowSwitchStr == "domainoff") {
                 key = GetPropertyName(PROP_DOMAIN_FLOWCTRL);
                 PropertySet(key.c_str(), "false");
                 cout << "flow control by domain is disabled" << endl;
+            } else {
+                return RET_FAIL;
             }
             break;
-
         default:
             break;
     }
