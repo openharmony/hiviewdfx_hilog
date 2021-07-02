@@ -55,7 +55,6 @@ HilogBuffer::~HilogBuffer() {}
 
 size_t HilogBuffer::Insert(const HilogMsg& msg)
 {
-    printf("insert: %s\n", CONTENT_PTR((&msg)));
     size_t eleSize = CONTENT_LEN((&msg)); /* include '\0' */
 
     if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || eleSize > MAX_LOG_LEN || eleSize <= 0)) {
@@ -163,7 +162,7 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
     }
     while (reader->readPos != hilogDataList.end()) {
         reader->lastPos = reader->readPos;
-        if (conditionMatch(reader)) {
+        if (ConditionMatch(reader)) {
             reader->SetSendId(SENDIDA);
             reader->WriteData(&*(reader->readPos));
             printLenByType[reader->readPos->type] += strlen(reader->readPos->content);
@@ -330,7 +329,7 @@ int32_t HilogBuffer::ClearStatisticInfoByDomain(uint32_t domain)
     return 0;
 }
 
-bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
+bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
 {
     /* domain patterns:
      * strict mode: 0xdxxxxxx   (full)
@@ -338,7 +337,7 @@ bool HilogBuffer::conditionMatch(std::shared_ptr<LogReader> reader)
      */
     
     if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) == 0) ||
-        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.types)) == 0)))
+        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) == 0)))
         return false;
     
     int ret = 0;
