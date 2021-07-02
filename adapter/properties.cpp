@@ -268,7 +268,7 @@ bool IsDomainSwitchOn()
     return GetSwitchCache(isFirst, switchCache, PROP_DOMAIN_FLOWCTRL, false);
 }
 
-uint16_t GetCacheLevel(char propertyChar) 
+static uint16_t GetCacheLevel(char propertyChar) 
 {
     uint16_t cacheLevel = LOG_LEVEL_MIN;
     switch (propertyChar) {
