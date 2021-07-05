@@ -59,7 +59,7 @@ private:
     uint64_t cacheLenByType[LOG_TYPE_MAX];
     uint64_t droppedByType[LOG_TYPE_MAX];
     uint64_t printLenByType[LOG_TYPE_MAX];
-    bool conditionMatch(std::shared_ptr<LogReader> reader);
+    bool ConditionMatch(std::shared_ptr<LogReader> reader);
     void ReturnNoLog(std::shared_ptr<LogReader> reader);
 };
 } // namespace HiviewDFX
