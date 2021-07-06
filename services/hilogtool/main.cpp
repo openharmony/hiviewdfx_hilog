@@ -65,9 +65,9 @@ static void Helper()
     "                     Reads <type> and prints logs of the specific type,\n"
     "                     which is -t app (application logs) by default.\n"
     "  -D <domain>, --domain=<domain>\n"
-    "                     specify the domain, no more than %d.\n"
+    "                     specify the domain.\n"
     "  -T <tag>, --Tag=<tag>\n"
-    "                     specify the tag, no more than %d.\n"
+    "                     specify the tag.\n"
     "  -c <expr>, --compress=<expr>\n"
     "                     specify compress type of log files.\n"
     "                     0 plain text, 1 stream compression 2 compress per file.\n"
@@ -75,7 +75,7 @@ static void Helper()
     "  -z <n>, --tail=<n> show n lines log on tail.\n"
     "  -G <size>, --buffer-size=<size>\n"
     "                     set hilogd buffer size, use -t to specify log type.\n"
-    "  -P <pid>           specify pid, no more than %d.\n"
+    "  -P <pid>           specify pid .\n"
     "  -e <expr>, --regex=<expr>\n"
     "                     show the logs which match the regular expression,\n"
     "                     <expr> is a regular expression.\n"
@@ -107,8 +107,7 @@ static void Helper()
     "  \n  Types, levels, domains, tags support exclusion query.\n"
     "  Exclusion query can be done with parameters starting with \"^\" and delimiter \",\".\n"
     "  Example: \"-t ^core,app\" excludes logs with types core and app.\n"
-    "  Could be used along with other parameters.\n", 
-    MAX_DOMAINS, MAX_TAGS, MAX_PIDS
+    "  Could be used along with other parameters.\n"
     );
 }
 
@@ -166,7 +165,6 @@ int HilogEntry(int argc, char* argv[])
     int optIndex = 0;
     int indexLevel = 0;
     int indexType = 0;
-    int indexPid = 0;
     int indexDomain = 0;
     int indexTag = 0;
     bool noLogOption = false;
@@ -411,37 +409,7 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 break;
             case 'P':
-                indexPid = optind - 1;
-                while (indexPid < argc) {
-                    if ((context.nPid >= MAX_PIDS) || (context.nNoPid >= MAX_PIDS)) {
-                        break;
-                    }
-                    std::string pids(argv[indexPid]);
-                    indexPid++;
-                    if (!strstr(pids.c_str(), "-")) {
-                        if (pids.front() == '^') {
-                            vector<string> v(sregex_token_iterator(pids.begin() + 1, pids.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s: v) {
-                                context.noPids[context.nNoPid++] = stoul(s);
-                            }
-                        } else {
-                            vector<string> v(sregex_token_iterator(pids.begin(), pids.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s: v) {
-                                context.pids[context.nPid++] = stoul(s);
-                                context.pidArgs += s + " ";
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-                if (context.nPid != 0 && context.nNoPid != 0) {
-                    std::cout << "Query condition on both pid and excluded pid is undefined." << std::endl;
-                    std::cout << "Please remove pid or excluded pid condition, and try again." << std::endl;
-                    exit(RET_FAIL);
-                }
+                context.pidArgs = optarg;
                 break;
             case 'm':
                 context.algorithmArgs = optarg;

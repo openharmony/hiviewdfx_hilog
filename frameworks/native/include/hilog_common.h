@@ -32,7 +32,6 @@
 #define MAX_TAG_LEN 32  /* log tag size, include '\0' */
 #define MAX_DOMAINS 5
 #define MAX_TAGS 10
-#define MAX_PIDS 5
 #define RET_SUCCESS 0
 #define RET_FAIL (-1)
 #define IS_ONE(number, n) ((number>>n)&0x01)
