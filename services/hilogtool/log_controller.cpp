@@ -156,32 +156,17 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     memset_s(&logQueryRequest, sizeof(LogQueryRequest), 0, sizeof(LogQueryRequest));
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
-    logQueryRequest.nPid = context->nPid;
     logQueryRequest.nDomain = context->nDomain;
     logQueryRequest.nTag = context->nTag;
-    for (int i = 0; i < context->nPid; i++) {
-        logQueryRequest.pids[i] = context->pids[i];
-    }
     for (int i = 0; i < context->nDomain; i++) {
-        logQueryRequest.domains[i] = stoul(context->domains[i]);
+        std::istringstream(context->domains[i]) >> std::hex >> logQueryRequest.domains[i];
     }
     for (int i = 0; i < context->nTag; i++) {
-        if (context->tags[i].length() >= MAX_TAG_LEN) {
-            strncpy_s(logQueryRequest.tags[i], MAX_TAG_LEN,
-                      context->tags[i].c_str(), MAX_TAG_LEN - 1);
-        } else {
-            strncpy_s(logQueryRequest.tags[i], context->tags[i].length() + 1,
-                      context->tags[i].c_str(), context->tags[i].length());
-        }
+        std::istringstream(context->tags[i]) >> std::hex >> logQueryRequest.tags[i];
     }
     logQueryRequest.noLevels = context->noLevels;
     logQueryRequest.noTypes = context->noTypes;
-    logQueryRequest.nNoPid = context->nNoPid;
     logQueryRequest.nNoDomain = context->nNoDomain;
-    logQueryRequest.nNoTag = context->nNoTag;
-    for (int i = 0; i < context->nNoPid; i++) {
-        logQueryRequest.noPids[i] = context->noPids[i];
-    }
     for (int i = 0; i < context->nNoDomain; i++) {
         std::istringstream(context->noDomains[i]) >> std::hex >> logQueryRequest.noDomains[i];
     }

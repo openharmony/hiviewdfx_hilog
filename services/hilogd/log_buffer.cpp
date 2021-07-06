@@ -341,16 +341,6 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
         return false;
     
     int ret = 0;
-    if (reader->queryCondition.nPid > 0) {
-        for (int i = 0; i < reader->queryCondition.nPid; i++) {
-            if (reader->readPos->pid == reader->queryCondition.pids[i]) {
-                ret = 1;
-                break;
-            }
-        }
-        if (ret == 0) return false;
-        ret = 0;
-    }
     if (reader->queryCondition.nDomain > 0) {
         for (int i = 0; i < reader->queryCondition.nDomain; i++) {
             uint32_t domains = reader->queryCondition.domains[i];
@@ -371,15 +361,8 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
             }
         }
         if (ret == 0) return false;
-        ret = 0;
     }
-    
-    // exclusion
-    if (reader->queryCondition.nNoPid > 0) {
-        for (int i = 0; i < reader->queryCondition.nNoPid; i++) {
-            if (reader->readPos->pid == reader->queryCondition.noPids[i]) return false;
-        }
-    }
+    // domain exclusion
     if (reader->queryCondition.nNoDomain != 0) {
         for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
             uint32_t noDomains = reader->queryCondition.noDomains[i];
