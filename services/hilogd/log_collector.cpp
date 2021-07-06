@@ -87,7 +87,9 @@ size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
     hilogBuffer->logReaderListMutex.lock_shared();
     auto it = hilogBuffer->logReaderList.begin();
     while (it != hilogBuffer->logReaderList.end()) {
-        (*it).lock()->NotifyForNewData();
+        if ((*it).lock()->GetType() != TYPE_CONTROL) {
+            (*it).lock()->NotifyForNewData();
+        }
         ++it;
     }
     hilogBuffer->logReaderListMutex.unlock_shared();

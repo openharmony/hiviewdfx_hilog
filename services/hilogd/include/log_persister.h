@@ -56,7 +56,7 @@ public:
     void FillInfo(LogPersistQueryResult *response);
     int MkDirPath(const char *p_cMkdir);
     bool writeUnCompressedBuffer(HilogData *data);
-    uint8_t getType() const;
+    uint8_t GetType() const;
     std::string getPath();
     LogPersisterBuffer *buffer;
     
