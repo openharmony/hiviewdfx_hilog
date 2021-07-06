@@ -68,6 +68,7 @@ LogPersister::~LogPersister()
 {
     SAFE_DELETE(rotator);
     SAFE_DELETE(LogCompress);
+    SAFE_DELETE(compressBuffer);
 }
 
 int LogPersister::Init()
@@ -149,6 +150,8 @@ int LogPersister::Init()
         SetBufferOffset(0);
     }
     logPersisters.push_back(std::static_pointer_cast<LogPersister>(shared_from_this()));
+    compressBuffer = new LogPersisterBuffer[COMPRESS_BUFFER_SIZE];
+
     return 0;
 }
 
@@ -183,7 +186,6 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     showBuffer.domain = data->domain;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-  
     int offset = data->tag_len;
     char *dataCopy= (char*)calloc(data->len, sizeof(char));
     memcpy_s(dataCopy, offset, data->tag, offset);
@@ -222,7 +224,7 @@ bool LogPersister::writeUnCompressedBuffer(HilogData *data)
     int listSize = persistList.size();
 
     if (persistList.empty()) {
-        listSize = GenPersistLogHeader(data, persistList);    
+        listSize = GenPersistLogHeader(data, persistList);
     }
     while (listSize--) {
         string header = persistList.front();
@@ -232,7 +234,6 @@ bool LogPersister::writeUnCompressedBuffer(HilogData *data)
         int r = 0;
         if (buffer->offset + size > MAX_PERSISTER_BUFFER_SIZE)
             return false;
-        
         r = memcpy_s(buffer->content + buffer->offset, MAX_PERSISTER_BUFFER_SIZE - buffer->offset,
             header.c_str(), headerLen);
         if (r != 0) {
@@ -259,21 +260,30 @@ int LogPersister::WriteData(HilogData *data)
             break;
         case COMPRESS_TYPE_ZLIB: {
             LogCompress = new ZlibCompress();
-#ifdef DEBUG
-            cout << buffer->content << endl;
-#endif
             LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
-            rotator->Input((char *)LogCompress->zdata, LogCompress->zdlen);
-            rotator->FinishInput();
-            SetBufferOffset(0);
+            memcpy_s(compressBuffer->content + compressBuffer->offset, COMPRESS_BUFFER_SIZE,
+                LogCompress->zdata, LogCompress->zdlen);
+            compressBuffer->offset += LogCompress->zdlen;
+            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2/3) {
+                rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
+                rotator->FinishInput();
+                compressBuffer->offset = 0;
             }
+            SetBufferOffset(0);
+        }
             break;
 #ifdef USING_ZSTD_COMPRESS
         case COMPRESS_TYPE_ZSTD:  {
             LogCompress = new ZstdCompress();
             LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
-            rotator->Input((char *)LogCompress->zdata, LogCompress->zdlen);
-            rotator->FinishInput();
+            memcpy_s(compressBuffer->content + compressBuffer->offset, COMPRESS_BUFFER_SIZE,
+                LogCompress->zdata, LogCompress->zdlen);
+            compressBuffer->offset += LogCompress->zdlen;
+            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2/3) {
+                rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
+                rotator->FinishInput();
+                compressBuffer->offset = 0;
+            }
             SetBufferOffset(0);
         }
             break;

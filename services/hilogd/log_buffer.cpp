@@ -335,11 +335,9 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
      * strict mode: 0xdxxxxxx   (full)
      * fuzzy mode: 0xdxxxx      (using last 2 digits of full domain as mask)
      */
-    
     if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) == 0) ||
         (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) == 0)))
         return false;
-    
     int ret = 0;
     if (reader->queryCondition.nDomain > 0) {
         for (int i = 0; i < reader->queryCondition.nDomain; i++) {
