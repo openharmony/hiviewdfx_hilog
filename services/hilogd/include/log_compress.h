@@ -21,7 +21,7 @@
 #include "zstd.h"
 #endif
 #include <zlib.h>
-
+#define CHUNK 16384
 namespace OHOS {
 namespace HiviewDFX {
 class LogCompress {
