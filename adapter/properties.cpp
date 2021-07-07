@@ -188,23 +188,23 @@ static bool CheckCache(const PropertyCache *cache)
 }
 
 
-static bool GetSwitchCache(bool isFirst, SwitchCache* switchCache, uint32_t propType, bool defaultValue)
+static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
 {
     int notLocked;
     std::string key = GetPropertyName(propType);
-    if (isFirst || CheckCache(&switchCache->cache)) {
+    if (isFirst || CheckCache(&switchCache.cache)) {
         notLocked = LockByProp(propType);
         if (!notLocked) {
-            RefreshCacheBuf(&switchCache->cache, key.c_str());
-            if (strcmp(switchCache->cache.propertyValue, "true") == 0) {
-                switchCache->isOn = true;
-            } else if (strcmp(switchCache->cache.propertyValue, "false") == 0) {
-                switchCache->isOn = false;
+            RefreshCacheBuf(&switchCache.cache, key.c_str());
+            if (strcmp(switchCache.cache.propertyValue, "true") == 0) {
+                switchCache.isOn = true;
+            } else if (strcmp(switchCache.cache.propertyValue, "false") == 0) {
+                switchCache.isOn = false;
             } else {
-                switchCache->isOn = defaultValue;
+                switchCache.isOn = defaultValue;
             }
             UnlockByProp(propType);
-            return switchCache->isOn;
+            return switchCache.isOn;
         } else {
             SwitchCache tmpCache = {{nullptr, 0xffffffff, ""}, defaultValue};
             RefreshCacheBuf(&tmpCache.cache, key.c_str());
@@ -218,7 +218,7 @@ static bool GetSwitchCache(bool isFirst, SwitchCache* switchCache, uint32_t prop
             return tmpCache.isOn;
         }
     } else {
-        return switchCache->isOn;
+        return switchCache.isOn;
     }
 }
 
@@ -232,7 +232,7 @@ bool IsSingleDebugOn()
     static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_SINGLE_DEBUG, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_SINGLE_DEBUG, false);
 }
 
 bool IsPersistDebugOn()
@@ -240,7 +240,7 @@ bool IsPersistDebugOn()
     static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PERSIST_DEBUG, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PERSIST_DEBUG, false);
 }
 
 bool IsPrivateSwitchOn()
@@ -248,7 +248,7 @@ bool IsPrivateSwitchOn()
     static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, true};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PRIVATE, true);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PRIVATE, true);
 }
 
 bool IsProcessSwitchOn()
@@ -256,7 +256,7 @@ bool IsProcessSwitchOn()
     static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PROCESS_FLOWCTRL, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PROCESS_FLOWCTRL, false);
 }
 
 bool IsDomainSwitchOn()
@@ -264,7 +264,7 @@ bool IsDomainSwitchOn()
     static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_DOMAIN_FLOWCTRL, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_DOMAIN_FLOWCTRL, false);
 }
 
 static uint16_t GetCacheLevel(char propertyChar) 
