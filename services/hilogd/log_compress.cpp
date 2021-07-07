@@ -35,6 +35,10 @@ int ZlibCompress::Compress(Bytef *data, uLong dlen)
 {
     zdlen = compressBound(dlen);
     zdata = new unsigned char [zdlen];
+    if (zdata == NULL) {
+        cout << "no enough memory!" << endl;
+        return -1;
+    }
     int err = 0;
     z_stream c_stream;
 
@@ -78,7 +82,10 @@ int ZstdCompress::Compress(Bytef *data, uLong dlen)
 #ifdef USING_ZSTD_COMPRESS
     zdlen = ZSTD_CStreamOutSize();
     zdata = new unsigned char [zdlen];
-
+    if (zdata == NULL) {
+        cout << "no enough memory!" << endl;
+        return -1;
+    }
     size_t const buffInSize = ZSTD_CStreamInSize();
     void* const buffIn  = malloc(buffInSize);
     size_t const buffOutSize = ZSTD_CStreamOutSize();
@@ -86,6 +93,10 @@ int ZstdCompress::Compress(Bytef *data, uLong dlen)
 
     int compressionlevel = 1;
     ZSTD_CCtx* const cctx = ZSTD_createCCtx();
+    if (cctx == NULL) {
+        cout << "ZSTD_createCCtx() failed!" << endl;
+        return -1;
+    }
     ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, compressionlevel);
 
     size_t const toRead = buffInSize;
@@ -94,8 +105,8 @@ int ZstdCompress::Compress(Bytef *data, uLong dlen)
     size_t read = dlen;
     for (;;) {
         if (read - src_pos < toRead) {
-            memcpy_s(buffIn, buffInSize - src_pos, data + src_pos, read);
-            src_pos += read;
+            memcpy_s(buffIn, buffInSize - src_pos, data + src_pos, read - src_pos);
+            src_pos += read - src_pos;
         } else {
             memcpy_s(buffIn, buffInSize - src_pos, data + src_pos, toRead);
             src_pos += toRead;

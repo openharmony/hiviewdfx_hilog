@@ -43,7 +43,7 @@ using namespace std;
 
 static std::list<shared_ptr<LogPersister>> logPersisters;
 static std::mutex g_listMutex;
-
+#define ANXILLARY_FILE_NAME "persisterInfo_"
 #define SAFE_DELETE(x) \
     do { \
         delete (x); \
@@ -77,7 +77,7 @@ int LogPersister::Init()
     if (nPos == RET_FAIL) {
         return RET_FAIL;
     }
-    mmapPath = path.substr(0, nPos) + "/." + to_string(id);
+    mmapPath = path.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
             MkDirPath(path.substr(0, nPos).c_str());
@@ -94,6 +94,7 @@ int LogPersister::Init()
     if (hit) {
         return RET_FAIL;
     }
+
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
     bool restore = false;
     if (fd <= 0) {
@@ -260,11 +261,14 @@ int LogPersister::WriteData(HilogData *data)
             break;
         case COMPRESS_TYPE_ZLIB: {
             LogCompress = new ZlibCompress();
-            LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
+            if (LogCompress->Compress((Bytef *)buffer->content, buffer->offset) != 0) {
+                cout << "COMPRESS_TYPE_ZLIB Error" << endl;
+                return -1;
+            };
             memcpy_s(compressBuffer->content + compressBuffer->offset, COMPRESS_BUFFER_SIZE,
                 LogCompress->zdata, LogCompress->zdlen);
             compressBuffer->offset += LogCompress->zdlen;
-            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2/3) {
+            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2 / 3) {
                 rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
                 rotator->FinishInput();
                 compressBuffer->offset = 0;
@@ -275,11 +279,14 @@ int LogPersister::WriteData(HilogData *data)
 #ifdef USING_ZSTD_COMPRESS
         case COMPRESS_TYPE_ZSTD:  {
             LogCompress = new ZstdCompress();
-            LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
+            if (LogCompress->Compress((Bytef *)buffer->content, buffer->offset) != 0) {
+                cout << "COMPRESS_TYPE_ZSTD Error" << endl;
+                return -1;
+            };
             memcpy_s(compressBuffer->content + compressBuffer->offset, COMPRESS_BUFFER_SIZE,
                 LogCompress->zdata, LogCompress->zdlen);
             compressBuffer->offset += LogCompress->zdlen;
-            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2/3) {
+            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2 / 3) {
                 rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
                 rotator->FinishInput();
                 compressBuffer->offset = 0;
