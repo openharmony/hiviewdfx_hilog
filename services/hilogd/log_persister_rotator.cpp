@@ -23,7 +23,7 @@ namespace HiviewDFX {
 using namespace std;
 
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
-    : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
+    : fileNum(fileNum - 1), fileSize(fileSize), fileName(path), fileSuffix(suffix)
 {
     index = 0;
     leftSize = 0;
@@ -72,10 +72,10 @@ void LogPersisterRotator::InternalRotate()
     stringstream ss;
     ss << fileName << ".";
     int pos = ss.tellp();
-    ss << 1 << fileSuffix;
+    ss << 0 << fileSuffix;
     remove(ss.str().c_str());
 
-    for (uint32_t i = 2; i <= fileNum; ++i) {
+    for (uint32_t i = 1; i <= fileNum; ++i) {
         ss.seekp(pos);
         ss << (i - 1) << fileSuffix;
         string newName = ss.str();

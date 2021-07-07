@@ -29,7 +29,6 @@
 #include <regex>
 #include <algorithm>
 #include <securec.h>
-#include "compressing_rotator.h"
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "log_data.h"
@@ -66,17 +65,6 @@ LogPersisterRotator* MakeRotator(LogPersistStartMsg& pLogPersistStartMsg)
     string fileSuffix = "";
 
     switch (pLogPersistStartMsg.compressType) {
-        case CompressStrategy::DIVIDED:{
-            stringstream tmpFileSuffix;
-            tmpFileSuffix << pLogPersistStartMsg.filePath << "tmpLog" << pLogPersistStartMsg.jobId;
-            int tmpFileSize = 4096;
-            int tmpFileNum = 2;
-            return new CompressingRotator(
-                pLogPersistStartMsg.filePath,
-                pLogPersistStartMsg.fileSize,
-                pLogPersistStartMsg.fileNum,
-                tmpFileSize, tmpFileNum, tmpFileSuffix.str());
-        }
         case CompressStrategy::STREAM:
             switch (pLogPersistStartMsg.compressAlg) {
                 case CompressAlg::COMPRESS_TYPE_ZSTD:
