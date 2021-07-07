@@ -39,42 +39,51 @@ int ZlibCompress::Compress(Bytef *data, uLong dlen)
         cout << "no enough memory!" << endl;
         return -1;
     }
-    int err = 0;
+    void* const buffIn  = malloc(CHUNK);
+    void* const buffOut = malloc(CHUNK);
+    size_t const toRead = CHUNK;
+    auto src_pos = 0;
+    auto dst_pos = 0;
+    size_t read = dlen;
+    int ret = 0;
+    unsigned have = 0;
+    int flush = 0;
     z_stream c_stream;
-
-    if (data && dlen > 0) {
-        c_stream.zalloc = NULL;
-        c_stream.zfree = NULL;
-        c_stream.opaque = NULL;
-        if (deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
-            return -1;
-        }
-        c_stream.next_in = data;
-        c_stream.avail_in = dlen;
-        c_stream.next_out = zdata;
-        c_stream.avail_out = zdlen;
-        while (c_stream.avail_in != 0 && c_stream.total_out < zdlen) {
-            if (deflate(&c_stream, Z_NO_FLUSH) != Z_OK) {
-                return -1;
-            }
-        }
-        if (c_stream.avail_in != 0) {
-            return c_stream.avail_in;
-        }
-        for (;;) {
-            if ((err = deflate(&c_stream, Z_FINISH)) == Z_STREAM_END)
-                break;
-            if (err != Z_OK) {
-                return -1;
-            }
-        }
-        if (deflateEnd(&c_stream) != Z_OK) {
-            return -1;
-        }
-        zdlen = c_stream.total_out;
-        return 0;
+    c_stream.zalloc = Z_NULL;
+    c_stream.zfree = Z_NULL;
+    c_stream.opaque = Z_NULL;
+    if (deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+        return -1;
     }
-    return -1;
+    do {
+        if (read - src_pos < toRead) {
+            memcpy_s(buffIn, CHUNK - src_pos , data + src_pos, read - src_pos);
+            src_pos += read - src_pos;
+        } else {
+            memcpy_s(buffIn, CHUNK - src_pos,  data + src_pos, toRead);
+            src_pos += toRead;
+        }
+        int const lastChunk = (read < toRead);
+        flush = lastChunk ? Z_FINISH : Z_NO_FLUSH;
+        c_stream.avail_in = read;
+        c_stream.next_in = (Bytef *)buffIn;
+        /* run deflate() on input until output buffer not full, finish
+           compression if all of source has been read in */
+        do {
+            c_stream.avail_out = CHUNK;
+            c_stream.next_out = (Bytef *)buffOut;
+            if (deflate(&c_stream, flush) == Z_STREAM_ERROR) {
+                return -1;
+            }   /* no bad return value */
+            have = CHUNK - c_stream.avail_out;
+            memcpy_s(zdata + dst_pos, zdlen - dst_pos, buffOut, have);
+            dst_pos += have;
+            zdlen = dst_pos;
+        } while (c_stream.avail_out == 0);
+    } while (flush != Z_FINISH);
+    /* clean up and return */
+    (void)deflateEnd(&c_stream);
+    return 0;
 }
 
 int ZstdCompress::Compress(Bytef *data, uLong dlen)
