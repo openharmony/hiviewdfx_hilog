@@ -327,6 +327,7 @@ int LogPersister::ThreadFunc()
         hasExited = true;
     }
     cvhasExited.notify_all();
+    hilogBuffer->RemoveLogReader(shared_from_this());
     return 0;
 }
 
