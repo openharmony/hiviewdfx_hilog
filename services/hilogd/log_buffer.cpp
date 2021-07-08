@@ -415,5 +415,18 @@ void HilogBuffer::ReleaseBufferLock()
 {
     hilogBufferMutex.unlock();
 }
+
+void HilogBuffer::RemoveLogReader(std::shared_ptr<LogReader> reader)
+{
+    logReaderListMutex.lock();
+    const auto findIter = std::find_if(logReaderList.begin(), logReaderList.end(),
+        [reader](const std::weak_ptr<LogReader>& ptr0) {
+        return ptr0.lock() == reader;
+    });
+    if (findIter != logReaderList.end()) {
+        logReaderList.erase(findIter);
+    }
+    logReaderListMutex.unlock();
+}
 } // namespace HiviewDFX
 } // namespace OHOS

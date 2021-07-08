@@ -488,6 +488,7 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
                 break;
         }
     }
+    hilogBuffer->RemoveLogReader(logReader);
 }
 
 LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer* buffer)

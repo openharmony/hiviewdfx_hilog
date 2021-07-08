@@ -62,7 +62,7 @@ public:
     bool isNotified;
 
     LogReader();
-    virtual ~LogReader();
+    virtual ~LogReader() = default;
     bool GetReload() const;
     void SetReload(bool);
     virtual void NotifyForNewData() = 0;
