@@ -192,7 +192,6 @@ static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t prop
 {
     int notLocked;
     std::string key = GetPropertyName(propType);
-
     if (isFirst || CheckCache(&switchCache.cache)) {
         notLocked = LockByProp(propType);
         if (!notLocked) {
@@ -230,42 +229,42 @@ bool IsDebugOn()
 
 bool IsSingleDebugOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_SINGLE_DEBUG, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_SINGLE_DEBUG, false);
 }
 
 bool IsPersistDebugOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PERSIST_DEBUG, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PERSIST_DEBUG, false);
 }
 
 bool IsPrivateSwitchOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, true};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, true};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PRIVATE, true);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PRIVATE, true);
 }
 
 bool IsProcessSwitchOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PROCESS_FLOWCTRL, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PROCESS_FLOWCTRL, false);
 }
 
 bool IsDomainSwitchOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_DOMAIN_FLOWCTRL, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_DOMAIN_FLOWCTRL, false);
 }
 
 static uint16_t GetCacheLevel(char propertyChar) 
@@ -301,17 +300,17 @@ static uint16_t GetCacheLevel(char propertyChar)
 uint16_t GetGlobalLevel()
 {
     std::string key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
-    static LogLevelCache levelCache = {{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
+    static LogLevelCache *levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     int notLocked;
 
-    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache.cache)) {
+    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache->cache)) {
         notLocked = LockByProp(PROP_GLOBAL_LOG_LEVEL);
         if (!notLocked) {
-            RefreshCacheBuf(&levelCache.cache, key.c_str());
-            levelCache.logLevel = GetCacheLevel(levelCache.cache.propertyValue[0]);
+            RefreshCacheBuf(&levelCache->cache, key.c_str());
+            levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
             UnlockByProp(PROP_GLOBAL_LOG_LEVEL);
-            return levelCache.logLevel;
+            return levelCache->logLevel;
         } else {
             LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
             RefreshCacheBuf(&tmpCache.cache, key.c_str());
@@ -319,28 +318,26 @@ uint16_t GetGlobalLevel()
             return tmpCache.logLevel;
         }
     } else {
-        return levelCache.logLevel;
+        return levelCache->logLevel;
     }
 }
 
 uint16_t GetDomainLevel(uint32_t domain)
 {
-    static std::unordered_map<uint32_t, LogLevelCache*> domainMap;
+    static std::unordered_map<uint32_t, LogLevelCache*> *domainMap = new std::unordered_map<uint32_t, 
+    LogLevelCache*>();
     std::unordered_map<uint32_t, LogLevelCache*>::iterator it;
     std::string key = GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + std::to_string(domain);
     int notLocked;
 
-    it = domainMap.find(domain);
-    if (it == domainMap.end()) { // new domain
-        LogLevelCache* levelCache = new(LogLevelCache);
-        levelCache->cache.pinfo = nullptr;
-        levelCache->cache.serial = 0xffffffff;
-        levelCache->logLevel = LOG_LEVEL_MIN;
+    it = domainMap->find(domain);
+    if (it == domainMap->end()) { // new domain
+        LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
         RefreshCacheBuf(&levelCache->cache, key.c_str()); 
         levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
         notLocked = LockByProp(PROP_DOMAIN_LOG_LEVEL);
         if (!notLocked) {
-            domainMap.insert({ domain, levelCache });
+            domainMap->insert({ domain, levelCache });
             UnlockByProp(PROP_DOMAIN_LOG_LEVEL);
         } else {
             uint16_t level = levelCache->logLevel;
@@ -370,23 +367,21 @@ uint16_t GetDomainLevel(uint32_t domain)
 
 uint16_t GetTagLevel(const std::string& tag)
 {
-    static std::unordered_map<std::string, LogLevelCache*> tagMap;
+    static std::unordered_map<std::string, LogLevelCache*> *tagMap = new std::unordered_map<std::string, 
+    LogLevelCache*>();
     std::unordered_map<std::string, LogLevelCache*>::iterator it;
     std::string tagStr = tag;
     std::string key = GetPropertyName(PROP_TAG_LOG_LEVEL) + tagStr;
     int notLocked;
 
-    it = tagMap.find(tagStr);
-    if (it == tagMap.end()) {
-        LogLevelCache* levelCache = new(LogLevelCache);
-        levelCache->cache.pinfo = nullptr;
-        levelCache->cache.serial = 0xffffffff;
-        levelCache->logLevel = LOG_LEVEL_MIN;
+    it = tagMap->find(tagStr);
+    if (it == tagMap->end()) {
+        LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
         RefreshCacheBuf(&levelCache->cache, key.c_str());    
         levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
         notLocked = LockByProp(PROP_TAG_LOG_LEVEL);
         if (!notLocked) {
-            tagMap.insert({ tagStr, levelCache });
+            tagMap->insert({ tagStr, levelCache });
             UnlockByProp(PROP_TAG_LOG_LEVEL);
         } else {
             uint16_t level = levelCache->logLevel;
