@@ -160,10 +160,10 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     logQueryRequest.nDomain = context->nDomain;
     logQueryRequest.nTag = context->nTag;
     for (int i = 0; i < context->nPid; i++) {
-        logQueryRequest.pids[i] = context->pids[i];
+        std::istringstream(context->pids[i]) >> std::dec >> logQueryRequest.pids[i];
     }
     for (int i = 0; i < context->nDomain; i++) {
-        logQueryRequest.domains[i] = stoul(context->domains[i]);
+        std::istringstream(context->domains[i]) >> std::hex >> logQueryRequest.domains[i];
     }
     for (int i = 0; i < context->nTag; i++) {
         if (context->tags[i].length() >= MAX_TAG_LEN) {
@@ -180,7 +180,7 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     logQueryRequest.nNoDomain = context->nNoDomain;
     logQueryRequest.nNoTag = context->nNoTag;
     for (int i = 0; i < context->nNoPid; i++) {
-        logQueryRequest.noPids[i] = context->noPids[i];
+        std::istringstream(context->noPids[i]) >> std::dec >> logQueryRequest.noPids[i];
     }
     for (int i = 0; i < context->nNoDomain; i++) {
         std::istringstream(context->noDomains[i]) >> std::hex >> logQueryRequest.noDomains[i];

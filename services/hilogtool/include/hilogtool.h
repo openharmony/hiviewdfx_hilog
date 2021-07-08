@@ -31,12 +31,12 @@ typedef struct {
     uint16_t tailLines;
     std::string domain; // domain recv
     std::string tag; // tag recv
-    uint32_t pids[MAX_PIDS];
+    std::string pids[MAX_PIDS];
     std::string domains[MAX_DOMAINS]; // domains send
     std::string tags[MAX_TAGS]; // tags send
     uint16_t noTypes;
     uint16_t noLevels;
-    uint32_t noPids[MAX_PIDS];
+    std::string noPids[MAX_PIDS];
     std::string noDomains[MAX_DOMAINS];
     std::string noTags[MAX_TAGS];
     std::string regexArgs;
