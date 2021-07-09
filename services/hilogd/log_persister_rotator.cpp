@@ -39,7 +39,6 @@ int LogPersisterRotator::Input(const char *buf, int length)
         Rotate();
         needRotate = false;
     }
-
     if (length <= 0 || buf == nullptr) return -1;
 
     unsigned int offset = 0;
@@ -59,11 +58,9 @@ int LogPersisterRotator::Input(const char *buf, int length)
         }
         Rotate();
     }
-
     output.write(buf + offset, length);
     leftSize -= length;
     output.flush();
-
     return 0;
 }
 
@@ -85,7 +82,6 @@ void LogPersisterRotator::InternalRotate()
         cout << "OLD NAME " << oldName << " NEW NAME " << newName << endl;
         rename(oldName.c_str(), newName.c_str());
     }
-
     output.open(ss.str(), ios::out);
     leftSize = fileSize;
 }

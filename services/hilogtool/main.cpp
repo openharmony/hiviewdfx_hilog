@@ -68,9 +68,6 @@ static void Helper()
     "                     specify the domain.\n"
     "  -T <tag>, --Tag=<tag>\n"
     "                     specify the tag.\n"
-    "  -c <expr>, --compress=<expr>\n"
-    "                     specify compress type of log files.\n"
-    "                     0 plain text, 1 stream compression 2 compress per file.\n"
     "  -a <n>, --head=<n> show n lines log on head.\n"
     "  -z <n>, --tail=<n> show n lines log on tail.\n"
     "  -G <size>, --buffer-size=<size>\n"
@@ -79,7 +76,7 @@ static void Helper()
     "  -e <expr>, --regex=<expr>\n"
     "                     show the logs which match the regular expression,\n"
     "                     <expr> is a regular expression.\n"
-    "  -F <filename>, --filename=<filename>\n"
+    "  -f <filename>, --filename=<filename>\n"
     "                     set log file name.\n"
     "  -l <length>, --length=<length>\n"
     "                     set single log file size.\n"
@@ -91,6 +88,10 @@ static void Helper()
     "                     query      log file writing task query.\n"
     "                     start      start a log file writing task, see -F -l -n -c for to set more configs,\n"
     "                     stop       stop a log file writing task.\n"
+    "  -m <compress algorithm>,--stream=<compress algorithm>\n"
+    "                     none       log file without compressing\n"
+    "                     zlib       compress log file by the zlib algorithm\n"
+    "                     zstd       compress log file by the zstd algorithm\n"
     "  -v <format>, --format=<format> options:\n"
     "                     time       display local time.\n"
     "                     color      display colorful logs by log level.i.e. \x1B[38;5;231mVERBOSE\n"
@@ -193,10 +194,9 @@ int HilogEntry(int argc, char* argv[])
             { "buffer-size", required_argument, nullptr, 'G' },
             { "jobid",       required_argument, nullptr, 'j' },
             { "flowctrl",    required_argument, nullptr, 'Q' },
-            { "compress",    required_argument, nullptr, 'c' },
             { "stream",      required_argument, nullptr, 'm' },
             { "number",      required_argument, nullptr, 'n' },
-            { "filename",    required_argument, nullptr, 'F' },
+            { "filename",    required_argument, nullptr, 'f' },
             { "private",     required_argument, nullptr, 'p' },
             { "domain",      required_argument, nullptr, 'D' },
             { "tag",         required_argument, nullptr, 'T' },
@@ -207,7 +207,7 @@ int HilogEntry(int argc, char* argv[])
             {nullptr, 0, nullptr, 0}
         };
 
-        int choice = getopt_long(argc, argv, "hxz:grsSa:v:e:t:L:G:F:l:n:j:w:c:p:k:M:D:T:b:Q:m:P:",
+        int choice = getopt_long(argc, argv, "hxz:grsSa:v:e:t:L:G:f:l:n:j:w:p:k:M:D:T:b:Q:m:P:",
             longOptions, &optIndex);
         if (choice == -1) {
             break;
@@ -308,16 +308,13 @@ int HilogEntry(int argc, char* argv[])
                 context.logFileCtrlArgs = optarg;
                 noLogOption = true;
                 break;
-            case 'c':
-                context.compressArgs = optarg;
-                break;
             case 'l':
                 context.fileSizeArgs = optarg;
                 break;
             case 'n':
                 context.fileNumArgs = optarg;
                 break;
-            case 'F':
+            case 'f':
                 context.fileNameArgs = optarg;
                 break;
             case 'j':
@@ -448,7 +445,6 @@ int HilogEntry(int argc, char* argv[])
         } else if (context.logFileCtrlArgs != "") {
             LogPersistParam logPersistParam;
             logPersistParam.logTypeStr = context.logTypeArgs;
-            logPersistParam.compressTypeStr = context.compressArgs;
             logPersistParam.compressAlgStr = context.algorithmArgs;
             logPersistParam.fileSizeStr = context.fileSizeArgs;
             logPersistParam.fileNumStr = context.fileNumArgs;
@@ -552,7 +548,7 @@ int HilogEntry(int argc, char* argv[])
         }
 
         default:
-            cout << "Invalid response from hilogd!" << endl;
+            cout << "Invalid response from hilogd! response: " << msgHeader->msgType << endl;
             break;
     }
     return 0;

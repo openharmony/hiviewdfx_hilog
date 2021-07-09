@@ -107,6 +107,19 @@ uint64_t GetBuffSize(const string& buffSizeStr)
     }
     return buffSize;
 }
+
+uint16_t GetCompressAlg(const std::string& pressAlg)
+{
+    if (pressAlg == "none") {
+        return COMPRESS_TYPE_OFF;
+    } else if (pressAlg == "zlib") {
+        return COMPRESS_TYPE_ZLIB;
+    } else if (pressAlg == "zstd") {
+        return COMPRESS_TYPE_ZSTD;
+    }
+    return COMPRESS_TYPE_ZLIB;
+}
+
 uint16_t GetLogLevel(const string& logLevelStr)
 {
     if (logLevelStr == "debug" || logLevelStr == "DEBUG") {
@@ -362,9 +375,6 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
     Split(logPersistParam->jobIdStr, " ", vecJobId);
     logTypeNum = vecLogType.size();
     jobIdNum = vecJobId.size();
-    if (msgCmd == MC_REQ_LOG_PERSIST_STOP && logPersistParam->jobIdStr == "") { // support stop several jobs each time
-        return RET_FAIL;
-    }
     switch (msgCmd) {
         case MC_REQ_LOG_PERSIST_START: {
             LogPersistStartRequest* pLogPersistStartReq = reinterpret_cast<LogPersistStartRequest*>(msgToSend);
@@ -382,11 +392,9 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             }
             pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
             : stoi(logPersistParam->jobIdStr);
-            pLogPersistStartMsg->compressType = (logPersistParam->compressTypeStr == "") ? STREAM : stoi(logPersistParam
-                ->compressTypeStr);
-            pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB : stoi(
-                logPersistParam->compressAlgStr);
-            pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : stoi(
+            pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB : 
+            GetCompressAlg(logPersistParam->compressAlgStr);
+            pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : GetBuffSize(
                 logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
@@ -406,6 +414,12 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 reinterpret_cast<LogPersistStopRequest*>(msgToSend);
             LogPersistStopMsg* pLogPersistStopMsg =
                 reinterpret_cast<LogPersistStopMsg*>(&pLogPersistStopReq->logPersistStopMsg);
+            if (logPersistParam->jobIdStr == "") {
+                pLogPersistStopMsg->jobId = 0xffffffff;
+                SetMsgHead(&pLogPersistStopReq->msgHeader, msgCmd, sizeof(LogPersistStopMsg));
+                controller.WriteAll(msgToSend, sizeof(LogPersistStopMsg) + sizeof(MessageHeader));
+                break;
+            }
             if (jobIdNum * sizeof(LogPersistStopMsg) + sizeof(MessageHeader) > MSG_MAX_LEN) {
                 return RET_FAIL;
             }

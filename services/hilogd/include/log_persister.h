@@ -38,9 +38,8 @@ const uint16_t MAX_PERSISTER_BUFFER_SIZE = 4096;
 const uint32_t COMPRESS_BUFFER_SIZE = 4 * 1024;
 class LogPersister : public LogReader {
 public:
-    LogPersister(uint32_t id, std::string path, uint16_t compressType,
-                 uint16_t compressAlg, int sleepTime, LogPersisterRotator *rotator,
-                 HilogBuffer *buffer);
+    LogPersister(uint32_t id, std::string path, uint16_t compressAlg, int sleepTime,
+                 LogPersisterRotator *rotator, HilogBuffer *buffer);
     ~LogPersister();
     void SetBufferOffset(int off);
     void NotifyForNewData();
@@ -63,7 +62,6 @@ private:
     uint32_t id;
     std::string path;
     std::string mmapPath;
-    uint16_t compressType;
     uint16_t compressAlg;
     int sleepTime;
     std::mutex cvMutex;
