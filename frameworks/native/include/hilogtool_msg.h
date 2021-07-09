@@ -96,17 +96,21 @@ typedef struct {
 
 typedef struct {
     MessageHeader header;
+    uint8_t nPid;
+    uint8_t nNoPid;
     uint8_t nDomain;
     uint8_t nNoDomain;
     uint8_t nTag;
     uint8_t nNoTag;
     uint8_t levels;
     uint16_t types;
+    uint32_t pids[MAX_PIDS];
     uint32_t domains[MAX_DOMAINS];
     char tags[MAX_TAGS][MAX_TAG_LEN];
     uint16_t logCount;
     uint8_t noLevels;
     uint16_t noTypes;
+    uint32_t noPids[MAX_PIDS];
     uint32_t noDomains[MAX_DOMAINS];
     char noTags[MAX_TAGS][MAX_TAG_LEN];
 } LogQueryRequest;

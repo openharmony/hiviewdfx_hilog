@@ -19,6 +19,8 @@ namespace OHOS {
 namespace HiviewDFX {
 typedef struct {
     uint16_t noBlockMode;
+    uint8_t nPid;
+    uint8_t nNoPid;
     uint8_t nDomain;
     uint8_t nNoDomain;
     uint8_t nTag;
@@ -29,10 +31,12 @@ typedef struct {
     uint16_t tailLines;
     std::string domain; // domain recv
     std::string tag; // tag recv
+    std::string pids[MAX_PIDS];
     std::string domains[MAX_DOMAINS]; // domains send
     std::string tags[MAX_TAGS]; // tags send
     uint16_t noTypes;
     uint16_t noLevels;
+    std::string noPids[MAX_PIDS];
     std::string noDomains[MAX_DOMAINS];
     std::string noTags[MAX_TAGS];
     std::string regexArgs;

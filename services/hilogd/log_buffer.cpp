@@ -339,6 +339,16 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
         (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) == 0)))
         return false;
     int ret = 0;
+    if (reader->queryCondition.nPid > 0) {
+        for (int i = 0; i < reader->queryCondition.nPid; i++) {
+            if (reader->readPos->pid == reader->queryCondition.pids[i]) {
+                ret = 1;
+                break;
+            }
+        }
+        if (ret == 0) return false;
+        ret = 0;
+    }
     if (reader->queryCondition.nDomain > 0) {
         for (int i = 0; i < reader->queryCondition.nDomain; i++) {
             uint32_t domains = reader->queryCondition.domains[i];
@@ -359,8 +369,15 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
             }
         }
         if (ret == 0) return false;
+        ret = 0;
     }
-    // domain exclusion
+    
+    // exclusion
+    if (reader->queryCondition.nNoPid > 0) {
+        for (int i = 0; i < reader->queryCondition.nNoPid; i++) {
+            if (reader->readPos->pid == reader->queryCondition.noPids[i]) return false;
+        }
+    }
     if (reader->queryCondition.nNoDomain != 0) {
         for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
             uint32_t noDomains = reader->queryCondition.noDomains[i];
@@ -395,6 +412,19 @@ void HilogBuffer::GetBufferLock()
 void HilogBuffer::ReleaseBufferLock()
 {
     hilogBufferMutex.unlock();
+}
+
+void HilogBuffer::RemoveLogReader(std::shared_ptr<LogReader> reader)
+{
+    logReaderListMutex.lock();
+    const auto findIter = std::find_if(logReaderList.begin(), logReaderList.end(),
+        [reader](const std::weak_ptr<LogReader>& ptr0) {
+        return ptr0.lock() == reader;
+    });
+    if (findIter != logReaderList.end()) {
+        logReaderList.erase(findIter);
+    }
+    logReaderListMutex.unlock();
 }
 } // namespace HiviewDFX
 } // namespace OHOS
