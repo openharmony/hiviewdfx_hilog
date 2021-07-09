@@ -27,7 +27,7 @@ public:
     int WriteData(LogQueryResponse& rsp, HilogData* data);
     int WriteData(HilogData* data);
     void NotifyForNewData();
-    uint8_t getType() const;
+    uint8_t GetType() const;
     ~LogQuerier() = default;
 };
 } // namespace HiviewDFX

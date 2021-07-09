@@ -48,6 +48,7 @@ public:
     int32_t ClearStatisticInfoByDomain(uint32_t domain);
     void GetBufferLock();
     void ReleaseBufferLock();
+    void RemoveLogReader(std::shared_ptr<LogReader> reader);
 private:
     size_t size;
     size_t sizeByType[LOG_TYPE_MAX];
