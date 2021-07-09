@@ -59,11 +59,6 @@ typedef enum {
     OT_FLOW_SWITCH,
 } OperateType;
 
-typedef enum {
-    NONE = 0,
-    STREAM = 1,
-    DIVIDED = 2,
-} CompressStrategy;
 
 typedef enum {
     CREATE_SUCCESS = 1,
@@ -241,7 +236,6 @@ typedef struct {
 
 typedef struct {
     std::string logTypeStr;
-    std::string compressTypeStr;
     std::string compressAlgStr;
     std::string fileSizeStr;
     std::string fileNumStr;
@@ -250,7 +244,6 @@ typedef struct {
 } LogPersistParam;
 typedef struct {
     uint16_t logType; // union logType
-    uint16_t compressType;
     uint16_t compressAlg;
     char filePath[FILE_PATH_MAX_LEN];
     uint32_t fileSize;
@@ -301,7 +294,6 @@ typedef struct {
     int32_t result;
     uint32_t jobId;
     uint16_t logType;
-    uint16_t compressType;
     uint16_t compressAlg;
     char filePath[FILE_PATH_MAX_LEN];
     uint32_t fileSize;

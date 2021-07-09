@@ -84,20 +84,6 @@ string GetOrigType(uint16_t shiftType)
     return logType;
 }
 
-string GetPressTypeStr(uint16_t pressType)
-{
-    string pressTypeStr;
-    if (pressType == NONE) {
-        pressTypeStr = "none";
-    }
-    if (pressType == STREAM) {
-        pressTypeStr = "stream";
-    }
-    if (pressType == DIVIDED) {
-        pressTypeStr = "divided";
-    }
-    return pressTypeStr;
-}
 
 string GetPressAlgStr(uint16_t pressAlg)
 {
@@ -321,8 +307,6 @@ int32_t ControlCmdResult(const char* message)
                     outputStr += to_string(pLogPersistQueryRst->jobId);
                     outputStr += " ";
                     outputStr += GetOrigType(pLogPersistQueryRst->logType);
-                    outputStr += " ";
-                    outputStr += GetPressTypeStr(pLogPersistQueryRst->compressType);
                     outputStr += " ";
                     outputStr += GetPressAlgStr(pLogPersistQueryRst->compressAlg);
                     outputStr += " ";

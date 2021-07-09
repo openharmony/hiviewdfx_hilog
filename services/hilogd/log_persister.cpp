@@ -40,7 +40,6 @@ namespace HiviewDFX {
 using namespace std::literals::chrono_literals;
 using namespace std;
 
-
 static std::list<shared_ptr<LogPersister>> logPersisters;
 static std::mutex g_listMutex;
 #define ANXILLARY_FILE_NAME "persisterInfo_"
@@ -50,10 +49,9 @@ static std::mutex g_listMutex;
         (x) = nullptr; \
     } while (0)
 
-LogPersister::LogPersister(uint32_t id, string path, uint16_t compressType,
-                           uint16_t compressAlg, int sleepTime,
+LogPersister::LogPersister(uint32_t id, string path, uint16_t compressAlg, int sleepTime,
                            LogPersisterRotator *rotator, HilogBuffer *_buffer)
-    : id(id), path(path), compressType(compressType), compressAlg(compressAlg),
+    : id(id), path(path), compressAlg(compressAlg),
       sleepTime(sleepTime), rotator(rotator)
 {
     toExit = false;
@@ -152,7 +150,6 @@ int LogPersister::Init()
     }
     logPersisters.push_back(std::static_pointer_cast<LogPersister>(shared_from_this()));
     compressBuffer = new LogPersisterBuffer[COMPRESS_BUFFER_SIZE];
-
     return 0;
 }
 
@@ -370,7 +367,6 @@ void LogPersister::FillInfo(LogPersistQueryResult *response)
     if (strcpy_s(response->filePath, FILE_PATH_MAX_LEN, path.c_str())) {
         return;
     }
-    response->compressType = compressType;
     response->compressAlg = compressAlg;
     rotator->FillInfo(&response->fileSize, &response->fileNum);
     return;
