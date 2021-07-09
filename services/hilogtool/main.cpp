@@ -423,13 +423,13 @@ int HilogEntry(int argc, char* argv[])
                             vector<string> v(sregex_token_iterator(pids.begin() + 1, pids.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
-                                context.noPids[context.nNoPid++] = stoul(s);
+                                context.noPids[context.nNoPid++] = s;
                             }
                         } else {
                             vector<string> v(sregex_token_iterator(pids.begin(), pids.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
-                                context.pids[context.nPid++] = stoul(s);
+                                context.pids[context.nPid++] = s;
                                 context.pidArgs += s + " ";
                             }
                         }

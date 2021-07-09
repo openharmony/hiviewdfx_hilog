@@ -488,6 +488,7 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
                 break;
         }
     }
+    hilogBuffer->RemoveLogReader(logReader);
 }
 
 LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer* buffer)
@@ -552,9 +553,16 @@ void LogQuerier::NotifyForNewData()
     }
 }
 
-uint8_t LogQuerier::getType() const
+uint8_t LogQuerier::GetType() const
 {
-    return TYPE_QUERIER;
+    switch (cmd) {
+        case LOG_QUERY_RESPONSE:
+            return TYPE_QUERIER;
+        case NEXT_RESPONSE:
+            return TYPE_QUERIER;
+        default:
+            return TYPE_CONTROL;
+    }
 }
 } // namespace HiviewDFX
 } // namespace OHOS
