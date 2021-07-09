@@ -327,6 +327,7 @@ int LogPersister::ThreadFunc()
         hasExited = true;
     }
     cvhasExited.notify_all();
+    hilogBuffer->RemoveLogReader(shared_from_this());
     return 0;
 }
 
@@ -408,7 +409,7 @@ string LogPersister::getPath()
     return path;
 }
 
-uint8_t LogPersister::getType() const
+uint8_t LogPersister::GetType() const
 {
     return TYPE_PERSISTER;
 }
