@@ -299,7 +299,7 @@ int32_t ControlCmdResult(const char* message)
             LogPersistQueryResult* pLogPersistQueryRst =
                 (LogPersistQueryResult*)&pLogPersistQueryRsp->logPersistQueryRst;
             while (pLogPersistQueryRst && resultLen < msgLen) {
-                if (pLogPersistQueryRst->result == RET_FAIL) {\
+                if (pLogPersistQueryRst->result == RET_FAIL) {
                     outputStr = "Persist task [logtype:";
                     outputStr += GetLogTypeStr(pLogPersistQueryRst->logType);
                     outputStr += "] query failed\n";
@@ -382,7 +382,7 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
-void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context, 
+void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context,
     vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {
@@ -420,7 +420,6 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     showBuffer.tv_nsec = data->tv_nsec;
 
     int offset = data->tag_len;
-    
     char *dataBegin = data->data + offset;
     char *dataPos = data->data + offset;
     while (*dataPos != 0) {
