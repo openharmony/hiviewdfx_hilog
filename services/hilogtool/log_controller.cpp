@@ -227,7 +227,7 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
                     HilogShowLog(format, data, context, tailBuffer);
                     NextRequestOp(controller, SENDIDA);
                     break;
-                default:                    
+                default:
                     NextRequestOp(controller, SENDIDA);
                     break;
             }
@@ -392,7 +392,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             }
             pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
             : stoi(logPersistParam->jobIdStr);
-            pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB : 
+            pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB :
             GetCompressAlg(logPersistParam->compressAlgStr);
             pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : GetBuffSize(
                 logPersistParam->fileSizeStr);

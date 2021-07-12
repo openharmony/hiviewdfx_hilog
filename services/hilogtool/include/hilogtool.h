@@ -57,4 +57,4 @@ typedef struct {
 }  HilogArgs;
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif 
+#endif
