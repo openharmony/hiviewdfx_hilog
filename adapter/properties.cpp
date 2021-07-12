@@ -33,8 +33,6 @@
 #include <unordered_map>
 #include <pthread.h>
 
-#define HILOG_LEVEL_MIN LOG_LEVEL_MIN
-#define HILOG_LEVEL_MAX LOG_LEVEL_MAX
 
 static pthread_mutex_t g_globalLevelLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_tagLevelLock = PTHREAD_MUTEX_INITIALIZER;
@@ -84,7 +82,8 @@ void PropertySet(const std::string &key, const char* value)
 
 std::string GetProgName()
 {
-    return nullptr; /* use HOS interface */
+    return nullptr; 
+    /* use HOS interface */
 }
 
 std::string GetPropertyName(uint32_t propType) 
@@ -188,11 +187,11 @@ static bool CheckCache(const PropertyCache *cache)
     /* use OHOS interface */
 }
 
+
 static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
 {
     int notLocked;
     std::string key = GetPropertyName(propType);
-
     if (isFirst || CheckCache(&switchCache.cache)) {
         notLocked = LockByProp(propType);
         if (!notLocked) {
@@ -230,109 +229,134 @@ bool IsDebugOn()
 
 bool IsSingleDebugOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_SINGLE_DEBUG, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_SINGLE_DEBUG, false);
 }
 
 bool IsPersistDebugOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PERSIST_DEBUG, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PERSIST_DEBUG, false);
 }
 
 bool IsPrivateSwitchOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, true};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, true};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PRIVATE, true);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PRIVATE, true);
 }
 
 bool IsProcessSwitchOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_PROCESS_FLOWCTRL, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_PROCESS_FLOWCTRL, false);
 }
 
 bool IsDomainSwitchOn()
 {
-    static SwitchCache switchCache = {{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
-    return GetSwitchCache(isFirst, switchCache, PROP_DOMAIN_FLOWCTRL, false);
+    return GetSwitchCache(isFirst, *switchCache, PROP_DOMAIN_FLOWCTRL, false);
+}
+
+static uint16_t GetCacheLevel(char propertyChar) 
+{
+    uint16_t cacheLevel = LOG_LEVEL_MIN;
+    switch (propertyChar) {
+        case 'D':
+        case 'd':
+            cacheLevel = LOG_DEBUG;
+            break;
+        case 'I':
+        case 'i':
+            cacheLevel = LOG_INFO;
+            break;
+        case 'W':
+        case 'w':
+            cacheLevel = LOG_WARN;
+            break;
+        case 'E':
+        case 'e':
+            cacheLevel = LOG_ERROR;
+            break;
+        case 'F':
+        case 'f':
+            cacheLevel = LOG_FATAL;
+            break;
+        default:
+            break;
+    }
+    return cacheLevel;
 }
 
 uint16_t GetGlobalLevel()
 {
     std::string key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
-    static LogLevelCache levelCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+    static LogLevelCache *levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     int notLocked;
 
-    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache.cache)) {
+    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache->cache)) {
         notLocked = LockByProp(PROP_GLOBAL_LOG_LEVEL);
         if (!notLocked) {
-            RefreshCacheBuf(&levelCache.cache, key.c_str());
-            if (sscanf_s(levelCache.cache.propertyValue, "%d", &levelCache.logLevel) <= 0) {
-                UnlockByProp(PROP_GLOBAL_LOG_LEVEL);
-                return HILOG_LEVEL_MIN;
-            }
+            RefreshCacheBuf(&levelCache->cache, key.c_str());
+            levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
             UnlockByProp(PROP_GLOBAL_LOG_LEVEL);
-            return levelCache.logLevel;
+            return levelCache->logLevel;
         } else {
-            LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+            LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
             RefreshCacheBuf(&tmpCache.cache, key.c_str());
-            if (sscanf_s(tmpCache.cache.propertyValue, "%d", &tmpCache.logLevel) <= 0) {
-                return HILOG_LEVEL_MIN;
-            }
+            tmpCache.logLevel = GetCacheLevel(tmpCache.cache.propertyValue[0]);
             return tmpCache.logLevel;
         }
     } else {
-        return levelCache.logLevel;
+        return levelCache->logLevel;
     }
 }
 
 uint16_t GetDomainLevel(uint32_t domain)
 {
-    static std::unordered_map<uint32_t, LogLevelCache*> domainMap;
+    static std::unordered_map<uint32_t, LogLevelCache*> *domainMap = new std::unordered_map<uint32_t, 
+    LogLevelCache*>();
     std::unordered_map<uint32_t, LogLevelCache*>::iterator it;
     std::string key = GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + std::to_string(domain);
     int notLocked;
 
-    it = domainMap.find(domain);
-    if (it == domainMap.end()) { // new domain
-        LogLevelCache* levelCache = new(LogLevelCache);
-        levelCache->cache.pinfo = nullptr;
-        levelCache->cache.serial = 0xffffffff;
+    it = domainMap->find(domain);
+    if (it == domainMap->end()) { // new domain
+        LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
         RefreshCacheBuf(&levelCache->cache, key.c_str()); 
-        if (sscanf_s(levelCache->cache.propertyValue, "%d", &levelCache->logLevel) <= 0) {
-            return HILOG_LEVEL_MIN;
+        levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+        notLocked = LockByProp(PROP_DOMAIN_LOG_LEVEL);
+        if (!notLocked) {
+            domainMap->insert({ domain, levelCache });
+            UnlockByProp(PROP_DOMAIN_LOG_LEVEL);
+        } else {
+            uint16_t level = levelCache->logLevel;
+            delete(levelCache);
+            return level;
         }
-        domainMap.insert({ domain, levelCache });
         return levelCache->logLevel;
     } else { // exist domain
         if (CheckCache(&it->second->cache)) { // change
             notLocked = LockByProp(PROP_DOMAIN_LOG_LEVEL);
             if (!notLocked) {
                 RefreshCacheBuf(&it->second->cache, key.c_str());
-                if (sscanf_s(it->second->cache.propertyValue, "%d", &it->second->logLevel) <= 0) {
-                    UnlockByProp(PROP_DOMAIN_LOG_LEVEL);
-                    return HILOG_LEVEL_MIN;
-                }
+                it->second->logLevel = GetCacheLevel(it->second->cache.propertyValue[0]);
                 UnlockByProp(PROP_DOMAIN_LOG_LEVEL);
                 return it->second->logLevel;
             } else {
-                LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+                LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
                 RefreshCacheBuf(&tmpCache.cache, key.c_str());
-                if (sscanf_s(tmpCache.cache.propertyValue, "%d", &tmpCache.logLevel) <= 0) {
-                    return HILOG_LEVEL_MIN;
-                }
+                tmpCache.logLevel = GetCacheLevel(tmpCache.cache.propertyValue[0]);
                 return tmpCache.logLevel;
             }     
         } else { // not change
@@ -343,40 +367,40 @@ uint16_t GetDomainLevel(uint32_t domain)
 
 uint16_t GetTagLevel(const std::string& tag)
 {
-    static std::unordered_map<std::string, LogLevelCache*> tagMap;
+    static std::unordered_map<std::string, LogLevelCache*> *tagMap = new std::unordered_map<std::string, 
+    LogLevelCache*>();
     std::unordered_map<std::string, LogLevelCache*>::iterator it;
     std::string tagStr = tag;
     std::string key = GetPropertyName(PROP_TAG_LOG_LEVEL) + tagStr;
     int notLocked;
 
-    it = tagMap.find(tagStr);
-    if (it == tagMap.end()) {
-        LogLevelCache* levelCache = new(LogLevelCache);
-        levelCache->cache.pinfo = nullptr;
-        levelCache->cache.serial = 0xffffffff;
+    it = tagMap->find(tagStr);
+    if (it == tagMap->end()) {
+        LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
         RefreshCacheBuf(&levelCache->cache, key.c_str());    
-        if (sscanf_s(levelCache->cache.propertyValue, "%d", &levelCache->logLevel) <= 0) {
-            return HILOG_LEVEL_MIN;
+        levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+        notLocked = LockByProp(PROP_TAG_LOG_LEVEL);
+        if (!notLocked) {
+            tagMap->insert({ tagStr, levelCache });
+            UnlockByProp(PROP_TAG_LOG_LEVEL);
+        } else {
+            uint16_t level = levelCache->logLevel;
+            delete(levelCache);
+            return level;
         }
-        tagMap.insert({ tagStr, levelCache });
         return levelCache->logLevel;
     } else {
         if (CheckCache(&it->second->cache)) {
             notLocked = LockByProp(PROP_TAG_LOG_LEVEL);
             if (!notLocked) {
                 RefreshCacheBuf(&it->second->cache, key.c_str());
-                if (sscanf_s(it->second->cache.propertyValue, "%d", &it->second->logLevel) <= 0) {
-                    UnlockByProp(PROP_TAG_LOG_LEVEL);
-                    return HILOG_LEVEL_MIN;
-                }
+                it->second->logLevel = GetCacheLevel(it->second->cache.propertyValue[0]);
                 UnlockByProp(PROP_TAG_LOG_LEVEL);
                 return it->second->logLevel;
             } else {
-                LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, HILOG_LEVEL_MIN};
+                LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
                 RefreshCacheBuf(&tmpCache.cache, key.c_str());
-                if (sscanf_s(tmpCache.cache.propertyValue, "%d", &tmpCache.logLevel) <= 0) {
-                    return HILOG_LEVEL_MIN;
-                }
+                tmpCache.logLevel = GetCacheLevel(tmpCache.cache.propertyValue[0]);
                 return tmpCache.logLevel;
             }
         } else {

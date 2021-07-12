@@ -400,17 +400,25 @@ void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryRequest& q
 {
     logReader->queryCondition.levels = qRstMsg.levels;
     logReader->queryCondition.types = qRstMsg.types;
+    logReader->queryCondition.nPid = qRstMsg.nPid;
     logReader->queryCondition.nDomain = qRstMsg.nDomain;
     logReader->queryCondition.nTag = qRstMsg.nTag;
     logReader->queryCondition.noLevels = qRstMsg.noLevels;
     logReader->queryCondition.noTypes = qRstMsg.noTypes;
+    logReader->queryCondition.nNoPid = qRstMsg.nNoPid;
     logReader->queryCondition.nNoDomain = qRstMsg.nNoDomain;
     logReader->queryCondition.nNoTag = qRstMsg.nNoTag;
+    for (int i = 0; i < qRstMsg.nPid; i++) {
+        logReader->queryCondition.pids[i] = qRstMsg.pids[i];
+    }
     for (int i = 0; i < qRstMsg.nDomain; i++) {
         logReader->queryCondition.domains[i] = qRstMsg.domains[i];
     }
     for (int i = 0; i < qRstMsg.nTag; i++) {
         logReader->queryCondition.tags[i] = qRstMsg.tags[i];
+    }
+    for (int i = 0; i < qRstMsg.nNoPid; i++) {
+        logReader->queryCondition.noPids[i] = qRstMsg.noPids[i];
     }
     for (int i = 0; i < qRstMsg.nNoDomain; i++) {
         logReader->queryCondition.noDomains[i] = qRstMsg.noDomains[i];
@@ -469,6 +477,7 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
                 break;
         }
     }
+    hilogBuffer->RemoveLogReader(logReader);
 }
 
 LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer* buffer)
@@ -533,9 +542,16 @@ void LogQuerier::NotifyForNewData()
     }
 }
 
-uint8_t LogQuerier::getType() const
+uint8_t LogQuerier::GetType() const
 {
-    return TYPE_QUERIER;
+    switch (cmd) {
+        case LOG_QUERY_RESPONSE:
+            return TYPE_QUERIER;
+        case NEXT_RESPONSE:
+            return TYPE_QUERIER;
+        default:
+            return TYPE_CONTROL;
+    }
 }
 } // namespace HiviewDFX
 } // namespace OHOS

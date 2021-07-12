@@ -31,18 +31,23 @@ class HilogBuffer;
 
 #define TYPE_QUERIER 1
 #define TYPE_PERSISTER 2
+#define TYPE_CONTROL 3
 
 using QueryCondition = struct QueryCondition {
+    uint8_t nPid = 0;
+    uint8_t nNoPid = 0;
     uint8_t nDomain = 0;
     uint8_t nNoDomain = 0;
     uint8_t nTag = 0;
     uint8_t nNoTag = 0;
     uint16_t levels = 0;
     uint16_t types = 0;
+    uint32_t pids[MAX_PIDS];
     uint32_t domains[MAX_DOMAINS];
     std::string tags[MAX_TAGS];
     uint8_t noLevels = 0;
     uint16_t noTypes = 0;
+    uint32_t noPids[MAX_PIDS];
     uint32_t noDomains[MAX_DOMAINS];
     std::string noTags[MAX_TAGS];
 };
@@ -57,7 +62,7 @@ public:
     bool isNotified;
 
     LogReader();
-    virtual ~LogReader();
+    virtual ~LogReader() = default;
     bool GetReload() const;
     void SetReload(bool);
     virtual void NotifyForNewData() = 0;
@@ -66,7 +71,7 @@ public:
     virtual int WriteData(HilogData* data) =0;
     void SetSendId(unsigned int value);
     void SetCmd(uint8_t value);
-    virtual uint8_t getType() const = 0;
+    virtual uint8_t GetType() const = 0;
 protected:
     unsigned int sendId = 1;
     uint8_t cmd = 0;
