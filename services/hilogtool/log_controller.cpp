@@ -120,7 +120,7 @@ uint16_t GetCompressAlg(const std::string& pressAlg)
     return COMPRESS_TYPE_ZLIB;
 }
 
-uint16_t GetLogLevel(const string& logLevelStr)
+uint16_t GetLogLevel(const std::string& logLevelStr, std::string& logLevel)
 {
     if (logLevelStr == "debug" || logLevelStr == "DEBUG" || logLevelStr == "d" || logLevelStr == "D") {
         logLevel = "D";

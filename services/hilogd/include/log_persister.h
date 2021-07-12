@@ -35,7 +35,7 @@ typedef struct {
 } LogPersisterBuffer;
 
 const uint16_t MAX_PERSISTER_BUFFER_SIZE = 4096;
-const uint32_t COMPRESS_BUFFER_SIZE = 4 * 1024;
+const uint32_t COMPRESS_BUFFER_SIZE = 64 * 1024;
 class LogPersister : public LogReader {
 public:
     LogPersister(uint32_t id, std::string path, uint16_t compressAlg, int sleepTime,

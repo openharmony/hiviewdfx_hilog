@@ -45,7 +45,7 @@ constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
 constexpr int SLEEP_TIME = 5;
-list<int> persisterJobIds;
+list<int> g_persisterJobId;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
@@ -135,7 +135,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst->result == RET_FAIL) {
         persister.reset();
     } else {
-        persisterJobIds.push_back(pLogPersistStartRst->jobId);
+        g_persisterJobId.push_back(pLogPersistStartRst->jobId);
         persister->Start();
         buffer->AddLogReader(weak_ptr<LogPersister>(persister));
     }
@@ -154,7 +154,6 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
         = reinterpret_cast<LogPersistStopResponse*>(msgToSend);
     LogPersistStopResult* pLogPersistStopRst
         = reinterpret_cast<LogPersistStopResult*>(&pLogPersistStopRsp->logPersistStopRst);
-    uint32_t recvMsgLen = 0;
     uint32_t msgNum = 0;
     uint16_t msgLen = pLogPersistStopReq->msgHeader.msgLen;
     uint16_t sendMsgLen = 0;
@@ -163,11 +162,10 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
     if (msgLen > sizeof(LogPersistStopMsg) * LOG_TYPE_MAX) {
         return;
     }
-    if(pLogPersistStopMsg && pLogPersistStopMsg->jobId == 0xffffffff) {
-        for (list<int>::iterator iter = persisterJobIds.begin();iter != persisterJobIds.end(); ++iter) {
+    if (pLogPersistStopMsg && pLogPersistStopMsg->jobId == 0xffffffff) {
+        for (list<int>::iterator iter = g_persisterJobId.begin(); iter != g_persisterJobId.end(); ++iter) {
             rst = LogPersister::Kill(*iter);
-            persisterJobIds.pop_front();
-            cout << "*iter" << hex << *iter << endl;
+            g_persisterJobId.pop_front();
             if (pLogPersistStopRst) {
                 pLogPersistStopRst->jobId = *iter;
                 pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
@@ -176,11 +174,15 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
             }
         }
     } else {
+        uint32_t recvMsgLen = 0;
         while (pLogPersistStopMsg && recvMsgLen < msgLen) {
             rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
             if (pLogPersistStopRst) {
                 pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
                 pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
+                if (pLogPersistStopRst->result == RET_SUCCESS) {
+                    g_persisterJobId.remove(pLogPersistStopMsg->jobId);
+                }
                 pLogPersistStopRst++;
             }
             pLogPersistStopMsg++;

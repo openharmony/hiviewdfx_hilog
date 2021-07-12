@@ -67,7 +67,7 @@ static void Helper()
     "  -D <domain>, --domain=<domain>\n"
     "                     specify the domain, no more than %d.\n"
     "  -T <tag>, --Tag=<tag>\n"
-    "                     specify the tag.\n"
+    "                     specify the tag, no more than %d.\n"
     "  -a <n>, --head=<n> show n lines log on head.\n"
     "  -z <n>, --tail=<n> show n lines log on tail.\n"
     "  -G <size>, --buffer-size=<size>\n"
