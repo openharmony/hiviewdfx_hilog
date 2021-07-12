@@ -45,7 +45,7 @@ constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
 constexpr int SLEEP_TIME = 5;
-
+list<int> persisterJobIds;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
@@ -128,7 +128,6 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         pLogPersistStartMsg->filePath,
         pLogPersistStartMsg->compressAlg,
         SLEEP_TIME, rotator, buffer);
-
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
     pLogPersistStartRst->result = persister->Init();
     persister->queryCondition.types = pLogPersistStartMsg->logType;
@@ -136,6 +135,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst->result == RET_FAIL) {
         persister.reset();
     } else {
+        persisterJobIds.push_back(pLogPersistStartRst->jobId);
         persister->Start();
         buffer->AddLogReader(weak_ptr<LogPersister>(persister));
     }
@@ -163,17 +163,30 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
     if (msgLen > sizeof(LogPersistStopMsg) * LOG_TYPE_MAX) {
         return;
     }
-
-    while (pLogPersistStopMsg && recvMsgLen < msgLen) {
-        rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
-        if (pLogPersistStopRst) {
-            pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
-            pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-            pLogPersistStopRst++;
+    if(pLogPersistStopMsg && pLogPersistStopMsg->jobId == 0xffffffff) {
+        for (list<int>::iterator iter = persisterJobIds.begin();iter != persisterJobIds.end(); ++iter) {
+            rst = LogPersister::Kill(*iter);
+            persisterJobIds.pop_front();
+            cout << "*iter" << hex << *iter << endl;
+            if (pLogPersistStopRst) {
+                pLogPersistStopRst->jobId = *iter;
+                pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
+                pLogPersistStopRst++;
+                msgNum++;
+            }
         }
-        pLogPersistStopMsg++;
-        recvMsgLen += sizeof(LogPersistStopMsg);
-        msgNum++;
+    } else {
+        while (pLogPersistStopMsg && recvMsgLen < msgLen) {
+            rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
+            if (pLogPersistStopRst) {
+                pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
+                pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
+                pLogPersistStopRst++;
+            }
+            pLogPersistStopMsg++;
+            recvMsgLen += sizeof(LogPersistStopMsg);
+            msgNum++;
+        }
     }
     sendMsgLen = msgNum * sizeof(LogPersistStopResult);
     SetMsgHead(&pLogPersistStopRsp->msgHeader, MC_RSP_LOG_PERSIST_STOP, sendMsgLen);

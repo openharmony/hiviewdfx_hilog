@@ -257,13 +257,13 @@ int32_t ControlCmdResult(const char* message)
                 (LogPersistStartResult*)&pLogPersistStartRsp->logPersistStartRst;
             while (pLogPersistStartRst && resultLen < msgLen) {
                 if (pLogPersistStartRst->result == RET_FAIL) {
+                    outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStartRst->jobId);
-                    outputStr += " log file task start fail";
-                    outputStr += "\n";
+                    outputStr += "] start failed\n";
                 } else {
+                    outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStartRst->jobId);
-                    outputStr += " log file task start success";
-                    outputStr += "\n";
+                    outputStr += "] started successfully\n";
                 }
                 pLogPersistStartRst++;
                 resultLen += sizeof(LogPersistStartResult);
@@ -278,13 +278,13 @@ int32_t ControlCmdResult(const char* message)
             LogPersistStopResult* pLogPersistStopRst = (LogPersistStopResult*)&pLogPersistStopRsp->logPersistStopRst;
             while (pLogPersistStopRst && resultLen < msgLen) {
                 if (pLogPersistStopRst->result == RET_FAIL) {
+                    outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStopRst->jobId);
-                    outputStr += " log file task stop fail";
-                    outputStr += "\n";
+                    outputStr += "] stop failed\n";
                 } else {
+                    outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStopRst->jobId);
-                    outputStr += " log file task stop success";
-                    outputStr += "\n";
+                    outputStr += "] stopped successfully\n";
                 }
                 pLogPersistStopRst++;
                 resultLen += sizeof(LogPersistStopResult);
@@ -299,10 +299,10 @@ int32_t ControlCmdResult(const char* message)
             LogPersistQueryResult* pLogPersistQueryRst =
                 (LogPersistQueryResult*)&pLogPersistQueryRsp->logPersistQueryRst;
             while (pLogPersistQueryRst && resultLen < msgLen) {
-                if (pLogPersistQueryRst->result == RET_FAIL) {
+                if (pLogPersistQueryRst->result == RET_FAIL) {\
+                    outputStr = "Persist task [logtype:";
                     outputStr += GetLogTypeStr(pLogPersistQueryRst->logType);
-                    outputStr = " log file task query fail";
-                    outputStr += "\n";
+                    outputStr += "] query failed\n";
                 } else {
                     outputStr += to_string(pLogPersistQueryRst->jobId);
                     outputStr += " ";

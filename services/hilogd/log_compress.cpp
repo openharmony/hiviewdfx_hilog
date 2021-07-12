@@ -35,9 +35,8 @@ int ZlibCompress::Compress(Bytef *data, uLong dlen)
 {
     zdlen = compressBound(dlen);
     zdata = new unsigned char [zdlen];
-    
     if (zdata == NULL) {
-        cout << "no enough memory!" << endl; 
+        cout << "no enough memory!" << endl;
         return -1;
     }
     void* const buffIn  = malloc(CHUNK);
@@ -54,7 +53,7 @@ int ZlibCompress::Compress(Bytef *data, uLong dlen)
     if (deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
         return -1;
     }
-    do { 
+    do {
         bool flag = read - src_pos < toRead;
         if (flag) {
             memset_s(buffIn, CHUNK, 0, CHUNK);
@@ -116,7 +115,7 @@ int ZstdCompress::Compress(Bytef *data, uLong dlen)
     auto dst_pos = 0;
     size_t read = dlen;
     ZSTD_inBuffer input;
-    do { 
+    do {
         bool flag = read - src_pos < toRead;
         if (flag) {
             memset_s(buffIn, buffInSize, 0, buffInSize);
