@@ -26,47 +26,46 @@ LogCompress::LogCompress()
 {
 }
 
-LogCompress::~LogCompress()
+int NoneCompress::Compress(char (&src)[], uint32_t& inLen,char (&dst)[], uint32_t &outLen)
 {
-    delete zdata;
+    outLen = inLen;
+    if( memcpy_s(dst, outLen, src, inLen) != 0) {
+        return -1;
+    }
+    return 0;
 }
 
-int ZlibCompress::Compress(Bytef *data, uLong dlen)
+int ZlibCompress::Compress(char (&src)[], uint32_t &inLen,char (&dst)[], uint32_t &outLen)
 {
-    zdlen = compressBound(dlen);
+    zdlen = compressBound(inLen);
     zdata = new unsigned char [zdlen];
     if (zdata == NULL) {
         cout << "no enough memory!" << endl;
         return -1;
     }
-    void* const buffIn  = malloc(CHUNK);
-    void* const buffOut = malloc(CHUNK);
     size_t const toRead = CHUNK;
     auto src_pos = 0;
     auto dst_pos = 0;
-    size_t read = dlen;
+    size_t read = inLen;
     int flush = 0;
-    z_stream c_stream;
     c_stream.zalloc = Z_NULL;
     c_stream.zfree = Z_NULL;
     c_stream.opaque = Z_NULL;
     if (deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
-        free(buffIn);
-        free(buffOut);
         return -1;
     }
     do {
         bool flag = read - src_pos < toRead;
         if (flag) {
             memset_s(buffIn, CHUNK, 0, CHUNK);
-            if (memmove_s(buffIn, CHUNK, data + src_pos, read - src_pos) != 0) {
+            if (memmove_s(buffIn, CHUNK, src + src_pos, read - src_pos) != 0) {
                 return -1;
             }
             c_stream.avail_in = read - src_pos;
             src_pos += read - src_pos;
         } else {
             memset_s(buffIn, CHUNK, 0, CHUNK);
-            if (memmove_s(buffIn, CHUNK, data + src_pos, toRead) != 0) {
+            if (memmove_s(buffIn, CHUNK, src + src_pos, toRead) != 0) {
                 return -1;
             };
             src_pos += toRead;
@@ -92,62 +91,53 @@ int ZlibCompress::Compress(Bytef *data, uLong dlen)
     } while (flush != Z_FINISH);
     /* clean up and return */
     (void)deflateEnd(&c_stream);
-    free(buffIn);
-    free(buffOut);
+    memcpy_s(dst + outLen, COMPRESS_BUFFER_SIZE - outLen, zdata, zdlen);
+    outLen += zdlen;
+    delete zdata;
     return 0;
 }
 
-int ZstdCompress::Compress(Bytef *data, uLong dlen)
+int ZstdCompress::Compress(char (&src)[], uint32_t &inLen,char (&dst)[], uint32_t &outLen)
 {
 #ifdef USING_ZSTD_COMPRESS
-    zdlen = ZSTD_CStreamOutSize();
+   zdlen = ZSTD_CStreamOutSize();
     zdata = new unsigned char [zdlen];
     if (zdata == NULL) {
         cout << "no enough memory!" << endl;
         return -1;
     }
-    size_t const buffInSize = ZSTD_CStreamInSize();
-    void* const buffIn  = malloc(buffInSize);
-    size_t const buffOutSize = ZSTD_CStreamOutSize();
-    void* const buffOut = malloc(buffOutSize);
     ZSTD_EndDirective mode;
     int compressionlevel = 1;
-    ZSTD_CCtx* const cctx = ZSTD_createCCtx();
+    cctx = ZSTD_createCCtx();
     if (cctx == NULL) {
         cout << "ZSTD_createCCtx() failed!" << endl;
-        free(buffIn);
-        free(buffOut);
         return -1;
     }
     ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, compressionlevel);
-    size_t const toRead = buffInSize;
+    size_t const toRead = CHUNK;
     auto src_pos = 0;
     auto dst_pos = 0;
-    size_t read = dlen;
+    size_t read = inLen;
     ZSTD_inBuffer input;
     do {
         bool flag = read - src_pos < toRead;
         if (flag) {
-            memset_s(buffIn, buffInSize, 0, buffInSize);
-            if (memmove_s(buffIn,  buffInSize, data + src_pos, read - src_pos) != 0) {
-                return -1;
-            }
+            memset_s(buffIn, CHUNK, 0, CHUNK);
+            memmove(buffIn, src + src_pos, read - src_pos);
             input = {buffIn, read - src_pos, 0};
             src_pos += read - src_pos;
         } else {
-            memset_s(buffIn, buffInSize, 0, buffInSize);
-            if (memmove_s(buffIn,  buffInSize, data + src_pos, toRead) != 0) {
-                return -1;
-            }
+            memset_s(buffIn, CHUNK, 0, CHUNK);
+            memmove(buffIn, src + src_pos, toRead);
             input = {buffIn, toRead, 0};
             src_pos += toRead;
         }
         mode = flag ? ZSTD_e_end : ZSTD_e_continue;
         int finished;
         do {
-            ZSTD_outBuffer output = {buffOut, buffOutSize, 0};
+            ZSTD_outBuffer output = {buffOut, CHUNK, 0};
             size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
-            if (memmove_s(zdata + dst_pos, zdlen, (Bytef *)buffOut, output.pos) != 0) {
+            if(memmove_s(zdata + dst_pos, zdlen, (Bytef *)buffOut, output.pos) != 0) {
                 return -1;
             }
             dst_pos += output.pos;
@@ -155,9 +145,10 @@ int ZstdCompress::Compress(Bytef *data, uLong dlen)
             finished = flag ? (remaining == 0) : (input.pos == input.size);
         } while (!finished);
     } while (mode != ZSTD_e_end);
-    free(buffIn);
-    free(buffOut);
     ZSTD_freeCCtx(cctx);
+    memcpy_s(dst + outLen, COMPRESS_BUFFER_SIZE - outLen, zdata, zdlen);
+    outLen += zdlen;
+    delete zdata;
 #endif // #ifdef USING_ZSTD_COMPRESS
     return 0;
 }

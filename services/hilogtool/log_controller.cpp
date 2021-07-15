@@ -38,6 +38,7 @@ const int MSG_MAX_LEN = 2048;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
 const uint32_t DEFAULT_JOBID = 1;
+const int LOG_PERSIST_MIN_FILE_SIZE = 16 * ONE_KB;
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
@@ -111,7 +112,7 @@ uint64_t GetBuffSize(const string& buffSizeStr)
 uint16_t GetCompressAlg(const std::string& pressAlg)
 {
     if (pressAlg == "none") {
-        return COMPRESS_TYPE_OFF;
+        return COMPRESS_TYPE_NONE;
     } else if (pressAlg == "zlib") {
         return COMPRESS_TYPE_ZLIB;
     } else if (pressAlg == "zstd") {
@@ -137,7 +138,7 @@ uint16_t GetLogLevel(const std::string& logLevelStr, std::string& logLevel)
     } else if (logLevelStr == "fatal" || logLevelStr == "FATAL" || logLevelStr == "f" || logLevelStr == "F") {
         logLevel = "F";
         return LOG_FATAL;
-    } 
+    }
     return 0xffff;
 }
 
@@ -415,6 +416,10 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             GetCompressAlg(logPersistParam->compressAlgStr);
             pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : GetBuffSize(
                 logPersistParam->fileSizeStr);
+	    if (pLogPersistStartMsg->fileSize < LOG_PERSIST_MIN_FILE_SIZE) {
+                std::cout << "Persist log file size less than min size" << std::endl;
+		return RET_FAIL;
+	    }
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
@@ -434,7 +439,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             LogPersistStopMsg* pLogPersistStopMsg =
                 reinterpret_cast<LogPersistStopMsg*>(&pLogPersistStopReq->logPersistStopMsg);
             if (logPersistParam->jobIdStr == "") {
-                pLogPersistStopMsg->jobId = 0xffffffff;
+                pLogPersistStopMsg->jobId = JOB_ID_ALL;
                 SetMsgHead(&pLogPersistStopReq->msgHeader, msgCmd, sizeof(LogPersistStopMsg));
                 controller.WriteAll(msgToSend, sizeof(LogPersistStopMsg) + sizeof(MessageHeader));
                 break;

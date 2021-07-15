@@ -23,44 +23,26 @@ namespace HiviewDFX {
 using namespace std;
 
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
-    : fileNum(fileNum - 1), fileSize(fileSize), fileName(path), fileSuffix(suffix)
+    : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
 {
     index = 0;
     leftSize = 0;
     needRotate = true;
 }
 
-int LogPersisterRotator::Input(const char *buf, int length)
+int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
     cout << __func__ << " " << fileName << " " << index
-         << " " << length  << " need: " << needRotate << endl;
-    if (needRotate) {
-        output.close();
-        Rotate();
-        needRotate = false;
-    }
-    if (length <= 0 || buf == nullptr) return -1;
+		 << " " << length  << " need: " << needRotate << endl;
+	if (needRotate) {
+		output.close();
+		Rotate();
+		needRotate = false;
+	}
 
-    unsigned int offset = 0;
-    while (length >= leftSize) {
-        int pos = leftSize - 1;
-        while (pos >= 0 && buf[offset + pos] != '\n')
-            pos--;
-        int realSize = pos + 1;
-        if (realSize == 0 && (uint32_t)leftSize == fileSize) {
-            cout << "ERROR! some log line is too long" << endl;
-            break;
-        } else {
-            output.write(buf + offset, realSize);
-            offset += realSize;
-            length -= realSize;
-            output.close();
-        }
-        Rotate();
-    }
-    output.write(buf + offset, length);
-    leftSize -= length;
-    output.flush();
+    if (length <= 0 || buf == nullptr) return -1;
+	uint32_t offset = 0;
+	output.write(buf + offset, length);
     return 0;
 }
 
@@ -72,7 +54,7 @@ void LogPersisterRotator::InternalRotate()
     ss << 0 << fileSuffix;
     remove(ss.str().c_str());
 
-    for (uint32_t i = 1; i <= fileNum; ++i) {
+    for (uint32_t i = 1; i < fileNum; ++i) {
         ss.seekp(pos);
         ss << (i - 1) << fileSuffix;
         string newName = ss.str();
@@ -83,13 +65,12 @@ void LogPersisterRotator::InternalRotate()
         rename(oldName.c_str(), newName.c_str());
     }
     output.open(ss.str(), ios::out);
-    leftSize = fileSize;
 }
 
 void LogPersisterRotator::Rotate()
 {
     cout << __func__ << endl;
-    if (index == (int)fileNum) {
+    if (index == (int)(fileNum - 1)) {
         InternalRotate();
     } else {
         index += 1;
@@ -97,7 +78,6 @@ void LogPersisterRotator::Rotate()
         ss << fileName << "." << index << fileSuffix;
         cout << "THE FILE NAME !!!!!!! " << ss.str() << endl;
         output.open(ss.str(), ios::app);
-        leftSize = fileSize;
     }
 }
 
@@ -107,9 +87,8 @@ void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
     *num = fileNum;
 }
 
-void LogPersisterRotator::FinishInput()
-{
-    needRotate = true;
+void LogPersisterRotator::FinishInput() {
+	needRotate = true;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

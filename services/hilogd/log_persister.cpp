@@ -49,24 +49,47 @@ static std::mutex g_listMutex;
         (x) = nullptr; \
     } while (0)
 
-LogPersister::LogPersister(uint32_t id, string path, uint16_t compressAlg, int sleepTime,
+LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t compressAlg, int sleepTime,
                            LogPersisterRotator *rotator, HilogBuffer *_buffer)
-    : id(id), path(path), compressAlg(compressAlg),
+    : id(id), path(path), fileSize(fileSize), compressAlg(compressAlg),
       sleepTime(sleepTime), rotator(rotator)
 {
     toExit = false;
     hasExited = false;
     hilogBuffer = _buffer;
-    LogCompress = nullptr;
+    compressor = nullptr;
     fdinfo = nullptr;
     buffer = nullptr;
+    beforeCompressLogSize = 0;
 }
 
 LogPersister::~LogPersister()
 {
     SAFE_DELETE(rotator);
-    SAFE_DELETE(LogCompress);
+    SAFE_DELETE(compressor);
     SAFE_DELETE(compressBuffer);
+}
+
+int LogPersister::InitCompress() {
+    compressBuffer = new LogPersisterBuffer[MAX_PERSISTER_BUFFER_SIZE];
+    if (compressBuffer == NULL) {
+        return RET_FAIL;
+    }
+    switch (compressAlg)
+    {
+    case COMPRESS_TYPE_NONE:
+        compressor = new NoneCompress();
+        break;
+    case COMPRESS_TYPE_ZLIB:
+        compressor = new ZlibCompress();
+        break;
+    case COMPRESS_TYPE_ZSTD:
+        compressor = new ZstdCompress();
+        break;
+    default:
+        break;
+    }
+    return RET_SUCCESS;
 }
 
 int LogPersister::Init()
@@ -92,7 +115,9 @@ int LogPersister::Init()
     if (hit) {
         return RET_FAIL;
     }
-
+    if (InitCompress() ==  RET_FAIL) {
+        return RET_FAIL;
+    }
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
     bool restore = false;
     if (fd <= 0) {
@@ -144,7 +169,7 @@ int LogPersister::Init()
         cout << "Recovered persister, Offset=" << moffset << endl;
 #endif
         SetBufferOffset(moffset);
-        WriteFile();
+        //WriteFile();
     } else {
         SetBufferOffset(0);
     }
@@ -228,7 +253,7 @@ bool LogPersister::writeUnCompressedBuffer(HilogData *data)
         string header = persistList.front();
         uint16_t headerLen = header.length();
         uint16_t size = headerLen + 1;
-        uint16_t orig_offset = buffer->offset;
+        uint32_t orig_offset = buffer->offset;
         int r = 0;
         if (buffer->offset + size > MAX_PERSISTER_BUFFER_SIZE)
             return false;
@@ -252,49 +277,12 @@ int LogPersister::WriteData(HilogData *data)
         return -1;
     if (writeUnCompressedBuffer(data))
         return 0;
-    switch (compressAlg) {
-        case COMPRESS_TYPE_OFF:
-            WriteFile();
-            break;
-        case COMPRESS_TYPE_ZLIB: {
-            LogCompress = new ZlibCompress();
-            if (LogCompress->Compress((Bytef *)buffer->content, buffer->offset) != 0) {
-                cout << "COMPRESS_TYPE_ZLIB Error" << endl;
-                return -1;
-            };
-            memcpy_s(compressBuffer->content + compressBuffer->offset, COMPRESS_BUFFER_SIZE,
-                LogCompress->zdata, LogCompress->zdlen);
-            compressBuffer->offset += LogCompress->zdlen;
-            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2 / 3) {
-                rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
-                rotator->FinishInput();
-                compressBuffer->offset = 0;
-            }
-            SetBufferOffset(0);
-        }
-            break;
-#ifdef USING_ZSTD_COMPRESS
-        case COMPRESS_TYPE_ZSTD:  {
-            LogCompress = new ZstdCompress();
-            if (LogCompress->Compress((Bytef *)buffer->content, buffer->offset) != 0) {
-                cout << "COMPRESS_TYPE_ZSTD Error" << endl;
-                return -1;
-            };
-            memcpy_s(compressBuffer->content + compressBuffer->offset, COMPRESS_BUFFER_SIZE,
-                LogCompress->zdata, LogCompress->zdlen);
-            compressBuffer->offset += LogCompress->zdlen;
-            if (compressBuffer->offset >= COMPRESS_BUFFER_SIZE * 2 / 3) {
-                rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
-                rotator->FinishInput();
-                compressBuffer->offset = 0;
-            }
-            SetBufferOffset(0);
-        }
-            break;
-#endif // #ifdef USING_ZSTD_COMPRESS
-        default:
-            break;
-    }
+    if (compressor->Compress(buffer->content, buffer->offset,
+        compressBuffer->content, compressBuffer->offset) != 0) {
+        cout << "COMPRESS Error" << endl;
+        return -1;
+    };
+    WriteFile();
     return writeUnCompressedBuffer(data) ? 0 : -1;
 }
 
@@ -308,11 +296,21 @@ void LogPersister::Start()
 
 inline void LogPersister::WriteFile()
 {
-    if (buffer->offset == 0) return;
-    if (compressAlg == 0) {
-        rotator->Input(buffer->content, buffer->offset);
+	if (buffer->offset == 0)
+        return;
+    rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
+    beforeCompressLogSize += buffer->offset;
+#ifdef DEBUG
+    cout << buffer->offset << endl;
+    cout << compressBuffer->offset << endl;
+    cout << "beforeCompressLogSize" << beforeCompressLogSize <<endl;
+#endif
+    if (beforeCompressLogSize > fileSize) {
+        beforeCompressLogSize = 0;
+        rotator->FinishInput();
     }
-    SetBufferOffset(0);
+    compressBuffer->offset = 0;
+	SetBufferOffset(0);
 }
 
 int LogPersister::ThreadFunc()
@@ -333,7 +331,6 @@ int LogPersister::ThreadFunc()
                 WriteFile();
             }
         }
-        cout << "running! " << compressAlg << endl;
     }
     WriteFile();
     {
@@ -379,7 +376,9 @@ int LogPersister::Kill(const uint32_t id)
     std::lock_guard<mutex> guard(g_listMutex);
     for (auto it = logPersisters.begin(); it != logPersisters.end(); ) {
         if ((*it)->Identify(id)) {
+#ifdef DEBUG
             cout << "find a persister" << endl;
+#endif
             (*it)->Exit();
             it = logPersisters.erase(it);
             found = true;
