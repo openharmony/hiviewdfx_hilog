@@ -15,6 +15,7 @@
 
 #include "hilog_input_socket_client.h"
 
+#include <sys/time.h>
 #include <cstring>
 #include <iostream>
 

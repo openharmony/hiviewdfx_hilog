@@ -29,27 +29,6 @@ ohos_shared_library("libhilog_os_adapter") {
   ]
 
   install_enable = true
-  part_name = "hilog"
-  subsystem_name = "hiviewdfx"
-}
-
-ohos_shared_library("libhilog_os_adapter_native") {
-  sources = [
-    "properties.cpp",
-    "socket_server_adapter.cpp",
-  ]
-
-  deps = [ "//utils/native/base:utilsecurec_shared" ]
-
-  defines = [ "USING_EXISTING_SOCKET" ]
-
-  include_dirs = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//base/hiviewdfx/hilog/adapter",
-  ]
-
-  output_name = "libhilog_os_adapter"
-  install_enable = true
-  part_name = "hiviewdfx_hilog_native"
+  part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
 }

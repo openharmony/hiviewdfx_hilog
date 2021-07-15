@@ -31,23 +31,6 @@ ohos_shared_library("libhilog") {
   output_extension = "so"
   install_enable = true
 
-  part_name = "hilog"
-  subsystem_name = "hiviewdfx"
-}
-
-ohos_shared_library("libhilog_native") {
-  public_configs = [ ":libhilog_pub_config" ]
-
-  deps = [
-    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter_native",
-    "//base/hiviewdfx/hilog/frameworks/native:libhilog_source",
-    "//utils/native/base:utilsecurec_shared",
-  ]
-
-  output_name = "libhilog"
-  output_extension = "so"
-  install_enable = true
-
-  part_name = "hiviewdfx_hilog_native"
+  part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
 }
