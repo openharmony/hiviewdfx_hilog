@@ -23,7 +23,7 @@
 #include "hilog_common.h"
 
 #define FILE_PATH_MAX_LEN 100
-
+#define JOB_ID_ALL 0xffffffff
 typedef enum {
     LOG_QUERY_REQUEST = 0x01,
     LOG_QUERY_RESPONSE,
@@ -71,7 +71,7 @@ typedef enum {
 } PersisterResponse;
 
 typedef enum {
-    COMPRESS_TYPE_OFF = 0,
+    COMPRESS_TYPE_NONE = 0,
     COMPRESS_TYPE_ZSTD,
     COMPRESS_TYPE_ZLIB,
 } CompressAlg;
