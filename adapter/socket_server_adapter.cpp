@@ -17,11 +17,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <dirent.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/socket.h>
-#include <linux/un.h>
+#include <sys/un.h>
 #include <string>
 #include <vector>
 

@@ -15,7 +15,7 @@
 
 #include "dgram_socket_client.h"
 
-#include <sys/unistd.h>
+#include <unistd.h>
 
 namespace OHOS {
 namespace HiviewDFX {
