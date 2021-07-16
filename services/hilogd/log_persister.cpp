@@ -75,20 +75,19 @@ int LogPersister::InitCompress() {
     if (compressBuffer == NULL) {
         return RET_FAIL;
     }
-    switch (compressAlg)
-    {
-    case COMPRESS_TYPE_NONE:
-        compressor = new NoneCompress();
-        break;
-    case COMPRESS_TYPE_ZLIB:
-        compressor = new ZlibCompress();
-        break;
-    case COMPRESS_TYPE_ZSTD:
-        compressor = new ZstdCompress();
-        break;
-    default:
-        break;
-    }
+    switch (compressAlg) {
+        case COMPRESS_TYPE_NONE:
+            compressor = new NoneCompress();
+            break;
+        case COMPRESS_TYPE_ZLIB:
+            compressor = new ZlibCompress();
+            break;
+        case COMPRESS_TYPE_ZSTD:
+            compressor = new ZstdCompress();
+            break;
+        default:
+            break;
+        }
     return RET_SUCCESS;
 }
 
@@ -169,7 +168,7 @@ int LogPersister::Init()
         cout << "Recovered persister, Offset=" << moffset << endl;
 #endif
         SetBufferOffset(moffset);
-        //WriteFile();
+        WriteFile();
     } else {
         SetBufferOffset(0);
     }
@@ -296,21 +295,16 @@ void LogPersister::Start()
 
 inline void LogPersister::WriteFile()
 {
-	if (buffer->offset == 0)
+    if (buffer->offset == 0)
         return;
     rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
     beforeCompressLogSize += buffer->offset;
-#ifdef DEBUG
-    cout << buffer->offset << endl;
-    cout << compressBuffer->offset << endl;
-    cout << "beforeCompressLogSize" << beforeCompressLogSize <<endl;
-#endif
     if (beforeCompressLogSize > fileSize) {
         beforeCompressLogSize = 0;
         rotator->FinishInput();
     }
     compressBuffer->offset = 0;
-	SetBufferOffset(0);
+    SetBufferOffset(0);
 }
 
 int LogPersister::ThreadFunc()
