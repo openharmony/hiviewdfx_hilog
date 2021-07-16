@@ -416,10 +416,10 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             GetCompressAlg(logPersistParam->compressAlgStr);
             pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : GetBuffSize(
                 logPersistParam->fileSizeStr);
-	    if (pLogPersistStartMsg->fileSize < LOG_PERSIST_MIN_FILE_SIZE) {
+            if (pLogPersistStartMsg->fileSize < LOG_PERSIST_MIN_FILE_SIZE) {
                 std::cout << "Persist log file size less than min size" << std::endl;
-		return RET_FAIL;
-	    }
+                return RET_FAIL;
+            }
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
@@ -431,8 +431,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;
-        }
-
+            }
         case MC_REQ_LOG_PERSIST_STOP: {
             LogPersistStopRequest* pLogPersistStopReq =
                 reinterpret_cast<LogPersistStopRequest*>(msgToSend);

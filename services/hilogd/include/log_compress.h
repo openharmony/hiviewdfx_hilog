@@ -23,15 +23,13 @@
 #include <zlib.h>
 namespace OHOS {
 namespace HiviewDFX {
-
 const uint32_t COMPRESS_BUFFER_SIZE = 64 * 1024;
 const uint16_t CHUNK = 16384;
-class LogCompress
-{
+class LogCompress {
 public:
     LogCompress();
     virtual ~LogCompress() = default;
-    virtual int Compress(char (&src)[], uint32_t &inLen,char (&dst)[], uint32_t &outLen) = 0;
+    virtual int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen) = 0;
     uLong zdlen = 0;
     unsigned char *zdata;
     char buffIn[CHUNK];
@@ -44,11 +42,10 @@ public:
 };
 
 class ZlibCompress: public LogCompress {
-
 public:
     int Compress(char (&src)[], uint32_t &inLen,char (&dst)[], uint32_t &outLen);
 private:
-    z_stream c_stream;
+    z_stream cStream;
 };
 
 class ZstdCompress: public LogCompress {

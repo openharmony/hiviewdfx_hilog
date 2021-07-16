@@ -33,16 +33,15 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
     cout << __func__ << " " << fileName << " " << index
-		 << " " << length  << " need: " << needRotate << endl;
-	if (needRotate) {
-		output.close();
-		Rotate();
-		needRotate = false;
-	}
-
+        << " " << length  << " need: " << needRotate << endl;
+    if (needRotate) {
+        output.close();
+        Rotate();
+        needRotate = false;
+    }
     if (length <= 0 || buf == nullptr) return -1;
-	uint32_t offset = 0;
-	output.write(buf + offset, length);
+    uint32_t offset = 0;
+    output.write(buf + offset, length);
     return 0;
 }
 
@@ -87,7 +86,8 @@ void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
     *num = fileNum;
 }
 
-void LogPersisterRotator::FinishInput() {
+void LogPersisterRotator::FinishInput()
+{
 	needRotate = true;
 }
 } // namespace HiviewDFX
