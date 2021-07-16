@@ -79,33 +79,6 @@ ohos_shared_library("libhilogutil") {
   output_extension = "so"
   install_enable = true
 
-  part_name = "hilog"
-  subsystem_name = "hiviewdfx"
-}
-
-ohos_shared_library("libhilogutil_native") {
-  sources = [
-    "dgram_socket_client.cpp",
-    "dgram_socket_server.cpp",
-    "format.cpp",
-    "seq_packet_socket_client.cpp",
-    "seq_packet_socket_server.cpp",
-    "socket.cpp",
-    "socket_client.cpp",
-    "socket_server.cpp",
-  ]
-  public_configs = [ ":libhilogutil_config" ]
-  configs = [ ":libhilogutil_config" ]
-
-  deps = [
-    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter_native",
-    "//utils/native/base:utilsecurec_shared",
-  ]
-
-  output_name = "libhilogutil"
-  output_extension = "so"
-  install_enable = true
-
-  part_name = "hiviewdfx_hilog_native"
+  part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
 }

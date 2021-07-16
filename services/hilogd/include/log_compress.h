@@ -36,22 +36,21 @@ public:
     char buffOut[CHUNK];
 };
 
-class NoneCompress: public LogCompress {
+class NoneCompress : public LogCompress {
 public:
-    int Compress(char (&src)[], uint32_t& inLen,char (&dst)[], uint32_t &outLen);
+    int Compress(char (&src)[], uint32_t& inLen, char (&dst)[], uint32_t &outLen);
 };
 
-class ZlibCompress: public LogCompress {
+class ZlibCompress : public LogCompress {
 public:
-    int Compress(char (&src)[], uint32_t &inLen,char (&dst)[], uint32_t &outLen);
+    int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen);
 private:
     z_stream cStream;
 };
 
-class ZstdCompress: public LogCompress {
-
+class ZstdCompress : public LogCompress {
 public:
-    int Compress(char (&src)[], uint32_t &inLen,char (&dst)[], uint32_t &outLen);
+    int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen);
 private:
 #ifdef USING_ZSTD_COMPRESS
     ZSTD_CCtx* cctx;

@@ -22,21 +22,13 @@ group("hilogd_etc") {
 
 ohos_prebuilt_etc("hilog_domains.conf") {
   source = "hilog_domains.conf"
-  if (is_standard_system) {
-    part_name = "hiviewdfx_hilog_native"
-  } else {
-    part_name = "hilog"
-  }
+  part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
 }
 
 ohos_prebuilt_etc("hilogd.rc") {
   source = "hilogd.rc"
   relative_install_dir = "init"
-  if (is_standard_system) {
-    part_name = "hiviewdfx_hilog_native"
-  } else {
-    part_name = "hilog"
-  }
+  part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
 }

@@ -45,6 +45,7 @@ constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
 constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE;
+const int LOG_PERSIST_MIN_FILE_SIZE = 64 * ONE_KB;
 constexpr int SLEEP_TIME = 5;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
@@ -107,6 +108,10 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     LogPersistStartResult* pLogPersistStartRst
         = reinterpret_cast<LogPersistStartResult*>(&pLogPersistStartRsp->logPersistStartRst);
     if (pLogPersistStartRst == nullptr) {
+        return;
+    }
+    if (pLogPersistStartMsg->fileSize < LOG_PERSIST_MIN_FILE_SIZE) {
+        std::cout << "Persist log file size less than min size" << std::endl;
         return;
     }
     string logPersisterPath;
