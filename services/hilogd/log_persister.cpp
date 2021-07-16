@@ -70,7 +70,8 @@ LogPersister::~LogPersister()
     SAFE_DELETE(compressBuffer);
 }
 
-int LogPersister::InitCompress() {
+int LogPersister::InitCompress()
+{
     compressBuffer = new LogPersisterBuffer[MAX_PERSISTER_BUFFER_SIZE];
     if (compressBuffer == NULL) {
         return RET_FAIL;
@@ -299,7 +300,7 @@ inline void LogPersister::WriteFile()
         return;
     rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
     beforeCompressLogSize += buffer->offset;
-    if (beforeCompressLogSize > fileSize) {
+    if (beforeCompressLogSize >= fileSize) {
         beforeCompressLogSize = 0;
         rotator->FinishInput();
     }

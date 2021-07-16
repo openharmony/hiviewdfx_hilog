@@ -31,7 +31,7 @@ ohos_moduletest("HiLogNDKTest") {
     "//utils/native/base:utils",
   ]
 
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [ "hilog_native:libhilog" ]
 
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",

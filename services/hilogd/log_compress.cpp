@@ -39,7 +39,7 @@ int ZlibCompress::Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32
 {
     zdlen = compressBound(inLen);
     zdata = new unsigned char [zdlen];
-    if (zdata == NULL) {
+    if (zdata == nullptr) {
         cout << "no enough memory!" << endl;
         return -1;
     }
@@ -102,14 +102,14 @@ int ZstdCompress::Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32
 #ifdef USING_ZSTD_COMPRESS
     zdlen = ZSTD_CStreamOutSize();
     zdata = new unsigned char [zdlen];
-    if (zdata == NULL) {
+    if (zdata == nullptr) {
         cout << "no enough memory!" << endl;
         return -1;
     }
     ZSTD_EndDirective mode;
     int compressionlevel = 1;
     cctx = ZSTD_createCCtx();
-    if (cctx == NULL) {
+    if (cctx == nullptr) {
         cout << "ZSTD_createCCtx() failed!" << endl;
         return -1;
     }

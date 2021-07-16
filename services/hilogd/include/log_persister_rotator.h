@@ -22,7 +22,7 @@ class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
     virtual ~LogPersisterRotator(){};
-    int Input(const char *buf, uint32_t);
+    int Input(const char *buf, uint32_t length);
     void FillInfo(uint32_t *size, uint32_t *num);
     void FinishInput();
 
@@ -33,9 +33,7 @@ protected:
     std::string fileName;
     std::string fileSuffix;
     int index;
-    int leftSize;
     std::fstream output;
-
 private:
     void Rotate();
     bool needRotate = false;

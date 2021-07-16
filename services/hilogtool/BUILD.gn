@@ -37,29 +37,6 @@ ohos_executable("hilog") {
   ]
 
   install_enable = true
-  part_name = "hilog"
-  subsystem_name = "hiviewdfx"
-}
-
-ohos_executable("hilog_native") {
-  sources = [
-    "log_controller.cpp",
-    "log_display.cpp",
-    "main.cpp",
-  ]
-
-  configs = [ ":hilog_config" ]
-
-  deps = [
-    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter_native",
-    "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-    "//third_party/zlib:libz",
-    "//utils/native/base:utilsecurec_shared",
-  ]
-
-  output_name = "hilog"
-  install_enable = true
-  part_name = "hiviewdfx_hilog_native"
+  part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
 }

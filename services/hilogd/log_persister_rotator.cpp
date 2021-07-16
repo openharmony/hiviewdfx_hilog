@@ -26,7 +26,6 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
     : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
 {
     index = 0;
-    leftSize = 0;
     needRotate = true;
 }
 
@@ -40,8 +39,8 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
         needRotate = false;
     }
     if (length <= 0 || buf == nullptr) return -1;
-    uint32_t offset = 0;
-    output.write(buf + offset, length);
+    output.write(buf, length);
+    output.flush();
     return 0;
 }
 
@@ -88,7 +87,7 @@ void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
 
 void LogPersisterRotator::FinishInput()
 {
-	needRotate = true;
+    needRotate = true;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
