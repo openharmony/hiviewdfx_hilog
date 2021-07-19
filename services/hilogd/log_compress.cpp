@@ -91,7 +91,9 @@ int ZlibCompress::Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32
     } while (flush != Z_FINISH);
     /* clean up and return */
     (void)deflateEnd(&cStream);
-    memcpy_s(dst + outLen, COMPRESS_BUFFER_SIZE - outLen, zdata, zdlen);
+    if (memcpy_s(dst + outLen, COMPRESS_BUFFER_SIZE - outLen, zdata, zdlen) != 0) {
+        return -1;
+    }
     outLen += zdlen;
     delete zdata;
     return 0;
@@ -150,7 +152,9 @@ int ZstdCompress::Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32
         } while (!finished);
     } while (mode != ZSTD_e_end);
     ZSTD_freeCCtx(cctx);
-    memcpy_s(dst + outLen, COMPRESS_BUFFER_SIZE - outLen, zdata, zdlen);
+    if (memcpy_s(dst + outLen, COMPRESS_BUFFER_SIZE - outLen, zdata, zdlen) != 0) {
+        return -1;
+    }
     outLen += zdlen;
     delete zdata;
 #endif // #ifdef USING_ZSTD_COMPRESS

@@ -174,7 +174,6 @@ int LogPersister::Init()
         SetBufferOffset(0);
     }
     logPersisters.push_back(std::static_pointer_cast<LogPersister>(shared_from_this()));
-    compressBuffer = new LogPersisterBuffer[COMPRESS_BUFFER_SIZE];
     return 0;
 }
 
