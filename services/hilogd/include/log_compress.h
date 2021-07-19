@@ -31,7 +31,7 @@ public:
     virtual ~LogCompress() = default;
     virtual int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen) = 0;
     uLong zdlen = 0;
-    unsigned char *zdata;
+    unsigned char *zdata = nullptr;
     char buffIn[CHUNK];
     char buffOut[CHUNK];
 };

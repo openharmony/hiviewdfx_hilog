@@ -25,20 +25,20 @@ using namespace std;
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
     : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
 {
-    index = 0;
-    needRotate = true;
+    index = -1;
+    needRotate = false;
 }
 
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
     cout << __func__ << " " << fileName << " " << index
         << " " << length  << " need: " << needRotate << endl;
+    if (length <= 0 || buf == nullptr) return -1;
     if (needRotate) {
         output.close();
         Rotate();
         needRotate = false;
     }
-    if (length <= 0 || buf == nullptr) return -1;
     output.write(buf, length);
     output.flush();
     return 0;

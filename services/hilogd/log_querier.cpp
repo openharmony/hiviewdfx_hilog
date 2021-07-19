@@ -112,6 +112,10 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     }
     if (pLogPersistStartMsg->fileSize < LOG_PERSIST_MIN_FILE_SIZE) {
         std::cout << "Persist log file size less than min size" << std::endl;
+        pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+        pLogPersistStartRst->result = RET_FAIL;
+        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
+        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
         return;
     }
     string logPersisterPath;
@@ -138,7 +142,9 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     pLogPersistStartRst->result = persister->Init();
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
+    cout << "pLogPersistStartRst->result" << pLogPersistStartRst->result << endl;
     if (pLogPersistStartRst->result == RET_FAIL) {
+        cout << "pLogPersistStartRst->result" << pLogPersistStartRst->result << endl;
         persister.reset();
     } else {
         persister->Start();
