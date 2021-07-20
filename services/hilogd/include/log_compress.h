@@ -14,6 +14,8 @@
  */
 #ifndef HILOG_COMPRESS_H
 #define HILOG_COMPRESS_H
+#include "hilogd.h"
+
 #include <iostream>
 #ifdef USING_ZSTD_COMPRESS
 #define ZSTD_STATIC_LINKING_ONLY
@@ -23,14 +25,13 @@
 #include <zlib.h>
 namespace OHOS {
 namespace HiviewDFX {
-const uint32_t COMPRESS_BUFFER_SIZE = 64 * 1024;
+
 const uint16_t CHUNK = 16384;
 class LogCompress {
 public:
     LogCompress();
     virtual ~LogCompress() = default;
-    virtual int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen) = 0;
-    uLong zdlen = 0;
+    virtual int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer) = 0;
     unsigned char *zdata = nullptr;
     char buffIn[CHUNK];
     char buffOut[CHUNK];
@@ -38,19 +39,19 @@ public:
 
 class NoneCompress : public LogCompress {
 public:
-    int Compress(char (&src)[], uint32_t& inLen, char (&dst)[], uint32_t &outLen);
+    int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer);
 };
 
 class ZlibCompress : public LogCompress {
 public:
-    int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen);
+    int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer);
 private:
     z_stream cStream;
 };
 
 class ZstdCompress : public LogCompress {
 public:
-    int Compress(char (&src)[], uint32_t &inLen, char (&dst)[], uint32_t &outLen);
+    int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer);
 private:
 #ifdef USING_ZSTD_COMPRESS
     ZSTD_CCtx* cctx;

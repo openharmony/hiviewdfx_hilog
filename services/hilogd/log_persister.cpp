@@ -14,6 +14,7 @@
  */
 
 #include "log_persister.h"
+#include "hilogd.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -60,7 +61,7 @@ LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t
     compressor = nullptr;
     fdinfo = nullptr;
     buffer = nullptr;
-    beforeCompressLogSize = 0;
+    plainLogSize = 0;
 }
 
 LogPersister::~LogPersister()
@@ -72,7 +73,7 @@ LogPersister::~LogPersister()
 
 int LogPersister::InitCompress()
 {
-    compressBuffer = new LogPersisterBuffer[MAX_PERSISTER_BUFFER_SIZE];
+    compressBuffer = new LogPersisterBuffer;
     if (compressBuffer == NULL) {
         return RET_FAIL;
     }
@@ -130,7 +131,7 @@ int LogPersister::Init()
 #ifdef DEBUG
         cout << "New log file: " << mmapPath << endl;
 #endif
-        lseek(fd, MAX_PERSISTER_BUFFER_SIZE - 1, SEEK_SET);
+        lseek(fd, sizeof(LogPersisterBuffer) - 1, SEEK_SET);
         write(fd, "", 1);
     }
     if (fd < 0) {
@@ -150,7 +151,7 @@ int LogPersister::Init()
         close(fd);
         return RET_FAIL;
     }
-    buffer = (LogPersisterBuffer *)mmap(nullptr, MAX_PERSISTER_BUFFER_SIZE, PROT_READ | PROT_WRITE,
+    buffer = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
                                         MAP_SHARED, fd, 0);
     close(fd);
     if (buffer == MAP_FAILED) {
@@ -276,8 +277,7 @@ int LogPersister::WriteData(HilogData *data)
         return -1;
     if (writeUnCompressedBuffer(data))
         return 0;
-    if (compressor->Compress(buffer->content, buffer->offset,
-        compressBuffer->content, compressBuffer->offset) != 0) {
+    if (compressor->Compress(buffer, compressBuffer) != 0) {
         cout << "COMPRESS Error" << endl;
         return -1;
     };
@@ -298,9 +298,9 @@ inline void LogPersister::WriteFile()
     if (buffer->offset == 0)
         return;
     rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
-    beforeCompressLogSize += buffer->offset;
-    if (beforeCompressLogSize >= fileSize) {
-        beforeCompressLogSize = 0;
+    plainLogSize += buffer->offset;
+    if (plainLogSize >= fileSize) {
+        plainLogSize = 0;
         rotator->FinishInput();
     }
     compressBuffer->offset = 0;
