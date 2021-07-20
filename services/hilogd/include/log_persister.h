@@ -29,12 +29,7 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-typedef struct {
-    uint32_t offset;
-    char content[];
-} LogPersisterBuffer;
 
-const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
 class LogPersister : public LogReader {
 public:
     LogPersister(uint32_t id, std::string path,  uint32_t fileSize, uint16_t compressAlg, int sleepTime,
@@ -46,8 +41,7 @@ public:
     int ThreadFunc();
     static int Kill(uint32_t id);
     void Exit();
-    static int Query(uint16_t logType,
-                     std::list<LogPersistQueryResult> &results);
+    static int Query(uint16_t logType, std::list<LogPersistQueryResult> &results);
     int Init();
     int InitCompress();
     void Start();
@@ -58,6 +52,7 @@ public:
     uint8_t GetType() const;
     std::string getPath();
     LogPersisterBuffer *buffer;
+    LogPersisterBuffer *compressBuffer;
 private:
     uint32_t id;
     std::string path;
@@ -77,9 +72,8 @@ private:
     FILE *fdinfo;
     int fd = -1;
     LogCompress *compressor;
-    LogPersisterBuffer *compressBuffer;
     list<string> persistList;
-    uint32_t beforeCompressLogSize;
+    uint32_t plainLogSize;
 };
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList);

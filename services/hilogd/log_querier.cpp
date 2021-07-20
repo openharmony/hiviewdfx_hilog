@@ -14,7 +14,7 @@
  */
 
 #include "log_querier.h"
-
+#include "hilogd.h"
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -37,6 +37,7 @@
 #include "log_persister.h"
 #include "log_reader.h"
 
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
@@ -45,8 +46,7 @@ constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
 constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE;
-const int LOG_PERSIST_MIN_FILE_SIZE = 64 * ONE_KB;
-constexpr int SLEEP_TIME = 5;
+constexpr int SLEEP_TIME = 50;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
@@ -110,7 +110,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst == nullptr) {
         return;
     }
-    if (pLogPersistStartMsg->fileSize < LOG_PERSIST_MIN_FILE_SIZE) {
+    if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
         std::cout << "Persist log file size less than min size" << std::endl;
         pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
         pLogPersistStartRst->result = RET_FAIL;
@@ -142,7 +142,6 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     pLogPersistStartRst->result = persister->Init();
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    cout << "pLogPersistStartRst->result" << pLogPersistStartRst->result << endl;
     if (pLogPersistStartRst->result == RET_FAIL) {
         cout << "pLogPersistStartRst->result" << pLogPersistStartRst->result << endl;
         persister.reset();
@@ -178,23 +177,23 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
     list<LogPersistQueryResult>::iterator it;
     rst = LogPersister::Query(DEFAULT_LOG_TYPE, resultList);
     if (pLogPersistStopMsg && recvMsgLen < msgLen) {
-            for (it = resultList.begin(); it != resultList.end(); ++it) {
-                if (pLogPersistStopMsg->jobId != JOB_ID_ALL) {
-                    rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
+            if (pLogPersistStopMsg->jobId != JOB_ID_ALL) {
+                rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
+                if (pLogPersistStopRst) {
+                    pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
+                    pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
+                    pLogPersistStopRst++;
+                    msgNum++;
+                }
+            }  else {
+                for (it = resultList.begin(); it != resultList.end(); ++it) {
+                    rst = LogPersister::Kill((*it).jobId);
                     if (pLogPersistStopRst) {
-                        pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
+                        pLogPersistStopRst->jobId = (*it).jobId;
                         pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
                         pLogPersistStopRst++;
                         msgNum++;
                     }
-                    break;
-                }
-                rst = LogPersister::Kill((*it).jobId);
-                if (pLogPersistStopRst) {
-                    pLogPersistStopRst->jobId = (*it).jobId;
-                    pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-                    pLogPersistStopRst++;
-                    msgNum++;
                 }
             }
     }
