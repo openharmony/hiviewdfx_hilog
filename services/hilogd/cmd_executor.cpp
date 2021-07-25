@@ -28,6 +28,12 @@ const int MAX_WRITE_LOG_TASK = 100;
 
 using namespace std;
 HilogBuffer* CmdExecutor::hilogBuffer = nullptr;
+void StartUpCheck()
+{
+    std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr,
+        CmdExecutor::getHilogBuffer());
+    logQuerier->CheckUnfinishedJobs(CmdExecutor::getHilogBuffer());
+}
 void LogQuerierMonitor(std::unique_ptr<Socket> handler)
 {
     std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(std::move(handler),
@@ -37,6 +43,8 @@ void LogQuerierMonitor(std::unique_ptr<Socket> handler)
 
 int CmdExecutorThreadFunc(std::unique_ptr<Socket> handler)
 {
+    std::thread StartUpCheckThread(StartUpCheck);
+    StartUpCheckThread.detach();
     std::thread logQuerierMonitorThread(LogQuerierMonitor, std::move(handler));
     logQuerierMonitorThread.detach();
     return 0;

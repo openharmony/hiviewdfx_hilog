@@ -287,6 +287,9 @@ int LogPersister::WriteData(HilogData *data)
 
 void LogPersister::Start()
 {
+    fseek(fdinfo, 0, SEEK_END);
+    fprintf(fdinfo, "%u\n%s\n%u\n%u\n%u\n%u\n", id, path.c_str(), fileSize, compressAlg,
+            queryCondition.types, queryCondition.levels);
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
     newThread.detach();
