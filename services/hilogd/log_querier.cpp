@@ -25,6 +25,7 @@
 #include <sys/mman.h>
 #include <thread>
 #include <unistd.h>
+#include <dirent.h>
 #include <sstream>
 #include <regex>
 #include <algorithm>
@@ -41,7 +42,7 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-
+namespace fs = std::filesystem;
 constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
@@ -561,6 +562,61 @@ uint8_t LogQuerier::GetType() const
         default:
             return TYPE_CONTROL;
     }
+}
+
+int LogQuerier::CheckUnfinishedJobs(HilogBuffer *_buffer)
+{
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir (g_logPersisterDir.c_str())) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            std::string pPath = std::string(ent->d_name);
+            if (pPath.substr(pPath.length() - 5, pPath.length()) == ".info") {
+                std::ifstream infile;
+                infile.open(pPath);
+                uint8_t levels = 0;
+                uint32_t jobId = 0, fileSize = 0, offset = 0;
+                int fileNum = 0;
+                std::string path;
+                uint16_t compressAlg = 0, types = 0;
+                string fileSuffix = "";
+                infile >> offset >> jobId >> path >> fileSize >> compressAlg >> types >> levels;
+                switch (compressAlg) {
+                    case CompressAlg::COMPRESS_TYPE_ZSTD:
+                        fileSuffix = ".zst";
+                        break;
+                    case CompressAlg::COMPRESS_TYPE_ZLIB:
+                        fileSuffix = ".gz";
+                        break;
+                    default:
+                        break;
+                };
+                LogPersisterRotator* rotator = new LogPersisterRotator(
+                    path,
+                    fileSize,
+                    fileNum,
+                    fileSuffix);
+                std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
+                    jobId, path, fileSize, compressAlg, SLEEP_TIME, rotator, _buffer);
+                int result = persister->Init();
+                persister->queryCondition.types = types;
+                persister->queryCondition.levels = levels;
+                if (result == RET_FAIL) {
+                    cout << "LogPersister Start Failed, result=" << result << endl;
+                    persister.reset();
+                } else {
+                    persister->Start();
+                    _buffer->AddLogReader(weak_ptr<LogPersister>(persister));
+                }
+                infile.close();
+            }
+        }
+        closedir (dir);
+    } else {
+        perror ("Failed to open persister directory!");
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
