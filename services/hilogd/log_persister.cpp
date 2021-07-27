@@ -279,9 +279,14 @@ int LogPersister::WriteData(HilogData *data)
 
 void LogPersister::Start()
 {
-    fseek(fdinfo, 0, SEEK_SET);
-    fprintf(fdinfo, "%u\n%s\n%u\n%u\n%u\n%u\n", id, path.c_str(), fileSize, compressAlg,
-            queryCondition.types, queryCondition.levels);
+//     fseek(fdinfo, 0, SEEK_SET);
+//     fprintf(fdinfo, "%u\n%s\n%u\n%u\n%u\n%u\n", id, path.c_str(), fileSize, compressAlg,
+//             queryCondition.types, queryCondition.levels);
+    PersistRecoveryInfo info;
+    info.msg = startMsg;
+    info.types = queryCondition.types;
+    info.levels = queryCondition.levels;
+    fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
     newThread.detach();
@@ -413,6 +418,11 @@ string LogPersister::getPath()
 uint8_t LogPersister::GetType() const
 {
     return TYPE_PERSISTER;
+}
+
+void LogPersister::saveMsg(LogPersistStartMsg pMsg)
+{
+    startMsg = pMsg;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

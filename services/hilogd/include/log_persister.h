@@ -31,6 +31,13 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
+typedef struct {
+    LogPersistStartMsg msg;
+//     uint8_t fileId;
+    uint16_t types;
+    uint8_t levels;
+} PersistRecoveryInfo;
+
 class LogPersister : public LogReader {
 public:
     LogPersister(uint32_t id, std::string path,  uint32_t fileSize, uint16_t compressAlg, int sleepTime,
@@ -52,6 +59,7 @@ public:
     bool writeUnCompressedBuffer(HilogData *data);
     uint8_t GetType() const;
     std::string getPath();
+    void saveMsg(LogPersistStartMsg pMsg);
     LogPersisterBuffer *buffer;
     LogPersisterBuffer *compressBuffer;
 private:
@@ -75,6 +83,7 @@ private:
     LogCompress *compressor;
     list<string> persistList;
     uint32_t plainLogSize;
+    LogPersistStartMsg startMsg;
 };
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList);
