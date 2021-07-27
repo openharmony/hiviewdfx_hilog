@@ -26,6 +26,7 @@
 #include "log_persister_rotator.h"
 #include "log_reader.h"
 #include "log_compress.h"
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;

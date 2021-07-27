@@ -14,7 +14,6 @@
  */
 
 #include "log_querier.h"
-#include "hilogd.h"
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -564,7 +563,7 @@ uint8_t LogQuerier::GetType() const
     }
 }
 
-int LogQuerier::CheckUnfinishedJobs(HilogBuffer *_buffer)
+int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
 {
     DIR *dir;
     struct dirent *ent;
@@ -575,12 +574,13 @@ int LogQuerier::CheckUnfinishedJobs(HilogBuffer *_buffer)
                 std::ifstream infile;
                 infile.open(pPath);
                 uint8_t levels = 0;
-                uint32_t jobId = 0, fileSize = 0, offset = 0;
+                uint32_t jobId = 0, fileSize = 0;
                 int fileNum = 0;
                 std::string path;
                 uint16_t compressAlg = 0, types = 0;
                 string fileSuffix = "";
-                infile >> offset >> jobId >> path >> fileSize >> compressAlg >> types >> levels;
+                infile >> jobId >> path >> fileSize >> compressAlg >> types >> levels;
+                infile.close();
                 switch (compressAlg) {
                     case CompressAlg::COMPRESS_TYPE_ZSTD:
                         fileSuffix = ".zst";
@@ -608,7 +608,6 @@ int LogQuerier::CheckUnfinishedJobs(HilogBuffer *_buffer)
                     persister->Start();
                     _buffer->AddLogReader(weak_ptr<LogPersister>(persister));
                 }
-                infile.close();
             }
         }
         closedir (dir);

@@ -28,7 +28,7 @@ public:
     int WriteData(HilogData* data);
     void NotifyForNewData();
     uint8_t GetType() const;
-    int CheckUnfinishedJobs(HilogBuffer *_buffer);
+    int RestorePersistJobs(HilogBuffer *_buffer);
     ~LogQuerier() = default;
 };
 } // namespace HiviewDFX

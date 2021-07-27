@@ -14,7 +14,6 @@
  */
 
 #include "log_persister.h"
-#include "hilogd.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -162,14 +161,9 @@ int LogPersister::Init()
         return RET_FAIL;
     }
     if (restore == true) {
-        int moffset;
-        if (fscanf_s(fdinfo, "%04x", &moffset) == -1) {
-            return RET_FAIL;
-        }
 #ifdef DEBUG
-        cout << "Recovered persister, Offset=" << moffset << endl;
+        cout << "Recovered persister, Offset=" << buffer->offset << endl;
 #endif
-        SetBufferOffset(moffset);
         WriteFile();
     } else {
         SetBufferOffset(0);
@@ -195,8 +189,6 @@ int LogPersister::MkDirPath(const char *pMkdir)
 void LogPersister::SetBufferOffset(int off)
 {
     buffer->offset = off;
-    fseek(fdinfo, 0, SEEK_SET);
-    fprintf(fdinfo, "%04x\n", off);
 }
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList)
@@ -287,7 +279,7 @@ int LogPersister::WriteData(HilogData *data)
 
 void LogPersister::Start()
 {
-    fseek(fdinfo, 0, SEEK_END);
+    fseek(fdinfo, 0, SEEK_SET);
     fprintf(fdinfo, "%u\n%s\n%u\n%u\n%u\n%u\n", id, path.c_str(), fileSize, compressAlg,
             queryCondition.types, queryCondition.levels);
     auto newThread =
