@@ -32,10 +32,10 @@ namespace HiviewDFX {
 using namespace std;
 
 typedef struct {
-    LogPersistStartMsg msg;
-//     uint8_t fileId;
+    uint8_t index;
     uint16_t types;
     uint8_t levels;
+    LogPersistStartMsg msg;
 } PersistRecoveryInfo;
 
 class LogPersister : public LogReader {
