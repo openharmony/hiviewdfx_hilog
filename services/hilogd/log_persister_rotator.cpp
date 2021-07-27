@@ -29,6 +29,11 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
     needRotate = false;
 }
 
+void LogPersisterRotator::Init()
+{
+    fdinfo = fopen((fileName + ".info").c_str(), "w+");
+}
+
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
     cout << __func__ << " " << fileName << " " << index
@@ -68,7 +73,7 @@ void LogPersisterRotator::InternalRotate()
 void LogPersisterRotator::Rotate()
 {
     cout << __func__ << endl;
-    if (index == (int)(fileNum - 1)) {
+    if (index >= (int)(fileNum - 1)) {
         InternalRotate();
     } else {
         index += 1;
@@ -76,6 +81,8 @@ void LogPersisterRotator::Rotate()
         ss << fileName << "." << index << fileSuffix;
         cout << "THE FILE NAME !!!!!!! " << ss.str() << endl;
         output.open(ss.str(), ios::app);
+        fseek(fdinfo, 0, SEEK_SET);
+        fwrite(&index, sizeof(uint8_t), 1, fdinfo);
     }
 }
 
@@ -88,6 +95,11 @@ void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
 void LogPersisterRotator::FinishInput()
 {
     needRotate = true;
+}
+
+void LogPersisterRotator::setIndex(int pIndex)
+{
+    index = pIndex;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

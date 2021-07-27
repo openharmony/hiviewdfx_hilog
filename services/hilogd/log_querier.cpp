@@ -580,6 +580,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
                 PersistRecoveryInfo info;
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
                 LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
+                rotator->setIndex(info.index + 1);
                 std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
                     info.msg.jobId,
                     info.msg.filePath,
