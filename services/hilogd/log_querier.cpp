@@ -571,36 +571,24 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
         while ((ent = readdir (dir)) != NULL) {
             std::string pPath = std::string(ent->d_name);
             if (pPath.substr(pPath.length() - 5, pPath.length()) == ".info") {
-                std::ifstream infile;
-                infile.open(pPath);
-                uint8_t levels = 0;
-                uint32_t jobId = 0, fileSize = 0;
-                int fileNum = 0;
-                std::string path;
-                uint16_t compressAlg = 0, types = 0;
-                string fileSuffix = "";
-                infile >> jobId >> path >> fileSize >> compressAlg >> types >> levels;
-                infile.close();
-                switch (compressAlg) {
-                    case CompressAlg::COMPRESS_TYPE_ZSTD:
-                        fileSuffix = ".zst";
-                        break;
-                    case CompressAlg::COMPRESS_TYPE_ZLIB:
-                        fileSuffix = ".gz";
-                        break;
-                    default:
-                        break;
-                };
-                LogPersisterRotator* rotator = new LogPersisterRotator(
-                    path,
-                    fileSize,
-                    fileNum,
-                    fileSuffix);
+                FILE* infile;
+                infile = fopen(pPath.c_str(), "r");
+                if (infile == NULL) {
+                    std::cout << "Error opening recovery info file!" << std::endl;
+                    continue;
+                }
+                PersistRecoveryInfo info;
+                fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
+                LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
                 std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
-                    jobId, path, fileSize, compressAlg, SLEEP_TIME, rotator, _buffer);
+                    info.msg.jobId,
+                    info.msg.filePath,
+                    info.msg.fileSize,
+                    info.msg.compressAlg,
+                    SLEEP_TIME, rotator, _buffer);
                 int result = persister->Init();
-                persister->queryCondition.types = types;
-                persister->queryCondition.levels = levels;
+                persister->queryCondition.types = info.types;
+                persister->queryCondition.levels = info.levels;
                 if (result == RET_FAIL) {
                     cout << "LogPersister Start Failed, result=" << result << endl;
                     persister.reset();
