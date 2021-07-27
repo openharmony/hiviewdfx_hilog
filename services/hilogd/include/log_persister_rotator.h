@@ -21,13 +21,14 @@ namespace HiviewDFX {
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
-    virtual ~LogPersisterRotator(){};
+    ~LogPersisterRotator(){fclose(fdinfo);};
+    void Init();
     int Input(const char *buf, uint32_t length);
     void FillInfo(uint32_t *size, uint32_t *num);
     void FinishInput();
-
+    void setIndex(int pIndex);
 protected:
-    virtual void InternalRotate();
+    void InternalRotate();
     uint32_t fileNum;
     uint32_t fileSize;
     std::string fileName;
@@ -37,6 +38,7 @@ protected:
 private:
     void Rotate();
     bool needRotate = false;
+    FILE* fdinfo;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
