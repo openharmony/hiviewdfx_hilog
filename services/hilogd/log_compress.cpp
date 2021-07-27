@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include "log_compress.h"
-#include "hilogd.h"
 #include "malloc.h"
 #include <iostream>
 #include <cstring>
@@ -52,6 +51,7 @@ int ZlibCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
     cStream.zfree = Z_NULL;
     cStream.opaque = Z_NULL;
     if (deflateInit2(&cStream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+        delete zdata;
         return -1;
     }
     do {
@@ -59,6 +59,7 @@ int ZlibCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
         if (flag) {
             memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, buffer->content + src_pos, read - src_pos) != 0) {
+                delete zdata;
                 return -1;
             }
             cStream.avail_in = read - src_pos;
@@ -66,6 +67,7 @@ int ZlibCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
         } else {
             memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, buffer->content + src_pos, toRead) != 0) {
+                delete zdata;
                 return -1;
             };
             src_pos += toRead;
@@ -79,10 +81,12 @@ int ZlibCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
             cStream.avail_out = CHUNK;
             cStream.next_out = (Bytef *)buffOut;
             if (deflate(&cStream, flush) == Z_STREAM_ERROR) {
+                delete zdata;
                 return -1;
             }
             unsigned have = CHUNK - cStream.avail_out;
             if (memmove_s(zdata + dst_pos, CHUNK, buffOut, have) != 0) {
+                delete zdata;
                 return -1;
             }
             dst_pos += have;
@@ -92,6 +96,7 @@ int ZlibCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
     (void)deflateEnd(&cStream);
     if (memcpy_s(compressBuffer->content + compressBuffer->offset,
         MAX_PERSISTER_BUFFER_SIZE - compressBuffer->offset, zdata, dst_pos) != 0) {
+        delete zdata;
         return -1;
     }
     compressBuffer->offset += dst_pos;
@@ -113,6 +118,7 @@ int ZstdCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
     cctx = ZSTD_createCCtx();
     if (cctx == nullptr) {
         cout << "ZSTD_createCCtx() failed!" << endl;
+        delete zdata;
         return -1;
     }
     ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, compressionlevel);
@@ -126,6 +132,7 @@ int ZstdCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
         if (flag) {
             memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, buffer->content + src_pos, read - src_pos) != 0) {
+                delete zdata;
                 return -1;
             }
             input = {buffIn, read - src_pos, 0};
@@ -133,6 +140,7 @@ int ZstdCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
         } else {
             memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, buffer->content + src_pos, toRead) != 0) {
+                delete zdata;
                 return -1;
             }
             input = {buffIn, toRead, 0};
@@ -144,6 +152,7 @@ int ZstdCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
             ZSTD_outBuffer output = {buffOut, CHUNK, 0};
             size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
             if (memmove_s(zdata + dst_pos, zdlen, (Bytef *)buffOut, output.pos) != 0) {
+                delete zdata;
                 return -1;
             }
             dst_pos += output.pos;
@@ -153,6 +162,7 @@ int ZstdCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
     ZSTD_freeCCtx(cctx);
     if (memcpy_s(compressBuffer->content + compressBuffer->offset,
         MAX_PERSISTER_BUFFER_SIZE - compressBuffer->offset, zdata, dst_pos) != 0) {
+        delete zdata;
         return -1;
     }
     compressBuffer->offset += dst_pos;

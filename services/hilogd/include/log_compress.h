@@ -14,7 +14,6 @@
  */
 #ifndef HILOG_COMPRESS_H
 #define HILOG_COMPRESS_H
-#include "hilogd.h"
 
 #include <iostream>
 #ifdef USING_ZSTD_COMPRESS
@@ -25,6 +24,12 @@
 #include <zlib.h>
 namespace OHOS {
 namespace HiviewDFX {
+
+const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
+typedef struct {
+    uint32_t offset;
+    char content[MAX_PERSISTER_BUFFER_SIZE];
+} LogPersisterBuffer;
 
 const uint16_t CHUNK = 16384;
 class LogCompress {

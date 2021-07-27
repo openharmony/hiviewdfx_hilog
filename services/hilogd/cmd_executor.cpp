@@ -32,7 +32,7 @@ void StartUpCheck()
 {
     std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr,
         CmdExecutor::getHilogBuffer());
-    logQuerier->CheckUnfinishedJobs(CmdExecutor::getHilogBuffer());
+    logQuerier->RestorePersistJobs(CmdExecutor::getHilogBuffer());
 }
 void LogQuerierMonitor(std::unique_ptr<Socket> handler)
 {
