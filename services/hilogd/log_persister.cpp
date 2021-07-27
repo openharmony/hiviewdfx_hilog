@@ -287,6 +287,7 @@ void LogPersister::Start()
     info.types = queryCondition.types;
     info.levels = queryCondition.levels;
     fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+    fclose(fdinfo);
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
     newThread.detach();
@@ -402,7 +403,6 @@ void LogPersister::Exit()
     cout << "removed mmap file" << endl;
     remove(mmapPath.c_str());
     remove((mmapPath + ".info").c_str());
-    fclose(fdinfo);
     return;
 }
 bool LogPersister::Identify(uint32_t id)
