@@ -138,6 +138,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         pLogPersistStartMsg->fileSize,
         pLogPersistStartMsg->compressAlg,
         SLEEP_TIME, rotator, buffer);
+    persister->saveMsg(pLogPersistStartMsg);
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
     pLogPersistStartRst->result = persister->Init();
     persister->queryCondition.types = pLogPersistStartMsg->logType;
@@ -146,6 +147,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         cout << "pLogPersistStartRst->result" << pLogPersistStartRst->result << endl;
         persister.reset();
     } else {
+        rotator->Init();
         persister->Start();
         buffer->AddLogReader(weak_ptr<LogPersister>(persister));
     }
@@ -569,18 +571,23 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
     struct dirent *ent;
     if ((dir = opendir (g_logPersisterDir.c_str())) != NULL) {
         while ((ent = readdir (dir)) != NULL) {
-            std::string pPath = std::string(ent->d_name);
-            if (pPath.substr(pPath.length() - 5, pPath.length()) == ".info") {
+            size_t length = strlen(ent->d_name);
+            std::string pPath(ent->d_name, length);
+            if (length >= 5 && pPath.substr(length - 5, length) == ".info") {
+                std::cout << "Found a persist job!" << std::endl;
                 FILE* infile;
-                infile = fopen(pPath.c_str(), "r");
+                infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
                 if (infile == NULL) {
                     std::cout << "Error opening recovery info file!" << std::endl;
                     continue;
                 }
                 PersistRecoveryInfo info;
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
+                fclose(infile);
                 LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
                 rotator->setIndex(info.index + 1);
+                printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
+                       info.msg.jobId, info.msg.filePath);
                 std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
                     info.msg.jobId,
                     info.msg.filePath,
@@ -604,6 +611,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
         perror ("Failed to open persister directory!");
         return EXIT_FAILURE;
     }
+    cout << "Finished restoring persist jobs!" << endl;
     return EXIT_SUCCESS;
 }
 } // namespace HiviewDFX

@@ -59,7 +59,7 @@ public:
     bool writeUnCompressedBuffer(HilogData *data);
     uint8_t GetType() const;
     std::string getPath();
-    void saveMsg(LogPersistStartMsg pMsg);
+    void saveMsg(LogPersistStartMsg *pMsg);
     LogPersisterBuffer *buffer;
     LogPersisterBuffer *compressBuffer;
 private:

@@ -43,8 +43,6 @@ void LogQuerierMonitor(std::unique_ptr<Socket> handler)
 
 int CmdExecutorThreadFunc(std::unique_ptr<Socket> handler)
 {
-    std::thread StartUpCheckThread(StartUpCheck);
-    StartUpCheckThread.detach();
     std::thread logQuerierMonitorThread(LogQuerierMonitor, std::move(handler));
     logQuerierMonitorThread.detach();
     return 0;
@@ -65,6 +63,9 @@ void CmdExecutor::StartCmdExecutorThread()
             cout << "chmod control socket failed !\n";
         }
         cout << "Begin to cmd accept !\n";
+        cout << "Restoring !\n";
+        std::thread StartUpCheckThread(StartUpCheck);
+        StartUpCheckThread.detach();
         cmdExecutorMainSocket.AcceptConnection(CmdExecutorThreadFunc);
     }
 }
