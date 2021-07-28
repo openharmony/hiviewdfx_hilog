@@ -139,9 +139,6 @@ int LogPersister::Init()
         return RET_FAIL;
     }
     fdinfo = fopen((mmapPath + ".info").c_str(), "a+");
-//     if (fdinfo == nullptr) {
-//         fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
-//     }
     if (fdinfo == nullptr) {
 #ifdef DEBUG
         cout << "open loginfo file failed: " << strerror(errno) << endl;
@@ -280,10 +277,6 @@ void LogPersister::Start()
 {
     if (!restore) {
         std::cout << "Save Info file!" << std::endl;
-        PersistRecoveryInfo info;
-        info.msg = startMsg;
-        info.types = queryCondition.types;
-        info.levels = queryCondition.levels;
         fseek(fdinfo, 0, SEEK_SET);
         fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
         fsync(fileno(fdinfo));
@@ -421,11 +414,13 @@ uint8_t LogPersister::GetType() const
     return TYPE_PERSISTER;
 }
 
-void LogPersister::saveMsg(LogPersistStartMsg *pMsg)
+void LogPersister::saveInfo(LogPersistStartMsg *pMsg)
 {
-    startMsg = *pMsg;
-    strcpy_s(startMsg.filePath, FILE_PATH_MAX_LEN, pMsg->filePath);
-    printf("Saved Path=%s\n",startMsg.filePath);
+    info.msg = *pMsg;
+    info.types = queryCondition.types;
+    info.levels = queryCondition.levels;
+    strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg->filePath);
+    printf("Saved Path=%s\n",info.msg.filePath);
 }
 } // namespace HiviewDFX
 } // namespace OHOS
