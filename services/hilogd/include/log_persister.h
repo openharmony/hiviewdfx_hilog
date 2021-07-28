@@ -78,12 +78,13 @@ private:
     bool hasExited;
     inline void WriteFile();
     bool isExited();
-    FILE *fdinfo;
+    FILE *fdinfo = nullptr;
     int fd = -1;
     LogCompress *compressor;
     list<string> persistList;
     uint32_t plainLogSize;
     LogPersistStartMsg startMsg;
+    bool restore = false;
 };
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList);

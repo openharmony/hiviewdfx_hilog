@@ -98,7 +98,6 @@ int LogPersister::Init()
     if (nPos == RET_FAIL) {
         return RET_FAIL;
     }
-    std::cout << "Checkpoint 1" << std::endl;
     mmapPath = path.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
@@ -116,13 +115,10 @@ int LogPersister::Init()
     if (hit) {
         return RET_FAIL;
     }
-    std::cout << "Checkpoint 2" << std::endl;
     if (InitCompress() ==  RET_FAIL) {
         return RET_FAIL;
     }
-    std::cout << "Checkpoint 3" << std::endl;
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
-    bool restore = false;
     if (fd <= 0) {
         if (errno == EEXIST) {
             cout << "File already exists!" << endl;
@@ -142,10 +138,10 @@ int LogPersister::Init()
 #endif
         return RET_FAIL;
     }
-    fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
-    if (fdinfo == nullptr) {
-        fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
-    }
+    fdinfo = fopen((mmapPath + ".info").c_str(), "a+");
+//     if (fdinfo == nullptr) {
+//         fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
+//     }
     if (fdinfo == nullptr) {
 #ifdef DEBUG
         cout << "open loginfo file failed: " << strerror(errno) << endl;
@@ -282,14 +278,15 @@ int LogPersister::WriteData(HilogData *data)
 
 void LogPersister::Start()
 {
-//     fseek(fdinfo, 0, SEEK_SET);
-//     fprintf(fdinfo, "%u\n%s\n%u\n%u\n%u\n%u\n", id, path.c_str(), fileSize, compressAlg,
-//             queryCondition.types, queryCondition.levels);
-    PersistRecoveryInfo info;
-    info.msg = startMsg;
-    info.types = queryCondition.types;
-    info.levels = queryCondition.levels;
-    fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+    if (!restore) {
+        std::cout << "Save Info file!" << std::endl;
+        PersistRecoveryInfo info;
+        info.msg = startMsg;
+        info.types = queryCondition.types;
+        info.levels = queryCondition.levels;
+        fseek(fdinfo, 0, SEEK_SET);
+        fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+    }
     fclose(fdinfo);
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
