@@ -286,6 +286,7 @@ void LogPersister::Start()
         info.levels = queryCondition.levels;
         fseek(fdinfo, 0, SEEK_SET);
         fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+        fsync(fileno(fdinfo));
     }
     fclose(fdinfo);
     auto newThread =

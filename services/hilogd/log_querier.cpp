@@ -132,6 +132,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     }
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
     rotator = MakeRotator(*pLogPersistStartMsg);
+    rotator->SetId(pLogPersistStartMsg->jobId);
     rotator->Init();
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
         pLogPersistStartMsg->jobId,
@@ -586,7 +587,8 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
                 fclose(infile);
                 LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
-                rotator->setIndex(info.index + 1);
+                rotator->SetIndex(info.index + 1);
+                rotator->SetId(info.msg.jobId);
                 rotator->Init();
                 printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
                        info.msg.jobId, info.msg.filePath);

@@ -19,6 +19,7 @@
 #include <csignal>
 
 #include "cmd_executor.h"
+#include "log_querier.h"
 #include "hilog_input_socket_server.h"
 #include "log_collector.h"
 #include "flow_control_init.h"
@@ -47,6 +48,13 @@ static void SigHandler(int sig)
 #endif
         std::cout<<"Exited!"<<std::endl;
     }
+}
+
+void StartUpCheck()
+{
+    std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr,
+        CmdExecutor::getHilogBuffer());
+    logQuerier->RestorePersistJobs(CmdExecutor::getHilogBuffer());
 }
 
 int HilogdEntry(int argc, char* argv[])
@@ -81,6 +89,9 @@ int HilogdEntry(int argc, char* argv[])
 #endif
         server.RunServingThread();
     }
+    
+    std::thread StartupCheckThread(StartUpCheck);
+    StartupCheckThread.detach();
 
     CmdExecutor cmdExecutor(&hilogBuffer);
     cmdExecutor.StartCmdExecutorThread();
