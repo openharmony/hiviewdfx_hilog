@@ -98,6 +98,7 @@ int LogPersister::Init()
     if (nPos == RET_FAIL) {
         return RET_FAIL;
     }
+    std::cout << "Checkpoint 1" << std::endl;
     mmapPath = path.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
@@ -115,9 +116,11 @@ int LogPersister::Init()
     if (hit) {
         return RET_FAIL;
     }
+    std::cout << "Checkpoint 2" << std::endl;
     if (InitCompress() ==  RET_FAIL) {
         return RET_FAIL;
     }
+    std::cout << "Checkpoint 3" << std::endl;
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
     bool restore = false;
     if (fd <= 0) {
@@ -420,9 +423,11 @@ uint8_t LogPersister::GetType() const
     return TYPE_PERSISTER;
 }
 
-void LogPersister::saveMsg(LogPersistStartMsg pMsg)
+void LogPersister::saveMsg(LogPersistStartMsg *pMsg)
 {
-    startMsg = pMsg;
+    startMsg = *pMsg;
+    strcpy_s(startMsg.filePath, FILE_PATH_MAX_LEN, pMsg->filePath);
+    printf("Saved Path=%s\n",startMsg.filePath);
 }
 } // namespace HiviewDFX
 } // namespace OHOS
