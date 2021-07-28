@@ -21,7 +21,7 @@ namespace HiviewDFX {
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
-    ~LogPersisterRotator(){fclose(fdinfo);};
+    virtual ~LogPersisterRotator(){fclose(fdinfo);};
     void Init();
     int Input(const char *buf, uint32_t length);
     void FillInfo(uint32_t *size, uint32_t *num);
@@ -29,7 +29,8 @@ public:
     void SetIndex(int pIndex);
     void SetId(uint32_t pId);
 protected:
-    void InternalRotate();
+    virtual void InternalRotate();
+    int MkDirPath(const char *pMkdir);
     uint32_t fileNum;
     uint32_t fileSize;
     std::string fileName;

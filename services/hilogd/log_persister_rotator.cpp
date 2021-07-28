@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
+#include <sys/stat.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -36,6 +37,11 @@ void LogPersisterRotator::Init()
 {
     int nPos = fileName.find_last_of('/');
     std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
+    if (access(fileName.substr(0, nPos).c_str(), F_OK) != 0) {
+        if (errno == ENOENT) {
+            MkDirPath(fileName.substr(0, nPos).c_str());
+        }
+    }
     fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
 }
 
@@ -112,5 +118,14 @@ void LogPersisterRotator::SetId(uint32_t pId)
 {
     id = pId;
 }
+
+int LogPersisterRotator::MkDirPath(const char *pMkdir)
+{
+    int isCreate = mkdir(pMkdir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+    if (!isCreate)
+        cout << "create path:" << pMkdir << endl;
+    return isCreate;
+}
+
 } // namespace HiviewDFX
 } // namespace OHOS
