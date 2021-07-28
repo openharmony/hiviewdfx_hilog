@@ -28,12 +28,6 @@ const int MAX_WRITE_LOG_TASK = 100;
 
 using namespace std;
 HilogBuffer* CmdExecutor::hilogBuffer = nullptr;
-void StartUpCheck()
-{
-    std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr,
-        CmdExecutor::getHilogBuffer());
-    logQuerier->RestorePersistJobs(CmdExecutor::getHilogBuffer());
-}
 void LogQuerierMonitor(std::unique_ptr<Socket> handler)
 {
     std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(std::move(handler),
@@ -63,9 +57,6 @@ void CmdExecutor::StartCmdExecutorThread()
             cout << "chmod control socket failed !\n";
         }
         cout << "Begin to cmd accept !\n";
-        cout << "Restoring !\n";
-        std::thread StartUpCheckThread(StartUpCheck);
-        StartUpCheckThread.detach();
         cmdExecutorMainSocket.AcceptConnection(CmdExecutorThreadFunc);
     }
 }

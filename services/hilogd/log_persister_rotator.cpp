@@ -18,9 +18,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+#define ANXILLARY_FILE_NAME "persisterInfo_"
 
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
     : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
@@ -31,7 +34,9 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
 
 void LogPersisterRotator::Init()
 {
-    fdinfo = fopen((fileName + ".info").c_str(), "w+");
+    int nPos = fileName.find_last_of('/');
+    std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
+    fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
 }
 
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
@@ -83,6 +88,7 @@ void LogPersisterRotator::Rotate()
         output.open(ss.str(), ios::app);
         fseek(fdinfo, 0, SEEK_SET);
         fwrite(&index, sizeof(uint8_t), 1, fdinfo);
+        fsync(fileno(fdinfo));
     }
 }
 
@@ -97,9 +103,14 @@ void LogPersisterRotator::FinishInput()
     needRotate = true;
 }
 
-void LogPersisterRotator::setIndex(int pIndex)
+void LogPersisterRotator::SetIndex(int pIndex)
 {
     index = pIndex;
+}
+
+void LogPersisterRotator::SetId(uint32_t pId)
+{
+    id = pId;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

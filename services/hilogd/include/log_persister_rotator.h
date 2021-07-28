@@ -26,7 +26,8 @@ public:
     int Input(const char *buf, uint32_t length);
     void FillInfo(uint32_t *size, uint32_t *num);
     void FinishInput();
-    void setIndex(int pIndex);
+    void SetIndex(int pIndex);
+    void SetId(uint32_t pId);
 protected:
     virtual void InternalRotate();
     uint32_t fileNum;
@@ -39,6 +40,7 @@ private:
     void Rotate();
     bool needRotate = false;
     FILE* fdinfo;
+    uint32_t id = 0;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
