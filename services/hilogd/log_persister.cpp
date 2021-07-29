@@ -420,10 +420,10 @@ int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
     info.types = queryCondition.types;
     info.levels = queryCondition.levels;
     if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
-        printf("Failed to save persister file path\n");
+        cout << "Failed to save persister file path" << endl;
         return RET_FAIL;
     }
-    printf("Saved Path=%s\n", info.msg.filePath);
+    cout << "Saved Path=" << info.msg.filePath << endl;
     return RET_SUCCESS;
 }
 } // namespace HiviewDFX
