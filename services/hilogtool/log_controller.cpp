@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <securec.h>
-#include <error.h>
+#include <stdio.h>
 
 #include "hilog/log.h"
 #include "hilog_common.h"
@@ -224,7 +224,8 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
     while(1) {
         memset_s(recvBuffer, bufLen, 0, bufLen);
         if (controller.RecvMsg(recvBuffer, bufLen) == 0) {
-            error(EXIT_FAILURE, 0, "Unexpected EOF");
+            fprintf(stderr, "Unexpected EOF %s\n", strerror(errno));
+            exit(1);
             return;
         }
         MessageHeader* msgHeader = &(rsp->header);
