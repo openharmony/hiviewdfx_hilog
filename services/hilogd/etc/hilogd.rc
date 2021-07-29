@@ -15,6 +15,7 @@ on early-init
     write /proc/sys/net/unix/max_dgram_qlen  600
 
 on post-fs-data
+    mkdir /data/misc/logd/ 0770 logd logd
     start hilogd
 
 service hilogd /system/bin/hilogd

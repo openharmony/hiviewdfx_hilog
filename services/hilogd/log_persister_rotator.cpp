@@ -117,6 +117,5 @@ void LogPersisterRotator::SetId(uint32_t pId)
 {
     id = pId;
 }
-
 } // namespace HiviewDFX
 } // namespace OHOS
