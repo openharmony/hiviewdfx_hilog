@@ -26,21 +26,22 @@
 #include "log_persister_rotator.h"
 #include "log_reader.h"
 #include "log_compress.h"
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-typedef struct {
-    uint16_t offset;
-    char content[];
-} LogPersisterBuffer;
 
-const uint16_t MAX_PERSISTER_BUFFER_SIZE = 4096;
+typedef struct {
+    uint8_t index;
+    uint16_t types;
+    uint8_t levels;
+    LogPersistStartMsg msg;
+} PersistRecoveryInfo;
 
 class LogPersister : public LogReader {
 public:
-    LogPersister(uint32_t id, std::string path, uint16_t compressType,
-                 uint16_t compressAlg, int sleepTime, LogPersisterRotator *rotator,
-                 HilogBuffer *buffer);
+    LogPersister(uint32_t id, std::string path,  uint32_t fileSize, uint16_t compressAlg, int sleepTime,
+                 LogPersisterRotator& rotator, HilogBuffer &buffer);
     ~LogPersister();
     void SetBufferOffset(int off);
     void NotifyForNewData();
@@ -48,9 +49,9 @@ public:
     int ThreadFunc();
     static int Kill(uint32_t id);
     void Exit();
-    static int Query(uint16_t logType,
-                     std::list<LogPersistQueryResult> &results);
+    static int Query(uint16_t logType, std::list<LogPersistQueryResult> &results);
     int Init();
+    int InitCompress();
     void Start();
     bool Identify(uint32_t id);
     void FillInfo(LogPersistQueryResult *response);
@@ -58,13 +59,14 @@ public:
     bool writeUnCompressedBuffer(HilogData *data);
     uint8_t GetType() const;
     std::string getPath();
+    int SaveInfo(LogPersistStartMsg& pMsg);
     LogPersisterBuffer *buffer;
-    
+    LogPersisterBuffer *compressBuffer;
 private:
     uint32_t id;
     std::string path;
+    uint32_t fileSize;
     std::string mmapPath;
-    uint16_t compressType;
     uint16_t compressAlg;
     int sleepTime;
     std::mutex cvMutex;
@@ -76,10 +78,13 @@ private:
     bool hasExited;
     inline void WriteFile();
     bool isExited();
-    FILE *fdinfo;
+    FILE *fdinfo = nullptr;
     int fd = -1;
-    LogCompress *LogCompress;
+    LogCompress *compressor;
     list<string> persistList;
+    uint32_t plainLogSize;
+    PersistRecoveryInfo info;
+    bool restore = false;
 };
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList);

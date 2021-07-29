@@ -40,7 +40,6 @@ namespace HiviewDFX {
 using namespace std::literals::chrono_literals;
 using namespace std;
 
-
 static std::list<shared_ptr<LogPersister>> logPersisters;
 static std::mutex g_listMutex;
 
@@ -50,24 +49,47 @@ static std::mutex g_listMutex;
         (x) = nullptr; \
     } while (0)
 
-LogPersister::LogPersister(uint32_t id, string path, uint16_t compressType,
-                           uint16_t compressAlg, int sleepTime,
-                           LogPersisterRotator *rotator, HilogBuffer *_buffer)
-    : id(id), path(path), compressType(compressType), compressAlg(compressAlg),
-      sleepTime(sleepTime), rotator(rotator)
+LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t compressAlg, int sleepTime,
+                           LogPersisterRotator& rotator, HilogBuffer &_buffer)
+    : id(id), path(path), fileSize(fileSize), compressAlg(compressAlg),
+      sleepTime(sleepTime), rotator(&rotator)
 {
     toExit = false;
     hasExited = false;
-    hilogBuffer = _buffer;
-    LogCompress = nullptr;
+    hilogBuffer = &_buffer;
+    compressor = nullptr;
     fdinfo = nullptr;
     buffer = nullptr;
+    plainLogSize = 0;
 }
 
 LogPersister::~LogPersister()
 {
     SAFE_DELETE(rotator);
-    SAFE_DELETE(LogCompress);
+    SAFE_DELETE(compressor);
+    SAFE_DELETE(compressBuffer);
+}
+
+int LogPersister::InitCompress()
+{
+    compressBuffer = new LogPersisterBuffer;
+    if (compressBuffer == NULL) {
+        return RET_FAIL;
+    }
+    switch (compressAlg) {
+        case COMPRESS_TYPE_NONE:
+            compressor = new NoneCompress();
+            break;
+        case COMPRESS_TYPE_ZLIB:
+            compressor = new ZlibCompress();
+            break;
+        case COMPRESS_TYPE_ZSTD:
+            compressor = new ZstdCompress();
+            break;
+        default:
+            break;
+        }
+    return RET_SUCCESS;
 }
 
 int LogPersister::Init()
@@ -76,7 +98,7 @@ int LogPersister::Init()
     if (nPos == RET_FAIL) {
         return RET_FAIL;
     }
-    mmapPath = path.substr(0, nPos) + "/." + to_string(id);
+    mmapPath = path.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
             MkDirPath(path.substr(0, nPos).c_str());
@@ -93,8 +115,10 @@ int LogPersister::Init()
     if (hit) {
         return RET_FAIL;
     }
+    if (InitCompress() ==  RET_FAIL) {
+        return RET_FAIL;
+    }
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
-    bool restore = false;
     if (fd <= 0) {
         if (errno == EEXIST) {
             cout << "File already exists!" << endl;
@@ -105,7 +129,7 @@ int LogPersister::Init()
 #ifdef DEBUG
         cout << "New log file: " << mmapPath << endl;
 #endif
-        lseek(fd, MAX_PERSISTER_BUFFER_SIZE - 1, SEEK_SET);
+        lseek(fd, sizeof(LogPersisterBuffer) - 1, SEEK_SET);
         write(fd, "", 1);
     }
     if (fd < 0) {
@@ -114,10 +138,7 @@ int LogPersister::Init()
 #endif
         return RET_FAIL;
     }
-    fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
-    if (fdinfo == nullptr) {
-        fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
-    }
+    fdinfo = fopen((mmapPath + ".info").c_str(), "a+");
     if (fdinfo == nullptr) {
 #ifdef DEBUG
         cout << "open loginfo file failed: " << strerror(errno) << endl;
@@ -125,7 +146,7 @@ int LogPersister::Init()
         close(fd);
         return RET_FAIL;
     }
-    buffer = (LogPersisterBuffer *)mmap(nullptr, MAX_PERSISTER_BUFFER_SIZE, PROT_READ | PROT_WRITE,
+    buffer = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
                                         MAP_SHARED, fd, 0);
     close(fd);
     if (buffer == MAP_FAILED) {
@@ -136,14 +157,9 @@ int LogPersister::Init()
         return RET_FAIL;
     }
     if (restore == true) {
-        int moffset;
-        if (fscanf_s(fdinfo, "%04x", &moffset) == -1) {
-            return RET_FAIL;
-        }
 #ifdef DEBUG
-        cout << "Recovered persister, Offset=" << moffset << endl;
+        cout << "Recovered persister, Offset=" << buffer->offset << endl;
 #endif
-        SetBufferOffset(moffset);
         WriteFile();
     } else {
         SetBufferOffset(0);
@@ -169,8 +185,6 @@ int LogPersister::MkDirPath(const char *pMkdir)
 void LogPersister::SetBufferOffset(int off)
 {
     buffer->offset = off;
-    fseek(fdinfo, 0, SEEK_SET);
-    fprintf(fdinfo, "%04x\n", off);
 }
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList)
@@ -183,7 +197,6 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     showBuffer.domain = data->domain;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-  
     int offset = data->tag_len;
     char *dataCopy= (char*)calloc(data->len, sizeof(char));
     memcpy_s(dataCopy, offset, data->tag, offset);
@@ -222,17 +235,16 @@ bool LogPersister::writeUnCompressedBuffer(HilogData *data)
     int listSize = persistList.size();
 
     if (persistList.empty()) {
-        listSize = GenPersistLogHeader(data, persistList);    
+        listSize = GenPersistLogHeader(data, persistList);
     }
     while (listSize--) {
         string header = persistList.front();
         uint16_t headerLen = header.length();
         uint16_t size = headerLen + 1;
-        uint16_t orig_offset = buffer->offset;
+        uint32_t orig_offset = buffer->offset;
         int r = 0;
         if (buffer->offset + size > MAX_PERSISTER_BUFFER_SIZE)
             return false;
-        
         r = memcpy_s(buffer->content + buffer->offset, MAX_PERSISTER_BUFFER_SIZE - buffer->offset,
             header.c_str(), headerLen);
         if (r != 0) {
@@ -253,39 +265,23 @@ int LogPersister::WriteData(HilogData *data)
         return -1;
     if (writeUnCompressedBuffer(data))
         return 0;
-    switch (compressAlg) {
-        case COMPRESS_TYPE_OFF:
-            WriteFile();
-            break;
-        case COMPRESS_TYPE_ZLIB: {
-            LogCompress = new ZlibCompress();
-#ifdef DEBUG
-            cout << buffer->content << endl;
-#endif
-            LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
-            rotator->Input((char *)LogCompress->zdata, LogCompress->zdlen);
-            rotator->FinishInput();
-            SetBufferOffset(0);
-            }
-            break;
-#ifdef USING_ZSTD_COMPRESS
-        case COMPRESS_TYPE_ZSTD:  {
-            LogCompress = new ZstdCompress();
-            LogCompress->Compress((Bytef *)buffer->content, buffer->offset);
-            rotator->Input((char *)LogCompress->zdata, LogCompress->zdlen);
-            rotator->FinishInput();
-            SetBufferOffset(0);
-        }
-            break;
-#endif // #ifdef USING_ZSTD_COMPRESS
-        default:
-            break;
-    }
+    if (compressor->Compress(buffer, compressBuffer) != 0) {
+        cout << "COMPRESS Error" << endl;
+        return -1;
+    };
+    WriteFile();
     return writeUnCompressedBuffer(data) ? 0 : -1;
 }
 
 void LogPersister::Start()
 {
+    if (!restore) {
+        std::cout << "Save Info file!" << std::endl;
+        fseek(fdinfo, 0, SEEK_SET);
+        fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+        fsync(fileno(fdinfo));
+    }
+    fclose(fdinfo);
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
     newThread.detach();
@@ -294,10 +290,15 @@ void LogPersister::Start()
 
 inline void LogPersister::WriteFile()
 {
-    if (buffer->offset == 0) return;
-    if (compressAlg == 0) {
-        rotator->Input(buffer->content, buffer->offset);
+    if (buffer->offset == 0)
+        return;
+    rotator->Input((char *)compressBuffer->content, compressBuffer->offset);
+    plainLogSize += buffer->offset;
+    if (plainLogSize >= fileSize) {
+        plainLogSize = 0;
+        rotator->FinishInput();
     }
+    compressBuffer->offset = 0;
     SetBufferOffset(0);
 }
 
@@ -319,7 +320,6 @@ int LogPersister::ThreadFunc()
                 WriteFile();
             }
         }
-        cout << "running! " << compressAlg << endl;
     }
     WriteFile();
     {
@@ -354,7 +354,6 @@ void LogPersister::FillInfo(LogPersistQueryResult *response)
     if (strcpy_s(response->filePath, FILE_PATH_MAX_LEN, path.c_str())) {
         return;
     }
-    response->compressType = compressType;
     response->compressAlg = compressAlg;
     rotator->FillInfo(&response->fileSize, &response->fileNum);
     return;
@@ -366,7 +365,9 @@ int LogPersister::Kill(const uint32_t id)
     std::lock_guard<mutex> guard(g_listMutex);
     for (auto it = logPersisters.begin(); it != logPersisters.end(); ) {
         if ((*it)->Identify(id)) {
+#ifdef DEBUG
             cout << "find a persister" << endl;
+#endif
             (*it)->Exit();
             it = logPersisters.erase(it);
             found = true;
@@ -396,7 +397,6 @@ void LogPersister::Exit()
     cout << "removed mmap file" << endl;
     remove(mmapPath.c_str());
     remove((mmapPath + ".info").c_str());
-    fclose(fdinfo);
     return;
 }
 bool LogPersister::Identify(uint32_t id)
@@ -412,6 +412,19 @@ string LogPersister::getPath()
 uint8_t LogPersister::GetType() const
 {
     return TYPE_PERSISTER;
+}
+
+int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
+{
+    info.msg = pMsg;
+    info.types = queryCondition.types;
+    info.levels = queryCondition.levels;
+    if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
+        cout << "Failed to save persister file path" << endl;
+        return RET_FAIL;
+    }
+    cout << "Saved Path=" << info.msg.filePath << endl;
+    return RET_SUCCESS;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -42,7 +42,6 @@ typedef struct {
     std::string regexArgs;
     std::string buffSizeArgs;
     std::string logFileCtrlArgs;
-    std::string compressArgs;
     std::string fileSizeArgs;
     std::string fileNumArgs;
     std::string filePathArgs;
@@ -62,4 +61,4 @@ typedef struct {
 }  HilogArgs;
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif 
+#endif
