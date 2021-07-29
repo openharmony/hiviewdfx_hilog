@@ -24,7 +24,6 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-#define ANXILLARY_FILE_NAME "persisterInfo_"
 
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
     : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
@@ -39,7 +38,7 @@ void LogPersisterRotator::Init()
     std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(fileName.substr(0, nPos).c_str(), F_OK) != 0) {
         if (errno == ENOENT) {
-            MkDirPath(fileName.substr(0, nPos).c_str());
+            mkdir(fileName.substr(0, nPos).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
         }
     }
     fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
@@ -117,14 +116,6 @@ void LogPersisterRotator::SetIndex(int pIndex)
 void LogPersisterRotator::SetId(uint32_t pId)
 {
     id = pId;
-}
-
-int LogPersisterRotator::MkDirPath(const char *pMkdir)
-{
-    int isCreate = mkdir(pMkdir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
-    if (!isCreate)
-        cout << "create path:" << pMkdir << endl;
-    return isCreate;
 }
 
 } // namespace HiviewDFX

@@ -48,6 +48,7 @@ constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <
 constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE;
 constexpr int SLEEP_TIME = 5;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
+constexpr int INFO_SUFFIX = 5;
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
     msgHeader->version = 0;
@@ -94,7 +95,7 @@ void HandleNextRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer
     buffer.Query(logReader);
 }
 
-void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
+void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)
 {
     char msgToSend[MAX_DATA_LEN];
     const uint16_t sendMsgLen = sizeof(LogPersistStartResult);
@@ -139,18 +140,18 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         pLogPersistStartMsg->filePath,
         pLogPersistStartMsg->fileSize,
         pLogPersistStartMsg->compressAlg,
-        SLEEP_TIME, rotator, buffer);
+        SLEEP_TIME, *rotator, buffer);
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    persister->saveInfo(pLogPersistStartMsg);
+    int saveInfoRes = persister->SaveInfo(*pLogPersistStartMsg);
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
     pLogPersistStartRst->result = persister->Init();
-    if (pLogPersistStartRst->result == RET_FAIL) {
-        cout << "pLogPersistStartRst->result" << pLogPersistStartRst->result << endl;
+    if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL) {
+        cout << "Error initializing log persister!" << endl;
         persister.reset();
     } else {
         persister->Start();
-        buffer->AddLogReader(weak_ptr<LogPersister>(persister));
+        buffer.AddLogReader(weak_ptr<LogPersister>(persister));
     }
     SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
@@ -462,7 +463,7 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
                 }
                 break;
             case MC_REQ_LOG_PERSIST_START:
-                HandlePersistStartRequest(g_tempBuffer, logReader, hilogBuffer);
+                HandlePersistStartRequest(g_tempBuffer, logReader, *hilogBuffer);
                 break;
             case MC_REQ_LOG_PERSIST_STOP:
                 HandlePersistDeleteRequest(g_tempBuffer, logReader);
@@ -566,19 +567,18 @@ uint8_t LogQuerier::GetType() const
     }
 }
 
-int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
+int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
 {
     DIR *dir;
-    struct dirent *ent;
+    struct dirent *ent = nullptr;
     if ((dir = opendir (g_logPersisterDir.c_str())) != NULL) {
         while ((ent = readdir (dir)) != NULL) {
             size_t length = strlen(ent->d_name);
             std::string pPath(ent->d_name, length);
-            if (length >= 5 && pPath.substr(length - 5, length) == ".info") {
+            if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
                 if (pPath == "hilog.info") continue;
                 std::cout << "Found a persist job!" << std::endl;
-                FILE* infile;
-                infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
+                FILE* infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
                 if (infile == NULL) {
                     std::cout << "Error opening recovery info file!" << std::endl;
                     continue;
@@ -597,7 +597,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
                     info.msg.filePath,
                     info.msg.fileSize,
                     info.msg.compressAlg,
-                    SLEEP_TIME, rotator, _buffer);
+                    SLEEP_TIME, *rotator, _buffer);
                 int result = persister->Init();
                 persister->queryCondition.types = info.types;
                 persister->queryCondition.levels = info.levels;
@@ -606,7 +606,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer *_buffer)
                     persister.reset();
                 } else {
                     persister->Start();
-                    _buffer->AddLogReader(weak_ptr<LogPersister>(persister));
+                    _buffer.AddLogReader(weak_ptr<LogPersister>(persister));
                 }
             }
         }

@@ -24,7 +24,6 @@
 #include <zlib.h>
 namespace OHOS {
 namespace HiviewDFX {
-
 const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
 typedef struct {
     uint32_t offset;

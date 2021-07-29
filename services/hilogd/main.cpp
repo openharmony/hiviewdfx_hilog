@@ -50,13 +50,6 @@ static void SigHandler(int sig)
     }
 }
 
-void StartUpCheck()
-{
-    std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr,
-        CmdExecutor::getHilogBuffer());
-    logQuerier->RestorePersistJobs(CmdExecutor::getHilogBuffer());
-}
-
 int HilogdEntry(int argc, char* argv[])
 {
     HilogBuffer hilogBuffer;
@@ -90,8 +83,11 @@ int HilogdEntry(int argc, char* argv[])
         server.RunServingThread();
     }
     
-    std::thread StartupCheckThread(StartUpCheck);
-    StartupCheckThread.detach();
+    std::thread startupCheckThread([&hilogBuffer]() {
+        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, &hilogBuffer);
+        logQuerier->RestorePersistJobs(hilogBuffer);
+    });
+    startupCheckThread.detach();
 
     CmdExecutor cmdExecutor(&hilogBuffer);
     cmdExecutor.StartCmdExecutorThread();
