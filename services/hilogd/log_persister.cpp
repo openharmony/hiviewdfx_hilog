@@ -423,7 +423,7 @@ int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
         printf("Failed to save persister file path\n");
         return RET_FAIL;
     }
-    printf("Saved Path=%s\n", info.msg. filePath);
+    printf("Saved Path=%s\n", info.msg.filePath);
     return RET_SUCCESS;
 }
 } // namespace HiviewDFX

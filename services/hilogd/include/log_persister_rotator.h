@@ -22,7 +22,7 @@ const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
-    virtual ~LogPersisterRotator() {
+    virtual ~LogPersisterRotator(){
         fclose(fdinfo);
     }
     void Init();
