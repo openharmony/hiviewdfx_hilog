@@ -42,7 +42,7 @@ using namespace std;
 
 static std::list<shared_ptr<LogPersister>> logPersisters;
 static std::mutex g_listMutex;
-#define ANXILLARY_FILE_NAME "persisterInfo_"
+
 #define SAFE_DELETE(x) \
     do { \
         delete (x); \
@@ -50,13 +50,13 @@ static std::mutex g_listMutex;
     } while (0)
 
 LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t compressAlg, int sleepTime,
-                           LogPersisterRotator *rotator, HilogBuffer *_buffer)
+                           LogPersisterRotator& rotator, HilogBuffer &_buffer)
     : id(id), path(path), fileSize(fileSize), compressAlg(compressAlg),
-      sleepTime(sleepTime), rotator(rotator)
+      sleepTime(sleepTime), rotator(&rotator)
 {
     toExit = false;
     hasExited = false;
-    hilogBuffer = _buffer;
+    hilogBuffer = &_buffer;
     compressor = nullptr;
     fdinfo = nullptr;
     buffer = nullptr;
@@ -414,13 +414,17 @@ uint8_t LogPersister::GetType() const
     return TYPE_PERSISTER;
 }
 
-void LogPersister::saveInfo(LogPersistStartMsg *pMsg)
+int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
 {
-    info.msg = *pMsg;
+    info.msg = pMsg;
     info.types = queryCondition.types;
     info.levels = queryCondition.levels;
-    strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg->filePath);
-    printf("Saved Path=%s\n",info.msg.filePath);
+    if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
+        printf("Failed to save persister file path\n");
+        return RET_FAIL;
+    }
+    printf("Saved Path=%s\n", info.msg. filePath);
+    return RET_SUCCESS;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

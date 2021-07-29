@@ -41,7 +41,7 @@ typedef struct {
 class LogPersister : public LogReader {
 public:
     LogPersister(uint32_t id, std::string path,  uint32_t fileSize, uint16_t compressAlg, int sleepTime,
-                 LogPersisterRotator *rotator, HilogBuffer *buffer);
+                 LogPersisterRotator& rotator, HilogBuffer &buffer);
     ~LogPersister();
     void SetBufferOffset(int off);
     void NotifyForNewData();
@@ -59,7 +59,7 @@ public:
     bool writeUnCompressedBuffer(HilogData *data);
     uint8_t GetType() const;
     std::string getPath();
-    void saveInfo(LogPersistStartMsg *pMsg);
+    int SaveInfo(LogPersistStartMsg& pMsg);
     LogPersisterBuffer *buffer;
     LogPersisterBuffer *compressBuffer;
 private:
