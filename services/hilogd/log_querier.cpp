@@ -14,7 +14,6 @@
  */
 
 #include "log_querier.h"
-
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -25,11 +24,11 @@
 #include <sys/mman.h>
 #include <thread>
 #include <unistd.h>
+#include <dirent.h>
 #include <sstream>
 #include <regex>
 #include <algorithm>
 #include <securec.h>
-#include "compressing_rotator.h"
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "log_data.h"
@@ -38,16 +37,18 @@
 #include "log_persister.h"
 #include "log_reader.h"
 
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-
+namespace fs = std::filesystem;
 constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = "/data/misc/logd/";
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
+constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE;
 constexpr int SLEEP_TIME = 5;
-
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
+constexpr int INFO_SUFFIX = 5;
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
     msgHeader->version = 0;
@@ -64,41 +65,21 @@ inline bool IsValidFileName(const std::string& strFileName)
 LogPersisterRotator* MakeRotator(LogPersistStartMsg& pLogPersistStartMsg)
 {
     string fileSuffix = "";
-
-    switch (pLogPersistStartMsg.compressType) {
-        case CompressStrategy::DIVIDED:{
-            stringstream tmpFileSuffix;
-            tmpFileSuffix << pLogPersistStartMsg.filePath << "tmpLog" << pLogPersistStartMsg.jobId;
-            int tmpFileSize = 4096;
-            int tmpFileNum = 2;
-            return new CompressingRotator(
-                pLogPersistStartMsg.filePath,
-                pLogPersistStartMsg.fileSize,
-                pLogPersistStartMsg.fileNum,
-                tmpFileSize, tmpFileNum, tmpFileSuffix.str());
-        }
-        case CompressStrategy::STREAM:
-            switch (pLogPersistStartMsg.compressAlg) {
-                case CompressAlg::COMPRESS_TYPE_ZSTD:
-                    fileSuffix = ".zst";
-                    break;
-                case CompressAlg::COMPRESS_TYPE_ZLIB:
-                    fileSuffix = ".gz";
-                    break;
-                default:
-                    break;
-            };
-            return new LogPersisterRotator(
-                pLogPersistStartMsg.filePath,
-                pLogPersistStartMsg.fileSize,
-                pLogPersistStartMsg.fileNum,
-                fileSuffix);
+    switch (pLogPersistStartMsg.compressAlg) {
+        case CompressAlg::COMPRESS_TYPE_ZSTD:
+            fileSuffix = ".zst";
+            break;
+        case CompressAlg::COMPRESS_TYPE_ZLIB:
+            fileSuffix = ".gz";
+            break;
         default:
-            return new LogPersisterRotator(
-                pLogPersistStartMsg.filePath,
-                pLogPersistStartMsg.fileSize,
-                pLogPersistStartMsg.fileNum);
+            break;
     };
+    return new LogPersisterRotator(
+        pLogPersistStartMsg.filePath,
+        pLogPersistStartMsg.fileSize,
+        pLogPersistStartMsg.fileNum,
+        fileSuffix);
 }
 
 void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)
@@ -114,7 +95,7 @@ void HandleNextRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer
     buffer.Query(logReader);
 }
 
-void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
+void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)
 {
     char msgToSend[MAX_DATA_LEN];
     const uint16_t sendMsgLen = sizeof(LogPersistStartResult);
@@ -128,6 +109,14 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     LogPersistStartResult* pLogPersistStartRst
         = reinterpret_cast<LogPersistStartResult*>(&pLogPersistStartRsp->logPersistStartRst);
     if (pLogPersistStartRst == nullptr) {
+        return;
+    }
+    if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
+        std::cout << "Persist log file size less than min size" << std::endl;
+        pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+        pLogPersistStartRst->result = RET_FAIL;
+        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
+        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
         return;
     }
     string logPersisterPath;
@@ -144,24 +133,26 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     }
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
     rotator = MakeRotator(*pLogPersistStartMsg);
+    rotator->SetId(pLogPersistStartMsg->jobId);
+    rotator->Init();
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
         pLogPersistStartMsg->jobId,
         pLogPersistStartMsg->filePath,
-        pLogPersistStartMsg->compressType,
+        pLogPersistStartMsg->fileSize,
         pLogPersistStartMsg->compressAlg,
-        SLEEP_TIME, rotator, buffer);
-
-    pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-    pLogPersistStartRst->result = persister->Init();
+        SLEEP_TIME, *rotator, buffer);
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    if (pLogPersistStartRst->result == RET_FAIL) {
+    int saveInfoRes = persister->SaveInfo(*pLogPersistStartMsg);
+    pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+    pLogPersistStartRst->result = persister->Init();
+    if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL) {
+        cout << "Error initializing log persister!" << endl;
         persister.reset();
     } else {
         persister->Start();
-        buffer->AddLogReader(weak_ptr<LogPersister>(persister));
+        buffer.AddLogReader(weak_ptr<LogPersister>(persister));
     }
-
     SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
@@ -186,17 +177,29 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
     if (msgLen > sizeof(LogPersistStopMsg) * LOG_TYPE_MAX) {
         return;
     }
-
-    while (pLogPersistStopMsg && recvMsgLen < msgLen) {
-        rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
-        if (pLogPersistStopRst) {
-            pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
-            pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-            pLogPersistStopRst++;
-        }
-        pLogPersistStopMsg++;
-        recvMsgLen += sizeof(LogPersistStopMsg);
-        msgNum++;
+    list<LogPersistQueryResult> resultList;
+    list<LogPersistQueryResult>::iterator it;
+    rst = LogPersister::Query(DEFAULT_LOG_TYPE, resultList);
+    if (pLogPersistStopMsg && recvMsgLen < msgLen) {
+            if (pLogPersistStopMsg->jobId != JOB_ID_ALL) {
+                rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
+                if (pLogPersistStopRst) {
+                    pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
+                    pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
+                    pLogPersistStopRst++;
+                    msgNum++;
+                }
+            }  else {
+                for (it = resultList.begin(); it != resultList.end(); ++it) {
+                    rst = LogPersister::Kill((*it).jobId);
+                    if (pLogPersistStopRst) {
+                        pLogPersistStopRst->jobId = (*it).jobId;
+                        pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
+                        pLogPersistStopRst++;
+                        msgNum++;
+                    }
+                }
+            }
     }
     sendMsgLen = msgNum * sizeof(LogPersistStopResult);
     SetMsgHead(&pLogPersistStopRsp->msgHeader, MC_RSP_LOG_PERSIST_STOP, sendMsgLen);
@@ -233,7 +236,6 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
                 pLogPersistQueryRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
                 pLogPersistQueryRst->jobId = (*it).jobId;
                 pLogPersistQueryRst->logType = (*it).logType;
-                pLogPersistQueryRst->compressType = (*it).compressType;
                 pLogPersistQueryRst->compressAlg = (*it).compressAlg;
                 if (strcpy_s(pLogPersistQueryRst->filePath, FILE_PATH_MAX_LEN, (*it).filePath)) {
                     return;
@@ -461,7 +463,7 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
                 }
                 break;
             case MC_REQ_LOG_PERSIST_START:
-                HandlePersistStartRequest(g_tempBuffer, logReader, hilogBuffer);
+                HandlePersistStartRequest(g_tempBuffer, logReader, *hilogBuffer);
                 break;
             case MC_REQ_LOG_PERSIST_STOP:
                 HandlePersistDeleteRequest(g_tempBuffer, logReader);
@@ -563,6 +565,58 @@ uint8_t LogQuerier::GetType() const
         default:
             return TYPE_CONTROL;
     }
+}
+
+int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
+{
+    DIR *dir;
+    struct dirent *ent = nullptr;
+    if ((dir = opendir (g_logPersisterDir.c_str())) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            size_t length = strlen(ent->d_name);
+            std::string pPath(ent->d_name, length);
+            if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
+                if (pPath == "hilog.info") continue;
+                std::cout << "Found a persist job!" << std::endl;
+                FILE* infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
+                if (infile == NULL) {
+                    std::cout << "Error opening recovery info file!" << std::endl;
+                    continue;
+                }
+                PersistRecoveryInfo info;
+                fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
+                fclose(infile);
+                LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
+                rotator->SetIndex(info.index + 1);
+                rotator->SetId(info.msg.jobId);
+                rotator->Init();
+                printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
+                       info.msg.jobId, info.msg.filePath);
+                std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
+                    info.msg.jobId,
+                    info.msg.filePath,
+                    info.msg.fileSize,
+                    info.msg.compressAlg,
+                    SLEEP_TIME, *rotator, _buffer);
+                int result = persister->Init();
+                persister->queryCondition.types = info.types;
+                persister->queryCondition.levels = info.levels;
+                if (result == RET_FAIL) {
+                    cout << "LogPersister Start Failed, result=" << result << endl;
+                    persister.reset();
+                } else {
+                    persister->Start();
+                    _buffer.AddLogReader(weak_ptr<LogPersister>(persister));
+                }
+            }
+        }
+        closedir (dir);
+    } else {
+        perror ("Failed to open persister directory!");
+        return EXIT_FAILURE;
+    }
+    cout << "Finished restoring persist jobs!" << endl;
+    return EXIT_SUCCESS;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

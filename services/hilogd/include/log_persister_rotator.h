@@ -18,27 +18,33 @@
 #include <string>
 namespace OHOS {
 namespace HiviewDFX {
+const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
-    virtual ~LogPersisterRotator(){};
-    int Input(const char *buf, int length);
+    ~LogPersisterRotator()
+    {
+        fclose(fdinfo);
+    }
+    void Init();
+    int Input(const char *buf, uint32_t length);
     void FillInfo(uint32_t *size, uint32_t *num);
     void FinishInput();
-
+    void SetIndex(int pIndex);
+    void SetId(uint32_t pId);
 protected:
-    virtual void InternalRotate();
+    void InternalRotate();
     uint32_t fileNum;
     uint32_t fileSize;
     std::string fileName;
     std::string fileSuffix;
     int index;
-    int leftSize;
     std::fstream output;
-
 private:
     void Rotate();
     bool needRotate = false;
+    FILE* fdinfo;
+    uint32_t id = 0;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
