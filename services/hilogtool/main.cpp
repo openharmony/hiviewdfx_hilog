@@ -21,9 +21,9 @@
 #include <iomanip>
 #include <string>
 #include <vector>
+#include <stdio.h>
 #include <sstream>
 #include <regex>
-#include <error.h>
 #include <securec.h>
 
 #include "hilog/log.h"
@@ -558,7 +558,8 @@ int HilogEntry(int argc, char* argv[])
 
     memset_s(recvBuffer, sizeof(recvBuffer), 0, sizeof(recvBuffer));
     if (controller.RecvMsg(recvBuffer, RECV_BUF_LEN) == 0) {
-            error(EXIT_FAILURE, 0, "Unexpected EOF");
+            fprintf(stderr, "Unexpected EOF %s\n", strerror(errno));
+            exit(1);
             return 0;
     }
 

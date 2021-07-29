@@ -16,7 +16,7 @@ import("//build/ohos.gni")
 group("hilogd_etc") {
   deps = [
     ":hilog_domains.conf",
-    ":hilogd.rc",
+    ":hilogd.cfg",
   ]
 }
 
@@ -26,8 +26,12 @@ ohos_prebuilt_etc("hilog_domains.conf") {
   subsystem_name = "hiviewdfx"
 }
 
-ohos_prebuilt_etc("hilogd.rc") {
-  source = "hilogd.rc"
+ohos_prebuilt_etc("hilogd.cfg") {
+  if (use_musl) {
+    source = "hilogd.cfg"
+  } else {
+    source = "hilogd.rc"
+  }
   relative_install_dir = "init"
   part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
