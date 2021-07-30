@@ -32,7 +32,14 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
     needRotate = false;
 }
 
-void LogPersisterRotator::Init()
+LogPersisterRotator::~LogPersisterRotator()
+{
+    if (fdinfo != nullptr) {
+        fclose(fdinfo);
+    }
+}
+
+int LogPersisterRotator::Init()
 {
     int nPos = fileName.find_last_of('/');
     std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
@@ -41,7 +48,9 @@ void LogPersisterRotator::Init()
             mkdir(fileName.substr(0, nPos).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
         }
     }
-    fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
+    fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
+    if (fdinfo == nullptr) return RET_FAIL;
+    return RET_SUCCESS;
 }
 
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
