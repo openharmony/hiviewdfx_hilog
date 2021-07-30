@@ -134,7 +134,6 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
     rotator = MakeRotator(*pLogPersistStartMsg);
     rotator->SetId(pLogPersistStartMsg->jobId);
-    rotator->Init();
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
         pLogPersistStartMsg->jobId,
         pLogPersistStartMsg->filePath,
@@ -146,8 +145,9 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     int saveInfoRes = persister->SaveInfo(*pLogPersistStartMsg);
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
     pLogPersistStartRst->result = persister->Init();
-    if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL) {
-        cout << "Error initializing log persister!" << endl;
+    int rotatorRes = rotator->Init();
+    if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
+        cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
     } else {
         persister->Start();
@@ -589,7 +589,6 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
                 rotator->SetIndex(info.index + 1);
                 rotator->SetId(info.msg.jobId);
-                rotator->Init();
                 printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
                        info.msg.jobId, info.msg.filePath);
                 std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
@@ -598,11 +597,13 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                     info.msg.fileSize,
                     info.msg.compressAlg,
                     SLEEP_TIME, *rotator, _buffer);
-                int result = persister->Init();
+                persister->SetRestore(true);
+                int persisterRes = persister->Init();
+                int rotatorRes = rotator->Init();
                 persister->queryCondition.types = info.types;
                 persister->queryCondition.levels = info.levels;
-                if (result == RET_FAIL) {
-                    cout << "LogPersister Start Failed, result=" << result << endl;
+                if (persisterRes == RET_FAIL || rotatorRes == RET_FAIL) {
+                    cout << "LogPersister failed to initialize!" << endl;
                     persister.reset();
                 } else {
                     persister->Start();
