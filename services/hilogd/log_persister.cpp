@@ -123,7 +123,6 @@ int LogPersister::Init()
         if (errno == EEXIST) {
             cout << "File already exists!" << endl;
             fd = open(mmapPath.c_str(), O_RDWR, 0);
-            restore = true;
         }
     } else {
 #ifdef DEBUG
@@ -425,6 +424,11 @@ int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
     }
     cout << "Saved Path=" << info.msg.filePath << endl;
     return RET_SUCCESS;
+}
+
+void LogPersister::SetRestore(bool flag)
+{
+    restore = flag;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
