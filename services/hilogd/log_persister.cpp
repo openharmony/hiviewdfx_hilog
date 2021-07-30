@@ -118,7 +118,7 @@ int LogPersister::Init()
     if (InitCompress() ==  RET_FAIL) {
         return RET_FAIL;
     }
-    fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, 0);
+    fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd <= 0) {
         if (errno == EEXIST) {
             cout << "File already exists!" << endl;
