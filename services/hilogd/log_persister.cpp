@@ -426,5 +426,10 @@ int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
     cout << "Saved Path=" << info.msg.filePath << endl;
     return RET_SUCCESS;
 }
+
+void LogPersister::SetRestore(bool flag)
+{
+    restore = flag;
+}
 } // namespace HiviewDFX
 } // namespace OHOS

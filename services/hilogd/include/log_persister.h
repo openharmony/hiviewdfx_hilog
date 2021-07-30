@@ -60,6 +60,7 @@ public:
     uint8_t GetType() const;
     std::string getPath();
     int SaveInfo(LogPersistStartMsg& pMsg);
+    void SetRestore(bool flag);
     LogPersisterBuffer *buffer;
     LogPersisterBuffer *compressBuffer;
 private:

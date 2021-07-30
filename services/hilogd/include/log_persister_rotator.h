@@ -16,17 +16,15 @@
 #define _HILOG_PERSISTER_ROTATOR_H
 #include <fstream>
 #include <string>
+#include "hilog_common.h"
 namespace OHOS {
 namespace HiviewDFX {
 const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
-    ~LogPersisterRotator()
-    {
-        fclose(fdinfo);
-    }
-    void Init();
+    ~LogPersisterRotator();
+    int Init();
     int Input(const char *buf, uint32_t length);
     void FillInfo(uint32_t *size, uint32_t *num);
     void FinishInput();
