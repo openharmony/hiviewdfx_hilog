@@ -123,7 +123,6 @@ int LogPersister::Init()
         if (errno == EEXIST) {
             cout << "File already exists!" << endl;
             fd = open(mmapPath.c_str(), O_RDWR, 0);
-            restore = true;
         }
     } else {
 #ifdef DEBUG

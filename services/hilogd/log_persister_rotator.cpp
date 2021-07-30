@@ -100,10 +100,10 @@ void LogPersisterRotator::Rotate()
         ss << fileName << "." << index << fileSuffix;
         cout << "THE FILE NAME !!!!!!! " << ss.str() << endl;
         output.open(ss.str(), ios::app);
-        fseek(fdinfo, 0, SEEK_SET);
-        fwrite(&index, sizeof(uint8_t), 1, fdinfo);
-        fsync(fileno(fdinfo));
     }
+    fseek(fdinfo, 0, SEEK_SET);
+    fwrite(&index, sizeof(uint8_t), 1, fdinfo);
+    fsync(fileno(fdinfo));
 }
 
 void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
