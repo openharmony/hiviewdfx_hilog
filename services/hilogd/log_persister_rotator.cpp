@@ -86,7 +86,7 @@ void LogPersisterRotator::InternalRotate()
         cout << "OLD NAME " << oldName << " NEW NAME " << newName << endl;
         rename(oldName.c_str(), newName.c_str());
     }
-    output.open(ss.str(), ios::out);
+    output.open(ss.str(), ios::trunc);
 }
 
 void LogPersisterRotator::Rotate()
@@ -99,7 +99,7 @@ void LogPersisterRotator::Rotate()
         stringstream ss;
         ss << fileName << "." << index << fileSuffix;
         cout << "THE FILE NAME !!!!!!! " << ss.str() << endl;
-        output.open(ss.str(), ios::app);
+        output.open(ss.str(), ios::trunc);
     }
     fseek(fdinfo, 0, SEEK_SET);
     fwrite(&index, sizeof(uint8_t), 1, fdinfo);
