@@ -38,7 +38,7 @@ ohos_source_set("libhilog_source") {
   ]
 
   defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_default_privacy" ]
-
+  defines += [ "__RECV_MSG_WITH_UCRED_" ]
   public_configs = [ ":libhilog_config" ]
   configs = [ ":libhilog_config" ]
   deps = [
