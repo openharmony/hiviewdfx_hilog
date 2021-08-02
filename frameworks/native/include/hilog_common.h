@@ -23,6 +23,7 @@
 #define INPUT_SOCKET SOCKET_FILE_DIR INPUT_SOCKET_NAME
 #define CONTROL_SOCKET_NAME "hilogControl"
 #define CONTROL_SOCKET SOCKET_FILE_DIR CONTROL_SOCKET_NAME
+#define HLIOG_FILE_DIR "/data/log/hilog/"
 
 #define SENDIDN 0    // hilogd: reached end of log;  hilogtool: exit log reading
 #define SENDIDA 1    // hilogd & hilogtool: normal log reading
