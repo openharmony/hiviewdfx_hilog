@@ -247,7 +247,9 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     int logLen = strnlen(buf, MAX_LOG_LEN - 1);
     header.type = type;
     header.level = level;
+#ifndef __RECV_MSG_WITH_UCRED_
     header.pid = getpid();
+#endif
     header.tid = syscall(SYS_gettid);
     header.domain = domain;
 
