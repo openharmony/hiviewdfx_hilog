@@ -15,12 +15,15 @@ on early-init
     write /proc/sys/net/unix/max_dgram_qlen  600
 
 on post-fs-data
-    mkdir /data/misc/logd/ 0770 logd logd
+    mkdir /data/log/ 0770 system log
+    mkdir /data/log/hliog/ 0750 logd logd
+    restorecon recursive /data/log/hilog/
     start hilogd
 
 service hilogd /system/bin/hilogd
     disabled
     user logd
+    group log
     socket hilogInput dgram+passcred 0666 logd logd
     socket hilogControl seqpacket 0600 logd logd
-    seclabel u:r:logd:s0
+    seclabel u:r:hilogd:s0

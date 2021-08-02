@@ -55,7 +55,7 @@ int HilogdEntry(int argc, char* argv[])
     HilogBuffer hilogBuffer;
 
 #ifdef DEBUG
-    int fd = open("/data/misc/logd/hilogd.txt", O_WRONLY | O_APPEND);
+    int fd = open(HLIOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
     if (fd > 0) {
         g_fd = dup2(fd, fileno(stdout));
     } else {
