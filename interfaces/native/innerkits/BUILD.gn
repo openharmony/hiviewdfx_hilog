@@ -30,7 +30,8 @@ ohos_shared_library("libhilog") {
 
   output_extension = "so"
   install_enable = true
-
+  module_install_dir = "lib"
+  install_images = [ "system", "updater" ]
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
 }
