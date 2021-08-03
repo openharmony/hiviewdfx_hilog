@@ -18,7 +18,11 @@
 
 #include <cstdint>
 
+#ifdef HILOG_USE_MUSL
+#define SOCKET_FILE_DIR "/dev/unix/socket/"
+#else
 #define SOCKET_FILE_DIR "/dev/socket/"
+#endif
 #define INPUT_SOCKET_NAME "hilogInput"
 #define INPUT_SOCKET SOCKET_FILE_DIR INPUT_SOCKET_NAME
 #define CONTROL_SOCKET_NAME "hilogControl"
