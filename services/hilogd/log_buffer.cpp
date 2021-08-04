@@ -139,9 +139,7 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
     }
 
     if (reader->isNotified) {
-        if (reader->lastPos == hilogDataList.end()) {
-            reader->readPos = std::prev(reader->lastPos);
-        } else {
+        if (reader->readPos == hilogDataList.end()) {
             reader->readPos = std::next(reader->lastPos);
         }
     }
@@ -173,13 +171,12 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
                 printLenByDomain[reader->readPos->domain] += strlen(reader->readPos->content);
             }
             reader->readPos++;
-            reader->isNotified = false;
             hilogBufferMutex.unlock();
             return true;
         }
         reader->readPos++;
     }
-
+    reader->isNotified = false;
     ReturnNoLog(reader);
     hilogBufferMutex.unlock();
     return false;

@@ -544,14 +544,17 @@ int LogQuerier::WriteData(HilogData* data)
 
 void LogQuerier::NotifyForNewData()
 {
+    if (isNotified) {
+        return;
+    }
+    isNotified = true;
     LogQueryResponse rsp;
     rsp.data.sendId = SENDIDS;
     rsp.data.type = -1;
     /* set header */
     SetMsgHead(&(rsp.header), NEXT_RESPONSE, sizeof(rsp));
-    int ret = WriteData(rsp, nullptr);
-    if (ret > 0) {
-        isNotified = true;
+    if ( WriteData(rsp, nullptr) <= 0) {
+        isNotified = false;
     }
 }
 
