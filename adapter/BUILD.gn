@@ -31,6 +31,5 @@ ohos_shared_library("libhilog_os_adapter") {
   install_enable = true
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
-  module_install_dir = "lib"
   install_images = [ "system", "updater" ]
 }
