@@ -169,8 +169,9 @@ int LogPersister::Init()
 
 void LogPersister::NotifyForNewData()
 {
-    condVariable.notify_one();
+    if (isNotified) return;
     isNotified = true;
+    condVariable.notify_one();
 }
 
 int LogPersister::MkDirPath(const char *pMkdir)
