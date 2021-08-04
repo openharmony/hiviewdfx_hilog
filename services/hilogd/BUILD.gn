@@ -33,6 +33,7 @@ ohos_executable("hilogd") {
     "main.cpp",
   ]
   configs = [ ":hilogd_config" ]
+  defines = [ "__RECV_MSG_WITH_UCRED_" ]
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
