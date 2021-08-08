@@ -61,10 +61,9 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         return 0;
     }
 
-    hilogBufferMutex.lock();
-
     // Delete old entries when full
     if (eleSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
+        hilogBufferMutex.lock();
         // Drop 5% of maximum log when full
         std::list<HilogData>::iterator it = hilogDataList.begin();
         while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
@@ -91,16 +90,15 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
         // Re-confirm if enough elements has been removed
         if (sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
-            hilogBufferMutex.unlock();
-            return -1;
+            std::cout << "Failed to clean old logs." << std::endl;
         }
+        hilogBufferMutex.unlock();
     }
 
     // Insert new log into HilogBuffer
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
     if (msg.tv_sec >= (rit->tv_sec)) {
         hilogDataList.emplace_back(msg);
-        hilogBufferMutex.unlock();
     } else {
         // Find the place with right timestamp
         ++rit;
@@ -114,7 +112,6 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
             logReaderListMutex.unlock_shared();
         }
         hilogDataList.emplace(rit.base(), msg);
-        hilogBufferMutex.unlock();
     }
     // Update current size of HilogBuffer
     size += eleSize;
@@ -131,7 +128,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
 bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
 {
-    hilogBufferMutex.lock();
+    hilogBufferMutex.lock_shared();
     if (reader->GetReload()) {
         reader->readPos = hilogDataList.begin();
         reader->lastPos = hilogDataList.begin();
@@ -155,7 +152,7 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
             printLenByDomain[reader->oldData.back().domain] += strlen(reader->oldData.back().content);
         }
         reader->oldData.pop_back();
-        hilogBufferMutex.unlock();
+        hilogBufferMutex.unlock_shared();
         return true;
     }
     while (reader->readPos != hilogDataList.end()) {
@@ -171,14 +168,14 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
                 printLenByDomain[reader->readPos->domain] += strlen(reader->readPos->content);
             }
             reader->readPos++;
-            hilogBufferMutex.unlock();
+            hilogBufferMutex.unlock_shared();
             return true;
         }
         reader->readPos++;
     }
     reader->isNotified = false;
     ReturnNoLog(reader);
-    hilogBufferMutex.unlock();
+    hilogBufferMutex.unlock_shared();
     return false;
 }
 
