@@ -29,7 +29,7 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
     : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
 {
     index = -1;
-    needRotate = false;
+    needRotate = true;
 }
 
 LogPersisterRotator::~LogPersisterRotator()
