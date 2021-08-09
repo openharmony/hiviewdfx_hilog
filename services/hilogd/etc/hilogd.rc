@@ -16,7 +16,7 @@ on early-init
 
 on post-fs-data
     mkdir /data/log/ 0770 system log
-    mkdir /data/log/hliog/ 0750 logd logd
+    mkdir /data/log/hilog/ 0750 logd logd
     restorecon recursive /data/log/hilog/
     start hilogd
 
