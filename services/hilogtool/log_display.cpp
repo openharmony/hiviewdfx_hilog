@@ -35,6 +35,85 @@ using hash_t = std::uint64_t;
 constexpr hash_t PRIME = 0x100000001B3ull;
 constexpr hash_t BASIS = 0xCBF29CE484222325ull;
 
+string ParseErrorCode(ErrorCode errorCode) {
+    string errorMsg;
+    switch (errorCode)
+    {
+        case ERR_LOG_LEVEL_INVALID:
+            errorMsg = "Invalid log level";
+            break;
+        case ERR_LOG_TYPE_INVALID:
+            errorMsg = "Invalid log type";
+            break;
+        case ERR_QUERY_TYPE_INVALID:
+            errorMsg = "Query condition on both types and excluded types is undefined.\n";
+            errorMsg += "Please remove types or excluded types condition, and try again.";
+            break;
+        case ERR_QUERY_LEVEL_INVALID:
+            errorMsg = "Query condition on both levels and excluded levels is undefined.\n";
+            errorMsg += "Please remove levels or excluded levels condition, and try again.";
+            break;
+        case ERR_QUERY_TAG_INVALID:
+            errorMsg = "Query condition on both tags and excluded tags is undefined.\n";
+            errorMsg += "Please remove tags or excluded tags condition, and try again.";
+            break;
+        case ERR_QUERY_PID_INVALID:
+            errorMsg = "Query condition on both pid and excluded pid is undefined.\n";
+            errorMsg += "Please remove pid or excluded pid condition, and try again.";
+            break;
+        case ERR_BUFF_SIZE_INVALID:
+            errorMsg = "Invalid buffer size";
+            break;
+        case ERR_BUFF_SIZE_EXP:
+            errorMsg = "buffer size exception";
+            break;
+        case ERR_LOG_PERSIST_FILE_SIZE_INVALID:
+            errorMsg = "Invalid log persist file size";
+            break;
+        case ERR_LOG_PERSIST_FILE_NAME_INVALID:
+            errorMsg = "Invalid log persist file name";
+            break;
+        case ERR_LOG_PERSIST_FILE_PATH_EXP:
+            errorMsg = "log persist file path exception";
+            break;
+        case ERR_LOG_PERSIST_COMPRESS_INIT_FAIL:
+            errorMsg = "log persist compress initial failed";
+            break;
+        case ERR_LOG_PERSIST_FILE_OPEN_FAIL:
+            errorMsg = "log persist open file failed";
+            break;
+        case ERR_LOG_PERSIST_MMAP_FAIL:
+            errorMsg = "log persist mmap failed";
+            break;
+        case ERR_LOG_PERSIST_JOBID_FAIL:
+            errorMsg = "log persist jobid not exist";
+            break;
+        case ERR_DOMAIN_INVALID:
+            errorMsg = "Invalid domain";
+            break;
+        case ERR_MEM_ALLOC_FAIL:
+            errorMsg = "alloc memory failed";
+            break;
+        case ERR_MSG_LEN_INVALID:
+            errorMsg = "Invalid message length";
+            break;
+        case ERR_PROPERTY_VALUE_INVALID:
+            errorMsg = "Invalid property value";
+            break;
+        case ERR_LOG_CONTENT_NULL:
+            errorMsg = "log content NULL";
+            break;
+        case ERR_COMMAND_NOT_FOUND:
+            errorMsg = "command not found";
+            break;
+        case ERR_FORMAT_INVALID:
+            errorMsg = "Invalid format parameter";
+            break;
+        default:
+            break;
+    }
+    return errorMsg;
+}
 hash_t Hash(char const *str)
 {
     hash_t ret {BASIS};
@@ -143,7 +222,8 @@ int32_t ControlCmdResult(const char* message)
             while (pBuffSizeRst && resultLen < msgLen) {
                 if (pBuffSizeRst->result == RET_FAIL) {
                     outputStr += GetLogTypeStr(pBuffSizeRst->logType);
-                    outputStr += " buffer size fail";
+                    outputStr += " buffer size fail, reason:";
+                    outputStr += ParseErrorCode((ErrorCode)pBuffSizeRst->reason);
                     outputStr += "\n";
                 } else {
                     outputStr += GetLogTypeStr(pBuffSizeRst->logType);
@@ -165,7 +245,8 @@ int32_t ControlCmdResult(const char* message)
             while (pBuffResizeRst && resultLen < msgLen) {
                 if (pBuffResizeRst->result == RET_FAIL) {
                     outputStr += GetLogTypeStr(pBuffResizeRst->logType);
-                    outputStr += " buffer resize fail";
+                    outputStr += " buffer resize fail, reason:";
+                    outputStr += ParseErrorCode((ErrorCode)pBuffResizeRst->reason);
                     outputStr += "\n";
                 } else {
                     outputStr += GetLogTypeStr(pBuffResizeRst->logType);
@@ -203,7 +284,8 @@ int32_t ControlCmdResult(const char* message)
                 outputStr += GetByteLenStr(staInfoQueryRsp->dropped);
             } else if (staInfoQueryRsp->result == RET_FAIL) {
                 outputStr += logOrDomain;
-                outputStr += " statistic info query fail ";
+                outputStr += " statistic info query fail, reason:";
+                outputStr += ParseErrorCode((ErrorCode)staInfoQueryRsp->reason);
             }
             break;
         }
@@ -223,7 +305,8 @@ int32_t ControlCmdResult(const char* message)
                 outputStr += " statistic info clear success ";
             } else if (staInfoClearRsp->result == RET_FAIL) {
                 outputStr += logOrDomain;
-                outputStr += " statistic info clear fail ";
+                outputStr += " statistic info clear fail, reason:";
+                outputStr += ParseErrorCode((ErrorCode)staInfoClearRsp->reason);
             }
             break;
         }
@@ -236,7 +319,8 @@ int32_t ControlCmdResult(const char* message)
             while (pLogClearRst && resultLen < msgLen) {
                 if (pLogClearRst->result == RET_FAIL) {
                     outputStr += GetLogTypeStr(pLogClearRst->logType);
-                    outputStr += " log clear fail";
+                    outputStr += " log clear fail, reason:";
+                    outputStr += ParseErrorCode((ErrorCode)pLogClearRst->reason);
                     outputStr += "\n";
                 } else {
                     outputStr += GetLogTypeStr(pLogClearRst->logType);
@@ -260,6 +344,7 @@ int32_t ControlCmdResult(const char* message)
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStartRst->jobId);
                     outputStr += "] start failed\n";
+                    outputStr += ParseErrorCode((ErrorCode)pLogPersistStartRst->reason);
                 } else {
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStartRst->jobId);
@@ -281,6 +366,7 @@ int32_t ControlCmdResult(const char* message)
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStopRst->jobId);
                     outputStr += "] stop failed\n";
+                    outputStr += ParseErrorCode((ErrorCode)pLogPersistStopRst->reason);
                 } else {
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStopRst->jobId);
@@ -303,6 +389,7 @@ int32_t ControlCmdResult(const char* message)
                     outputStr = "Persist task [logtype:";
                     outputStr += GetLogTypeStr(pLogPersistQueryRst->logType);
                     outputStr += "] query failed\n";
+                    outputStr += ParseErrorCode((ErrorCode)pLogPersistQueryRst->reason);
                 } else {
                     outputStr += to_string(pLogPersistQueryRst->jobId);
                     outputStr += " ";
@@ -362,7 +449,7 @@ HilogShowFormat HilogFormat (const char* formatArg)
             format = MONOTONIC_SHOWFORMAT;
             break;
         default:
-            cout << "Format Invalid parameter"<<endl;
+            cout << ParseErrorCode(ERR_FORMAT_INVALID)<<endl;
             exit(1);
     }
     return format;
@@ -389,9 +476,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
         return;
     }
     if (data->length == 0) {
-#ifdef DEBUG
-        cout << "Log content null" << endl;
-#endif
+        std::cout << ParseErrorCode(ERR_LOG_CONTENT_NULL) << endl;
         return;
     }
 
