@@ -83,4 +83,34 @@ using HilogShowFormatBuffer = struct {
 
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
+
+/*-*********************************************
+ *  Error codes list
+ *-*********************************************
+ *  Error codes _values_ are pinned down.
+ **********************************************/
+typedef enum {
+    ERR_LOG_LEVEL_INVALID  = -1,
+    ERR_LOG_TYPE_INVALID = -2,
+    ERR_QUERY_LEVEL_INVALID = -3,
+    ERR_QUERY_TAG_INVALID = -4,
+    ERR_QUERY_PID_INVALID = -5,
+    ERR_QUERY_TYPE_INVALID = -6,
+    ERR_BUFF_SIZE_INVALID = -7,
+    ERR_BUFF_SIZE_EXP = -8,
+    ERR_LOG_PERSIST_FILE_SIZE_INVALID = -9,
+    ERR_LOG_PERSIST_FILE_NAME_INVALID = -10,
+    ERR_LOG_PERSIST_FILE_PATH_EXP = -11,
+    ERR_LOG_PERSIST_COMPRESS_INIT_FAIL = -12,
+    ERR_LOG_PERSIST_FILE_OPEN_FAIL = -13,
+    ERR_LOG_PERSIST_MMAP_FAIL = -14,
+    ERR_LOG_PERSIST_JOBID_FAIL = -15,
+    ERR_DOMAIN_INVALID = -16,
+    ERR_MEM_ALLOC_FAIL = -17,
+    ERR_MSG_LEN_INVALID = -18,
+    ERR_PROPERTY_VALUE_INVALID = -19,
+    ERR_LOG_CONTENT_NULL = -20,
+    ERR_COMMAND_NOT_FOUND = -21,
+    ERR_FORMAT_INVALID = -22
+} ErrorCode;
 #endif /* HILOG_COMMON_H */

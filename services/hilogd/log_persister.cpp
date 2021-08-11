@@ -96,7 +96,7 @@ int LogPersister::Init()
 {
     int nPos = path.find_last_of('/');
     if (nPos == RET_FAIL) {
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_FILE_PATH_EXP;
     }
     mmapPath = path.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
@@ -113,10 +113,10 @@ int LogPersister::Init()
             break;
         }
     if (hit) {
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_FILE_PATH_EXP;
     }
     if (InitCompress() ==  RET_FAIL) {
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_COMPRESS_INIT_FAIL;
     }
     fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd <= 0) {
@@ -135,7 +135,7 @@ int LogPersister::Init()
 #ifdef DEBUG
         cout << "open log file(" << mmapPath << ") failed: " << strerror(errno) << endl;
 #endif
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
     }
     fdinfo = fopen((mmapPath + ".info").c_str(), "a+");
     if (fdinfo == nullptr) {
@@ -143,7 +143,7 @@ int LogPersister::Init()
         cout << "open loginfo file failed: " << strerror(errno) << endl;
 #endif
         close(fd);
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
     }
     buffer = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
                                         MAP_SHARED, fd, 0);
@@ -153,7 +153,7 @@ int LogPersister::Init()
         cout << "mmap file failed: " << strerror(errno) << endl;
 #endif
         fclose(fdinfo);
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_MMAP_FAIL;
     }
     if (restore == true) {
 #ifdef DEBUG
@@ -374,7 +374,7 @@ int LogPersister::Kill(const uint32_t id)
             ++it;
         }
     }
-    return found ? 0 : -1;
+    return found ? 0 : ERR_LOG_PERSIST_JOBID_FAIL;
 }
 
 bool LogPersister::isExited()
