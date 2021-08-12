@@ -148,7 +148,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
     pLogPersistStartRst->result = persister->Init();
     int rotatorRes = rotator->Init();
-    if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
+    if (pLogPersistStartRst->result != 0 || saveInfoRes != 0 || rotatorRes != 0) {
         pLogPersistStartRst->reason = rotatorRes;
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
@@ -618,7 +618,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 int rotatorRes = rotator->Init();
                 persister->queryCondition.types = info.types;
                 persister->queryCondition.levels = info.levels;
-                if (persisterRes == RET_FAIL || rotatorRes == RET_FAIL) {
+                if (persisterRes != 0 || rotatorRes != 0) {
                     cout << "LogPersister failed to initialize!" << endl;
                     persister.reset();
                 } else {
@@ -630,7 +630,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
         closedir (dir);
     } else {
         perror ("Failed to open persister directory!");
-        return EXIT_FAILURE;
+        return ERR_LOG_PERSIST_DIR_OPEN_FAIL;
     }
     cout << "Finished restoring persist jobs!" << endl;
     return EXIT_SUCCESS;

@@ -145,7 +145,7 @@ int32_t InitDomainFlowCtrl()
 #ifdef DEBUG
         std::cout << "open file failed" << std::endl;
 #endif
-        return -1;
+        return ERR_FLOWCONTROL_CONF_OPEN_FAIL;
     }
     std::string line;
     while (!ifs.eof()) {

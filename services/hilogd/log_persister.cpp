@@ -74,7 +74,7 @@ int LogPersister::InitCompress()
 {
     compressBuffer = new LogPersisterBuffer;
     if (compressBuffer == NULL) {
-        return RET_FAIL;
+        return ERR_COMPRESS_FAIL;
     }
     switch (compressAlg) {
         case COMPRESS_TYPE_NONE:
@@ -266,7 +266,7 @@ int LogPersister::WriteData(HilogData *data)
         return 0;
     if (compressor->Compress(buffer, compressBuffer) != 0) {
         cout << "COMPRESS Error" << endl;
-        return -1;
+        return ERR_COMPRESS_FAIL;
     };
     WriteFile();
     return writeUnCompressedBuffer(data) ? 0 : -1;
@@ -420,7 +420,7 @@ int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
     info.levels = queryCondition.levels;
     if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
         cout << "Failed to save persister file path" << endl;
-        return RET_FAIL;
+        return ERR_LOG_PERSIST_FILE_PATH_EXP;
     }
     cout << "Saved Path=" << info.msg.filePath << endl;
     return RET_SUCCESS;

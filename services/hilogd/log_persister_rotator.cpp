@@ -49,7 +49,7 @@ int LogPersisterRotator::Init()
         }
     }
     fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
-    if (fdinfo == nullptr) return RET_FAIL;
+    if (fdinfo == nullptr) return ERR_PERSIST_INFO_OPEN_FAIL;
     return RET_SUCCESS;
 }
 
@@ -57,7 +57,7 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
     cout << __func__ << " " << fileName << " " << index
         << " " << length  << " need: " << needRotate << endl;
-    if (length <= 0 || buf == nullptr) return -1;
+    if (length <= 0 || buf == nullptr) return ERR_LOG_PERSIST_FILE_PATH_EXP;
     if (needRotate) {
         output.close();
         Rotate();
