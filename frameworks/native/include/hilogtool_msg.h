@@ -162,7 +162,6 @@ typedef struct {
     uint16_t logType;
     uint64_t buffSize;
     int32_t result;
-    int32_t reason;
 } BuffSizeResult;
 
 typedef struct {
@@ -184,7 +183,6 @@ typedef struct {
     uint16_t logType;
     uint64_t buffSize;
     int32_t result;
-    int32_t reason;
 } BuffResizeResult;
 
 typedef struct {
@@ -206,7 +204,6 @@ typedef struct {
     uint64_t printLen;
     uint64_t cacheLen;
     int32_t dropped;
-    int32_t reason;
 } StatisticInfoQueryResponse;
 
 typedef struct {
@@ -220,7 +217,6 @@ typedef struct {
     int32_t result;
     uint16_t logType;
     uint32_t domain;
-    int32_t reason;
 } StatisticInfoClearResponse;
 
 typedef struct {
@@ -235,7 +231,6 @@ typedef struct {
 typedef struct {
     uint16_t logType;
     int32_t result;
-    int32_t reason;
 } LogClearResult;
 
 typedef struct {
@@ -267,7 +262,6 @@ typedef struct {
 typedef struct {
     int32_t result;
     uint32_t jobId;
-    int32_t reason;
 } LogPersistStartResult;
 
 typedef struct {
@@ -286,7 +280,6 @@ typedef struct {
 typedef struct {
     int32_t result;
     uint32_t jobId;
-    int32_t reason;
 } LogPersistStopResult;
 typedef struct {
     MessageHeader msgHeader;
@@ -309,7 +302,6 @@ typedef struct {
     char filePath[FILE_PATH_MAX_LEN];
     uint32_t fileSize;
     uint32_t fileNum;
-    int32_t reason;
 } LogPersistQueryResult;
 typedef struct {
     MessageHeader msgHeader;

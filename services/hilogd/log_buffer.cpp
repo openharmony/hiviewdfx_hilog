@@ -31,7 +31,6 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-#define MAX_BUFFER_SIZE 4194304
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
 static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {1048576, 1048576, 1048576, 1048576};
@@ -245,9 +244,9 @@ size_t HilogBuffer::GetBuffLen(uint16_t logType)
 size_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
 {
     if (logType >= LOG_TYPE_MAX) {
-	return ERR_LOG_TYPE_INVALID;
+        return ERR_LOG_TYPE_INVALID;
     }
-    if (buffSize <= 0 || buffSize > ONE_GB) {
+    if (buffSize <= 0 || buffSize > MAX_BUFFER_SIZE) {
         return ERR_BUFF_SIZE_INVALID;
     }
     hilogBufferMutex.lock();

@@ -111,11 +111,16 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     if (pLogPersistStartRst == nullptr) {
         return;
     }
+    if (pLogPersistStartMsg->jobId  <= 0) {
+        pLogPersistStartRst->result = ERR_LOG_PERSIST_JOBID_INVALID;
+        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
+        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
+        return;    
+    }
     if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
         std::cout << "Persist log file size less than min size" << std::endl;
         pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-        pLogPersistStartRst->result = RET_FAIL;
-        pLogPersistStartRst->reason = ERR_LOG_PERSIST_FILE_SIZE_INVALID;
+        pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_SIZE_INVALID;
         SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
         logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
         return;
@@ -127,8 +132,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     } else {
         cout << "FileName is not valid!" << endl;
         pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-        pLogPersistStartRst->result = RET_FAIL;
-        pLogPersistStartRst->reason = ERR_LOG_PERSIST_FILE_NAME_INVALID;
+        pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
         SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
         logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
         return;
@@ -149,7 +153,6 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     pLogPersistStartRst->result = persister->Init();
     int rotatorRes = rotator->Init();
     if (pLogPersistStartRst->result != 0 || saveInfoRes != 0 || rotatorRes != 0) {
-        pLogPersistStartRst->reason = rotatorRes;
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
     } else {
@@ -188,8 +191,7 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
                 rst = LogPersister::Kill(pLogPersistStopMsg->jobId);
                 if (pLogPersistStopRst) {
                     pLogPersistStopRst->jobId = pLogPersistStopMsg->jobId;
-                    pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-                    pLogPersistStopRst->reason = rst;
+                    pLogPersistStopRst->result = (rst < 0) ? rst : RET_SUCCESS;
                     pLogPersistStopRst++;
                     msgNum++;
                 }
@@ -198,8 +200,7 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
                     rst = LogPersister::Kill((*it).jobId);
                     if (pLogPersistStopRst) {
                         pLogPersistStopRst->jobId = (*it).jobId;
-                        pLogPersistStopRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-                        pLogPersistStopRst->reason = rst;
+                        pLogPersistStopRst->result = (rst < 0) ? rst : RET_SUCCESS;
                         pLogPersistStopRst++;
                         msgNum++;
                     }
@@ -238,8 +239,7 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         rst = LogPersister::Query(pLogPersistQueryMsg->logType, resultList);
         for (it = resultList.begin(); it != resultList.end(); ++it) {
             if (pLogPersistQueryRst) {
-                pLogPersistQueryRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-                pLogPersistQueryRst->reason = rst;
+                pLogPersistQueryRst->result = (rst < 0) ? rst : RET_SUCCESS;
                 pLogPersistQueryRst->jobId = (*it).jobId;
                 pLogPersistQueryRst->logType = (*it).logType;
                 pLogPersistQueryRst->compressAlg = (*it).compressAlg;
@@ -286,8 +286,7 @@ void HandleBufferResizeRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         if (pBuffResizeRst) {
             pBuffResizeRst->logType = pBuffResizeMsg->logType;
             pBuffResizeRst->buffSize = pBuffResizeMsg->buffSize;
-            pBuffResizeRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-            pBuffResizeRst->reason = rst;
+            pBuffResizeRst->result = (rst < 0) ? rst : RET_SUCCESS;
             pBuffResizeRst++;
         }
         pBuffResizeMsg++;
@@ -322,8 +321,7 @@ void HandleBufferSizeRequest(char* reqMsg, std::shared_ptr<LogReader> logReader,
         if (pBuffSizeRst) {
             pBuffSizeRst->logType = pBuffSizeMsg->logType;
             pBuffSizeRst->buffSize = buffLen;
-            pBuffSizeRst->result = (buffLen < 0) ? RET_FAIL : RET_SUCCESS;
-            pBuffSizeRst->reason = buffLen;
+            pBuffSizeRst->result = (buffLen < 0) ? buffLen : RET_SUCCESS;
             pBuffSizeRst++;
         }
         recvMsgLen += sizeof(BuffSizeMsg);
@@ -348,15 +346,13 @@ void HandleInfoQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, 
         pStatisticInfoQueryRsp->domain = pStatisticInfoQueryReq->domain;
         rst = buffer->GetStatisticInfoByLog(pStatisticInfoQueryReq->logType, pStatisticInfoQueryRsp->printLen,
             pStatisticInfoQueryRsp->cacheLen, pStatisticInfoQueryRsp->dropped);
-        pStatisticInfoQueryRsp->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-        pStatisticInfoQueryRsp->reason = rst;
+        pStatisticInfoQueryRsp->result = (rst < 0) ? rst : RET_SUCCESS;
     } else {
         pStatisticInfoQueryRsp->logType = pStatisticInfoQueryReq->logType;
         pStatisticInfoQueryRsp->domain = pStatisticInfoQueryReq->domain;
         rst = buffer->GetStatisticInfoByDomain(pStatisticInfoQueryReq->domain, pStatisticInfoQueryRsp->printLen,
             pStatisticInfoQueryRsp->cacheLen, pStatisticInfoQueryRsp->dropped);
-        pStatisticInfoQueryRsp->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-        pStatisticInfoQueryRsp->reason = rst;
+        pStatisticInfoQueryRsp->result = (rst < 0) ? rst : RET_SUCCESS;
     }
     SetMsgHead(&pStatisticInfoQueryRsp->msgHeader, MC_RSP_STATISTIC_INFO_QUERY, sizeof(StatisticInfoQueryResponse)
         - sizeof(MessageHeader));
@@ -374,14 +370,12 @@ void HandleInfoClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, 
         pStatisticInfoClearRsp->logType = pStatisticInfoClearReq->logType;
         pStatisticInfoClearRsp->domain = pStatisticInfoClearReq->domain;
         rst = buffer->ClearStatisticInfoByLog(pStatisticInfoClearReq->logType);
-        pStatisticInfoClearRsp->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-        pStatisticInfoClearRsp->reason = rst;
+        pStatisticInfoClearRsp->result = (rst < 0) ? rst : RET_SUCCESS;
     } else {
         pStatisticInfoClearRsp->logType = pStatisticInfoClearReq->logType;
         pStatisticInfoClearRsp->domain = pStatisticInfoClearReq->domain;
         rst = buffer->ClearStatisticInfoByDomain(pStatisticInfoClearReq->domain);
-        pStatisticInfoClearRsp->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-        pStatisticInfoClearRsp->reason = rst;
+        pStatisticInfoClearRsp->result = (rst < 0) ? rst : RET_SUCCESS;
     }
     SetMsgHead(&pStatisticInfoClearRsp->msgHeader, MC_RSP_STATISTIC_INFO_CLEAR, sizeof(StatisticInfoClearResponse) -
         sizeof(MessageHeader));
@@ -408,8 +402,7 @@ void HandleBufferClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader
         rst = buffer->Delete(pLogClearMsg->logType);
         if (pLogClearRst) {
             pLogClearRst->logType = pLogClearMsg->logType;
-            pLogClearRst->result = (rst < 0) ? RET_FAIL : RET_SUCCESS;
-            pLogClearRst->reason = rst;
+            pLogClearRst->result = (rst < 0) ? rst : RET_SUCCESS;
             pLogClearRst++;
         }
         pLogClearMsg++;

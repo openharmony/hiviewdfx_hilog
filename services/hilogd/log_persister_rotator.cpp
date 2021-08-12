@@ -57,7 +57,7 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
     cout << __func__ << " " << fileName << " " << index
         << " " << length  << " need: " << needRotate << endl;
-    if (length <= 0 || buf == nullptr) return ERR_LOG_PERSIST_FILE_PATH_EXP;
+    if (length <= 0 || buf == nullptr) return ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP;
     if (needRotate) {
         output.close();
         Rotate();

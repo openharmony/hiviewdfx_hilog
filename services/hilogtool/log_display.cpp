@@ -20,7 +20,7 @@
 #include <vector>
 #include <regex>
 #include <securec.h>
-
+#include <unordered_map>
 #include "hilog/log.h"
 #include "format.h"
 #include "log_controller.h"
@@ -35,85 +35,49 @@ using hash_t = std::uint64_t;
 constexpr hash_t PRIME = 0x100000001B3ull;
 constexpr hash_t BASIS = 0xCBF29CE484222325ull;
 
-string ParseErrorCode(ErrorCode errorCode) {
-    string errorMsg;
-    switch (errorCode)
-    {
-        case ERR_LOG_LEVEL_INVALID:
-            errorMsg = "Invalid log level";
-            break;
-        case ERR_LOG_TYPE_INVALID:
-            errorMsg = "Invalid log type";
-            break;
-        case ERR_QUERY_TYPE_INVALID:
-            errorMsg = "Query condition on both types and excluded types is undefined.\n";
-            errorMsg += "Please remove types or excluded types condition, and try again.";
-            break;
-        case ERR_QUERY_LEVEL_INVALID:
-            errorMsg = "Query condition on both levels and excluded levels is undefined.\n";
-            errorMsg += "Please remove levels or excluded levels condition, and try again.";
-            break;
-        case ERR_QUERY_TAG_INVALID:
-            errorMsg = "Query condition on both tags and excluded tags is undefined.\n";
-            errorMsg += "Please remove tags or excluded tags condition, and try again.";
-            break;
-        case ERR_QUERY_PID_INVALID:
-            errorMsg = "Query condition on both pid and excluded pid is undefined.\n";
-            errorMsg += "Please remove pid or excluded pid condition, and try again.";
-            break;
-        case ERR_BUFF_SIZE_INVALID:
-            errorMsg = "Invalid buffer size";
-            break;
-        case ERR_BUFF_SIZE_EXP:
-            errorMsg = "buffer size exception";
-            break;
-        case ERR_LOG_PERSIST_FILE_SIZE_INVALID:
-            errorMsg = "Invalid log persist file size";
-            break;
-        case ERR_LOG_PERSIST_FILE_NAME_INVALID:
-            errorMsg = "Invalid log persist file name";
-            break;
-        case ERR_LOG_PERSIST_FILE_PATH_EXP:
-            errorMsg = "log persist file path exception";
-            break;
-        case ERR_LOG_PERSIST_COMPRESS_INIT_FAIL:
-            errorMsg = "log persist compress initial failed";
-            break;
-        case ERR_LOG_PERSIST_FILE_OPEN_FAIL:
-            errorMsg = "log persist open file failed";
-            break;
-        case ERR_LOG_PERSIST_MMAP_FAIL:
-            errorMsg = "log persist mmap failed";
-            break;
-        case ERR_LOG_PERSIST_JOBID_FAIL:
-            errorMsg = "log persist jobid not exist";
-            break;
-        case ERR_DOMAIN_INVALID:
-            errorMsg = "Invalid domain";
-            break;
-        case ERR_MEM_ALLOC_FAIL:
-            errorMsg = "alloc memory failed";
-            break;
-        case ERR_MSG_LEN_INVALID:
-            errorMsg = "Invalid message length";
-            break;
-        case ERR_PROPERTY_VALUE_INVALID:
-            errorMsg = "Invalid property value";
-            break;
-        case ERR_LOG_CONTENT_NULL:
-            errorMsg = "log content NULL";
-            break;
-        case ERR_COMMAND_NOT_FOUND:
-            errorMsg = "command not found";
-            break;
-        case ERR_FORMAT_INVALID:
-            errorMsg = "Invalid format parameter";
-            break;
-        default:
-            break;
-    }
-    return errorMsg;
+unordered_map<uint16_t, std::string> errorMsg
+{
+    {ERR_LOG_LEVEL_INVALID, "Invalid log level, the valid log levels include D/I/W/E/F"},
+    {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init"},
+    {ERR_QUERY_TYPE_INVALID, "Query condition on both types and excluded types is undefined"},
+    {ERR_QUERY_LEVEL_INVALID, "Query condition on both levels and excluded levels is undefined"},
+    {ERR_QUERY_DOMAIN_INVALID, "Invalid domain format, a hexadecimal number is needed"},
+    {ERR_QUERY_TAG_INVALID, "Query condition on both tags and excluded tags is undefined"},  
+    {ERR_QUERY_PID_INVALID, "Query condition on both pid and excluded pid is undefined"},
+    {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
+    + to_string(MAX_BUFFER_SIZE)},
+    {ERR_BUFF_SIZE_EXP, "Buffer resize exception"},
+    {ERR_LOG_PERSIST_FILE_SIZE_INVALID, "Invalid log persist file size, file size should be not less than "
+    + to_string(MAX_PERSISTER_BUFFER_SIZE)},
+    {ERR_LOG_PERSIST_FILE_NAME_INVALID, "Invalid log persist file name, file name should not contain [\\/:*?\"<>|]"},
+    {ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP, "Invalid Log persist compression buffer"},
+    {ERR_LOG_PERSIST_FILE_PATH_INVALID, "Invalid persister file path"},
+    {ERR_LOG_PERSIST_COMPRESS_INIT_FAIL, "Log persist compression initialization failed"},
+    {ERR_LOG_PERSIST_FILE_OPEN_FAIL, "Log persist open file failed"},
+    {ERR_LOG_PERSIST_MMAP_FAIL, "Log persist mmap failed"},
+    {ERR_LOG_PERSIST_JOBID_FAIL, "Log persist jobid not exist"},
+    {ERR_DOMAIN_INVALID, "Invalid domain, domain should not be  more than 0 and less than "
+    + to_string(DOMAIN_MAX_SCOPE)},
+    {ERR_MEM_ALLOC_FAIL, "Alloc memory failed"},
+    {ERR_MSG_LEN_INVALID, "Invalid message length, message length should be not more than "
+    + to_string(MSG_MAX_LEN)},
+    {ERR_PRIVATE_SWITCH_VALUE_INVALID, "Invalid private switch value, valid:on/off"},
+    {ERR_FLOWCTRL_SWITCH_VALUE_INVALID, "Invalid flowcontrl switch value, valid:pidon/pidoff/domainon/domainoff"},
+    {ERR_LOG_PERSIST_JOBID_INVALID, "Invalid jobid, jobid should be more than 0"},
+    {ERR_LOG_CONTENT_NULL, "Log content NULL"},
+    {ERR_COMMAND_NOT_FOUND, "Command not found"},
+    {ERR_FORMAT_INVALID, "Invalid format parameter"}
+}; 
+
+string ParseErrorCode(ErrorCode errorCode)
+{
+    if (errorMsg.count(errorCode) == 0) {
+        cout << "ERR_CODE not exist" << endl;
+    } 
+    string errorMsgStr = "[ERR_CODE:" + to_string(errorCode) + "], " + errorMsg[errorCode];
+    return errorMsgStr;
 }
+
 hash_t Hash(char const *str)
 {
     hash_t ret {BASIS};
@@ -152,14 +116,15 @@ string GetOrigType(uint16_t shiftType)
 {
     string logType = "";
     if (((1 << LOG_INIT) & shiftType) != 0) {
-        logType += "init";
+        logType += "init,";
     }
     if (((1 << LOG_CORE) & shiftType) != 0) {
-        logType += "core";
+        logType += "core,";
     }
     if (((1 << LOG_APP) & shiftType) != 0) {
-        logType += "app ";
+        logType += "app,";
     }
+    logType.erase(logType.end() - 1);
     return logType;
 }
 
@@ -220,10 +185,10 @@ int32_t ControlCmdResult(const char* message)
             }
             BuffSizeResult* pBuffSizeRst = (BuffSizeResult*)&pBuffSizeRsp->buffSizeRst;
             while (pBuffSizeRst && resultLen < msgLen) {
-                if (pBuffSizeRst->result == RET_FAIL) {
+                if (pBuffSizeRst->result < 0) {
                     outputStr += GetLogTypeStr(pBuffSizeRst->logType);
-                    outputStr += " buffer size fail, reason:";
-                    outputStr += ParseErrorCode((ErrorCode)pBuffSizeRst->reason);
+                    outputStr += " buffer size fail\n";
+                    outputStr += ParseErrorCode((ErrorCode)pBuffSizeRst->result);
                     outputStr += "\n";
                 } else {
                     outputStr += GetLogTypeStr(pBuffSizeRst->logType);
@@ -243,10 +208,10 @@ int32_t ControlCmdResult(const char* message)
             }
             BuffResizeResult* pBuffResizeRst = (BuffResizeResult*)&pBuffResizeRsp->buffResizeRst;
             while (pBuffResizeRst && resultLen < msgLen) {
-                if (pBuffResizeRst->result == RET_FAIL) {
+                if (pBuffResizeRst->result < 0) {
                     outputStr += GetLogTypeStr(pBuffResizeRst->logType);
-                    outputStr += " buffer resize fail, reason:";
-                    outputStr += ParseErrorCode((ErrorCode)pBuffResizeRst->reason);
+                    outputStr += " buffer resize fail\n";
+                    outputStr += ParseErrorCode((ErrorCode)pBuffResizeRst->result);
                     outputStr += "\n";
                 } else {
                     outputStr += GetLogTypeStr(pBuffResizeRst->logType);
@@ -282,10 +247,10 @@ int32_t ControlCmdResult(const char* message)
                 outputStr += logOrDomain;
                 outputStr += " dropped log lines is ";
                 outputStr += GetByteLenStr(staInfoQueryRsp->dropped);
-            } else if (staInfoQueryRsp->result == RET_FAIL) {
+            } else if (staInfoQueryRsp->result < 0) {
                 outputStr += logOrDomain;
-                outputStr += " statistic info query fail, reason:";
-                outputStr += ParseErrorCode((ErrorCode)staInfoQueryRsp->reason);
+                outputStr += " statistic info query fail\n";
+                outputStr += ParseErrorCode((ErrorCode)staInfoQueryRsp->result);
             }
             break;
         }
@@ -303,10 +268,10 @@ int32_t ControlCmdResult(const char* message)
             if (staInfoClearRsp->result == RET_SUCCESS) {
                 outputStr += logOrDomain;
                 outputStr += " statistic info clear success ";
-            } else if (staInfoClearRsp->result == RET_FAIL) {
+            } else if (staInfoClearRsp->result < 0) {
                 outputStr += logOrDomain;
-                outputStr += " statistic info clear fail, reason:";
-                outputStr += ParseErrorCode((ErrorCode)staInfoClearRsp->reason);
+                outputStr += " statistic info clear fail\n";
+                outputStr += ParseErrorCode((ErrorCode)staInfoClearRsp->result);
             }
             break;
         }
@@ -317,10 +282,10 @@ int32_t ControlCmdResult(const char* message)
             }
             LogClearResult* pLogClearRst = (LogClearResult*)&pLogClearRsp->logClearRst;
             while (pLogClearRst && resultLen < msgLen) {
-                if (pLogClearRst->result == RET_FAIL) {
+                if (pLogClearRst->result < 0) {
                     outputStr += GetLogTypeStr(pLogClearRst->logType);
-                    outputStr += " log clear fail, reason:";
-                    outputStr += ParseErrorCode((ErrorCode)pLogClearRst->reason);
+                    outputStr += " log clear fail\n";
+                    outputStr += ParseErrorCode((ErrorCode)pLogClearRst->result);
                     outputStr += "\n";
                 } else {
                     outputStr += GetLogTypeStr(pLogClearRst->logType);
@@ -340,11 +305,11 @@ int32_t ControlCmdResult(const char* message)
             LogPersistStartResult* pLogPersistStartRst =
                 (LogPersistStartResult*)&pLogPersistStartRsp->logPersistStartRst;
             while (pLogPersistStartRst && resultLen < msgLen) {
-                if (pLogPersistStartRst->result == RET_FAIL) {
+                if (pLogPersistStartRst->result < 0) {
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStartRst->jobId);
                     outputStr += "] start failed\n";
-                    outputStr += ParseErrorCode((ErrorCode)pLogPersistStartRst->reason);
+                    outputStr += ParseErrorCode((ErrorCode)pLogPersistStartRst->result);
                 } else {
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStartRst->jobId);
@@ -362,11 +327,11 @@ int32_t ControlCmdResult(const char* message)
             }
             LogPersistStopResult* pLogPersistStopRst = (LogPersistStopResult*)&pLogPersistStopRsp->logPersistStopRst;
             while (pLogPersistStopRst && resultLen < msgLen) {
-                if (pLogPersistStopRst->result == RET_FAIL) {
+                if (pLogPersistStopRst->result < 0) {
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStopRst->jobId);
                     outputStr += "] stop failed\n";
-                    outputStr += ParseErrorCode((ErrorCode)pLogPersistStopRst->reason);
+                    outputStr += ParseErrorCode((ErrorCode)pLogPersistStopRst->result);
                 } else {
                     outputStr += "Persist task [jobid:";
                     outputStr += to_string(pLogPersistStopRst->jobId);
@@ -385,11 +350,11 @@ int32_t ControlCmdResult(const char* message)
             LogPersistQueryResult* pLogPersistQueryRst =
                 (LogPersistQueryResult*)&pLogPersistQueryRsp->logPersistQueryRst;
             while (pLogPersistQueryRst && resultLen < msgLen) {
-                if (pLogPersistQueryRst->result == RET_FAIL) {
+                if (pLogPersistQueryRst->result < 0) {
                     outputStr = "Persist task [logtype:";
                     outputStr += GetLogTypeStr(pLogPersistQueryRst->logType);
                     outputStr += "] query failed\n";
-                    outputStr += ParseErrorCode((ErrorCode)pLogPersistQueryRst->reason);
+                    outputStr += ParseErrorCode((ErrorCode)pLogPersistQueryRst->result);
                 } else {
                     outputStr += to_string(pLogPersistQueryRst->jobId);
                     outputStr += " ";
@@ -449,7 +414,7 @@ HilogShowFormat HilogFormat (const char* formatArg)
             format = MONOTONIC_SHOWFORMAT;
             break;
         default:
-            cout << ParseErrorCode(ERR_FORMAT_INVALID)<<endl;
+            cout << ParseErrorCode(ERR_FORMAT_INVALID) << endl;
             exit(1);
     }
     return format;
