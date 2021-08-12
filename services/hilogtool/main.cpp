@@ -337,16 +337,27 @@ int HilogEntry(int argc, char* argv[])
                     std::string domains(argv[indexDomain]);
                     indexDomain++;
                     if (!strstr(domains.c_str(), "-")) {
+                        char* endptr = nullptr;
                         if (domains.front() == '^') {
                             vector<string> v(sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
+                                strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
+                                if (*endptr != '\0') {
+                                    cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
+                                    exit(RET_FAIL);
+                                }
                                 context.noDomains[context.nNoDomain++] = s;
                             }
                         } else {
                             vector<string> v(sregex_token_iterator(domains.begin(), domains.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
+                                strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
+                                if (*endptr != '\0') {
+                                    cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
+                                    exit(RET_FAIL);
+                                }
                                 context.domains[context.nDomain++] = s;
                                 context.domainArgs += (s + " ");
                             }
@@ -392,7 +403,7 @@ int HilogEntry(int argc, char* argv[])
                     }
                 }
                 if (context.nTag != 0 && context.nNoTag != 0) {
-                    cout << ParseErrorCode(ERR_QUERY_PID_INVALID) << endl;
+                    cout << ParseErrorCode(ERR_QUERY_TAG_INVALID) << endl;
                     
                     exit(RET_FAIL);
                 }
