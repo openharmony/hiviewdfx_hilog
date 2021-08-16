@@ -130,7 +130,11 @@ void LogPersisterRotator::OpenInfoFile()
         }
     }
     infoPath = mmapPath + ".info";
-    fdinfo = fopen(infoPath.c_str(), "a+");
+    if (restore) {
+        fdinfo = fopen(infoPath.c_str(), "r+");
+    } else {
+        fdinfo = fopen(infoPath.c_str(), "w+");
+    }
 }
 
 void LogPersisterRotator::UpdateRotateNumber()
@@ -161,6 +165,11 @@ void LogPersisterRotator::WriteRecoveryInfo()
     fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
     fflush(fdinfo);
     fsync(fileno(fdinfo));
+}
+
+void LogPersisterRotator::SetRestore(bool flag)
+{
+    restore = flag;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -71,7 +71,7 @@ private:
     bool hasExited;
     inline void WriteFile();
     bool isExited();
-    int fd = -1;
+    FILE* fd = nullptr;
     LogCompress *compressor;
     list<string> persistList;
     uint32_t plainLogSize;
