@@ -144,8 +144,8 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
     int saveInfoRes = persister->SaveInfo(*pLogPersistStartMsg);
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-    pLogPersistStartRst->result = persister->Init();
     int rotatorRes = rotator->Init();
+    pLogPersistStartRst->result = persister->Init();
     if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
@@ -601,8 +601,8 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                     info.msg.compressAlg,
                     SLEEP_TIME, *rotator, _buffer);
                 persister->SetRestore(true);
-                int persisterRes = persister->Init();
                 int rotatorRes = rotator->Init();
+                int persisterRes = persister->Init();
                 persister->queryCondition.types = info.types;
                 persister->queryCondition.levels = info.levels;
                 if (persisterRes == RET_FAIL || rotatorRes == RET_FAIL) {
