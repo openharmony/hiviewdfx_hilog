@@ -49,6 +49,7 @@ int LogPersisterRotator::Init()
         }
     }
     fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
+    if (fdinfo == nullptr) fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
     if (fdinfo == nullptr) return RET_FAIL;
     return RET_SUCCESS;
 }
