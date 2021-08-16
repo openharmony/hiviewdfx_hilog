@@ -590,7 +590,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 PersistRecoveryInfo info;
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
                 fclose(infile);
-                LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
+                LogPersisterRotator* rotator = MakeRotator(info.msg);
                 rotator->SetIndex(info.index + 1);
                 rotator->SetId(info.msg.jobId);
                 printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
@@ -602,6 +602,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                     info.msg.compressAlg,
                     SLEEP_TIME, *rotator, _buffer);
                 persister->SetRestore(true);
+                rotator->SetRestore(true);
                 int rotatorRes = rotator->Init();
                 int persisterRes = persister->Init();
                 persister->queryCondition.types = info.types;

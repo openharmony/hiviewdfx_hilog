@@ -117,28 +117,24 @@ int LogPersister::Init()
     if (InitCompress() ==  RET_FAIL) {
         return RET_FAIL;
     }
-    fd = open(mmapPath.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-    if (fd <= 0) {
-        if (errno == EEXIST) {
-            cout << "File already exists!" << endl;
-            fd = open(mmapPath.c_str(), O_RDWR, 0);
-        }
+    if (restore) {
+        fd = fopen(mmapPath.c_str(), "r+");
     } else {
-#ifdef DEBUG
-        cout << "New log file: " << mmapPath << endl;
-#endif
-        lseek(fd, sizeof(LogPersisterBuffer) - 1, SEEK_SET);
-        write(fd, "", 1);
+        fd = fopen(mmapPath.c_str(), "w+");
+        ftruncate(fileno(fd), sizeof(LogPersisterBuffer));
+        fflush(fd);
+        fsync(fileno(fd));
     }
-    if (fd < 0) {
+
+    if (fd == nullptr) {
 #ifdef DEBUG
         cout << "open log file(" << mmapPath << ") failed: " << strerror(errno) << endl;
 #endif
         return RET_FAIL;
     }
     buffer = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
-                                        MAP_SHARED, fd, 0);
-    close(fd);
+                                        MAP_SHARED, fileno(fd), 0);
+    fclose(fd);
     if (buffer == MAP_FAILED) {
 #ifdef DEBUG
         cout << "mmap file failed: " << strerror(errno) << endl;
@@ -395,8 +391,6 @@ uint8_t LogPersister::GetType() const
 {
     return TYPE_PERSISTER;
 }
-
-
 
 void LogPersister::SetRestore(bool flag)
 {

@@ -43,6 +43,7 @@ public:
     void UpdateRotateNumber();
     int SaveInfo(LogPersistStartMsg& pMsg, QueryCondition queryCondition);
     void WriteRecoveryInfo();
+    void SetRestore(bool flag);
 protected:
     void InternalRotate();
     uint32_t fileNum;
@@ -54,10 +55,11 @@ protected:
 private:
     void Rotate();
     bool needRotate = false;
-    FILE* fdinfo;
+    FILE* fdinfo = nullptr;
     uint32_t id = 0;
     std::string infoPath;
     PersistRecoveryInfo info;
+    bool restore = false;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
