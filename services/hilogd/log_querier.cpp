@@ -142,14 +142,15 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         SLEEP_TIME, *rotator, buffer);
     persister->queryCondition.types = pLogPersistStartMsg->logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    int saveInfoRes = persister->SaveInfo(*pLogPersistStartMsg);
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
     int rotatorRes = rotator->Init();
+    int saveInfoRes = rotator->SaveInfo(*pLogPersistStartMsg, persister->queryCondition);
     pLogPersistStartRst->result = persister->Init();
     if (pLogPersistStartRst->result == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
     } else {
+        rotator->WriteRecoveryInfo();
         persister->Start();
         buffer.AddLogReader(weak_ptr<LogPersister>(persister));
     }
