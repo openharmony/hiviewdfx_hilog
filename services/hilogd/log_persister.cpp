@@ -58,7 +58,6 @@ LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t
     hasExited = false;
     hilogBuffer = &_buffer;
     compressor = nullptr;
-    fdinfo = nullptr;
     buffer = nullptr;
     plainLogSize = 0;
 }
@@ -137,14 +136,6 @@ int LogPersister::Init()
 #endif
         return RET_FAIL;
     }
-    fdinfo = fopen((mmapPath + ".info").c_str(), "a+");
-    if (fdinfo == nullptr) {
-#ifdef DEBUG
-        cout << "open loginfo file failed: " << strerror(errno) << endl;
-#endif
-        close(fd);
-        return RET_FAIL;
-    }
     buffer = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
                                         MAP_SHARED, fd, 0);
     close(fd);
@@ -152,7 +143,6 @@ int LogPersister::Init()
 #ifdef DEBUG
         cout << "mmap file failed: " << strerror(errno) << endl;
 #endif
-        fclose(fdinfo);
         return RET_FAIL;
     }
     if (restore == true) {
@@ -274,13 +264,6 @@ int LogPersister::WriteData(HilogData *data)
 
 void LogPersister::Start()
 {
-    if (!restore) {
-        std::cout << "Save Info file!" << std::endl;
-        fseek(fdinfo, 0, SEEK_SET);
-        fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
-        fsync(fileno(fdinfo));
-    }
-    fclose(fdinfo);
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
     newThread.detach();
@@ -384,6 +367,7 @@ bool LogPersister::isExited()
 
 void LogPersister::Exit()
 {
+    std::cout << "LogPersister Exit!" << std::endl;
     toExit = true;
     condVariable.notify_all();
     unique_lock<mutex> lk(mutexForhasExited);
@@ -395,7 +379,6 @@ void LogPersister::Exit()
     munmap(buffer, MAX_PERSISTER_BUFFER_SIZE);
     cout << "removed mmap file" << endl;
     remove(mmapPath.c_str());
-    remove((mmapPath + ".info").c_str());
     return;
 }
 bool LogPersister::Identify(uint32_t id)
@@ -413,18 +396,7 @@ uint8_t LogPersister::GetType() const
     return TYPE_PERSISTER;
 }
 
-int LogPersister::SaveInfo(LogPersistStartMsg& pMsg)
-{
-    info.msg = pMsg;
-    info.types = queryCondition.types;
-    info.levels = queryCondition.levels;
-    if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
-        cout << "Failed to save persister file path" << endl;
-        return RET_FAIL;
-    }
-    cout << "Saved Path=" << info.msg.filePath << endl;
-    return RET_SUCCESS;
-}
+
 
 void LogPersister::SetRestore(bool flag)
 {

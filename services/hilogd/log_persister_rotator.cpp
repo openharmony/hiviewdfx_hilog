@@ -20,6 +20,7 @@
 #include <sstream>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <securec.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -37,19 +38,12 @@ LogPersisterRotator::~LogPersisterRotator()
     if (fdinfo != nullptr) {
         fclose(fdinfo);
     }
+    remove(infoPath.c_str());
 }
 
 int LogPersisterRotator::Init()
 {
-    int nPos = fileName.find_last_of('/');
-    std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
-    if (access(fileName.substr(0, nPos).c_str(), F_OK) != 0) {
-        if (errno == ENOENT) {
-            mkdir(fileName.substr(0, nPos).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
-        }
-    }
-    fdinfo = fopen((mmapPath + ".info").c_str(), "r+");
-    if (fdinfo == nullptr) fdinfo = fopen((mmapPath + ".info").c_str(), "w+");
+    OpenInfoFile();
     if (fdinfo == nullptr) return RET_FAIL;
     return RET_SUCCESS;
 }
@@ -102,9 +96,7 @@ void LogPersisterRotator::Rotate()
         cout << "THE FILE NAME !!!!!!! " << ss.str() << endl;
         output.open(ss.str(), ios::out | ios::trunc);
     }
-    fseek(fdinfo, 0, SEEK_SET);
-    fwrite(&index, sizeof(uint8_t), 1, fdinfo);
-    fsync(fileno(fdinfo));
+    UpdateRotateNumber();
 }
 
 void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
@@ -126,6 +118,49 @@ void LogPersisterRotator::SetIndex(int pIndex)
 void LogPersisterRotator::SetId(uint32_t pId)
 {
     id = pId;
+}
+
+void LogPersisterRotator::OpenInfoFile()
+{
+    int nPos = fileName.find_last_of('/');
+    std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
+    if (access(fileName.substr(0, nPos).c_str(), F_OK) != 0) {
+        if (errno == ENOENT) {
+            mkdir(fileName.substr(0, nPos).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+        }
+    }
+    infoPath = mmapPath + ".info";
+    fdinfo = fopen(infoPath.c_str(), "a+");
+}
+
+void LogPersisterRotator::UpdateRotateNumber()
+{
+    fseek(fdinfo, 0, SEEK_SET);
+    fwrite(&index, sizeof(uint8_t), 1, fdinfo);
+    fflush(fdinfo);
+    fsync(fileno(fdinfo));
+}
+
+int LogPersisterRotator::SaveInfo(LogPersistStartMsg& pMsg, QueryCondition queryCondition)
+{
+    info.msg = pMsg;
+    info.types = queryCondition.types;
+    info.levels = queryCondition.levels;
+    if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
+        cout << "Failed to save persister file path" << endl;
+        return RET_FAIL;
+    }
+    cout << "Saved Path=" << info.msg.filePath << endl;
+    return RET_SUCCESS;
+}
+
+void LogPersisterRotator::WriteRecoveryInfo()
+{
+    std::cout << "Save Info file!" << std::endl;
+    fseek(fdinfo, 0, SEEK_SET);
+    fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+    fflush(fdinfo);
+    fsync(fileno(fdinfo));
 }
 } // namespace HiviewDFX
 } // namespace OHOS
