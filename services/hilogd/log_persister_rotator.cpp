@@ -171,7 +171,7 @@ void LogPersisterRotator::SetRestore(bool flag)
     restore = flag;
 }
 
-void LogPersisterRotator::GetRestore()
+bool LogPersisterRotator::GetRestore()
 {
     return restore;
 }
