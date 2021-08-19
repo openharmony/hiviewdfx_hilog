@@ -13,14 +13,13 @@
  * limitations under the License.
  */
 #include "log_persister_rotator.h"
-
+#include <securec.h>
+#include <sstream>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <securec.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -170,6 +169,11 @@ void LogPersisterRotator::WriteRecoveryInfo()
 void LogPersisterRotator::SetRestore(bool flag)
 {
     restore = flag;
+}
+
+void LogPersisterRotator::GetRestore()
+{
+    return restore;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

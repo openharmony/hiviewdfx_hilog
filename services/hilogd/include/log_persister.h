@@ -52,7 +52,6 @@ public:
     bool writeUnCompressedBuffer(HilogData *data);
     uint8_t GetType() const;
     std::string getPath();
-    void SetRestore(bool flag);
     LogPersisterBuffer *buffer;
     LogPersisterBuffer *compressBuffer;
 private:
@@ -75,7 +74,6 @@ private:
     LogCompress *compressor;
     list<string> persistList;
     uint32_t plainLogSize;
-    bool restore = false;
 };
 
 int GenPersistLogHeader(HilogData *data, list<string>& persistList);

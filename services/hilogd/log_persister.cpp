@@ -93,6 +93,7 @@ int LogPersister::InitCompress()
 
 int LogPersister::Init()
 {
+    bool restore = rotator.GetRestore();
     int nPos = path.find_last_of('/');
     if (nPos == RET_FAIL) {
         return RET_FAIL;
@@ -390,11 +391,6 @@ string LogPersister::getPath()
 uint8_t LogPersister::GetType() const
 {
     return TYPE_PERSISTER;
-}
-
-void LogPersister::SetRestore(bool flag)
-{
-    restore = flag;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

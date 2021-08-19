@@ -601,12 +601,11 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                     info.msg.fileSize,
                     info.msg.compressAlg,
                     SLEEP_TIME, *rotator, _buffer);
-                persister->SetRestore(true);
                 rotator->SetRestore(true);
-                int rotatorRes = rotator->Init();
-                int persisterRes = persister->Init();
                 persister->queryCondition.types = info.types;
                 persister->queryCondition.levels = info.levels;
+                int rotatorRes = rotator->Init();
+                int persisterRes = persister->Init();
                 if (persisterRes == RET_FAIL || rotatorRes == RET_FAIL) {
                     cout << "LogPersister failed to initialize!" << endl;
                     persister.reset();

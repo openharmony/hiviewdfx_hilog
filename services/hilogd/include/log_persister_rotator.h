@@ -44,6 +44,7 @@ public:
     int SaveInfo(LogPersistStartMsg& pMsg, QueryCondition queryCondition);
     void WriteRecoveryInfo();
     void SetRestore(bool flag);
+    bool GetRestore();
 protected:
     void InternalRotate();
     uint32_t fileNum;
