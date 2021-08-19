@@ -15,6 +15,7 @@
 #ifndef HILOG_COMPRESS_H
 #define HILOG_COMPRESS_H
 
+#include "hilog_common.h"
 #include <iostream>
 #ifdef USING_ZSTD_COMPRESS
 #define ZSTD_STATIC_LINKING_ONLY
@@ -24,7 +25,6 @@
 #include <zlib.h>
 namespace OHOS {
 namespace HiviewDFX {
-const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
 typedef struct {
     uint32_t offset;
     char content[MAX_PERSISTER_BUFFER_SIZE];

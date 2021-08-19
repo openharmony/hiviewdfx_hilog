@@ -34,10 +34,10 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-const int MSG_MAX_LEN = 2048;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
 const uint32_t DEFAULT_JOBID = 1;
+
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
@@ -273,6 +273,7 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::str
             for (iter = 0; iter < logTypeNum; iter++) {
                 pBuffSizeMsg->logType = GetLogType(vecLogType[iter]);
                 if (pBuffSizeMsg->logType == 0xffff) {
+                    cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
                 pBuffSizeMsg++;
@@ -291,6 +292,7 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::str
             for (iter = 0; iter < logTypeNum; iter++) {
                 pBuffResizeMsg->logType = GetLogType(vecLogType[iter]);
                 if (pBuffResizeMsg->logType == 0xffff) {
+                    cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
                 pBuffResizeMsg->buffSize = GetBuffSize(buffSizeStr);
@@ -318,12 +320,13 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     if (domainStr == "") {
         domain = 0xffffffff;
         if (logType == 0xffff) {
+            cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
             return RET_FAIL;
         }
     } else {
         std::istringstream(domainStr) >> domain;
-        if (domain == 0) {
-            std::cout << "Invalid parameter" << std::endl;
+        if (domain == 0 || domain > DOMAIN_MAX_SCOPE) {
+            cout << ParseErrorCode(ERR_DOMAIN_INVALID) << endl;
             return RET_FAIL;
         }
     }
@@ -362,14 +365,17 @@ int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::strin
     LogClearRequest* pLogClearReq = reinterpret_cast<LogClearRequest*>(msgToSend);
     LogClearMsg* pLogClearMsg = reinterpret_cast<LogClearMsg*>(&pLogClearReq->logClearMsg);
     if (!pLogClearMsg) {
+        cout << ParseErrorCode(ERR_MEM_ALLOC_FAIL) << endl;
         return RET_FAIL;
     }
     if (logTypeNum * sizeof(LogClearMsg) + sizeof(MessageHeader) > MSG_MAX_LEN) {
+        cout << ParseErrorCode(ERR_MSG_LEN_INVALID) << endl;
         return RET_FAIL;
     }
     for (iter = 0; iter < logTypeNum; iter++) {
         pLogClearMsg->logType = GetLogType(vecLogType[iter]);
         if (pLogClearMsg->logType == 0xffff) {
+            cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
             return RET_FAIL;
         }
         pLogClearMsg++;
@@ -401,17 +407,23 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             LogPersistStartMsg* pLogPersistStartMsg =
                 reinterpret_cast<LogPersistStartMsg*>(&pLogPersistStartReq->logPersistStartMsg);
             if (sizeof(LogPersistStartRequest) > MSG_MAX_LEN) {
+                cout << ParseErrorCode(ERR_MSG_LEN_INVALID) << endl;
                 return RET_FAIL;
             }
             for (iter = 0; iter < logTypeNum; iter++) {
                 uint16_t tmpType = GetLogType(vecLogType[iter]);
                 if (tmpType == 0xffff) {
+                    cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
                 pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
             }
             pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
             : stoi(logPersistParam->jobIdStr);
+            if (pLogPersistStartMsg->jobId <= 0) {
+                cout << ParseErrorCode(ERR_LOG_PERSIST_JOBID_INVALID) << endl;
+                return RET_FAIL;
+            }
             pLogPersistStartMsg->compressAlg = (logPersistParam->compressAlgStr == "") ? COMPRESS_TYPE_ZLIB :
             GetCompressAlg(logPersistParam->compressAlgStr);
             pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : GetBuffSize(
@@ -419,6 +431,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
                 : stoi(logPersistParam->fileNumStr);
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
+                cout << ParseErrorCode(ERR_LOG_PERSIST_FILE_NAME_INVALID) << endl;
                 return RET_FAIL;
             }
             if (logPersistParam->fileNameStr != " ") {
@@ -440,6 +453,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 break;
             }
             if (jobIdNum * sizeof(LogPersistStopMsg) + sizeof(MessageHeader) > MSG_MAX_LEN) {
+                cout << ParseErrorCode(ERR_MSG_LEN_INVALID) << endl;
                 return RET_FAIL;
             }
             for (iter = 0; iter < jobIdNum; iter++) {
@@ -460,6 +474,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             for (iter = 0; iter < logTypeNum; iter++) {
                 uint16_t tmpType = GetLogType(vecLogType[iter]);
                 if (tmpType == 0xffff) {
+                    cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
                 pLogPersistQueryMsg->logType = (0b01 << tmpType) | pLogPersistQueryMsg->logType;
@@ -501,6 +516,7 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 PropertySet(key.c_str(), "false");
                 cout << "hilog private formatter is disabled" << endl;
             } else {
+                cout << ParseErrorCode(ERR_PRIVATE_SWITCH_VALUE_INVALID) << endl;
                 return RET_FAIL;
             }
             break;
@@ -554,6 +570,7 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 PropertySet(key.c_str(), "false");
                 cout << "flow control by domain is disabled" << endl;
             } else {
+                cout << ParseErrorCode(ERR_FLOWCTRL_SWITCH_VALUE_INVALID) << endl;
                 return RET_FAIL;
             }
             break;
