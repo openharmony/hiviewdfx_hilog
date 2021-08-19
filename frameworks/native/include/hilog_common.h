@@ -32,7 +32,6 @@
 #define SENDIDN 0    // hilogd: reached end of log;  hilogtool: exit log reading
 #define SENDIDA 1    // hilogd & hilogtool: normal log reading
 #define SENDIDS 2    // hilogd: notify for new data; hilogtool: block and wait for new data
-#define MULARGS 5
 #define MAX_LOG_LEN 1024  /* maximum length of a log, include '\0' */
 #define MAX_TAG_LEN 32  /* log tag size, include '\0' */
 #define MAX_DOMAINS 5
@@ -46,7 +45,9 @@
 #define ONE_GB (1UL<<30)
 #define ONE_TB (1ULL<<40)
 
-#define DOMAIN_NUMBER_BASE (16)
+const uint32_t MAX_BUFFER_SIZE = 1UL<<30;
+const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
+const int MSG_MAX_LEN = 2048;
 
 /*
  * header of log message from libhilog to hilogd
@@ -83,4 +84,42 @@ using HilogShowFormatBuffer = struct {
 
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
+
+/*
+ * ********************************************
+ *  Error codes list
+ *  Error codes _values_ are pinned down.
+ * ********************************************
+*/
+typedef enum {
+    ERR_LOG_LEVEL_INVALID  = -2,
+    ERR_LOG_TYPE_INVALID = -3,
+    ERR_QUERY_LEVEL_INVALID = -4,
+    ERR_QUERY_DOMAIN_INVALID = -5,
+    ERR_QUERY_TAG_INVALID = -6,
+    ERR_QUERY_PID_INVALID = -7,
+    ERR_QUERY_TYPE_INVALID = -8,
+    ERR_BUFF_SIZE_INVALID = -8,
+    ERR_BUFF_SIZE_EXP = -9,
+    ERR_LOG_CONTENT_NULL = -10,
+    ERR_LOG_PERSIST_FILE_SIZE_INVALID = -11,
+    ERR_LOG_PERSIST_FILE_NAME_INVALID = -12,
+    ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP = -13,
+    ERR_LOG_PERSIST_DIR_OPEN_FAIL = -14,
+    ERR_LOG_PERSIST_COMPRESS_INIT_FAIL = -15,
+    ERR_LOG_PERSIST_FILE_OPEN_FAIL = -16,
+    ERR_LOG_PERSIST_MMAP_FAIL = -17,
+    ERR_LOG_PERSIST_JOBID_FAIL = -18,
+    ERR_DOMAIN_INVALID = -19,
+    ERR_MEM_ALLOC_FAIL = -20,
+    ERR_MSG_LEN_INVALID = -21,
+    ERR_PRIVATE_SWITCH_VALUE_INVALID = -22,
+    ERR_COMMAND_NOT_FOUND = -23,
+    ERR_FORMAT_INVALID = -24,
+    ERR_LOG_PERSIST_FILE_PATH_INVALID = -25,
+    ERR_PERSIST_INFO_OPEN_FAIL = -26,
+    ERR_FLOWCONTROL_CONF_OPEN_FAIL = -27,
+    ERR_LOG_PERSIST_JOBID_INVALID = -28,
+    ERR_FLOWCTRL_SWITCH_VALUE_INVALID = -29,
+} ErrorCode;
 #endif /* HILOG_COMMON_H */

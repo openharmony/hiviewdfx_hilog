@@ -128,7 +128,7 @@ static int GetTypes(HilogArgs context, const string& typesArgs, bool exclude = f
     } else if (typesArgs ==  "core") {
         types |= 1<<LOG_CORE;
     } else {
-        std::cout<<"Invalid parameter"<<endl;
+        std::cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
         exit(0);
     }
     return types;
@@ -153,7 +153,7 @@ static int GetLevels(HilogArgs context, const string& levelsArgs, bool exclude =
     } else if (levelsArgs == "F") {
         levels |= 1<<LOG_FATAL;
     } else {
-        std::cout<<"Invalid parameter"<<endl;
+        std::cout << ParseErrorCode(ERR_LOG_LEVEL_INVALID) << endl;
         exit(0);
     }
     return levels;
@@ -261,8 +261,7 @@ int HilogEntry(int argc, char* argv[])
                     }
                 }
                 if (context.types != 0 && context.noTypes != 0) {
-                    std::cout << "Query condition on both types and excluded types is undefined." << std::endl;
-                    std::cout << "Please remove types or excluded types condition, and try again." << std::endl;
+                    cout << ParseErrorCode(ERR_QUERY_TYPE_INVALID) << endl; 
                     exit(RET_FAIL);
                 }
                 break;
@@ -290,8 +289,7 @@ int HilogEntry(int argc, char* argv[])
                     }
                 }
                 if (context.levels != 0 && context.noLevels != 0) {
-                    std::cout << "Query condition on both levels and excluded levels is undefined." << std::endl;
-                    std::cout << "Please remove levels or excluded levels condition, and try again." << std::endl;
+                    cout << ParseErrorCode(ERR_QUERY_LEVEL_INVALID) << endl;
                     exit(RET_FAIL);
                 }
                 break;
@@ -339,16 +337,27 @@ int HilogEntry(int argc, char* argv[])
                     std::string domains(argv[indexDomain]);
                     indexDomain++;
                     if (!strstr(domains.c_str(), "-")) {
+                        char* endptr = nullptr;
                         if (domains.front() == '^') {
                             vector<string> v(sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
+                                strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
+                                if (*endptr != '\0') {
+                                    cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
+                                    exit(RET_FAIL);
+                                }
                                 context.noDomains[context.nNoDomain++] = s;
                             }
                         } else {
                             vector<string> v(sregex_token_iterator(domains.begin(), domains.end(), delimiter, -1),
                                              sregex_token_iterator());
                             for (auto s: v) {
+                                strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
+                                if (*endptr != '\0') {
+                                    cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
+                                    exit(RET_FAIL);
+                                }
                                 context.domains[context.nDomain++] = s;
                                 context.domainArgs += (s + " ");
                             }
@@ -394,8 +403,8 @@ int HilogEntry(int argc, char* argv[])
                     }
                 }
                 if (context.nTag != 0 && context.nNoTag != 0) {
-                    std::cout << "Query condition on both tags and excluded tags is undefined." << std::endl;
-                    std::cout << "Please remove tags or excluded tags condition, and try again." << std::endl;
+                    cout << ParseErrorCode(ERR_QUERY_TAG_INVALID) << endl;
+                    
                     exit(RET_FAIL);
                 }
                 break;
@@ -435,8 +444,7 @@ int HilogEntry(int argc, char* argv[])
                     }
                 }
                 if (context.nPid != 0 && context.nNoPid != 0) {
-                    std::cout << "Query condition on both pid and excluded pid is undefined." << std::endl;
-                    std::cout << "Please remove pid or excluded pid condition, and try again." << std::endl;
+                    cout << ParseErrorCode(ERR_QUERY_PID_INVALID) << endl;
                     exit(RET_FAIL);
                 }
                 break;
@@ -444,7 +452,7 @@ int HilogEntry(int argc, char* argv[])
                 context.algorithmArgs = optarg;
                 break;
             default:
-                cout << "Command not found\n"<< endl;
+                cout << ParseErrorCode(ERR_COMMAND_NOT_FOUND) << endl;
                 exit(1);
         }
     }
@@ -579,7 +587,6 @@ int HilogEntry(int argc, char* argv[])
             LogQueryResponseOp(controller, recvBuffer, RECV_BUF_LEN, &context, showFormat);
             break;
         }
-
         default:
             cout << "Invalid response from hilogd! response: " << msgHeader->msgType << endl;
             break;

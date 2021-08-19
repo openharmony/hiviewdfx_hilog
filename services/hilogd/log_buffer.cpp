@@ -31,7 +31,6 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-#define MAX_BUFFER_SIZE 4194304
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
 static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {1048576, 1048576, 1048576, 1048576};
@@ -181,6 +180,9 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
 
 size_t HilogBuffer::Delete(uint16_t logType)
 {
+    if (logType >= LOG_TYPE_MAX) {
+        return ERR_LOG_TYPE_INVALID;
+    }
     size_t sum = 0;
     hilogBufferMutex.lock();
     std::list<HilogData>::iterator it = hilogDataList.begin();
@@ -233,7 +235,7 @@ bool HilogBuffer::Query(LogReader* reader)
 size_t HilogBuffer::GetBuffLen(uint16_t logType)
 {
     if (logType >= LOG_TYPE_MAX) {
-        return -1;
+        return ERR_LOG_TYPE_INVALID;
     }
     uint64_t buffSize = g_maxBufferSizeByType[logType];
     return buffSize;
@@ -241,8 +243,11 @@ size_t HilogBuffer::GetBuffLen(uint16_t logType)
 
 size_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
 {
-    if (logType >= LOG_TYPE_MAX || buffSize <= 0 || buffSize > ONE_GB) {
-        return -1;
+    if (logType >= LOG_TYPE_MAX) {
+        return ERR_LOG_TYPE_INVALID;
+    }
+    if (buffSize <= 0 || buffSize > MAX_BUFFER_SIZE) {
+        return ERR_BUFF_SIZE_INVALID;
     }
     hilogBufferMutex.lock();
     if (sizeByType[logType] > buffSize) {
@@ -270,7 +275,7 @@ size_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
         }
         // Re-confirm if enough elements has been removed
         if (sizeByType[logType] > (size_t)g_maxBufferSizeByType[logType] || size > (size_t)g_maxBufferSize) {
-            return -1;
+            return ERR_BUFF_SIZE_EXP;
         }
         g_maxBufferSizeByType[logType] = buffSize;
         g_maxBufferSize += (buffSize - sizeByType[logType]);
@@ -285,7 +290,7 @@ size_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
 int32_t HilogBuffer::GetStatisticInfoByLog(uint16_t logType, uint64_t& printLen, uint64_t& cacheLen, int32_t& dropped)
 {
     if (logType >= LOG_TYPE_MAX) {
-        return -1;
+        return ERR_LOG_TYPE_INVALID;
     }
     printLen = printLenByType[logType];
     cacheLen = cacheLenByType[logType];
@@ -305,7 +310,7 @@ int32_t HilogBuffer::GetStatisticInfoByDomain(uint32_t domain, uint64_t& printLe
 int32_t HilogBuffer::ClearStatisticInfoByLog(uint16_t logType)
 {
     if (logType >= LOG_TYPE_MAX) {
-        return -1;
+        return ERR_LOG_TYPE_INVALID;
     }
     ClearDroppedByType();
     printLenByType[logType] = 0;
