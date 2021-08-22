@@ -20,6 +20,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <zlib.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -138,10 +139,8 @@ void LogPersisterRotator::OpenInfoFile()
 
 void LogPersisterRotator::UpdateRotateNumber()
 {
-    fseek(fdinfo, 0, SEEK_SET);
-    fwrite(&index, sizeof(uint8_t), 1, fdinfo);
-    fflush(fdinfo);
-    fsync(fileno(fdinfo));
+    info.index = index;
+    WriteRecoveryInfo();
 }
 
 int LogPersisterRotator::SaveInfo(LogPersistStartMsg& pMsg, QueryCondition queryCondition)
@@ -160,8 +159,11 @@ int LogPersisterRotator::SaveInfo(LogPersistStartMsg& pMsg, QueryCondition query
 void LogPersisterRotator::WriteRecoveryInfo()
 {
     std::cout << "Save Info file!" << std::endl;
+    uLong crc = crc32(0L, Z_NULL, 0);
+    crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
     fseek(fdinfo, 0, SEEK_SET);
     fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
+    fwrite(&crc, sizeof(uLong), 1, fdinfo);
     fflush(fdinfo);
     fsync(fileno(fdinfo));
 }

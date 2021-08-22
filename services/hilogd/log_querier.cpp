@@ -594,7 +594,15 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 }
                 PersistRecoveryInfo info;
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
+                uLong crcSum = 0L;
+                fread(&crcSum, sizeof(uLong), 1, infile);
                 fclose(infile);
+                uLong crc = crc32(0L, Z_NULL, 0);
+                crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
+                if (crc != crcSum) {
+                    printf("Info file CRC Checksum Failed! %lu vs %lu\n", crc, crcSum);
+                    continue;
+                }
                 PersistJobLauncher(info.msg, _buffer, true, info.index + 1);
                 printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
                        info.msg.jobId, info.msg.filePath);
