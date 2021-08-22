@@ -82,6 +82,33 @@ LogPersisterRotator* MakeRotator(LogPersistStartMsg& pLogPersistStartMsg)
         fileSuffix);
 }
 
+void PersistJobLauncher(LogPersistStartMsg& pLogPersistStartMsg, HilogBuffer& buffer, bool restore = false, int index = -1)
+{
+    LogPersisterRotator* rotator = MakeRotator(pLogPersistStartMsg);
+    rotator->SetId(pLogPersistStartMsg.jobId);
+    rotator->SetIndex(index);
+    std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
+        pLogPersistStartMsg.jobId,
+        pLogPersistStartMsg.filePath,
+        pLogPersistStartMsg.fileSize,
+        pLogPersistStartMsg.compressAlg,
+        SLEEP_TIME, *rotator, buffer);
+    persister->queryCondition.types = pLogPersistStartMsg.logType;
+    persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
+    rotator->SetRestore(restore);
+    int rotatorRes = rotator->Init();
+    int saveInfoRes = rotator->SaveInfo(pLogPersistStartMsg, persister->queryCondition);
+    int persistRes = persister->Init();
+    if (persistRes == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
+        cout << "LogPersister failed to initialize!" << endl;
+        persister.reset();
+    } else {
+        if (!restore) rotator->WriteRecoveryInfo();
+        persister->Start();
+        buffer.AddLogReader(weak_ptr<LogPersister>(persister));
+    }
+}
+
 void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)
 {
     logReader->SetCmd(LOG_QUERY_RESPONSE);
@@ -99,7 +126,6 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
 {
     char msgToSend[MAX_DATA_LEN];
     const uint16_t sendMsgLen = sizeof(LogPersistStartResult);
-    LogPersisterRotator *rotator = nullptr;
     LogPersistStartRequest* pLogPersistStartReq
         = reinterpret_cast<LogPersistStartRequest*>(reqMsg);
     LogPersistStartMsg* pLogPersistStartMsg
@@ -138,27 +164,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         return;
     }
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
-    rotator = MakeRotator(*pLogPersistStartMsg);
-    rotator->SetId(pLogPersistStartMsg->jobId);
-    std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
-        pLogPersistStartMsg->jobId,
-        pLogPersistStartMsg->filePath,
-        pLogPersistStartMsg->fileSize,
-        pLogPersistStartMsg->compressAlg,
-        SLEEP_TIME, *rotator, buffer);
-    persister->queryCondition.types = pLogPersistStartMsg->logType;
-    persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
-    int saveInfoRes = persister->SaveInfo(*pLogPersistStartMsg);
-    pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-    pLogPersistStartRst->result = persister->Init();
-    int rotatorRes = rotator->Init();
-    if (pLogPersistStartRst->result != 0 || saveInfoRes != 0 || rotatorRes != 0) {
-        cout << "LogPersister failed to initialize!" << endl;
-        persister.reset();
-    } else {
-        persister->Start();
-        buffer.AddLogReader(weak_ptr<LogPersister>(persister));
-    }
+    PersistJobLauncher(*pLogPersistStartMsg, buffer);
     SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
@@ -594,30 +600,18 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 }
                 PersistRecoveryInfo info;
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
+                uLong crcSum = 0L;
+                fread(&crcSum, sizeof(uLong), 1, infile);
                 fclose(infile);
-                LogPersisterRotator* rotator = rotator = MakeRotator(info.msg);
-                rotator->SetIndex(info.index + 1);
-                rotator->SetId(info.msg.jobId);
+                uLong crc = crc32(0L, Z_NULL, 0);
+                crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
+                if (crc != crcSum) {
+                    printf("Info file CRC Checksum Failed! %lu vs %lu\n", crc, crcSum);
+                    continue;
+                }
+                PersistJobLauncher(info.msg, _buffer, true, info.index + 1);
                 printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
                        info.msg.jobId, info.msg.filePath);
-                std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
-                    info.msg.jobId,
-                    info.msg.filePath,
-                    info.msg.fileSize,
-                    info.msg.compressAlg,
-                    SLEEP_TIME, *rotator, _buffer);
-                persister->SetRestore(true);
-                int persisterRes = persister->Init();
-                int rotatorRes = rotator->Init();
-                persister->queryCondition.types = info.types;
-                persister->queryCondition.levels = info.levels;
-                if (persisterRes != 0 || rotatorRes != 0) {
-                    cout << "LogPersister failed to initialize!" << endl;
-                    persister.reset();
-                } else {
-                    persister->Start();
-                    _buffer.AddLogReader(weak_ptr<LogPersister>(persister));
-                }
             }
         }
         closedir (dir);
