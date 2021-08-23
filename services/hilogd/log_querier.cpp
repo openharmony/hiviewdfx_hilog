@@ -603,15 +603,15 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 uLong crcSum = 0L;
                 fread(&crcSum, sizeof(uLong), 1, infile);
                 fclose(infile);
-                uLong crc = crc32(0L, Z_NULL, 0);
-                crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
+                uLong crc = GetInfoCRC32(info);
                 if (crc != crcSum) {
-                    printf("Info file CRC Checksum Failed! %lu vs %lu\n", crc, crcSum);
+                    std::cout << "Info file CRC Checksum Failed!" << std::endl;
                     continue;
                 }
                 PersistJobLauncher(info.msg, _buffer, true, info.index + 1);
-                printf("Recovery Info:\njobId=%u\nfilePath=%s\n",
-                       info.msg.jobId, info.msg.filePath);
+                std::cout << "Recovery Info:" << std::endl <<
+                "jobId=" << (unsigned)(info.msg.jobId) << std::endl << 
+                "filePath=" << (unsigned)(info.msg.filePath) << std::endl;
             }
         }
         closedir (dir);

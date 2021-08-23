@@ -20,11 +20,17 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <zlib.h>
 
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+
+uLong GetInfoCRC32(PersistRecoveryInfo &info)
+{
+    uLong crc = crc32(0L, Z_NULL, 0);
+    crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
+    return crc;
+}
 
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
     : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
@@ -159,8 +165,7 @@ int LogPersisterRotator::SaveInfo(LogPersistStartMsg& pMsg, QueryCondition query
 void LogPersisterRotator::WriteRecoveryInfo()
 {
     std::cout << "Save Info file!" << std::endl;
-    uLong crc = crc32(0L, Z_NULL, 0);
-    crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
+    uLong crc = GetInfoCRC32(info);
     fseek(fdinfo, 0, SEEK_SET);
     fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
     fwrite(&crc, sizeof(uLong), 1, fdinfo);
