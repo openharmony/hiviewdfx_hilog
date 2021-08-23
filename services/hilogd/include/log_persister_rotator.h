@@ -16,6 +16,7 @@
 #define _HILOG_PERSISTER_ROTATOR_H
 #include <fstream>
 #include <string>
+#include <zlib.h>
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
 #include "log_buffer.h"
@@ -29,6 +30,7 @@ typedef struct {
 } PersistRecoveryInfo;
 
 const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
+uLong GetInfoCRC32(PersistRecoveryInfo &info);
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
