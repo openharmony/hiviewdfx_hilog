@@ -16,10 +16,21 @@
 #define _HILOG_PERSISTER_ROTATOR_H
 #include <fstream>
 #include <string>
+#include <zlib.h>
 #include "hilog_common.h"
+#include "hilogtool_msg.h"
+#include "log_buffer.h"
 namespace OHOS {
 namespace HiviewDFX {
+typedef struct {
+    uint8_t index;
+    uint16_t types;
+    uint8_t levels;
+    LogPersistStartMsg msg;
+} PersistRecoveryInfo;
+
 const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
+uLong GetInfoCRC32(const PersistRecoveryInfo &info);
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
@@ -30,6 +41,12 @@ public:
     void FinishInput();
     void SetIndex(int pIndex);
     void SetId(uint32_t pId);
+    void OpenInfoFile();
+    void UpdateRotateNumber();
+    int SaveInfo(const LogPersistStartMsg& pMsg, const QueryCondition queryCondition);
+    void WriteRecoveryInfo();
+    void SetRestore(bool flag);
+    bool GetRestore();
 protected:
     void InternalRotate();
     uint32_t fileNum;
@@ -41,8 +58,11 @@ protected:
 private:
     void Rotate();
     bool needRotate = false;
-    FILE* fdinfo;
+    FILE* fdinfo = nullptr;
     uint32_t id = 0;
+    std::string infoPath;
+    PersistRecoveryInfo info;
+    bool restore = false;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
