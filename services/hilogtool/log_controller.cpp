@@ -22,7 +22,7 @@
 #include <vector>
 #include <securec.h>
 #include <stdio.h>
-
+#include <regex>
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -92,6 +92,10 @@ uint64_t GetBuffSize(const string& buffSizeStr)
 {
     uint64_t index = buffSizeStr.size() - 1;
     uint64_t buffSize;
+    std::regex reg_buff_size("[0-9]+[bBkKmMgGtT]?");
+    if (!std::regex_match(buffSizeStr, reg_buff_size)) {
+        return 0;
+    }
     if (buffSizeStr[index] == 'b' || buffSizeStr[index] == 'B') {
         buffSize = stol(buffSizeStr.substr(0, index));
     } else if (buffSizeStr[index] == 'k' || buffSizeStr[index] == 'K') {
