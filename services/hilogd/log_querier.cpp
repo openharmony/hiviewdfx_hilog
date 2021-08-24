@@ -82,7 +82,7 @@ LogPersisterRotator* MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
         fileSuffix);
 }
 
-void JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool restore = false, int index = -1)
+int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool restore = false, int index = -1)
 {
     LogPersisterRotator* rotator = MakeRotator(pMsg);
     rotator->SetId(pMsg.jobId);
@@ -102,9 +102,11 @@ void JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool
     if (persistRes == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
+        return RET_FAIL;
     } else {
         if (!restore) rotator->WriteRecoveryInfo();
         persister->Start();
+        return RET_SUCCESS;
     }
 }
 
@@ -163,7 +165,8 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         return;
     }
     strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
-    JobLauncher(*pLogPersistStartMsg, buffer);
+    pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+    pLogPersistStartRst->result = JobLauncher(*pLogPersistStartMsg, buffer);
     SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
