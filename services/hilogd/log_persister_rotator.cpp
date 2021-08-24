@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 #include "log_persister_rotator.h"
-#include <securec.h>
-#include <sstream>
-#include <cstdio>
-#include <fstream>
-#include <iostream>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <cstdio>
+#include <securec.h>
 
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-uLong GetInfoCRC32(PersistRecoveryInfo &info)
+uLong GetInfoCRC32(const PersistRecoveryInfo &info)
 {
     uLong crc = crc32(0L, Z_NULL, 0);
     crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
@@ -149,7 +149,7 @@ void LogPersisterRotator::UpdateRotateNumber()
     WriteRecoveryInfo();
 }
 
-int LogPersisterRotator::SaveInfo(LogPersistStartMsg& pMsg, QueryCondition queryCondition)
+int LogPersisterRotator::SaveInfo(const LogPersistStartMsg& pMsg, const QueryCondition queryCondition)
 {
     info.msg = pMsg;
     info.types = queryCondition.types;
