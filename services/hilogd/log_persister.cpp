@@ -261,6 +261,7 @@ int LogPersister::WriteData(HilogData *data)
 
 void LogPersister::Start()
 {
+    hilogBuffer->AddLogReader(weak_from_this());
     auto newThread =
         thread(&LogPersister::ThreadFunc, static_pointer_cast<LogPersister>(shared_from_this()));
     newThread.detach();
