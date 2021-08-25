@@ -300,17 +300,17 @@ int HilogEntry(int argc, char* argv[])
             case 'g':
                 context.buffSizeArgs = "query";
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'G':
                 context.buffSizeArgs = optarg;
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'w':
                 context.logFileCtrlArgs = optarg;
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'l':
                 context.fileSizeArgs = optarg;
@@ -327,12 +327,12 @@ int HilogEntry(int argc, char* argv[])
             case 'p':
                 context.personalArgs = optarg;
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'r':
                 context.logClearArgs = "clear";
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'D':
                 indexDomain = optind - 1;
@@ -376,12 +376,12 @@ int HilogEntry(int argc, char* argv[])
             case 's':
                 context.statisticArgs = "query";
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'S':
                 context.statisticArgs = "clear";
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'T':
                 indexTag = optind - 1;
@@ -419,12 +419,12 @@ int HilogEntry(int argc, char* argv[])
             case 'b':
                 context.logLevelArgs = optarg;
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'Q':
                 context.flowSwitchArgs = optarg;
                 noLogOption = true;
-		controlCount++;
+                controlCount++;
                 break;
             case 'P':
                 indexPid = optind - 1;
@@ -482,7 +482,7 @@ int HilogEntry(int argc, char* argv[])
         context.levels = DEFAULT_LOG_LEVEL;
     }
     if (noLogOption) {
-	if (controlCount != 1) {
+        if (controlCount != 1) {
             exit(-1);
         }
         if (context.buffSizeArgs != "") {
@@ -511,7 +511,7 @@ int HilogEntry(int argc, char* argv[])
                 ret = LogPersistOp(controller, MC_REQ_LOG_PERSIST_QUERY, &logPersistParam);
             } else {
                 exit(-1);
-	    }
+            }
             if (ret == RET_FAIL) {
                 cout << "log file task operation error!" << endl;
                 exit(-1);
@@ -566,7 +566,7 @@ int HilogEntry(int argc, char* argv[])
             exit(0);
         } else {
             exit(-1);
-	}
+        }
     } else {
         LogQueryRequestOp(controller, &context);
         context.nDomain = 0;
