@@ -92,8 +92,8 @@ uint64_t GetBuffSize(const string& buffSizeStr)
 {
     uint64_t index = buffSizeStr.size() - 1;
     uint64_t buffSize;
-    std::regex reg_buff_size("[0-9]+[bBkKmMgGtT]?");
-    if (!std::regex_match(buffSizeStr, reg_buff_size)) {
+    std::regex reg("[0-9]+[bBkKmMgGtT]?");
+    if (!std::regex_match(buffSizeStr, reg)) {
         return 0;
     }
     if (buffSizeStr[index] == 'b' || buffSizeStr[index] == 'B') {
