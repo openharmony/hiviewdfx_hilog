@@ -613,7 +613,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 JobLauncher(info.msg, _buffer, true, info.index + 1);
                 std::cout << "Recovery Info:" << std::endl <<
                 "jobId=" << (unsigned)(info.msg.jobId) << std::endl << 
-                "filePath=" << (unsigned)(info.msg.filePath) << std::endl;
+                "filePath=" << (info.msg.filePath) << std::endl;
             }
         }
         closedir (dir);
