@@ -43,18 +43,20 @@ namespace HiviewDFX {
 using namespace std;
 namespace fs = std::filesystem;
 constexpr int MAX_DATA_LEN = 2048;
-string g_logPersisterDir = HLIOG_FILE_DIR;
+string g_logPersisterDir = HILOG_FILE_DIR;
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
 constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE;
 constexpr int SLEEP_TIME = 5;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 constexpr int INFO_SUFFIX = 5;
+
 inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
     msgHeader->version = 0;
     msgHeader->msgType = msgCmd;
     msgHeader->msgLen = msgLen;
 }
+
 inline bool IsValidFileName(const std::string& strFileName)
 {
     // File name shouldn't contain "[\\/:*?\"<>|]"
@@ -62,6 +64,7 @@ inline bool IsValidFileName(const std::string& strFileName)
     bool bValid = !std::regex_search(strFileName, regExpress);
     return bValid;
 }
+
 LogPersisterRotator* MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
 {
     string fileSuffix = "";
@@ -142,7 +145,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         pLogPersistStartRst->result = ERR_LOG_PERSIST_JOBID_INVALID;
         SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
         logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
-        return;    
+        return;
     }
     if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
         std::cout << "Persist log file size less than min size" << std::endl;
@@ -238,9 +241,11 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     uint16_t sendMsgLen = 0;
     int32_t rst = 0;
     list<LogPersistQueryResult>::iterator it;
+
     if (msgLen > sizeof(LogPersistQueryMsg) * LOG_TYPE_MAX) {
         return;
     }
+
     while (pLogPersistQueryMsg && recvMsgLen < msgLen) {
         list<LogPersistQueryResult> resultList;
         cout << pLogPersistQueryMsg->logType << endl;
@@ -567,7 +572,7 @@ void LogQuerier::NotifyForNewData()
     rsp.data.type = -1;
     /* set header */
     SetMsgHead(&(rsp.header), NEXT_RESPONSE, sizeof(rsp));
-    if ( WriteData(rsp, nullptr) <= 0) {
+    if (WriteData(rsp, nullptr) <= 0) {
         isNotified = false;
     }
 }
@@ -612,7 +617,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 }
                 JobLauncher(info.msg, _buffer, true, info.index + 1);
                 std::cout << "Recovery Info:" << std::endl <<
-                "jobId=" << (unsigned)(info.msg.jobId) << std::endl << 
+                "jobId=" << (unsigned)(info.msg.jobId) << std::endl <<
                 "filePath=" << (info.msg.filePath) << std::endl;
             }
         }

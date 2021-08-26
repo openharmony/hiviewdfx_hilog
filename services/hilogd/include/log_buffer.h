@@ -39,6 +39,7 @@ public:
     bool Query(LogReader* reader);
     bool Query(std::shared_ptr<LogReader> reader);
     void AddLogReader(std::weak_ptr<LogReader>);
+    void RemoveLogReader(std::shared_ptr<LogReader> reader);
     size_t Delete(uint16_t logType);
     size_t GetBuffLen(uint16_t logType);
     size_t SetBuffLen(uint16_t logType, uint64_t buffSize);
@@ -48,7 +49,6 @@ public:
     int32_t ClearStatisticInfoByDomain(uint32_t domain);
     void GetBufferLock();
     void ReleaseBufferLock();
-    void RemoveLogReader(std::shared_ptr<LogReader> reader);
 private:
     size_t size;
     size_t sizeByType[LOG_TYPE_MAX];

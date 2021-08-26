@@ -42,14 +42,14 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_QUERY_TYPE_INVALID, "Query condition on both types and excluded types is undefined"},
     {ERR_QUERY_LEVEL_INVALID, "Query condition on both levels and excluded levels is undefined"},
     {ERR_QUERY_DOMAIN_INVALID, "Invalid domain format, a hexadecimal number is needed"},
-    {ERR_QUERY_TAG_INVALID, "Query condition on both tags and excluded tags is undefined"},  
+    {ERR_QUERY_TAG_INVALID, "Query condition on both tags and excluded tags is undefined"},
     {ERR_QUERY_PID_INVALID, "Query condition on both pid and excluded pid is undefined"},
     {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
     + to_string(MAX_BUFFER_SIZE)},
     {ERR_BUFF_SIZE_EXP, "Buffer resize exception"},
     {ERR_LOG_PERSIST_FILE_SIZE_INVALID, "Invalid log persist file size, file size should be not less than "
     + to_string(MAX_PERSISTER_BUFFER_SIZE)},
-    {ERR_LOG_PERSIST_FILE_NAME_INVALID, "Invalid log persist file name, file name should not contain [\\/:*?\"<>|]"},
+    {ERR_LOG_PERSIST_FILE_NAME_INVALID, "Invalid log persist file name, file name should not contain [\\/:*?\"<>|]"},
     {ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP, "Invalid Log persist compression buffer"},
     {ERR_LOG_PERSIST_FILE_PATH_INVALID, "Invalid persister file path"},
     {ERR_LOG_PERSIST_COMPRESS_INIT_FAIL, "Log persist compression initialization failed"},
@@ -67,13 +67,13 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_LOG_CONTENT_NULL, "Log content NULL"},
     {ERR_COMMAND_NOT_FOUND, "Command not found"},
     {ERR_FORMAT_INVALID, "Invalid format parameter"}
-}; 
+};
 
 string ParseErrorCode(ErrorCode errorCode)
 {
     if (errorMsg.count(errorCode) == 0) {
         cout << "ERR_CODE not exist" << endl;
-    } 
+    }
     string errorMsgStr = "[ERR_CODE:" + to_string(errorCode) + "], " + errorMsg[errorCode];
     return errorMsgStr;
 }
@@ -127,7 +127,6 @@ string GetOrigType(uint16_t shiftType)
     logType.erase(logType.end() - 1);
     return logType;
 }
-
 
 string GetPressAlgStr(uint16_t pressAlg)
 {
@@ -440,6 +439,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     if (data->sendId == SENDIDN) {
         return;
     }
+
     if (data->length == 0) {
         std::cout << ParseErrorCode(ERR_LOG_CONTENT_NULL) << endl;
         return;
@@ -460,6 +460,7 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
             return;
         }
     }
+
     char buffer[MAX_LOG_LEN * 2];
     showBuffer.level = data->level;
     showBuffer.pid = data->pid;
@@ -468,7 +469,6 @@ void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs*
     showBuffer.tag_len = data->tag_len;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-
     int offset = data->tag_len;
     char *dataBegin = data->data + offset;
     char *dataPos = data->data + offset;
