@@ -55,7 +55,7 @@ int HilogdEntry(int argc, char* argv[])
     HilogBuffer hilogBuffer;
 
 #ifdef DEBUG
-    int fd = open(HLIOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
+    int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
     if (fd > 0) {
         g_fd = dup2(fd, fileno(stdout));
     } else {
@@ -82,7 +82,7 @@ int HilogdEntry(int argc, char* argv[])
 #endif
         server.RunServingThread();
     }
-    
+
     std::thread startupCheckThread([&hilogBuffer]() {
         std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, &hilogBuffer);
         logQuerier->RestorePersistJobs(hilogBuffer);
