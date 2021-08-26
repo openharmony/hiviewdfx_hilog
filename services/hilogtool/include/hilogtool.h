@@ -17,7 +17,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-
 #define DOMAIN_NUMBER_BASE (16)
 #define DOMAIN_MAX_SCOPE 0xDFFFFFF
 
