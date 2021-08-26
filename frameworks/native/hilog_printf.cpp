@@ -117,11 +117,11 @@ static uint32_t ParseProcessQuota()
                 break;
             }
             ret = sscanf_s(quotaValue, "%d", &proQuota);
-            if (ret != 0) {
+            if (ret <= 0) {
                 cout << "invalid quota config" << endl;
             }
             break;
-        }          
+        }
     }
     ifs.close();
     return proQuota;
