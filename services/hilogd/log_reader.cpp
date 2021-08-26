@@ -33,6 +33,11 @@ LogReader::LogReader()
     isNotified = false;
 }
 
+LogReader::~LogReader()
+{
+    cout << "Log Reader destruct" << endl;
+}
+
 void LogReader::NotifyReload()
 {
     isReload = true;
