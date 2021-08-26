@@ -24,7 +24,7 @@ namespace HiviewDFX {
 class LogCollector {
 public:
     LogCollector(HilogBuffer* buffer);
-    void operator ()();    
+    void operator ()();
     static int FlowCtrlDataRecv(HilogMsg *msg, int ret);
     static size_t InsertLogToBuffer(const HilogMsg& msg);
 #ifndef __RECV_MSG_WITH_UCRED_

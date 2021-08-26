@@ -178,12 +178,9 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
         std::istringstream(context->domains[i]) >> std::hex >> logQueryRequest.domains[i];
     }
     for (int i = 0; i < context->nTag; i++) {
-        if (context->tags[i].length() >= MAX_TAG_LEN) {
-            strncpy_s(logQueryRequest.tags[i], MAX_TAG_LEN,
-                      context->tags[i].c_str(), MAX_TAG_LEN - 1);
-        } else {
-            strncpy_s(logQueryRequest.tags[i], context->tags[i].length() + 1,
-                      context->tags[i].c_str(), context->tags[i].length());
+        if (strncpy_s(logQueryRequest.tags[i], MAX_TAG_LEN,
+            context->tags[i].c_str(), context->tags[i].length())) {
+            continue;
         }
     }
     logQueryRequest.noLevels = context->noLevels;
@@ -198,12 +195,9 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
         std::istringstream(context->noDomains[i]) >> std::hex >> logQueryRequest.noDomains[i];
     }
     for (int i = 0; i < context->nNoTag; i++) {
-        if (context->noTags[i].length() >= MAX_TAG_LEN) {
-            strncpy_s(logQueryRequest.noTags[i], MAX_TAG_LEN,
-                      context->noTags[i].c_str(), MAX_TAG_LEN - 1);
-        } else {
-            strncpy_s(logQueryRequest.noTags[i], context->noTags[i].length() + 1,
-                      context->noTags[i].c_str(), context->noTags[i].length());
+        if (strncpy_s(logQueryRequest.noTags[i], MAX_TAG_LEN,
+            context->noTags[i].c_str(), context->noTags[i].length())) {
+            continue;
         }
     }
     SetMsgHead(&logQueryRequest.header, LOG_QUERY_REQUEST, sizeof(LogQueryRequest)-sizeof(MessageHeader));
@@ -333,7 +327,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     switch (msgCmd) {
         case MC_REQ_STATISTIC_INFO_QUERY:
             StatisticInfoQueryRequest staInfoQueryReq;
-            memset_s (&staInfoQueryReq, sizeof(StatisticInfoQueryRequest), 0, sizeof(StatisticInfoQueryRequest));
+            memset_s(&staInfoQueryReq, sizeof(StatisticInfoQueryRequest), 0, sizeof(StatisticInfoQueryRequest));
             staInfoQueryReq.logType = logType;
             staInfoQueryReq.domain = domain;
             SetMsgHead(&staInfoQueryReq.msgHeader, msgCmd, sizeof(StatisticInfoQueryRequest) - sizeof(MessageHeader));
@@ -341,7 +335,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
             break;
         case MC_REQ_STATISTIC_INFO_CLEAR:
             StatisticInfoClearRequest staInfoClearReq;
-            memset_s (&staInfoClearReq, sizeof(StatisticInfoClearRequest), 0, sizeof(StatisticInfoClearRequest));
+            memset_s(&staInfoClearReq, sizeof(StatisticInfoClearRequest), 0, sizeof(StatisticInfoClearRequest));
             staInfoClearReq.logType = logType;
             staInfoClearReq.domain = domain;
             SetMsgHead(&staInfoClearReq.msgHeader, msgCmd, sizeof(StatisticInfoClearRequest) - sizeof(MessageHeader));
@@ -440,7 +434,8 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             SetMsgHead(&pLogPersistStartReq->msgHeader, msgCmd, sizeof(LogPersistStartRequest));
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;
-            }
+        }
+
         case MC_REQ_LOG_PERSIST_STOP: {
             LogPersistStopRequest* pLogPersistStopReq =
                 reinterpret_cast<LogPersistStopRequest*>(msgToSend);
@@ -520,6 +515,7 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 return RET_FAIL;
             }
             break;
+
         case OT_LOG_LEVEL:
             if (propertyParm->tagStr != "" && propertyParm->domainStr != "") {
                 return RET_FAIL;
@@ -552,6 +548,7 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                     cout << "global log level is set to " << propertyParm->logLevelStr << endl;
             }
             break;
+
         case OT_FLOW_SWITCH:
             if (propertyParm->flowSwitchStr == "pidon") {
                 key = GetPropertyName(PROP_PROCESS_FLOWCTRL);
@@ -574,6 +571,7 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 return RET_FAIL;
             }
             break;
+
         default:
             break;
     }

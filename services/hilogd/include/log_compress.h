@@ -23,6 +23,7 @@
 #include "zstd.h"
 #endif
 #include <zlib.h>
+
 namespace OHOS {
 namespace HiviewDFX {
 typedef struct {
@@ -31,6 +32,7 @@ typedef struct {
 } LogPersisterBuffer;
 
 const uint16_t CHUNK = 16384;
+
 class LogCompress {
 public:
     LogCompress();
@@ -63,5 +65,4 @@ private:
 };
 }
 }
-#endif
- /* HILOG_COMPRESS_H */
+#endif /* HILOG_COMPRESS_H */
