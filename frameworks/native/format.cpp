@@ -160,7 +160,7 @@ void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& cont
         logLen += ((ret > 0) ? ret : 0);
         ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
             " %s", contentOut.data + contentOut.tag_len);
-        logLen += ((ret > 0) ? ret : 0); 
+        logLen += ((ret > 0) ? ret : 0);
     }
 }
 }
