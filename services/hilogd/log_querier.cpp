@@ -138,38 +138,29 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         = reinterpret_cast<LogPersistStartResponse*>(msgToSend);
     LogPersistStartResult* pLogPersistStartRst
         = reinterpret_cast<LogPersistStartResult*>(&pLogPersistStartRsp->logPersistStartRst);
+
+    string logPersisterPath;
     if (pLogPersistStartRst == nullptr) {
         return;
-    }
-    if (pLogPersistStartMsg->jobId  <= 0) {
+    } else if (pLogPersistStartMsg->jobId  <= 0) {
         pLogPersistStartRst->result = ERR_LOG_PERSIST_JOBID_INVALID;
-        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
-        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
-        return;
-    }
-    if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
-        std::cout << "Persist log file size less than min size" << std::endl;
-        pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
+    } else if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
+        cout << "Persist log file size less than min size" << std::endl;
         pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_SIZE_INVALID;
-        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
-        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
-        return;
-    }
-    string logPersisterPath;
-    if (IsValidFileName(string(pLogPersistStartMsg->filePath)) == true) {
+    } else if (IsValidFileName(string(pLogPersistStartMsg->filePath)) == false){
+        cout << "FileName is not valid!" << endl;
+        pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
+    } else  {
         logPersisterPath = (strlen(pLogPersistStartMsg->filePath) == 0) ? (g_logPersisterDir + "hilog")
             : (g_logPersisterDir + string(pLogPersistStartMsg->filePath));
-    } else {
-        cout << "FileName is not valid!" << endl;
-        pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-        pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
-        SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
-        logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
-        return;
+        if (strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str()) != 0) {
+            pLogPersistStartRst->result = RET_FAIL;
+        } else {
+            pLogPersistStartRst->result = JobLauncher(*pLogPersistStartMsg, buffer);
+        }
     }
-    strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str());
+
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-    pLogPersistStartRst->result = JobLauncher(*pLogPersistStartMsg, buffer);
     SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
