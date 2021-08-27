@@ -258,7 +258,8 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
         }
     }
 }
-int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::string logTypeStr, std::string buffSizeStr)
+int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr, 
+    const std::string& buffSizeStr)
 {
     char msgToSend[MSG_MAX_LEN] = {0};
     vector<string> vecLogType;
@@ -314,7 +315,7 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::str
 }
 
 int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
-    std::string logTypeStr, std::string domainStr)
+    const std::string& logTypeStr, const std::string& domainStr)
 {
     if ((logTypeStr != "" && domainStr != "") || (logTypeStr == "" && domainStr == "")) {
         return RET_FAIL;
@@ -357,7 +358,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     return RET_SUCCESS;
 }
 
-int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::string logTypeStr)
+int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr)
 {
     char msgToSend[MSG_MAX_LEN] = {0};
     vector<string> vecLogType;
