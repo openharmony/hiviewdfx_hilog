@@ -37,6 +37,7 @@ constexpr hash_t BASIS = 0xCBF29CE484222325ull;
 
 unordered_map<uint16_t, std::string> errorMsg
 {
+    {RET_FAIL, "Unexpected error"},
     {ERR_LOG_LEVEL_INVALID, "Invalid log level, the valid log levels include D/I/W/E/F"},
     {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init"},
     {ERR_QUERY_TYPE_INVALID, "Query condition on both types and excluded types is undefined"},
