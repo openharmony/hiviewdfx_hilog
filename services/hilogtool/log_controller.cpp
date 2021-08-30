@@ -94,7 +94,8 @@ uint64_t GetBuffSize(const string& buffSizeStr)
     uint64_t buffSize;
     std::regex reg("[0-9]+[bBkKmMgGtT]?");
     if (!std::regex_match(buffSizeStr, reg)) {
-        return 0;
+        std::cout << ParseErrorCode(ERR_BUFF_SIZE_INVALID) << std::endl;
+        exit(-1);
     }
     if (buffSizeStr[index] == 'b' || buffSizeStr[index] == 'B') {
         buffSize = stol(buffSizeStr.substr(0, index));
