@@ -262,7 +262,7 @@ int HilogEntry(int argc, char* argv[])
                     }
                 }
                 if (context.types != 0 && context.noTypes != 0) {
-                    cout << ParseErrorCode(ERR_QUERY_TYPE_INVALID) << endl; 
+                    cout << ParseErrorCode(ERR_QUERY_TYPE_INVALID) << endl;
                     exit(RET_FAIL);
                 }
                 break;
@@ -412,7 +412,6 @@ int HilogEntry(int argc, char* argv[])
                 }
                 if (context.nTag != 0 && context.nNoTag != 0) {
                     cout << ParseErrorCode(ERR_QUERY_TAG_INVALID) << endl;
-                    
                     exit(RET_FAIL);
                 }
                 break;
@@ -603,6 +602,7 @@ int HilogEntry(int argc, char* argv[])
             LogQueryResponseOp(controller, recvBuffer, RECV_BUF_LEN, &context, showFormat);
             break;
         }
+
         default:
             cout << "Invalid response from hilogd! response: " << msgHeader->msgType << endl;
             break;

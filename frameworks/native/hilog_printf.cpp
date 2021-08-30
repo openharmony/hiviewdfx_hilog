@@ -109,13 +109,19 @@ static uint32_t ParseProcessQuota()
             continue;
         }
         if (proName == processName) {
+            int ret = 0;
             processQuotaValue = line.substr(processNameEnd, LOG_FLOWCTRL_QUOTA_STR_LEN);
             char quotaValue[LOG_FLOWCTRL_QUOTA_STR_LEN];
-            strcpy_s(quotaValue, LOG_FLOWCTRL_QUOTA_STR_LEN, processQuotaValue.c_str());
-            sscanf_s(quotaValue, "%d", &proQuota);
-            ifs.close();
-            return proQuota;
-        }          
+            ret = strcpy_s(quotaValue, LOG_FLOWCTRL_QUOTA_STR_LEN, processQuotaValue.c_str());
+            if (ret != 0) {
+                break;
+            }
+            ret = sscanf_s(quotaValue, "%d", &proQuota);
+            if (ret <= 0) {
+                cout << "invalid quota config" << endl;
+            }
+            break;
+        }
     }
     ifs.close();
     return proQuota;
@@ -136,7 +142,7 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
     if (!isFirstFlag.test_and_set()) {
         processQuota = ParseProcessQuota();
     }
-    
+
     struct timespec tsNow = { 0, 0 };
     struct timespec tsStart = atomic_load(&gStartTime);
     clock_gettime(CLOCK_MONOTONIC, &tsNow);

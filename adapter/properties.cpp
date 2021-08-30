@@ -192,11 +192,11 @@ static bool CheckCache(const PropertyCache *cache)
     /* use OHOS interface */
 }
 
-
 static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
 {
     int notLocked;
     string key = GetPropertyName(propType);
+
     if (isFirst || CheckCache(&switchCache.cache)) {
         notLocked = LockByProp(propType);
         if (!notLocked) {
@@ -234,7 +234,7 @@ bool IsDebugOn()
 
 bool IsSingleDebugOn()
 {
-    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
     static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, *switchCache, PROP_SINGLE_DEBUG, false);
@@ -242,7 +242,7 @@ bool IsSingleDebugOn()
 
 bool IsPersistDebugOn()
 {
-    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
     static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, *switchCache, PROP_PERSIST_DEBUG, false);
@@ -250,7 +250,7 @@ bool IsPersistDebugOn()
 
 bool IsPrivateSwitchOn()
 {
-    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, true};
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, true};
     static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, *switchCache, PROP_PRIVATE, true);
@@ -258,7 +258,7 @@ bool IsPrivateSwitchOn()
 
 bool IsProcessSwitchOn()
 {
-    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
     static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, *switchCache, PROP_PROCESS_FLOWCTRL, false);
@@ -266,7 +266,7 @@ bool IsProcessSwitchOn()
 
 bool IsDomainSwitchOn()
 {
-    static SwitchCache *switchCache = new SwitchCache{{nullptr, 0xffffffff, ""}, false};
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
     static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, *switchCache, PROP_DOMAIN_FLOWCTRL, false);
@@ -343,11 +343,13 @@ uint16_t GetDomainLevel(uint32_t domain)
         LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
         RefreshCacheBuf(&levelCache->cache, key.c_str());
         levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+        uint16_t lvl = levelCache->logLevel;
         pair<unordered_map<uint32_t, LogLevelCache*>::iterator, bool> ret = domainMap->insert({ domain, levelCache });
         if (!ret.second) {
             delete levelCache;
+            levelCache = nullptr;
         }
-        return levelCache->logLevel;
+        return lvl;
     } else { // existed domain
         if (CheckCache(&it->second->cache)) { // changed
             InsertLock lock(*mtx);
@@ -376,13 +378,15 @@ uint16_t GetTagLevel(const string& tag)
         LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
         RefreshCacheBuf(&levelCache->cache, key.c_str());
         levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+        uint16_t lvl = levelCache->logLevel;
         pair<unordered_map<string, LogLevelCache*>::iterator, bool> ret = tagMap->insert({ tag, levelCache });
         if (!ret.second) {
             delete(levelCache);
+            levelCache = nullptr;
         }
-        return levelCache->logLevel;
+        return lvl;
     } else { // existed tag
-        if (CheckCache(&it->second->cache)) { //changed
+        if (CheckCache(&it->second->cache)) { // changed
             InsertLock lock(*mtx);
             RefreshCacheBuf(&it->second->cache, key.c_str());
             it->second->logLevel = GetCacheLevel(it->second->cache.propertyValue[0]);
