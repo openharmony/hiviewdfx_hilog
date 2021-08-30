@@ -103,7 +103,7 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, HilogShowFormat showFormat,
                 timeLen += ((ret > 0) ? ret : 0);
                 break;
             case COLOR_SHOWFORMAT:
-                ret = snprintf_s(buffer, bufLen, bufLen,
+                ret = snprintf_s(buffer, bufLen, bufLen - 1,
                     "\x1B[38;5;%dm%02d-%02d %02d:%02d:%02d.%03llu\x1b[0m", ColorFromLevel(contentOut.level),
                     ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, nsecTime / NS2MS);
                 timeLen += ((ret > 0) ? ret : 0);
@@ -116,7 +116,7 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, HilogShowFormat showFormat,
                 break;
         }
     }
-    return timeLen; 
+    return timeLen;
 }
 
 void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, HilogShowFormat showFormat)
@@ -127,7 +127,7 @@ void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& cont
         return;
     }
     logLen += HilogShowTimeBuffer(buffer, bufLen, showFormat, contentOut);
-     
+
     if (showFormat == COLOR_SHOWFORMAT) {
         ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
             " \x1B[38;5;%dm%5d\x1b[0m", ColorFromLevel(contentOut.level), contentOut.pid);
@@ -160,8 +160,8 @@ void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& cont
         logLen += ((ret > 0) ? ret : 0);
         ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
             " %s", contentOut.data + contentOut.tag_len);
-        logLen += ((ret > 0) ? ret : 0); 
-        }
+        logLen += ((ret > 0) ? ret : 0);
+    }
 }
 }
 }
