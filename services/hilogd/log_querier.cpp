@@ -41,7 +41,6 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-namespace fs = std::filesystem;
 constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = HILOG_FILE_DIR;
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
@@ -584,8 +583,8 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
 {
     DIR *dir;
     struct dirent *ent = nullptr;
-    if ((dir = opendir (g_logPersisterDir.c_str())) != NULL) {
-        while ((ent = readdir (dir)) != NULL) {
+    if ((dir = opendir(g_logPersisterDir.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
             size_t length = strlen(ent->d_name);
             std::string pPath(ent->d_name, length);
             if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
@@ -612,9 +611,9 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 "filePath=" << (info.msg.filePath) << std::endl;
             }
         }
-        closedir (dir);
+        closedir(dir);
     } else {
-        perror ("Failed to open persister directory!");
+        perror("Failed to open persister directory!");
         return ERR_LOG_PERSIST_DIR_OPEN_FAIL;
     }
     cout << "Finished restoring persist jobs!" << endl;
