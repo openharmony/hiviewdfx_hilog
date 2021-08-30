@@ -483,6 +483,7 @@ int HilogEntry(int argc, char* argv[])
     }
     if (noLogOption) {
         if (controlCount != 1) {
+            std::cout << ParseErrorCode(ERR_COMMAND_INVALID) << std::endl;
             exit(-1);
         }
         if (context.buffSizeArgs != "") {

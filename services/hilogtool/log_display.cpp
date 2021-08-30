@@ -66,7 +66,8 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_LOG_PERSIST_JOBID_INVALID, "Invalid jobid, jobid should be more than 0"},
     {ERR_LOG_CONTENT_NULL, "Log content NULL"},
     {ERR_COMMAND_NOT_FOUND, "Command not found"},
-    {ERR_FORMAT_INVALID, "Invalid format parameter"}
+    {ERR_FORMAT_INVALID, "Invalid format parameter"},
+    {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed eatch time"}
 }; 
 
 string ParseErrorCode(ErrorCode errorCode)
