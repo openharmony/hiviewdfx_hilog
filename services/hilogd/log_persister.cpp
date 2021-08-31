@@ -194,6 +194,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
         return 0;
     }
     if (memcpy_s(dataCopy, data->len, data->tag, data->len)) {
+        free(dataCopy);
         return 0;
     }
     showBuffer.data = dataCopy;
