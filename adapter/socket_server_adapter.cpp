@@ -49,13 +49,13 @@ static std::string GetFileNameByFd(const int fd)
 
 static void GetSocketFds(std::vector<int> &fds)
 {
-    struct dirent *dp;
+    struct dirent *dp = nullptr;
     DIR *dir = opendir(OHOS_PROC_FD_DIR);
     if (!dir) {
         return;
     }
 
-    while ((dp = readdir(dir)) != NULL) {
+    while ((dp = readdir(dir)) != nullptr) {
         int fd = -1;
         if (dp->d_name[0] == '.') {
             continue;

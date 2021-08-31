@@ -39,8 +39,8 @@ public:
     virtual ~LogCompress() = default;
     virtual int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer) = 0;
     unsigned char *zdata = nullptr;
-    char buffIn[CHUNK];
-    char buffOut[CHUNK];
+    char buffIn[CHUNK] = {0};
+    char buffOut[CHUNK] = {0};
 };
 
 class NoneCompress : public LogCompress {
