@@ -28,7 +28,7 @@ enum SeqPacketSocketResult {
 
 class SeqPacketSocketClient : public SocketClient {
 public:
-    SeqPacketSocketClient(std::string serverPath, uint32_t socketOption) : SocketClient(serverPath, SOCK_SEQPACKET)
+    SeqPacketSocketClient(std::string serverPath, int socketOption) : SocketClient(serverPath, SOCK_SEQPACKET)
     {
         int socketType = SOCK_SEQPACKET | (socketOption & allowOption);
         SetType(socketType);

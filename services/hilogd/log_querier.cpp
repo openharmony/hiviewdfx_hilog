@@ -146,10 +146,10 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     } else if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
         cout << "Persist log file size less than min size" << std::endl;
         pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_SIZE_INVALID;
-    } else if (IsValidFileName(string(pLogPersistStartMsg->filePath)) == false){
+    } else if (IsValidFileName(string(pLogPersistStartMsg->filePath)) == false) {
         cout << "FileName is not valid!" << endl;
         pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
-    } else  {
+    } else {
         logPersisterPath = (strlen(pLogPersistStartMsg->filePath) == 0) ? (g_logPersisterDir + "hilog")
             : (g_logPersisterDir + string(pLogPersistStartMsg->filePath));
         if (strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str()) != 0) {
@@ -430,22 +430,22 @@ void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryRequest& q
     logReader->queryCondition.nNoPid = qRstMsg.nNoPid;
     logReader->queryCondition.nNoDomain = qRstMsg.nNoDomain;
     logReader->queryCondition.nNoTag = qRstMsg.nNoTag;
-    for (int i = 0; i < qRstMsg.nPid; i++) {
+    for (int i = 0; (i < qRstMsg.nPid) && (i < MAX_PIDS); i++) {
         logReader->queryCondition.pids[i] = qRstMsg.pids[i];
     }
-    for (int i = 0; i < qRstMsg.nDomain; i++) {
+    for (int i = 0; (i < qRstMsg.nDomain) && (i < MAX_DOMAINS); i++) {
         logReader->queryCondition.domains[i] = qRstMsg.domains[i];
     }
-    for (int i = 0; i < qRstMsg.nTag; i++) {
+    for (int i = 0; (i < qRstMsg.nTag) && (i < MAX_TAGS); i++) {
         logReader->queryCondition.tags[i] = qRstMsg.tags[i];
     }
-    for (int i = 0; i < qRstMsg.nNoPid; i++) {
+    for (int i = 0; (i < qRstMsg.nNoPid) && (i < MAX_PIDS); i++) {
         logReader->queryCondition.noPids[i] = qRstMsg.noPids[i];
     }
-    for (int i = 0; i < qRstMsg.nNoDomain; i++) {
+    for (int i = 0; (i < qRstMsg.nNoDomain) && (i < MAX_DOMAINS); i++) {
         logReader->queryCondition.noDomains[i] = qRstMsg.noDomains[i];
     }
-    for (int i = 0; i < qRstMsg.nNoTag; i++) {
+    for (int i = 0; (i < qRstMsg.nNoTag) && (i < MAX_TAGS); i++) {
         logReader->queryCondition.noTags[i] = qRstMsg.noTags[i];
     }
 }

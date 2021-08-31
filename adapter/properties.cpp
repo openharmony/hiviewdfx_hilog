@@ -87,8 +87,7 @@ void PropertySet(const string &key, const char* value)
 
 string GetProgName()
 {
-    return nullptr;
-    /* use HOS interface */
+    return program_invocation_short_name; /* use HOS interface */
 }
 
 string GetPropertyName(uint32_t propType)

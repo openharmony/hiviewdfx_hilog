@@ -52,6 +52,7 @@ int ZlibCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
     cStream.opaque = Z_NULL;
     if (deflateInit2(&cStream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
         delete zdata;
+        zdata = nullptr;
         return -1;
     }
     do {
