@@ -45,8 +45,6 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_QUERY_DOMAIN_INVALID, "Invalid domain format, a hexadecimal number is needed"},
     {ERR_QUERY_TAG_INVALID, "Query condition on both tags and excluded tags is undefined"},
     {ERR_QUERY_PID_INVALID, "Query condition on both pid and excluded pid is undefined"},
-    {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
-    + to_string(MAX_BUFFER_SIZE)},
     {ERR_BUFF_SIZE_EXP, "Buffer resize exception"},
     {ERR_LOG_PERSIST_FILE_SIZE_INVALID, "Invalid log persist file size, file size should be not less than "
     + to_string(MAX_PERSISTER_BUFFER_SIZE)},
@@ -68,7 +66,9 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_LOG_CONTENT_NULL, "Log content NULL"},
     {ERR_COMMAND_NOT_FOUND, "Command not found"},
     {ERR_FORMAT_INVALID, "Invalid format parameter"},
-    {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed eatch time"}
+    {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
+    + to_string(MAX_BUFFER_SIZE)},
+    {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed each time"}
 }; 
 
 string ParseErrorCode(ErrorCode errorCode)
