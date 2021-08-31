@@ -30,7 +30,7 @@ int LogCollector::FlowCtrlDataRecv(HilogMsg *msg, int ret)
 {
     string dropLog = to_string(ret) + " line(s) dropped!";
     char tag[] = "LOGLIMITD";
-    int len = sizeof(HilogMsg) + sizeof(tag) + 1 + dropLog.size() + 1;
+    int len = sizeof(HilogMsg) + sizeof(tag) + dropLog.size() + 1;
     HilogMsg *dropMsg = (HilogMsg*)malloc(len);
     if (dropMsg != nullptr) {
         dropMsg->len = len;
@@ -43,9 +43,9 @@ int LogCollector::FlowCtrlDataRecv(HilogMsg *msg, int ret)
         dropMsg->pid = msg->pid;
         dropMsg->tid = msg->tid;
         dropMsg->domain = msg->domain;
-        if (memcpy_s(dropMsg->tag, len - sizeof(HilogMsg), tag, sizeof(tag) + 1)) {
+        if (memcpy_s(dropMsg->tag, len - sizeof(HilogMsg), tag, sizeof(tag))) {
         }
-        if (memcpy_s(dropMsg->tag + sizeof(tag) + 1, len - sizeof(HilogMsg) - sizeof(tag) - 1,
+        if (memcpy_s(dropMsg->tag + sizeof(tag), len - sizeof(HilogMsg) - sizeof(tag),
             dropLog.c_str(), dropLog.size() + 1)) {
         }
         InsertLogToBuffer(*dropMsg);

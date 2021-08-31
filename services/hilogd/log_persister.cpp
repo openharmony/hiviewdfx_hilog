@@ -106,12 +106,13 @@ int LogPersister::Init()
     }
     bool hit = false;
     const lock_guard<mutex> lock(g_listMutex);
-    for (auto it = logPersisters.begin(); it != logPersisters.end(); ++it)
+    for (auto it = logPersisters.begin(); it != logPersisters.end(); ++it) {
         if ((*it)->getPath() == path || (*it)->Identify(id)) {
             std::cout << path << std::endl;
             hit = true;
             break;
         }
+    }
     if (hit) {
         return ERR_LOG_PERSIST_FILE_PATH_INVALID;
     }
@@ -122,9 +123,6 @@ int LogPersister::Init()
         fd = fopen(mmapPath.c_str(), "r+");
     } else {
         fd = fopen(mmapPath.c_str(), "w+");
-        ftruncate(fileno(fd), sizeof(LogPersisterBuffer));
-        fflush(fd);
-        fsync(fileno(fd));
     }
 
     if (fd == nullptr) {
@@ -132,6 +130,12 @@ int LogPersister::Init()
         cout << "open log file(" << mmapPath << ") failed: " << strerror(errno) << endl;
 #endif
         return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
+    }
+
+    if (!restore) {
+        ftruncate(fileno(fd), sizeof(LogPersisterBuffer));
+        fflush(fd);
+        fsync(fileno(fd));
     }
     buffer = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
                                         MAP_SHARED, fileno(fd), 0);
@@ -186,8 +190,12 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
 
     int offset = data->tag_len;
     char *dataCopy = (char*)calloc(data->len, sizeof(char));
-    memcpy_s(dataCopy, offset, data->tag, offset);
-    memcpy_s(dataCopy + offset, data->len - offset, data->content, data->len - offset);
+    if (dataCopy == nullptr) {
+        return 0;
+    }
+    if (memcpy_s(dataCopy, data->len, data->tag, data->len)) {
+        return 0;
+    }
     showBuffer.data = dataCopy;
     char *dataBegin = dataCopy + offset;
     char *dataPos = dataCopy + offset;
