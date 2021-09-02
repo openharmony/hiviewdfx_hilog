@@ -36,10 +36,10 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,
     HilogArgs* context, HilogShowFormat format);
 int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
-    std::string logTypeStr, std::string buffSizeStr);
+    const std::string& logTypeStr, const std::string& buffSizeStr);
 int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
-    std::string logTypeStr, std::string domainStr);
-int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::string logTypeStr);
+    const std::string& logTypeStr, const std::string& domainStr);
+int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr);
 int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersistParam* logPersistParam);
 int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType, SetPropertyParam* propertyParm);
 } // namespace HiviewDFX
