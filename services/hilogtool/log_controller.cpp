@@ -22,7 +22,7 @@
 #include <vector>
 #include <securec.h>
 #include <stdio.h>
-
+#include <regex>
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -92,6 +92,11 @@ uint64_t GetBuffSize(const string& buffSizeStr)
 {
     uint64_t index = buffSizeStr.size() - 1;
     uint64_t buffSize;
+    std::regex reg("[0-9]+[bBkKmMgGtT]?");
+    if (!std::regex_match(buffSizeStr, reg)) {
+        std::cout << ParseErrorCode(ERR_BUFF_SIZE_INVALID) << std::endl;
+        exit(-1);
+    }
     if (buffSizeStr[index] == 'b' || buffSizeStr[index] == 'B') {
         buffSize = stol(buffSizeStr.substr(0, index));
     } else if (buffSizeStr[index] == 'k' || buffSizeStr[index] == 'K') {
@@ -248,7 +253,8 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
         }
     }
 }
-int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::string logTypeStr, std::string buffSizeStr)
+int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr, 
+    const std::string& buffSizeStr)
 {
     char msgToSend[MSG_MAX_LEN] = {0};
     vector<string> vecLogType;
@@ -304,7 +310,7 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::str
 }
 
 int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
-    std::string logTypeStr, std::string domainStr)
+    const std::string& logTypeStr, const std::string& domainStr)
 {
     if ((logTypeStr != "" && domainStr != "") || (logTypeStr == "" && domainStr == "")) {
         return RET_FAIL;
@@ -347,7 +353,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     return RET_SUCCESS;
 }
 
-int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, std::string logTypeStr)
+int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr)
 {
     char msgToSend[MSG_MAX_LEN] = {0};
     vector<string> vecLogType;
