@@ -101,7 +101,7 @@ int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool 
     int rotatorRes = rotator->Init();
     int saveInfoRes = rotator->SaveInfo(pMsg, persister->queryCondition);
     int persistRes = persister->Init();
-    if (persistRes == RET_FAIL || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
+    if (persistRes != 0 || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
         return RET_FAIL;
