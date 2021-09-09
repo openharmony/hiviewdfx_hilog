@@ -38,6 +38,7 @@ public:
     LogCompress();
     virtual ~LogCompress() = default;
     virtual int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer) = 0;
+    void DeleteZData();
     unsigned char *zdata = nullptr;
     char buffIn[CHUNK] = {0};
     char buffOut[CHUNK] = {0};

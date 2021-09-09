@@ -59,6 +59,7 @@ LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t
     hilogBuffer = &_buffer;
     compressor = nullptr;
     buffer = nullptr;
+    compressBuffer = nullptr;
     plainLogSize = 0;
 }
 

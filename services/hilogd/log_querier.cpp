@@ -597,12 +597,12 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 }
                 PersistRecoveryInfo info;
                 fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
-                uLong crcSum = 0L;
-                fread(&crcSum, sizeof(uLong), 1, infile);
+                uint64_t hashSum = 0L;
+                fread(&hashSum, sizeof(hashSum), 1, infile);
                 fclose(infile);
-                uLong crc = GetInfoCRC32(info);
-                if (crc != crcSum) {
-                    std::cout << "Info file CRC Checksum Failed!" << std::endl;
+                uint64_t hash = GetInfoHash(info);
+                if (hash != hashSum) {
+                    std::cout << "Info file Checksum Failed!" << std::endl;
                     continue;
                 }
                 JobLauncher(info.msg, _buffer, true, info.index + 1);
