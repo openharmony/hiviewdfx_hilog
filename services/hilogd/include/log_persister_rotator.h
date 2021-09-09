@@ -30,7 +30,7 @@ typedef struct {
 } PersistRecoveryInfo;
 
 const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
-uLong GetInfoCRC32(const PersistRecoveryInfo &info);
+uint64_t GetInfoHash(const PersistRecoveryInfo &info);
 class LogPersisterRotator {
 public:
     LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");

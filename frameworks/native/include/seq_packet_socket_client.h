@@ -30,7 +30,7 @@ class SeqPacketSocketClient : public SocketClient {
 public:
     SeqPacketSocketClient(std::string serverPath, int socketOption) : SocketClient(serverPath, SOCK_SEQPACKET)
     {
-        int socketType = SOCK_SEQPACKET | (socketOption & allowOption);
+        int socketType = SOCK_SEQPACKET | ((uint32_t)socketOption & (uint32_t)allowOption);
         SetType(socketType);
     }
     ~SeqPacketSocketClient() = default;

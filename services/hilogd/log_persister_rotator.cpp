@@ -25,11 +25,19 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-uLong GetInfoCRC32(const PersistRecoveryInfo &info)
+constexpr uint64_t PRIME = 0x100000001B3ull;
+constexpr uint64_t BASIS = 0xCBF29CE484222325ull;
+uint64_t GetInfoHash(const PersistRecoveryInfo &info)
 {
-    uLong crc = crc32(0L, Z_NULL, 0);
-    crc = crc32(crc, (Bytef*)(&info), sizeof(PersistRecoveryInfo));
-    return crc;
+    uint64_t ret {BASIS};
+    const char *p = (char *)&info;
+    unsigned long i = 0;
+    while (i < sizeof(PersistRecoveryInfo)) {
+        ret ^= *(p+1);
+        ret *= PRIME;
+        i++;
+    }
+    return ret;
 }
 
 LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
@@ -37,6 +45,7 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
 {
     index = -1;
     needRotate = true;
+    memset_s(&info, sizeof(info), 0, sizeof(info));
 }
 
 LogPersisterRotator::~LogPersisterRotator()
@@ -165,10 +174,10 @@ int LogPersisterRotator::SaveInfo(const LogPersistStartMsg& pMsg, const QueryCon
 void LogPersisterRotator::WriteRecoveryInfo()
 {
     std::cout << "Save Info file!" << std::endl;
-    uLong crc = GetInfoCRC32(info);
+    uint64_t hash = GetInfoHash(info);
     fseek(fdinfo, 0, SEEK_SET);
     fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
-    fwrite(&crc, sizeof(uLong), 1, fdinfo);
+    fwrite(&hash, sizeof(hash), 1, fdinfo);
     fflush(fdinfo);
     fsync(fileno(fdinfo));
 }
