@@ -124,7 +124,7 @@ int ZstdCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &com
     cctx = ZSTD_createCCtx();
     if (cctx == nullptr) {
         cout << "ZSTD_createCCtx() failed!" << endl;
-        DeleteZData();;
+        DeleteZData();
         return -1;
     }
     ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, compressionlevel);
