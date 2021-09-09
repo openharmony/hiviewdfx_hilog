@@ -33,7 +33,7 @@ uint64_t GetInfoHash(const PersistRecoveryInfo &info)
     const char *p = (char *)&info;
     unsigned long i = 0;
     while (i < sizeof(PersistRecoveryInfo)) {
-        ret ^= *(p+1);
+        ret ^= *(p + i);
         ret *= PRIME;
         i++;
     }

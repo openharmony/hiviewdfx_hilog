@@ -602,7 +602,7 @@ int LogQuerier::RestorePersistJobs(HilogBuffer& _buffer)
                 fclose(infile);
                 uint64_t hash = GetInfoHash(info);
                 if (hash != hashSum) {
-                    std::cout << "Info file Checksum Failed!" << std::endl;
+                    std::cout << "Info file checksum Failed!" << std::endl;
                     continue;
                 }
                 JobLauncher(info.msg, _buffer, true, info.index + 1);
