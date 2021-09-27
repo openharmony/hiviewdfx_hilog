@@ -37,6 +37,7 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
 {
     index = -1;
     needRotate = true;
+    memset_s(&info, sizeof(info), 0, sizeof(info));
 }
 
 LogPersisterRotator::~LogPersisterRotator()
