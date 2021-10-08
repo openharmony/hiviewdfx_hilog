@@ -101,6 +101,9 @@ void LogCollector::operator()()
 
 size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
 {
+    if (msg.type >= LOG_TYPE_MAX) {
+        return ERR_LOG_TYPE_INVALID;
+    }
     size_t result = hilogBuffer->Insert(msg);
     if (result <= 0) {
         return result;
