@@ -50,7 +50,7 @@ unordered_map<uint16_t, std::string> errorMsg
     + to_string(MAX_PERSISTER_BUFFER_SIZE)},
     {ERR_LOG_PERSIST_FILE_NAME_INVALID, "Invalid log persist file name, file name should not contain [\\/:*?\"<>|]"},
     {ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP, "Invalid Log persist compression buffer"},
-    {ERR_LOG_PERSIST_FILE_PATH_INVALID, "Invalid persister file path"},
+    {ERR_LOG_PERSIST_FILE_PATH_INVALID, "Invalid persister file path or persister directory does not exist"},
     {ERR_LOG_PERSIST_COMPRESS_INIT_FAIL, "Log persist compression initialization failed"},
     {ERR_LOG_PERSIST_FILE_OPEN_FAIL, "Log persist open file failed"},
     {ERR_LOG_PERSIST_MMAP_FAIL, "Log persist mmap failed"},

@@ -101,15 +101,19 @@ int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool 
     int rotatorRes = rotator->Init();
     int saveInfoRes = rotator->SaveInfo(pMsg, persister->queryCondition);
     int persistRes = persister->Init();
-    if (persistRes != 0 || saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
+    if (persistRes != 0) {
+        cout << "LogPersister failed to initialize!" << endl;
+        persister.reset();
+        return persistRes;
+    }
+    if (saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
         return RET_FAIL;
-    } else {
-        if (!restore) rotator->WriteRecoveryInfo();
-        persister->Start();
-        return RET_SUCCESS;
-    }
+    } 
+    if (!restore) rotator->WriteRecoveryInfo();
+    persister->Start();
+    return RET_SUCCESS;
 }
 
 void HandleLogQueryRequest(std::shared_ptr<LogReader> logReader, HilogBuffer& buffer)

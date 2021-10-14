@@ -101,9 +101,8 @@ int LogPersister::Init()
     }
     mmapPath = path.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
     if (access(path.substr(0, nPos).c_str(), F_OK) != 0) {
-        if (errno == ENOENT) {
-            MkDirPath(path.substr(0, nPos).c_str());
-        }
+        perror("persister directory does not exist.");
+        return ERR_LOG_PERSIST_FILE_PATH_INVALID;
     }
     bool hit = false;
     const lock_guard<mutex> lock(g_listMutex);
@@ -163,14 +162,6 @@ void LogPersister::NotifyForNewData()
 {
     condVariable.notify_one();
     isNotified = true;
-}
-
-int LogPersister::MkDirPath(const char *pMkdir)
-{
-    int isCreate = mkdir(pMkdir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
-    if (!isCreate)
-        cout << "create path:" << pMkdir << endl;
-    return isCreate;
 }
 
 void LogPersister::SetBufferOffset(int off)
