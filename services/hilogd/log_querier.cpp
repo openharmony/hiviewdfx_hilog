@@ -106,10 +106,15 @@ int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool 
         persister.reset();
         return persistRes;
     }
-    if (saveInfoRes == RET_FAIL || rotatorRes == RET_FAIL) {
-        cout << "LogPersister failed to initialize!" << endl;
+    if (rotatorRes != 0) {
+        cout << "failed to open info file!" << endl;
         persister.reset();
-        return RET_FAIL;
+        return rotatorRes;
+    }
+    if (saveInfoRes != 0) {
+        cout << "Failed to save persister file path!" << endl;
+        persister.reset();
+        return saveInfoRes;
     } 
     if (!restore) rotator->WriteRecoveryInfo();
     persister->Start();
