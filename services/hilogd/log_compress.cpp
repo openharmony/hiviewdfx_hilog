@@ -34,9 +34,11 @@ void LogCompress::DeleteZData()
 
 int NoneCompress::Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer)
 {
-    if (memcpy_s(compressBuffer->content, compressBuffer->offset, buffer->content, buffer->offset) != 0) {
+    if (memcpy_s(compressBuffer->content + compressBuffer->offset, MAX_PERSISTER_BUFFER_SIZE - compressBuffer->offset,
+        buffer->content, buffer->offset) != 0) {
         return -1;
     }
+    compressBuffer->offset += buffer->offset;
     return 0;
 }
 
