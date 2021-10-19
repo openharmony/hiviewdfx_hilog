@@ -510,6 +510,7 @@ int HilogEntry(int argc, char* argv[])
             } else if (context.logFileCtrlArgs == "query") {
                 ret = LogPersistOp(controller, MC_REQ_LOG_PERSIST_QUERY, &logPersistParam);
             } else {
+                cout << "Invalid log persist parameter" << endl;
                 exit(-1);
             }
             if (ret == RET_FAIL) {
