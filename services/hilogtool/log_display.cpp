@@ -435,7 +435,7 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
-void HilogShowLog(HilogShowFormat showFormat, HilogDataMessage* data, HilogArgs* context,
+void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context,
     vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {
