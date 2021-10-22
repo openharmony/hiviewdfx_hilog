@@ -198,7 +198,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
                 *dataPos = 0;
                 showBuffer.tag_len = offset;
                 showBuffer.data = dataCopy;
-                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
+                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, 0);
                 persistList.push_back(buffer);
                 offset += dataPos - dataBegin + 1;
             } else {
@@ -211,7 +211,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     if (dataPos != dataBegin) {
         showBuffer.tag_len = offset;
         showBuffer.data = dataCopy;
-        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, OFF_SHOWFORMAT);
+        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, 0);
         persistList.push_back(buffer);
     }
     free(dataCopy);
