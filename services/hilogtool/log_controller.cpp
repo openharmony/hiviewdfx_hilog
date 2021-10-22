@@ -211,7 +211,7 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
 }
 
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,
-    HilogArgs* context, HilogShowFormat format)
+    HilogArgs* context, int32_t format)
 {
     static std::vector<string> tailBuffer;
     LogQueryResponse* rsp = reinterpret_cast<LogQueryResponse*>(recvBuffer);

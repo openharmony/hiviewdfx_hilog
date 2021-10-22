@@ -37,7 +37,6 @@
 #include "log_persister.h"
 #include "log_reader.h"
 
-
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
@@ -107,7 +106,7 @@ int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool 
         return persistRes;
     }
     if (rotatorRes != 0) {
-        cout << "failed to open info file!" << endl;
+        cout << "Failed to open info file!" << endl;
         persister.reset();
         return rotatorRes;
     }
@@ -461,7 +460,7 @@ void SetCondition(std::shared_ptr<LogReader> logReader, const LogQueryRequest& q
 
 void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
 {
-    cout << "Start log_querier thread!\n" << std::endl;
+    cout << "Start log_querier !\n" << std::endl;
     int readRes = 0;
     LogQueryRequest* qRstMsg = nullptr;
     NextRequest* nRstMsg = nullptr;
