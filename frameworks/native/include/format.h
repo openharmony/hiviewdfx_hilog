@@ -21,7 +21,7 @@ namespace OHOS {
 namespace HiviewDFX {
 const char* ParsedFromLevel(uint16_t level);
 int ColorFromLevel(uint16_t level);
-void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, HilogShowFormat showFormat);
+void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, int32_t showFormat);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif /* LOG_FORMAT_H */

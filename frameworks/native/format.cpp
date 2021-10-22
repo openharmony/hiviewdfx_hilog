@@ -22,6 +22,7 @@
 #include <iostream>
 #include <ctime>
 #include <securec.h>
+
 namespace OHOS {
 namespace HiviewDFX {
 static const int HILOG_COLOR_BLUE = 75;
@@ -58,7 +59,7 @@ int ColorFromLevel(uint16_t level)
     }
 }
 
-int HilogShowTimeBuffer(char* buffer, int bufLen, HilogShowFormat showFormat,
+int HilogShowTimeBuffer(char* buffer, int bufLen, int32_t showFormat,
     const HilogShowFormatBuffer& contentOut)
 {
     time_t now = contentOut.tv_sec;
@@ -68,99 +69,76 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, HilogShowFormat showFormat,
     int ret = 0;
     nsecTime = (now < 0) ? (NS - nsecTime) : nsecTime;
 
-    if ((showFormat == EPOCH_SHOWFORMAT) || (showFormat == MONOTONIC_SHOWFORMAT)) {
+    if ((showFormat & (1 << EPOCH_SHOWFORMAT)) || (showFormat & (1 << MONOTONIC_SHOWFORMAT))) {
         ret = snprintf_s(buffer, bufLen, bufLen - 1,
-            (showFormat == MONOTONIC_SHOWFORMAT) ? "%6lld" : "%19lld", (long long)now);
-        timeLen += ((ret > 0) ? ret : 0);
+            (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%19lld", (long long)now);
+        timeLen += ((ret > 0) ? ret : 0); 
     } else {
         ptm = localtime(&now);
         if (ptm == nullptr) {
             return 0;
         }
-        switch (showFormat) {
-            case YEAR_SHOWFORMAT:
-                timeLen = strftime(buffer, bufLen, "%Y-%m-%d %H:%M:%S", ptm);
-                ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                    ".%03llu", nsecTime / NS2MS);
-                timeLen += ((ret > 0) ? ret : 0);
-                break;
-            case ZONE_SHOWFORMAT:
-                timeLen = strftime(buffer, bufLen, "%z %m-%d %H:%M:%S", ptm);
-                ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                    ".%03llu", nsecTime / NS2MS);
-                timeLen += ((ret > 0) ? ret : 0);
-                break;
-            case TIME_NSEC_SHOWFORMAT:
-                timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", ptm);
-                ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                    ".%09ld", nsecTime);
-                timeLen += ((ret > 0) ? ret : 0);
-                break;
-            case TIME_USEC_SHOWFORMAT:
-                timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", ptm);
-                ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                    ".%06llu", nsecTime / NS2US);
-                timeLen += ((ret > 0) ? ret : 0);
-                break;
-            case COLOR_SHOWFORMAT:
-                ret = snprintf_s(buffer, bufLen, bufLen - 1,
-                    "\x1B[38;5;%dm%02d-%02d %02d:%02d:%02d.%03llu\x1b[0m", ColorFromLevel(contentOut.level),
-                    ptm->tm_mon + 1, ptm->tm_mday, ptm->tm_hour, ptm->tm_min, ptm->tm_sec, nsecTime / NS2MS);
-                timeLen += ((ret > 0) ? ret : 0);
-                break;
-            default:
-                timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", ptm);
-                ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                    ".%03llu", nsecTime / NS2MS);
-                timeLen += ((ret > 0) ? ret : 0);
-                break;
+        timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", ptm);
+        timeLen = strlen(buffer);
+        if (showFormat & (1 << YEAR_SHOWFORMAT)) {
+            timeLen = strftime(buffer, bufLen, "%Y-%m-%d %H:%M:%S", ptm);
+            timeLen = strlen(buffer);         
+        }
+        if (showFormat & (1 << ZONE_SHOWFORMAT)) {
+            timeLen = strftime(buffer, bufLen, "%z %m-%d %H:%M:%S", ptm);
+            timeLen = strlen(buffer); 
+        }
+        if (showFormat & (1 << TIME_NSEC_SHOWFORMAT)) {
+            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+                ".%09ld", nsecTime);
+            timeLen += ((ret > 0) ? ret : 0);
+        } else if (showFormat & (1 << TIME_USEC_SHOWFORMAT)) {
+            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+                ".%06llu", nsecTime / NS2US);
+            timeLen += ((ret > 0) ? ret : 0);
+        } else {
+            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+                ".%03llu", nsecTime / NS2MS);
+            timeLen += ((ret > 0) ? ret : 0); 
         }
     }
     return timeLen;
 }
 
-void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, HilogShowFormat showFormat)
+void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, int32_t showFormat)
 {
     int logLen = 0;
     int ret = 0;
     if (buffer == nullptr) {
         return;
     }
-    logLen += HilogShowTimeBuffer(buffer, bufLen, showFormat, contentOut);
-
-    if (showFormat == COLOR_SHOWFORMAT) {
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " \x1B[38;5;%dm%5d\x1b[0m", ColorFromLevel(contentOut.level), contentOut.pid);
+    if (showFormat & (1 << COLOR_SHOWFORMAT)) {
+        ret = snprintf_s(buffer, bufLen, bufLen - logLen - 1,
+            "\x1B[38;5;%dm", ColorFromLevel(contentOut.level));
         logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " \x1B[38;5;%dm%5d\x1b[0m", ColorFromLevel(contentOut.level), contentOut.tid);
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " \x1B[38;5;%dm%s \x1b[0m", ColorFromLevel(contentOut.level), ParsedFromLevel(contentOut.level));
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            "\x1B[38;5;%dm%05x/%s:\x1b[0m", ColorFromLevel(contentOut.level),
-            contentOut.domain & 0xFFFFF, contentOut.data);
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " \x1B[38;5;%dm%s\x1b[0m", ColorFromLevel(contentOut.level), contentOut.data + contentOut.tag_len);
-        logLen += ((ret > 0) ? ret : 0);
-    } else {
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %5d", contentOut.pid);
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %5d", contentOut.tid);
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %s ", ParsedFromLevel(contentOut.level));
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            "%05x/%s:", contentOut.domain & 0xFFFFF, contentOut.data);
-        logLen += ((ret > 0) ? ret : 0);
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %s", contentOut.data + contentOut.tag_len);
-        logLen += ((ret > 0) ? ret : 0);
+    }
+    logLen += HilogShowTimeBuffer(buffer + logLen, bufLen - logLen, showFormat, contentOut);
+    ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
+        " %5d", contentOut.pid);
+    logLen += ((ret > 0) ? ret : 0);
+    ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
+        " %5d", contentOut.tid);
+    logLen += ((ret > 0) ? ret : 0);
+    ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
+        " %s ", ParsedFromLevel(contentOut.level));
+    logLen += ((ret > 0) ? ret : 0);
+    ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
+        "%05x/%s:", contentOut.domain & 0xFFFFF, contentOut.data);
+    logLen += ((ret > 0) ? ret : 0);
+    ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
+        " %s", contentOut.data + contentOut.tag_len);
+    logLen += ((ret > 0) ? ret : 0);
+    if (showFormat & (1 << COLOR_SHOWFORMAT)) {
+        const char suffixColor[] = "\x1B[0m";
+        if (strcpy_s(buffer + logLen, sizeof(suffixColor), suffixColor) != 0) {
+            return;
+        }
+        logLen += strlen(suffixColor);
     }
 }
 }

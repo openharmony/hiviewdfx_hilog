@@ -174,7 +174,7 @@ int HilogEntry(int argc, char* argv[])
     regex delimiter(",");
     context.noBlockMode = 0;
     int32_t ret = 0;
-    HilogShowFormat showFormat = OFF_SHOWFORMAT;
+    int32_t showFormat = 0;
     int controlCount = 0;
     for (int argsCount = 0; argsCount < argc; argsCount++) {
         args.push_back(argv[argsCount]);
@@ -295,7 +295,7 @@ int HilogEntry(int argc, char* argv[])
                 }
                 break;
             case 'v':
-                showFormat = HilogFormat(optarg);
+                showFormat |=  1 << HilogFormat(optarg);
                 break;
             case 'g':
                 context.buffSizeArgs = "query";
@@ -605,7 +605,7 @@ int HilogEntry(int argc, char* argv[])
         }
 
         default:
-            cout << "Invalid response from hilogd! response: " << msgHeader->msgType << endl;
+            cout << "Invalid response from hilogd! response: " << unsigned(msgHeader->msgType) << endl;
             break;
     }
     return 0;
