@@ -115,7 +115,7 @@ int LogPersister::Init()
         }
     }
     if (hit) {
-        return ERR_LOG_PERSIST_FILE_PATH_INVALID;
+        return ERR_LOG_PERSIST_TASK_FAIL;
     }
     if (InitCompress() ==  RET_FAIL) {
         return ERR_LOG_PERSIST_COMPRESS_INIT_FAIL;
