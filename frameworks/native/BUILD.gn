@@ -82,7 +82,9 @@ ohos_shared_library("libhilogutil") {
 
   if (use_musl) {
     defines = [ "HILOG_USE_MUSL" ]
-    deps += [ "//base/startup/init_lite/interfaces/innerkits/socket:libsocket" ]
+    deps += [
+      "//base/startup/init_lite/interfaces/innerkits/socket:libsocket_shared",
+    ]
   }
 
   output_extension = "so"
