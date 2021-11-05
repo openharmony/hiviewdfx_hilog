@@ -76,7 +76,7 @@ using HilogShowFormatBuffer = struct {
     uint32_t domain;
     uint32_t tv_sec;
     uint32_t tv_nsec;
-    char* data;
+    const char* data;
 };
 
 #define CONTENT_LEN(pMsg) (pMsg->len - sizeof(HilogMsg) - pMsg->tag_len) /* include '\0' */

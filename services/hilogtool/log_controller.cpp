@@ -211,7 +211,7 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
 }
 
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,
-    HilogArgs* context, int32_t format)
+    const HilogArgs* context, int32_t format)
 {
     static std::vector<string> tailBuffer;
     LogQueryResponse* rsp = reinterpret_cast<LogQueryResponse*>(recvBuffer);
@@ -232,11 +232,10 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
             switch (data->sendId) {
                 case SENDIDN:
                     if (context->noBlockMode) {
-                        if (context->tailLines) {
-                            while (context->tailLines-- && !tailBuffer.empty()) {
-                                cout << tailBuffer.back() << endl;
-                                tailBuffer.pop_back();
-                            }
+                        uint16_t i = context->tailLines;
+                        while (i-- && !tailBuffer.empty()) {
+                            cout << tailBuffer.back() << endl;
+                            tailBuffer.pop_back();
                         }
                         NextRequestOp(controller, SENDIDN);
                         exit(1);

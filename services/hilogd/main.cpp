@@ -34,6 +34,8 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
+constexpr int HILOG_FILE_MASK = 0026;
+
 #ifdef DEBUG
 static int g_fd = -1;
 #endif
@@ -53,7 +55,7 @@ static void SigHandler(int sig)
 int HilogdEntry(int argc, char* argv[])
 {
     HilogBuffer hilogBuffer;
-
+    umask(HILOG_FILE_MASK);
 #ifdef DEBUG
     int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
     if (fd > 0) {
