@@ -435,7 +435,7 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
-void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context,
+void HilogShowLog(int32_t showFormat, HilogDataMessage* data, const HilogArgs* context,
     vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {
@@ -449,7 +449,7 @@ void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context
 
     static int printHeadCnt = 0;
     HilogShowFormatBuffer showBuffer;
-    char* content = data->data + data->tag_len;
+    const char* content = data->data + data->tag_len;
 
     if (context->headLines) {
         if (printHeadCnt++ >= context->headLines) {
@@ -463,7 +463,7 @@ void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context
         }
     }
 
-    char buffer[MAX_LOG_LEN * 2];
+    char buffer[MAX_LOG_LEN + MAX_LOG_LEN];
     showBuffer.level = data->level;
     showBuffer.pid = data->pid;
     showBuffer.tid = data->tid;
@@ -472,7 +472,7 @@ void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
     int offset = data->tag_len;
-    char *dataBegin = data->data + offset;
+    const char *dataBegin = data->data + offset;
     char *dataPos = data->data + offset;
     while (*dataPos != 0) {
         if (*dataPos == '\n') {
@@ -480,7 +480,7 @@ void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context
                 *dataPos = 0;
                 showBuffer.tag_len = offset;
                 showBuffer.data = data->data;
-                HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
+                HilogShowBuffer(buffer, MAX_LOG_LEN + MAX_LOG_LEN, showBuffer, showFormat);
                 if (context->tailLines) {
                     tailBuffer.emplace_back(buffer);
                     return;
@@ -497,7 +497,7 @@ void HilogShowLog(int32_t showFormat, HilogDataMessage* data, HilogArgs* context
     }
     if (dataPos != dataBegin) {
         showBuffer.data = data->data;
-        HilogShowBuffer(buffer, MAX_LOG_LEN * 2, showBuffer, showFormat);
+        HilogShowBuffer(buffer, MAX_LOG_LEN + MAX_LOG_LEN, showBuffer, showFormat);
         if (context->tailLines) {
             tailBuffer.emplace_back(buffer);
             return;
