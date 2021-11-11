@@ -376,6 +376,7 @@ void LogPersister::Exit()
     if (!isExited()) {
         cvhasExited.wait(lk);
     }
+    rotator->RemoveInfo();
     delete rotator;
     this->rotator = nullptr;
     munmap(buffer, MAX_PERSISTER_BUFFER_SIZE);
