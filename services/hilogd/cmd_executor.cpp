@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
+#include <sys/prctl.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -28,8 +29,10 @@ const int MAX_WRITE_LOG_TASK = 100;
 
 using namespace std;
 HilogBuffer* CmdExecutor::hilogBuffer = nullptr;
+
 void LogQuerierMonitor(std::unique_ptr<Socket> handler)
 {
+    prctl(PR_SET_NAME, "hilogd.query");
     std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(std::move(handler),
         CmdExecutor::getHilogBuffer());
     logQuerier->LogQuerierThreadFunc(logQuerier);

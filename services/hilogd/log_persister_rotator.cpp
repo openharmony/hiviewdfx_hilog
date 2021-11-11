@@ -48,12 +48,16 @@ LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_
     memset_s(&info, sizeof(info), 0, sizeof(info));
 }
 
+void LogPersisterRotator::RemoveInfo()
+{
+    remove(infoPath.c_str());
+}
+
 LogPersisterRotator::~LogPersisterRotator()
 {
     if (fdinfo != nullptr) {
         fclose(fdinfo);
     }
-    remove(infoPath.c_str());
 }
 
 int LogPersisterRotator::Init()

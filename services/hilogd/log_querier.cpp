@@ -100,11 +100,17 @@ int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool 
     int rotatorRes = rotator->Init();
     int saveInfoRes = rotator->SaveInfo(pMsg, persister->queryCondition);
     int persistRes = persister->Init();
+    if (persistRes == ERR_LOG_PERSIST_TASK_FAIL) {
+        cout << "Log persist task is existed!" << endl;
+        persister.reset();
+        return persistRes;
+    }
     if (persistRes != 0) {
         cout << "LogPersister failed to initialize!" << endl;
         persister.reset();
         return persistRes;
     }
+
     if (rotatorRes != 0) {
         cout << "Failed to open info file!" << endl;
         persister.reset();

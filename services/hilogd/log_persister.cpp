@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 #include <chrono>
 #include <cstdio>
@@ -114,7 +115,7 @@ int LogPersister::Init()
         }
     }
     if (hit) {
-        return ERR_LOG_PERSIST_FILE_PATH_INVALID;
+        return ERR_LOG_PERSIST_TASK_FAIL;
     }
     if (InitCompress() ==  RET_FAIL) {
         return ERR_LOG_PERSIST_COMPRESS_INIT_FAIL;
@@ -286,6 +287,7 @@ inline void LogPersister::WriteFile()
 
 int LogPersister::ThreadFunc()
 {
+    prctl(PR_SET_NAME, "hilogd.pst");
     std::thread::id tid = std::this_thread::get_id();
     cout << __func__ << " " << tid << endl;
     while (true) {
@@ -374,6 +376,7 @@ void LogPersister::Exit()
     if (!isExited()) {
         cvhasExited.wait(lk);
     }
+    rotator->RemoveInfo();
     delete rotator;
     this->rotator = nullptr;
     munmap(buffer, MAX_PERSISTER_BUFFER_SIZE);

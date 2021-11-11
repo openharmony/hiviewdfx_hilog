@@ -55,6 +55,7 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_LOG_PERSIST_FILE_OPEN_FAIL, "Log persist open file failed"},
     {ERR_LOG_PERSIST_MMAP_FAIL, "Log persist mmap failed"},
     {ERR_LOG_PERSIST_JOBID_FAIL, "Log persist jobid not exist"},
+    {ERR_LOG_PERSIST_TASK_FAIL, "Log persist task is existed"},
     {ERR_DOMAIN_INVALID, "Invalid domain, domain should not be  more than 0 and less than "
     + to_string(DOMAIN_MAX_SCOPE)},
     {ERR_MEM_ALLOC_FAIL, "Alloc memory failed"},
