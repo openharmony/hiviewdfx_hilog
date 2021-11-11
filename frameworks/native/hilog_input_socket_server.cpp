@@ -14,7 +14,7 @@
  */
 
 #include "hilog_input_socket_server.h"
-
+#include <sys/prctl.h>
 #include <thread>
 
 namespace OHOS {
@@ -28,6 +28,7 @@ int HilogInputSocketServer::RunServingThread()
 
 int HilogInputSocketServer::ServingThread()
 {
+    prctl(PR_SET_NAME, "hilogd.server");
     int ret;
     int length;
     char *data = nullptr;

@@ -47,6 +47,7 @@ public:
     void WriteRecoveryInfo();
     void SetRestore(bool flag);
     bool GetRestore();
+    void RemoveInfo();
 protected:
     void InternalRotate();
     uint32_t fileNum;

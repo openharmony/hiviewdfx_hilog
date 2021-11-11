@@ -27,8 +27,8 @@
 namespace OHOS {
 namespace HiviewDFX {
 typedef struct {
-    uint32_t offset;
     char content[MAX_PERSISTER_BUFFER_SIZE];
+    uint32_t offset;
 } LogPersisterBuffer;
 
 const uint16_t CHUNK = 16384;
