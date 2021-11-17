@@ -37,6 +37,9 @@
       "module_list": [
         "//base/hiviewdfx/hilog/services/hilogtool:hilog",
         "//base/hiviewdfx/hilog/services/hilogd:hilogd"
+      ],
+      "test_list": [
+        "//base/hiviewdfx/hilog/test:HiLogNDKTest"
       ]
     }
   }
