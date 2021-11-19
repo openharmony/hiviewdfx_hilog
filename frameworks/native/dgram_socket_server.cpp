@@ -16,6 +16,7 @@
 #include "dgram_socket_server.h"
 
 #include <iostream>
+#include <array>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -40,18 +41,18 @@ int DgramSocketServer::RecvPacket(char **data, int *length, struct ucred *cred)
         return 0;
     }
 
-    struct msghdr msgh;
+    std::array<char, CMSG_SPACE(sizeof(struct ucred))> control = {0};
+
+    struct msghdr msgh = {0};
     if (cred != nullptr) {
         struct iovec iov;
         iov.iov_base = *data;
         iov.iov_len = packetLen;
         msgh.msg_iov = &iov;
         msgh.msg_iovlen = 1;
-
-        unsigned int cmsgSize = CMSG_SPACE(sizeof(struct ucred));
-        char control[cmsgSize];
-        msgh.msg_control = control;
-        msgh.msg_controllen = cmsgSize;
+    
+        msgh.msg_control = control.data();
+        msgh.msg_controllen = control.size();
 
         msgh.msg_name = nullptr;
         msgh.msg_namelen = 0;
