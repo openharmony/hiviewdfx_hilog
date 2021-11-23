@@ -17,17 +17,17 @@
 #define DGRAM_SOCKET_SERVER_H
 
 #include "socket_server.h"
+#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {
 class DgramSocketServer : public SocketServer {
 public:
-    DgramSocketServer(const std::string& serverPath, uint16_t maxLength)
-        : SocketServer(serverPath, SOCK_DGRAM), maxLength(maxLength) {}
-        ~DgramSocketServer() = default;
-    int RecvPacket(char **data, int *length, struct ucred *cred = nullptr);
+    DgramSocketServer(const std::string& socketName, uint16_t maxLength)
+        : SocketServer(socketName, SOCK_DGRAM), maxPacketLength(maxLength) {}
+    int RecvPacket(std::vector<char>& buffer, struct ucred *cred = nullptr);
 private:
-    uint16_t maxLength;
+    uint16_t maxPacketLength;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
