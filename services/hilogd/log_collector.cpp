@@ -46,11 +46,15 @@ void LogCollector::InsertDropInfo(const HilogMsg &msg, int droppedCount)
         dropMsg->domain  = msg.domain;
 
         auto remainSize = buffer.size() - sizeof(HilogMsg);
-        memcpy_s(dropMsg->tag, remainSize, tag.data(), tag.size());
+        if (memcpy_s(dropMsg->tag, remainSize, tag.data(), tag.size())) {
+            std::cerr << "Can't copy tag info of Drop Info message\n";
+        }
         
         remainSize -= tag.size();
         auto logTextPtr = dropMsg->tag + tag.size(); // log text is behind tag data
-        memcpy_s(logTextPtr, remainSize, dropLog.data(), dropLog.size() + 1);
+        if (memcpy_s(logTextPtr, remainSize, dropLog.data(), dropLog.size() + 1)) {
+            std::cerr << "Can't copy log text info of Drop Info message\n";
+        }
 
         InsertLogToBuffer(*dropMsg);
     }
@@ -67,10 +71,10 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
     }
 
     HilogMsg *msg = reinterpret_cast<HilogMsg *>(data.data());
-    #ifdef __RECV_MSG_WITH_UCRED_
-        msg->pid = cred.pid;
-    #endif
-    // Domain flow control 
+#ifdef __RECV_MSG_WITH_UCRED_
+    msg->pid = cred.pid;
+#endif
+    // Domain flow control
     int ret = FlowCtrlDomain(msg);
     if (ret < 0) {
         // dropping message

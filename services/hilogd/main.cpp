@@ -70,17 +70,17 @@ int HilogdEntry(int argc, char* argv[])
     InitDomainFlowCtrl();
 
     // Start log_collector
-    #ifndef __RECV_MSG_WITH_UCRED_
+#ifndef __RECV_MSG_WITH_UCRED_
     auto onDataReceive = [&hilogBuffer](std::vector<char>& data) {
         static LogCollector logCollector(&hilogBuffer);
         logCollector.onDataRecv(data);
     };
-    #else
+#else
     auto onDataReceive = [&hilogBuffer](const ucred& cred, std::vector<char>& data) {
         static LogCollector logCollector(&hilogBuffer);
         logCollector.onDataRecv(cred, data);
     };
-    #endif
+#endif
     
     HilogInputSocketServer incomingLogsServer(onDataReceive);
     if (incomingLogsServer.Init() < 0) {
