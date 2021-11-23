@@ -29,8 +29,8 @@ namespace OHOS {
 namespace HiviewDFX {
 class SocketServer {
 public:
-    SocketServer(const std::string& serverPath, uint32_t socketType);
-    ~SocketServer();
+    SocketServer(const std::string& _socketName, uint32_t _socketType);
+    virtual ~SocketServer();
     int Init();
     int Recv(void *buffer, unsigned int bufferLen, int flags = MSG_PEEK);
     int RecvMsg(struct msghdr *hdr, int flags = 0);
@@ -40,7 +40,7 @@ private:
     int socketHandler;
     uint32_t socketType;
     sockaddr_un serverAddr;
-    std::string sockName;
+    std::string socketName;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

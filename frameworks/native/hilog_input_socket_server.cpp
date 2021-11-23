@@ -19,38 +19,62 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-int HilogInputSocketServer::RunServingThread()
+HilogInputSocketServer::~HilogInputSocketServer()
 {
-    auto thread = std::thread(&HilogInputSocketServer::ServingThread, this);
-    thread.detach();
-    return 0;
+    StopServingThread();
 }
 
-int HilogInputSocketServer::ServingThread()
+HilogInputSocketServer::ServerThreadState HilogInputSocketServer::RunServingThread()
+{
+    if (m_serverThread.get_id() != std::thread().get_id()) {
+        return ServerThreadState::ALREADY_STARTED;
+    }
+    m_serverThread = std::thread(&HilogInputSocketServer::ServingThread, this);
+    m_stopServer.store(false);
+    if (m_serverThread.get_id() != std::thread().get_id()) {
+        return ServerThreadState::JUST_STARTED;
+    }
+    return ServerThreadState::CAN_NOT_START;
+}
+
+void HilogInputSocketServer::StopServingThread()
+{
+    if (m_serverThread.get_id() == std::thread().get_id()) {
+        return;
+    }
+    std::thread tmp;
+    std::swap(m_serverThread, tmp);
+    if (tmp.joinable()) {
+        m_stopServer.store(true);
+        tmp.join();
+    }
+}
+
+void HilogInputSocketServer::ServingThread()
 {
     prctl(PR_SET_NAME, "hilogd.server");
     int ret;
-    int length;
-    char *data = nullptr;
+    std::vector<char> data;
 #ifndef __RECV_MSG_WITH_UCRED_
-    while ((ret = RecvPacket(&data, &length)) >= 0) {
+    while ((ret = RecvPacket(data)) >= 0) {
         if (ret > 0) {
-            handlePacket(data, length);
-            delete [] data;
-            data = nullptr;
+            m_packetHandler(data);
+        }
+        if (m_stopServer.load()) {
+            break;
         }
     }
 #else
-    struct ucred cred;
-    while ((ret = RecvPacket(&data, &length, &cred)) >= 0) {
+    ucred cred;
+    while ((ret = RecvPacket(data, &cred)) >= 0) {
         if (ret > 0) {
-            handlePacket(cred, data, length);
-            delete [] data;
-            data = nullptr;
+            m_packetHandler(cred, data);
+        }
+        if (m_stopServer.load()) {
+            break;
         }
     }
 #endif
-    return ret;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

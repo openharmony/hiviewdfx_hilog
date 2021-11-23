@@ -17,6 +17,10 @@
 #define HILOG_INPUT_SOCKET_SERVER_H
 
 #include "dgram_socket_server.h"
+#include <thread>
+#include <vector>
+#include <atomic>
+#include <functional>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -24,22 +28,34 @@ namespace HiviewDFX {
 
 class HilogInputSocketServer : public DgramSocketServer {
 public:
+
 #ifndef __RECV_MSG_WITH_UCRED_
-    explicit HilogInputSocketServer(int (*handlePacket)(char*, unsigned int))
-        : DgramSocketServer(INPUT_SOCKET_NAME, MAX_SOCKET_PACKET_LEN), handlePacket(handlePacket){}
+    using HandlingFunc = std::function<void(std::vector<char>& data)>;
 #else
-    explicit HilogInputSocketServer(int (*handlePacket)(struct ucred cred, char*, unsigned int))
-        : DgramSocketServer(INPUT_SOCKET_NAME, MAX_SOCKET_PACKET_LEN), handlePacket(handlePacket){}
+    using HandlingFunc = std::function<void(const ucred& credential, std::vector<char>& data)>;
 #endif
-    ~HilogInputSocketServer() = default;
-    int RunServingThread();
+    enum class ServerThreadState {
+        JUST_STARTED,
+        ALREADY_STARTED,
+        CAN_NOT_START
+    };
+
+    explicit HilogInputSocketServer(HandlingFunc _packetHandler)
+        : DgramSocketServer(INPUT_SOCKET_NAME, MAX_SOCKET_PACKET_LEN)
+        , m_packetHandler(_packetHandler)
+        , m_stopServer(false)
+        {}
+
+    ~HilogInputSocketServer();
+
+    ServerThreadState RunServingThread();
+    void StopServingThread();
 private:
-#ifndef __RECV_MSG_WITH_UCRED_
-    int (*handlePacket)(char *data, unsigned int dataLen);
-#else
-    int (*handlePacket)(struct ucred cred, char *data, unsigned int dataLen);
-#endif
-    int ServingThread();
+    void ServingThread();
+
+    HandlingFunc m_packetHandler = nullptr;
+    std::thread m_serverThread;
+    std::atomic_bool m_stopServer;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

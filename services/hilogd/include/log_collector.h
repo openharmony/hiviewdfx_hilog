@@ -24,17 +24,16 @@ namespace HiviewDFX {
 class LogCollector {
 public:
     LogCollector(HilogBuffer* buffer);
-    void operator ()();
-    static int FlowCtrlDataRecv(HilogMsg *msg, int ret);
-    static size_t InsertLogToBuffer(const HilogMsg& msg);
+    void InsertDropInfo(const HilogMsg &msg, int droppedCount);
+    size_t InsertLogToBuffer(const HilogMsg& msg);
 #ifndef __RECV_MSG_WITH_UCRED_
-    static int onDataRecv(char *data, unsigned int dataLen);
+    void onDataRecv(std::vector<char>& data);
 #else
-    static int onDataRecv(ucred cred, char *data, unsigned int dataLen);
+    void onDataRecv(const ucred& cred, std::vector<char>& data);
 #endif
     ~LogCollector() = default;
 private:
-    static HilogBuffer* hilogBuffer;
+    HilogBuffer* m_hilogBuffer = nullptr;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -70,9 +70,20 @@ int HilogdEntry(int argc, char* argv[])
     InitDomainFlowCtrl();
 
     // Start log_collector
-    LogCollector logCollector(&hilogBuffer);
-    HilogInputSocketServer server(logCollector.onDataRecv);
-    if (server.Init() < 0) {
+    #ifndef __RECV_MSG_WITH_UCRED_
+    auto onDataReceive = [&hilogBuffer](std::vector<char>& data) {
+        static LogCollector logCollector(&hilogBuffer);
+        logCollector.onDataRecv(data);
+    };
+    #else
+    auto onDataReceive = [&hilogBuffer](const ucred& cred, std::vector<char>& data) {
+        static LogCollector logCollector(&hilogBuffer);
+        logCollector.onDataRecv(cred, data);
+    };
+    #endif
+    
+    HilogInputSocketServer incomingLogsServer(onDataReceive);
+    if (incomingLogsServer.Init() < 0) {
 #ifdef DEBUG
         cout << "Failed to init input server socket ! error=" << strerror(errno) << std::endl;
 #endif
@@ -83,7 +94,7 @@ int HilogdEntry(int argc, char* argv[])
 #ifdef DEBUG
         cout << "Begin to listen !\n";
 #endif
-        server.RunServingThread();
+        incomingLogsServer.RunServingThread();
     }
 
     std::thread startupCheckThread([&hilogBuffer]() {
