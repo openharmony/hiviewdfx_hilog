@@ -32,13 +32,13 @@ extern "C" {
 #endif
 namespace OHOS {
 namespace HiviewDFX {
-SocketServer::SocketServer(const std::string& serverPath, uint32_t socketType)
-    : socketHandler(0), socketType(socketType), sockName(serverPath)
+SocketServer::SocketServer(const std::string& _socketName, uint32_t socketType)
+    : socketHandler(0), socketType(socketType), socketName(_socketName)
 {
     serverAddr.sun_family = AF_UNIX;
 
     std::string sockPath(SOCKET_FILE_DIR);
-    sockPath += sockName;
+    sockPath += socketName;
     if (strcpy_s(serverAddr.sun_path, sizeof(serverAddr.sun_path), sockPath.c_str()) != EOK) {
         return;
     }
@@ -47,11 +47,11 @@ SocketServer::SocketServer(const std::string& serverPath, uint32_t socketType)
 
 int SocketServer::Init()
 {
-    if (sockName.length()) {
+    if (socketName.length()) {
 #ifdef HILOG_USE_MUSL
-        socketHandler = GetControlSocket(sockName.c_str());
+        socketHandler = GetControlSocket(socketName.c_str());
 #else
-        socketHandler = GetExistingSocketServer(sockName.c_str(), socketType);
+        socketHandler = GetExistingSocketServer(socketName.c_str(), socketType);
 #endif
         if (socketHandler >= 0) {
             return socketHandler;
