@@ -174,7 +174,7 @@ int HilogEntry(int argc, char* argv[])
     regex delimiter(",");
     context.noBlockMode = 0;
     int32_t ret = 0;
-    int32_t showFormat = 0;
+    uint32_t showFormat = 0;
     int controlCount = 0;
     for (int argsCount = 0; argsCount < argc; argsCount++) {
         args.push_back(argv[argsCount]);

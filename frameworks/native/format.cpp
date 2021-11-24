@@ -59,7 +59,7 @@ int ColorFromLevel(uint16_t level)
     }
 }
 
-int HilogShowTimeBuffer(char* buffer, int bufLen, int32_t showFormat,
+int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
     const HilogShowFormatBuffer& contentOut)
 {
     time_t now = contentOut.tv_sec;
@@ -72,7 +72,7 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, int32_t showFormat,
     if ((showFormat & (1 << EPOCH_SHOWFORMAT)) || (showFormat & (1 << MONOTONIC_SHOWFORMAT))) {
         ret = snprintf_s(buffer, bufLen, bufLen - 1,
             (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%19lld", (long long)now);
-        timeLen += ((ret > 0) ? ret : 0); 
+        timeLen += ((ret > 0) ? ret : 0);
     } else {
         ptm = localtime(&now);
         if (ptm == nullptr) {
@@ -82,11 +82,11 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, int32_t showFormat,
         timeLen = strlen(buffer);
         if (showFormat & (1 << YEAR_SHOWFORMAT)) {
             timeLen = strftime(buffer, bufLen, "%Y-%m-%d %H:%M:%S", ptm);
-            timeLen = strlen(buffer);         
+            timeLen = strlen(buffer);
         }
         if (showFormat & (1 << ZONE_SHOWFORMAT)) {
             timeLen = strftime(buffer, bufLen, "%z %m-%d %H:%M:%S", ptm);
-            timeLen = strlen(buffer); 
+            timeLen = strlen(buffer);
         }
         if (showFormat & (1 << TIME_NSEC_SHOWFORMAT)) {
             ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
@@ -99,13 +99,13 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, int32_t showFormat,
         } else {
             ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
                 ".%03llu", nsecTime / NS2MS);
-            timeLen += ((ret > 0) ? ret : 0); 
+            timeLen += ((ret > 0) ? ret : 0);
         }
     }
     return timeLen;
 }
 
-void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, int32_t showFormat)
+void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, uint32_t showFormat)
 {
     int logLen = 0;
     int ret = 0;
