@@ -20,33 +20,25 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-int DgramSocketServer::RecvPacket(char **data, int *length, struct ucred *cred)
+int DgramSocketServer::RecvPacket(std::vector<char>& buffer, struct ucred *cred)
 {
-    int ret = 0;
     uint16_t packetLen = 0;
-
-    ret = Recv(&packetLen, sizeof(packetLen));
-    if (ret < 0) {
-        return ret;
+    if (auto status = Recv(&packetLen, sizeof(packetLen)); status < 0) {
+        return status;
     }
-    if (packetLen > maxLength) {
-        Recv(&packetLen, sizeof(packetLen), 0);
+    if (packetLen > maxPacketLength) {
+        Recv(&packetLen, sizeof(packetLen), 0); // skip too long packet
         return 0;
     }
-    *length = packetLen;
-    *data = new (std::nothrow) char[packetLen + 1];
-
-    if (*data == nullptr) {
-        Recv(&packetLen, sizeof(packetLen), 0);
-        return 0;
-    }
+    buffer.resize(packetLen + 1);
 
     std::array<char, CMSG_SPACE(sizeof(struct ucred))> control = {0};
 
     struct msghdr msgh = {0};
+    int ret = 0;
     if (cred != nullptr) {
         struct iovec iov;
-        iov.iov_base = *data;
+        iov.iov_base = buffer.data();
         iov.iov_len = packetLen;
         msgh.msg_iov = &iov;
         msgh.msg_iovlen = 1;
@@ -60,24 +52,20 @@ int DgramSocketServer::RecvPacket(char **data, int *length, struct ucred *cred)
 
         ret = RecvMsg(&msgh);
     } else {
-        ret = Recv(*data, packetLen, 0);
+        ret = Recv(buffer.data(), packetLen, 0);
     }
 
     if (ret <= 0) {
-        delete [] *data;
-        *data = nullptr;
         return ret;
     } else if (cred != nullptr) {
         struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msgh);
         struct ucred *receivedUcred = (struct ucred*)CMSG_DATA(cmsg);
         if (receivedUcred == nullptr) {
-            delete [] *data;
-            *data = nullptr;
             return 0;
         }
         *cred = *receivedUcred;
     }
-    (*data)[ret - 1] = 0;
+    buffer[ret - 1] = 0;
 
     return ret;
 }
