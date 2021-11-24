@@ -34,7 +34,7 @@ inline void PrintBuffer(void* pBuff, unsigned int nLen);
 void NextRequestOp(SeqPacketSocketClient& controller, uint16_t sendId);
 void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* context);
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,
-    const HilogArgs* context, int32_t format);
+    const HilogArgs* context, uint32_t format);
 int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     const std::string& logTypeStr, const std::string& buffSizeStr);
 int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,

@@ -70,7 +70,7 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
     + to_string(MAX_BUFFER_SIZE)},
     {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed each time"}
-}; 
+};
 
 string ParseErrorCode(ErrorCode errorCode)
 {
@@ -436,7 +436,7 @@ bool HilogMatchByRegex(string context, string regExpArg)
     }
 }
 
-void HilogShowLog(int32_t showFormat, HilogDataMessage* data, const HilogArgs* context,
+void HilogShowLog(uint32_t showFormat, HilogDataMessage* data, const HilogArgs* context,
     vector<string>& tailBuffer)
 {
     if (data->sendId == SENDIDN) {

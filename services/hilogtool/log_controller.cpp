@@ -211,7 +211,7 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
 }
 
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,
-    const HilogArgs* context, int32_t format)
+    const HilogArgs* context, uint32_t format)
 {
     static std::vector<string> tailBuffer;
     LogQueryResponse* rsp = reinterpret_cast<LogQueryResponse*>(recvBuffer);
@@ -252,7 +252,7 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
         }
     }
 }
-int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr, 
+int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr,
     const std::string& buffSizeStr)
 {
     char msgToSend[MSG_MAX_LEN] = {0};
