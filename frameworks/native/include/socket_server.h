@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <string>
+#include <chrono>
 
 #include "hilog_common.h"
 #include "socket_client.h"
@@ -35,6 +36,7 @@ public:
     int Recv(void *buffer, unsigned int bufferLen, int flags = MSG_PEEK);
     int RecvMsg(struct msghdr *hdr, int flags = 0);
     int Listen(unsigned int backlog);
+    int Poll(short inEvent, short& outEvent, const std::chrono::milliseconds& timeout);
     int Accept();
 private:
     int socketHandler;
