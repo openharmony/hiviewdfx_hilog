@@ -17,19 +17,22 @@
 #define SEQ_PACKET_SOCKET_SERVER_H
 
 #include "socket_server.h"
+#include <functional>
+#include <string_view>
 
 namespace OHOS {
 namespace HiviewDFX {
-typedef int (*AcceptingHandler)(std::unique_ptr<Socket>);
 class SeqPacketSocketServer : public SocketServer {
 public:
+    using AcceptingHandler = std::function<void(std::unique_ptr<Socket>)>;
+
     SeqPacketSocketServer(const std::string& serverPath, unsigned int maxListenNumber)
         : SocketServer(serverPath, SOCK_SEQPACKET), maxListenNumber(maxListenNumber) {}
     ~SeqPacketSocketServer() = default;
-    int AcceptConnection(AcceptingHandler func);
+    int StartAcceptingConnection(AcceptingHandler onAccepted);
 private:
     unsigned int maxListenNumber;
-    int AcceptingThread(AcceptingHandler func);
+    int AcceptingLoop(AcceptingHandler func);
 };
 } // namespace HiviewDFX
 } // namespace OHOS
