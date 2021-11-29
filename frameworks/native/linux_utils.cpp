@@ -21,7 +21,7 @@ using namespace std::literals;
 namespace OHOS {
 namespace HiviewDFX {
 namespace Utils {
-std::string_view ListenErrorToStr(int error) 
+std::string_view ListenErrorToStr(int error)
 {
     static const std::unordered_map<int, std::string_view> ERRORS {
         // explanations taken from https://man7.org/linux/man-pages/man2/listen.2.html
@@ -50,7 +50,8 @@ std::string_view AcceptErrorToStr(int error)
         {EBADF,        "sockfd is not an open file descriptor."sv},
         {ECONNABORTED, "A connection has been aborted."sv},
         {EFAULT,       "The addr argument is not in a writable part of the user address space."sv},
-        {EINTR,        "The system call was interrupted by a signal that was caught before a valid connection arrived."sv},
+        {EINTR,        "The system call was interrupted by a signal "
+                       "that was caught before a valid connection arrived."sv},
         {EINVAL,       "Socket is not listening for connections, or addrlen is invalid (e.g., is negative)."sv},
         {EMFILE,       "The per-process limit on the number of open file descriptors has been reached."sv},
         {ENFILE,       "The system-wide limit on the total number of open files has been reached."sv},
@@ -75,7 +76,8 @@ std::string_view ChmodErrorToStr(int error)
         // explanations taken from https://man7.org/linux/man-pages/man2/chmod.2.html
         {EACCES,       "Search permission is denied on a component of the path prefix."sv},
         {EBADF,        "(fchmod()) The file descriptor fd is not valid."sv},
-        {EBADF,        "(fchmodat()) pathname is relative but dirfd is neither AT_FDCWD nor a valid file descriptor."sv},
+        {EBADF,        "(fchmodat()) pathname is relative but dirfd is neither "
+                       "AT_FDCWD nor a valid file descriptor."sv},
         {EFAULT,       "pathname points outside your accessible address space."sv},
         {EINVAL,       "(fchmodat()) Invalid flag specified in flags."sv},
         {EIO,          "An I/O error occurred."sv},
@@ -112,7 +114,6 @@ std::string_view PollErrorToStr(int error)
     auto it = ERRORS.find(error);
     return it != ERRORS.end() ? it->second : "Unknown error"sv;
 }
-
 } // Utils
 } // HiviewDFX
 } // OHOS

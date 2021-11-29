@@ -14,19 +14,21 @@
  */
 #include "cmd_executor.h"
 #include "log_querier.h"
-#include "seq_packet_socket_server.h"
-#include "linux_utils.h"
 
+#include <linux_utils.h>
+#include <seq_packet_socket_server.h>
+
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <memory>
-#include <sys/stat.h>
-#include <thread>
-#include <unistd.h>
-#include <sys/prctl.h>
-#include <algorithm>
-#include <assert.h>
 #include <mutex>
+#include <thread>
+
 #include <poll.h>
+#include <sys/prctl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -72,22 +74,19 @@ void CmdExecutor::MainLoop()
     std::cout << "Server started to listen !\n";
 
     using namespace std::chrono_literals;
-    for(;;) {
+    for (;;) {
         const auto maxtime = 3000ms;
         short outEvent = 0;
         auto pollResult = cmdServer.Poll(POLLIN, outEvent, maxtime);
-        if (pollResult == 0) {
-            // std::cout << "---------Timeout---------\n";
+        if (pollResult == 0) { // poll == 0 means timeout
             CleanFinishedClients();
             continue;
-        }
-        else if (pollResult < 0) {
+        } else if (pollResult < 0) {
             int pollError = errno;
             std::cerr << "Socket polling error: " << pollError << "\n";
             std::cerr << Utils::ChmodErrorToStr(pollError) << "\n";
             break;
-        }
-        else if (pollResult != 1 || outEvent != POLLIN) {
+        } else if (pollResult != 1 || outEvent != POLLIN) {
             std::cerr << "Wrong poll result data."
                          " Result: " << pollResult <<
                          " OutEvent: " << outEvent << "\n";
@@ -96,13 +95,11 @@ void CmdExecutor::MainLoop()
 
         int acceptResult = cmdServer.Accept();
         if (acceptResult > 0) {
-            // std::cout << "---------New Connection---------\n";
             int acceptedSockedFd = acceptResult;
             std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
             handler->setHandler(acceptedSockedFd);
             OnAcceptedConnection(std::move(handler));
-        }
-        else {
+        } else {
             int acceptError = errno;
             std::cerr << "Socket accept failed: " << acceptError << "\n";
             std::cerr << Utils::AcceptErrorToStr(acceptError) << "\n";
@@ -114,10 +111,9 @@ void CmdExecutor::MainLoop()
 void CmdExecutor::OnAcceptedConnection(std::unique_ptr<Socket> handler)
 {
     std::lock_guard<std::mutex> lg(m_clientAccess);
-    auto newVal = std::unique_ptr<ClientThread>(new ClientThread{
-        std::thread(&CmdExecutor::ClientEventLoop, this, std::move(handler)),
-        std::atomic<bool>(false)
-    });
+    auto newVal = std::make_unique<ClientThread>();
+    newVal->m_stopThread.store(false);
+    newVal->m_clientThread = std::thread(&CmdExecutor::ClientEventLoop, this, std::move(handler));
     m_clients.push_back(std::move(newVal));
 }
 
@@ -136,12 +132,6 @@ void CmdExecutor::ClientEventLoop(std::unique_ptr<Socket> handler)
     prctl(PR_SET_NAME, "hilogd.query");
     auto logQuerier = std::make_shared<LogQuerier>(std::move(handler), m_hilogBuffer);
     logQuerier->LogQuerierThreadFunc(logQuerier);
-
-    // TODO add stopping child thread if parent thread is finished!
-    //      this will cause changes inside log querier and will be done later.
-    // if ((*clientInfoIt)->m_stopThread.load()) {
-    //    // break; return; :(
-    // }
 
     std::lock_guard<std::mutex> ul(m_finishedClientAccess);
     m_finishedClients.push_back(std::this_thread::get_id());

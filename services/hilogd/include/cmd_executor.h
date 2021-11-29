@@ -20,8 +20,8 @@
 #include <atomic>
 #include <thread>
 
-#include "log_buffer.h"
 #include <socket.h>
+#include "log_buffer.h"
 
 namespace OHOS {
 namespace HiviewDFX {
