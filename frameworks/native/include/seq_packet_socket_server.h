@@ -17,8 +17,8 @@
 #define SEQ_PACKET_SOCKET_SERVER_H
 
 #include "socket_server.h"
+
 #include <functional>
-#include <string_view>
 
 namespace OHOS {
 namespace HiviewDFX {
