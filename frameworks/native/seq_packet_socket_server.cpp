@@ -15,9 +15,9 @@
 
 #include "seq_packet_socket_server.h"
 
-#include <thread>
+#include <cstring>
 #include <iostream>
-#include "linux_utils.h"
+#include <thread>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -27,7 +27,7 @@ int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted)
     if (listeningStatus < 0) {
 #ifdef DEBUG
         std::cerr << "Socket listen failed: " << listeningStatus << "\n";
-        std::cerr << Utils::ListenErrorToStr(listeningStatus) << "\n";
+        std::cerr << strerror(listeningStatus) << "\n";
 #endif
         return listeningStatus;
     }
@@ -46,7 +46,7 @@ int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func)
     int acceptError = errno;
 #ifdef DEBUG
     std::cerr << "Socket accept failed: " << acceptError << "\n";
-    std::cerr << Utils::AccessErrorToStr(acceptError) << "\n";
+    std::cerr <<strerror(acceptError) << "\n";
 #endif
 
     return acceptError;

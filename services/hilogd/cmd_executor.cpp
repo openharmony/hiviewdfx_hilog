@@ -15,11 +15,11 @@
 #include "cmd_executor.h"
 #include "log_querier.h"
 
-#include <linux_utils.h>
 #include <seq_packet_socket_server.h>
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -32,7 +32,7 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-const int MAX_WRITE_LOG_TASK = 100;
+static const int MAX_CLIENT_CONNECTIONS = 100;
 
 CmdExecutor::CmdExecutor(HilogBuffer* buffer)
 {
@@ -54,21 +54,16 @@ CmdExecutor::~CmdExecutor()
 
 void CmdExecutor::MainLoop()
 {
-    SeqPacketSocketServer cmdServer(CONTROL_SOCKET_NAME, MAX_WRITE_LOG_TASK);
+    SeqPacketSocketServer cmdServer(CONTROL_SOCKET_NAME, MAX_CLIENT_CONNECTIONS);
     if (cmdServer.Init() < 0) {
         std::cerr << "Failed to init control socket ! \n";
         return;
     }
-    if (chmod(CONTROL_SOCKET, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) {
-        int chmodError = errno;
-        std::cerr << "chmod control socket failed ! Error: " << chmodError << "\n";
-        std::cerr << Utils::ChmodErrorToStr(chmodError) << "\n";
-    }
     std::cout << "Begin to cmd accept !\n";
-    int listeningStatus = cmdServer.Listen(MAX_WRITE_LOG_TASK);
+    int listeningStatus = cmdServer.Listen(MAX_CLIENT_CONNECTIONS);
     if (listeningStatus < 0) {
         std::cerr << "Socket listen failed: " << listeningStatus << "\n";
-        std::cerr << Utils::ListenErrorToStr(listeningStatus) << "\n";
+        std::cerr << strerror(listeningStatus) << "\n";
         return;
     }
     std::cout << "Server started to listen !\n";
@@ -84,7 +79,7 @@ void CmdExecutor::MainLoop()
         } else if (pollResult < 0) {
             int pollError = errno;
             std::cerr << "Socket polling error: " << pollError << "\n";
-            std::cerr << Utils::ChmodErrorToStr(pollError) << "\n";
+            std::cerr << strerror(pollError) << "\n";
             break;
         } else if (pollResult != 1 || outEvent != POLLIN) {
             std::cerr << "Wrong poll result data."
@@ -102,7 +97,7 @@ void CmdExecutor::MainLoop()
         } else {
             int acceptError = errno;
             std::cerr << "Socket accept failed: " << acceptError << "\n";
-            std::cerr << Utils::AcceptErrorToStr(acceptError) << "\n";
+            std::cerr << strerror(acceptError) << "\n";
             break;
         }
     }
