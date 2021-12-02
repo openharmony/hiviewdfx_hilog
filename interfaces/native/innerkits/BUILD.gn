@@ -25,7 +25,6 @@ ohos_shared_library("libhilog") {
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
     "//base/hiviewdfx/hilog/frameworks/native:libhilog_source",
-    "//utils/native/base:utilsecurec_shared",
   ]
 
   output_extension = "so"

@@ -39,7 +39,7 @@ ohos_executable("hilogd") {
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//third_party/zlib:libz",
-    "//utils/native/base:utilsecurec_shared",
+    "//third_party/bounds_checking_function:libsec_static"
   ]
 
   deps += [ "etc:hilogd_etc" ]

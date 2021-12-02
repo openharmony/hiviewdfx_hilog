@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <sstream>
 #include <regex>
-#include <securec.h>
 
 #include "hilog/log.h"
 #include "hilog_common.h"
@@ -163,7 +162,6 @@ int HilogEntry(int argc, char* argv[])
 {
     std::vector<std::string> args;
     HilogArgs context = {sizeof(HilogArgs), 0};
-    char recvBuffer[RECV_BUF_LEN] = {0};
     int optIndex = 0;
     int indexLevel = 0;
     int indexType = 0;
@@ -576,7 +574,7 @@ int HilogEntry(int argc, char* argv[])
         context.nNoTag = 0;
     }
 
-    memset_s(recvBuffer, sizeof(recvBuffer), 0, sizeof(recvBuffer));
+    char recvBuffer[RECV_BUF_LEN] = {0};
     if (controller.RecvMsg(recvBuffer, RECV_BUF_LEN) == 0) {
             fprintf(stderr, "Unexpected EOF %s\n", strerror(errno));
             exit(1);
