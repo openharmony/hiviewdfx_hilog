@@ -15,7 +15,6 @@
 
 #include "properties.h"
 #include "hilog/log.h"
-#include <securec.h>
 #include <string>
 #include <ctime>
 #include <fstream>

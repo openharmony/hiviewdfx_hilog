@@ -27,7 +27,6 @@ ohos_source_set("libhilog_source") {
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//base/hiviewdfx/hilog/frameworks/native/include",
-    "//utils/native/base/include",
   ]
 
   sources = [
@@ -35,6 +34,7 @@ ohos_source_set("libhilog_source") {
     "hilog_input_socket_client.cpp",
     "hilog_input_socket_server.cpp",
     "hilog_printf.cpp",
+    "vsnprintf_s_p.cpp",
   ]
 
   defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_default_privacy" ]
@@ -43,7 +43,7 @@ ohos_source_set("libhilog_source") {
   configs = [ ":libhilog_config" ]
   deps = [
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//utils/native/base:utilsecurec_shared",
+    "//third_party/bounds_checking_function:libsec_static",
   ]
 }
 
@@ -77,7 +77,7 @@ ohos_shared_library("libhilogutil") {
 
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//utils/native/base:utilsecurec_shared",
+    "//third_party/bounds_checking_function:libsec_static"
   ]
 
   if (use_musl) {
