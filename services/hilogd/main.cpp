@@ -105,7 +105,7 @@ int HilogdEntry(int argc, char* argv[])
     startupCheckThread.detach();
 
     CmdExecutor cmdExecutor(&hilogBuffer);
-    cmdExecutor.StartCmdExecutorThread();
+    cmdExecutor.MainLoop();
 
     return 0;
 }

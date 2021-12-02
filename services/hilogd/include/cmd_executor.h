@@ -17,21 +17,34 @@
 
 #include <list>
 #include <memory>
+#include <atomic>
+#include <thread>
 
+#include <socket.h>
 #include "log_buffer.h"
-#include "log_querier.h"
-#include "log_persister.h"
-#include "seq_packet_socket_server.h"
+
 namespace OHOS {
 namespace HiviewDFX {
+struct ClientThread {
+    std::thread m_clientThread;
+    std::atomic<bool> m_stopThread;
+};
+
 class CmdExecutor {
 public:
     CmdExecutor(HilogBuffer* buffer);
-    void StartCmdExecutorThread();
-    static HilogBuffer* getHilogBuffer();
-    ~CmdExecutor() = default;
+    ~CmdExecutor();
+    void MainLoop();
 private:
-    static HilogBuffer* hilogBuffer;
+    void OnAcceptedConnection(std::unique_ptr<Socket> handler);
+    void ClientEventLoop(std::unique_ptr<Socket> handler);
+    void CleanFinishedClients();
+
+    HilogBuffer* m_hilogBuffer = nullptr;
+    std::list<std::unique_ptr<ClientThread>> m_clients;
+    std::mutex m_clientAccess;
+    std::vector<std::thread::id> m_finishedClients;
+    std::mutex m_finishedClientAccess;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
