@@ -15,36 +15,41 @@
 
 #include "seq_packet_socket_server.h"
 
-#include <thread>
+#include <cstring>
 #include <iostream>
+#include <thread>
 
 namespace OHOS {
 namespace HiviewDFX {
-int SeqPacketSocketServer::AcceptConnection(AcceptingHandler func)
+int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted)
 {
-    int ret = Listen(maxListenNumber);
-    if (ret < 0) {
+    int listeningStatus = Listen(maxListenNumber);
+    if (listeningStatus < 0) {
 #ifdef DEBUG
-        std::cout << "Socket listen failed: " << ret << std::endl;
+        std::cerr << "Socket listen failed: " << listeningStatus << "\n";
+        std::cerr << strerror(listeningStatus) << "\n";
 #endif
-        return ret;
+        return listeningStatus;
     }
 
-    AcceptingThread(func);
-
-    return ret;
+    return AcceptingLoop(onAccepted);
 }
 
-int SeqPacketSocketServer::AcceptingThread(AcceptingHandler func)
+int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func)
 {
-    int ret = 0;
-    while ((ret = Accept()) > 0) {
+    int acceptedSockedFd = 0;
+    while ((acceptedSockedFd = Accept()) > 0) {
         std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
-        handler->setHandler(ret);
+        handler->setHandler(acceptedSockedFd);
         func(std::move(handler));
     }
+    int acceptError = errno;
+#ifdef DEBUG
+    std::cerr << "Socket accept failed: " << acceptError << "\n";
+    std::cerr <<strerror(acceptError) << "\n";
+#endif
 
-    return ret;
+    return acceptError;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

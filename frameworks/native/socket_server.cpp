@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <poll.h>
 #include <unistd.h>
 
 #include "socket_server_adapter.h"
@@ -87,6 +88,14 @@ int SocketServer::RecvMsg(struct msghdr *hdr, int flags)
 int SocketServer::Listen(unsigned int backlog)
 {
     return listen(socketHandler, backlog);
+}
+
+int SocketServer::Poll(short inEvent, short& outEvent, const std::chrono::milliseconds& timeout)
+{
+    pollfd info {socketHandler, inEvent, outEvent};
+    int result = poll(&info, 1, timeout.count());
+    outEvent = info.revents;
+    return result;
 }
 
 int SocketServer::Accept()
