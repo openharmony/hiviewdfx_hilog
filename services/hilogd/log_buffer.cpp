@@ -96,12 +96,12 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
     // Insert new log into HilogBuffer
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
-    if (msg.tv_sec >= (rit->tv_sec)) {
+    if (msg.tv_nsec >= (rit->tv_nsec)) {
         hilogDataList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
-        for (; rit != hilogDataList.rend() && msg.tv_sec < rit->tv_sec; ++rit) {
+        for (; rit != hilogDataList.rend() && msg.tv_nsec < rit->tv_nsec; ++rit) {
             logReaderListMutex.lock_shared();
             for (auto &itr :logReaderList) {
                 if (itr.lock()->readPos == std::prev(rit.base())) {
@@ -262,41 +262,8 @@ size_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
     if (buffSize <= 0 || buffSize > MAX_BUFFER_SIZE) {
         return ERR_BUFF_SIZE_INVALID;
     }
-    hilogBufferMutex.lock();
-    if (sizeByType[logType] > buffSize) {
-        // Drop old log when buffsize not enough
-        std::list<HilogData>::iterator it = hilogDataList.begin();
-        while (sizeByType[logType] > buffSize && it != hilogDataList.end()) {
-            if ((*it).type != logType) {    // Only remove old logs of the same type
-                ++it;
-                continue;
-            }
-            logReaderListMutex.lock_shared();
-            for (auto &itr :logReaderList) {
-                if (itr.lock()->readPos == it) {
-                    itr.lock()->readPos = std::next(it);
-                }
-                if (itr.lock()->lastPos == it) {
-                    itr.lock()->lastPos = std::next(it);
-                }
-            }
-            logReaderListMutex.unlock_shared();
-            size_t cLen = it->len - it->tag_len;
-            size -= cLen;
-            sizeByType[(*it).type] -= cLen;
-            it = hilogDataList.erase(it);
-        }
-        // Re-confirm if enough elements has been removed
-        if (sizeByType[logType] > (size_t)g_maxBufferSizeByType[logType] || size > (size_t)g_maxBufferSize) {
-            return ERR_BUFF_SIZE_EXP;
-        }
-        g_maxBufferSizeByType[logType] = buffSize;
-        g_maxBufferSize += (buffSize - sizeByType[logType]);
-    } else {
-        g_maxBufferSizeByType[logType] = buffSize;
-        g_maxBufferSize += (buffSize - sizeByType[logType]);
-    }
-    hilogBufferMutex.unlock();
+    g_maxBufferSizeByType[logType] = buffSize;
+    g_maxBufferSize += (buffSize - sizeByType[logType]);
     return buffSize;
 }
 
