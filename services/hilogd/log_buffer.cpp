@@ -33,7 +33,7 @@ using namespace std;
 
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
-static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {1048576, 1048576, 1048576, 1048576};
+static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144};
 const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;
@@ -96,12 +96,12 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
     // Insert new log into HilogBuffer
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
-    if (msg.tv_nsec >= (rit->tv_nsec)) {
+    if (msg.tv_sec >= (rit->tv_sec)) {
         hilogDataList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
-        for (; rit != hilogDataList.rend() && msg.tv_nsec < rit->tv_nsec; ++rit) {
+        for (; rit != hilogDataList.rend() && msg.tv_sec < rit->tv_sec; ++rit) {
             logReaderListMutex.lock_shared();
             for (auto &itr :logReaderList) {
                 if (itr.lock()->readPos == std::prev(rit.base())) {
