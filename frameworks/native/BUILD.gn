@@ -43,7 +43,7 @@ ohos_source_set("libhilog_source") {
   configs = [ ":libhilog_config" ]
   deps = [
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//third_party/bounds_checking_function:libsec_static",
+    "//third_party/bounds_checking_function:libsec_shared",
   ]
 }
 
@@ -77,7 +77,7 @@ ohos_shared_library("libhilogutil") {
 
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//third_party/bounds_checking_function:libsec_static"
+    "//third_party/bounds_checking_function:libsec_shared"
   ]
 
   if (use_musl) {

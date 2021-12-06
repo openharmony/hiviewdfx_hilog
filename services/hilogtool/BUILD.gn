@@ -33,7 +33,7 @@ ohos_executable("hilog") {
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//third_party/zlib:libz",
-    "//third_party/bounds_checking_function:libsec_static",
+    "//third_party/bounds_checking_function:libsec_shared",
   ]
 
   install_enable = true
