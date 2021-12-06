@@ -26,7 +26,7 @@
 
 #include "hilog_common.h"
 #include "flow_control_init.h"
-
+#include "log_time_stamp.h"
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
@@ -96,12 +96,14 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
     // Insert new log into HilogBuffer
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
-    if (msg.tv_sec >= (rit->tv_sec)) {
+    LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
+    LogTimeStamp ritTimeStamp(rit->tv_sec, rit->tv_nsec);
+    if (msgTimeStamp >= ritTimeStamp) {
         hilogDataList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
-        for (; rit != hilogDataList.rend() && msg.tv_sec < rit->tv_sec; ++rit) {
+        for (; rit != hilogDataList.rend() && msgTimeStamp < ritTimeStamp; ++rit) {
             logReaderListMutex.lock_shared();
             for (auto &itr :logReaderList) {
                 if (itr.lock()->readPos == std::prev(rit.base())) {

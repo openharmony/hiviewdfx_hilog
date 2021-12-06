@@ -243,10 +243,21 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     /* format log string */
     debug = IsDebugOn();
     priv = (!debug) && IsPrivateSwitchOn();
+#ifdef __clang__
+/*code specific to clang compiler*/
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
+#elif __GNUC__
+/*code for GNU C compiler */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
     ret = vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, priv, fmt, ap);
+#ifdef __clang__
 #pragma clang diagnostic pop
+#elif __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
     /* fill header info */
     int tagLen = strnlen(tag, MAX_TAG_LEN - 1);
