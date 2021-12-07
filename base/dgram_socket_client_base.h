@@ -16,14 +16,14 @@
 #ifndef DGRAM_SOCKET_CLIENT_H
 #define DGRAM_SOCKET_CLIENT_H
 
-#include "socket_client.h"
+#include "socket_client_base.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 class DgramSocketClient : public SocketClient {
 public:
-    DgramSocketClient(std::string serverPath, uint32_t socketOption)
-        : SocketClient(serverPath, SOCK_DGRAM), fdHandler(-1)
+    DgramSocketClient(const char* serverPath, uint16_t serverPathLen, uint32_t socketOption)
+        : SocketClient(serverPath, serverPathLen, SOCK_DGRAM), fdHandler(-1)
     {
         socketType = (socketOption & allowOption);
         SetType(SOCK_DGRAM | socketType);
