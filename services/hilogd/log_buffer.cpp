@@ -98,19 +98,15 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
     LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
     LogTimeStamp ritTimeStamp(rit->tv_sec, rit->tv_nsec);
+    LogTimeStamp measureTimeStamp(rit->tv_sec, rit->tv_nsec);
     if (msgTimeStamp >= ritTimeStamp) {
         hilogDataList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
-        for (; rit != hilogDataList.rend() && msgTimeStamp < ritTimeStamp; ++rit) {
-            logReaderListMutex.lock_shared();
-            for (auto &itr :logReaderList) {
-                if (itr.lock()->readPos == std::prev(rit.base())) {
-                    itr.lock()->oldData.emplace_front(msg);
-                }
-            }
-            logReaderListMutex.unlock_shared();
+        for (; rit != hilogDataList.rend() && (msgTimeStamp < measureTimeStamp
+            || (ritTimeStamp -= msgTimeStamp) > LogTimeStamp(5)); ++rit) {
+            hilogDataList.emplace_front(msg);
         }
         hilogDataList.emplace(rit.base(), msg);
     }
@@ -140,21 +136,6 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
         if (reader->readPos == hilogDataList.end()) {
             reader->readPos = std::next(reader->lastPos);
         }
-    }
-    // Look up in oldData first
-    if (!reader->oldData.empty()) {
-        reader->SetSendId(SENDIDA);
-        reader->WriteData(&(reader->oldData.back()));
-        printLenByType[(reader->oldData.back()).type] += strlen(reader->oldData.back().content);
-        if (printLenByDomain.count(reader->oldData.back().domain) == 0) {
-            printLenByDomain.insert(pair<uint32_t, uint64_t>(reader->oldData.back().domain,
-                strlen(reader->oldData.back().content)));
-        } else {
-            printLenByDomain[reader->oldData.back().domain] += strlen(reader->oldData.back().content);
-        }
-        reader->oldData.pop_back();
-        hilogBufferMutex.unlock_shared();
-        return true;
     }
     while (reader->readPos != hilogDataList.end()) {
         reader->lastPos = reader->readPos;

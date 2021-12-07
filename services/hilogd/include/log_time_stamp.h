@@ -15,37 +15,64 @@
 #ifndef LOG_TIME_STAMP_H
 #define LOG_TIME_STAMP_H
 
+#define NS_PER_SEC 1000000000ULL
 namespace OHOS {
 namespace HiviewDFX {
 class LogTimeStamp {
+
 public:
     LogTimeStamp() {};
     ~LogTimeStamp() = default;
+    explicit LogTimeStamp(const timespec& T)
+        : tv_sec(static_cast<uint32_t>(T.tv_sec)), tv_nsec(static_cast<uint32_t>(T.tv_nsec)) {}
     explicit LogTimeStamp(uint32_t sec, uint32_t nsec = 0)
-    : tv_sec(sec), tv_nsec(nsec) {
+        : tv_sec(sec), tv_nsec(nsec) {
     };
     /* LogTimeStamp */
     bool operator==(const LogTimeStamp& T) const {
-      return (tv_sec == T.tv_sec) && (tv_nsec == T.tv_nsec);
+        return (tv_sec == T.tv_sec) && (tv_nsec == T.tv_nsec);
     }
     bool operator!=(const LogTimeStamp& T) const {
-      return !(*this == T);
+        return !(*this == T);
     }
     bool operator<(const LogTimeStamp& T) const {
-      return (tv_sec < T.tv_sec) ||
-             ((tv_sec == T.tv_sec) && (tv_nsec < T.tv_nsec));
+        return (tv_sec < T.tv_sec) ||
+              ((tv_sec == T.tv_sec) && (tv_nsec < T.tv_nsec));
     }
     bool operator>=(const LogTimeStamp& T) const {
-      return !(*this < T);
+        return !(*this < T);
     }
     bool operator>(const LogTimeStamp& T) const {
-      return (tv_sec > T.tv_sec) ||
-             ((tv_sec == T.tv_sec) && (tv_nsec > T.tv_nsec));
+        return (tv_sec > T.tv_sec) ||
+              ((tv_sec == T.tv_sec) && (tv_nsec > T.tv_nsec));
     }
     bool operator<=(const LogTimeStamp& T) const {
-      return !(*this > T);
+        return !(*this > T);
+    }
+    LogTimeStamp operator-=(const LogTimeStamp& T) {
+        if (*this <= T) {
+            return *this = LogTimeStamp(epoch);
+        }
+        if (this->tv_nsec < T.tv_nsec) {
+            --this->tv_sec;
+            this->tv_nsec = NS_PER_SEC + this->tv_nsec - T.tv_nsec;
+        } else {
+            this->tv_nsec -= T.tv_nsec;
+        }
+        this->tv_sec -= T.tv_sec;
+        return *this;
+    }
+    LogTimeStamp operator+=(const LogTimeStamp& T) {
+        this->tv_nsec += T.tv_nsec;
+        if (this->tv_nsec >= NS_PER_SEC) {
+            this->tv_nsec -= NS_PER_SEC;
+            ++this->tv_sec;
+        }
+        this->tv_sec += T.tv_sec;
+        return *this;
     }
 private:
+    static constexpr timespec epoch = {0, 0};
     uint32_t tv_sec = 0;
     uint32_t tv_nsec = 0;
 };
