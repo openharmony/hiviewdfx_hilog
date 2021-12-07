@@ -77,7 +77,7 @@ ohos_shared_library("libhilogutil") {
 
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//third_party/bounds_checking_function:libsec_shared"
+    "//third_party/bounds_checking_function:libsec_shared",
   ]
 
   if (use_musl) {
