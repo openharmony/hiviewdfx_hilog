@@ -13,28 +13,36 @@
  * limitations under the License.
  */
 
-#ifndef DGRAM_SOCKET_CLIENT_H
-#define DGRAM_SOCKET_CLIENT_H
+#include "dgram_socket_client_base.h"
 
-#include "socket_client.h"
+#include <unistd.h>
 
 namespace OHOS {
 namespace HiviewDFX {
-class DgramSocketClient : public SocketClient {
-public:
-    DgramSocketClient(std::string serverPath, uint32_t socketOption)
-        : SocketClient(serverPath, SOCK_DGRAM), fdHandler(-1)
-    {
-        socketType = (socketOption & allowOption);
-        SetType(SOCK_DGRAM | socketType);
+int DgramSocketClient::CheckSocket()
+{
+    if (fdHandler >= 0) {
+        return fdHandler;
     }
-    ~DgramSocketClient() = default;
-    int CheckSocket();
-private:
-    std::atomic_int fdHandler;
-    uint32_t allowOption = SOCK_NONBLOCK | SOCK_CLOEXEC;
-    uint32_t socketType;
-};
+
+    int fd = GenerateFD();
+    if (fd < 0) {
+        return fd;
+    }
+
+    int ret;
+    int defaultValue = -1;
+    fdHandler.compare_exchange_strong(defaultValue, fd);
+    if (defaultValue != -1) {
+        ret = defaultValue;
+        close(fd);
+    } else {
+        ret = fd;
+        setHandler(fd);
+        Connect();
+    }
+
+    return ret;
+}
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif /* DGRAM_SOCKET_CLIENT_H */

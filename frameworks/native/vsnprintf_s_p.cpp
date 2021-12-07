@@ -14,8 +14,9 @@
  */
 
 #include "vsnprintf_s_p.h"
-#include <securectype.h>
 
+#include <cstdlib>
+#include <securectype.h>
 
 #if defined(_DEBUG) || defined(DEBUG)
     #if defined(SECUREC_ERROR_HANDLER_BY_ASSERT)
@@ -114,12 +115,18 @@ typedef enum {
     STAT_INVALID
 } SecFmtState;
 
+#ifndef HILOG_PROHIBIT_ALLOCATION
 #ifndef SECUREC_MALLOC
 #define SECUREC_MALLOC(x) malloc((size_t)(x))
 #endif
 
 #ifndef SECUREC_FREE
 #define SECUREC_FREE(x)   free((void *)(x))
+#endif
+
+#else
+#define SECUREC_MALLOC(x) (nullptr)
+#define SECUREC_FREE(x)   { printf("Malloc is not allowed, so free should not be possible to execute!"); std::abort(); }
 #endif
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(_MSC_VER)) || defined(__ARMCC_VERSION)

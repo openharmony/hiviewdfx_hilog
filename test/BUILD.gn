@@ -27,14 +27,32 @@ ohos_moduletest("HiLogNDKTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
+    "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/googletest:gtest_main",
-    "//utils/native/base:utils",
   ]
 
   external_deps = [ "hilog_native:libhilog" ]
 
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//utils/native/base/include",
+  ]
+}
+
+ohos_moduletest("HiLogBaseNDKTest") {
+  module_out_path = module_output_path
+
+  sources = [ "moduletest/common/hilog_ndk_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  deps = [
+    "//third_party/bounds_checking_function:libsec_shared",
+    "//third_party/googletest:gtest_main",
+  ]
+
+  external_deps = [ "hilog_native:libhilog_base" ]
+
+  include_dirs = [
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
 }
