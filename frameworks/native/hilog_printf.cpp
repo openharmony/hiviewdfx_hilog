@@ -23,13 +23,14 @@
 #include <unistd.h>
 #include <ctime>
 #include <cerrno>
-#include <securec_p.h>
+#include <securec.h>
 
 #include "hilog_trace.h"
 #include "hilog_inner.h"
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilog_input_socket_client.h"
+#include "vsnprintf_s_p.h"
 
 using namespace std;
 static RegisterFunc g_registerFunc = nullptr;
