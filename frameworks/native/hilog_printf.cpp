@@ -25,6 +25,7 @@
 #include <cerrno>
 #include <securec_p.h>
 
+#include "log_time_stamp.h"
 #include "hilog_trace.h"
 #include "hilog_inner.h"
 #include "hilog/log.h"
@@ -34,7 +35,6 @@
 using namespace std;
 static RegisterFunc g_registerFunc = nullptr;
 static atomic_int g_hiLogGetIdCallCount = 0;
-static const long long NSEC_PER_SEC = 1000000000ULL;
 static const char P_LIMIT_TAG[] = "LOGLIMITP";
 #ifdef DEBUG
 static const int MAX_PATH_LEN = 1024;
@@ -64,13 +64,6 @@ void HiLogUnregisterGetIdFun(RegisterFunc registerFunc)
     return;
 }
 
-static long long HiLogTimespecSub(struct timespec a, struct timespec b)
-{
-    long long ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
-
-    ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
-    return ret;
-}
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 {
     uint16_t domainLevel = GetDomainLevel(domain);
@@ -135,20 +128,16 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
     static uint32_t processQuota = DEFAULT_QUOTA;
     static atomic_int gSumLen = 0;
     static atomic_int gDropped = 0;
-    static atomic<struct timespec> gStartTime = atomic<struct timespec>({
-        .tv_sec = 0, .tv_nsec = 0
-    });
+    LogTimeStamp startTime(0, 0);
+    static atomic<LogTimeStamp> gStartTime(startTime);
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     if (!isFirstFlag.test_and_set()) {
         processQuota = ParseProcessQuota();
     }
-
-    struct timespec tsNow = { 0, 0 };
-    struct timespec tsStart = atomic_load(&gStartTime);
-    clock_gettime(CLOCK_MONOTONIC, &tsNow);
-    long long ns = HiLogTimespecSub(tsStart, tsNow);
+    LogTimeStamp tsStart = atomic_load(&gStartTime);
+    LogTimeStamp tsNow(CLOCK_MONOTONIC);
     /* in statistic period(1 second) */
-    if (ns <= NSEC_PER_SEC) {
+    if ((tsStart -= tsNow) <= LogTimeStamp(1)) {
         uint32_t sumLen = (uint32_t)atomic_load(&gSumLen);
         if (sumLen > processQuota) { /* over quota, -1 means don't print */
             atomic_fetch_add_explicit(&gDropped, 1, memory_order_relaxed);
@@ -163,7 +152,6 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
         atomic_store(&gSumLen, len);
         return dropped;
     }
-
     return 0;
 }
 

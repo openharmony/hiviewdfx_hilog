@@ -37,6 +37,7 @@ static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144
 const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;
+const int MAX_TIME_DIFF = 5;
 
 HilogBuffer::HilogBuffer()
 {
@@ -96,25 +97,19 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
     // Insert new log into HilogBuffer
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
+    std::list<HilogData>::reverse_iterator ritEnd = hilogDataList.rend(); 
     LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
     LogTimeStamp ritTimeStamp(rit->tv_sec, rit->tv_nsec);
-    LogTimeStamp measureTimeStamp(rit->tv_sec, rit->tv_nsec);
-    if (msgTimeStamp >= ritTimeStamp) {
+    LogTimeStamp measureTimeStamp(ritEnd->tv_sec, ritEnd->tv_nsec);
+    if (msgTimeStamp >= ritTimeStamp || msgTimeStamp < measureTimeStamp ||
+        (ritTimeStamp -= msgTimeStamp) > LogTimeStamp(MAX_TIME_DIFF)) {
         hilogDataList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
         ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
-        for (; rit != hilogDataList.rend() && (msgTimeStamp < measureTimeStamp
-            || (ritTimeStamp -= msgTimeStamp) > LogTimeStamp(5)); ++rit) {
+        for (; rit != hilogDataList.rend() && (msgTimeStamp < ritTimeStamp); ++rit) {
             ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
-            logReaderListMutex.lock_shared();
-            for (auto &itr :logReaderList) {
-                if (itr.lock()->readPos == std::prev(rit.base())) {
-                    hilogDataList.emplace_front(msg);
-                }
-            }
-            logReaderListMutex.unlock_shared();
         }
         hilogDataList.emplace(rit.base(), msg);
     }
