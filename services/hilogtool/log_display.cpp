@@ -19,7 +19,6 @@
 #include <cstring>
 #include <vector>
 #include <regex>
-#include <securec.h>
 #include <unordered_map>
 #include "hilog/log.h"
 #include "format.h"

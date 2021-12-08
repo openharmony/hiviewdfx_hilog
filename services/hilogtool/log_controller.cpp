@@ -15,14 +15,14 @@
 
 #include "log_controller.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <regex>
+#include <securec.h>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <securec.h>
-#include <stdio.h>
-#include <regex>
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
@@ -160,8 +160,7 @@ string SetDefaultLogType(const std::string& logTypeStr)
 }
 void NextRequestOp(SeqPacketSocketClient& controller, uint16_t sendId)
 {
-    NextRequest nextRequest;
-    memset_s(&nextRequest, sizeof(nextRequest), 0, sizeof(nextRequest));
+    NextRequest nextRequest = {{0}};
     SetMsgHead(&nextRequest.header, NEXT_REQUEST, sizeof(NextRequest)-sizeof(MessageHeader));
     nextRequest.sendId = sendId;
     controller.WriteAll((char*)&nextRequest, sizeof(NextRequest));
@@ -169,8 +168,7 @@ void NextRequestOp(SeqPacketSocketClient& controller, uint16_t sendId)
 
 void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* context)
 {
-    LogQueryRequest logQueryRequest;
-    memset_s(&logQueryRequest, sizeof(LogQueryRequest), 0, sizeof(LogQueryRequest));
+    LogQueryRequest logQueryRequest = {{0}};
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
     logQueryRequest.nPid = context->nPid;
@@ -221,7 +219,7 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
     }
     NextRequestOp(controller, SENDIDA);
     while(1) {
-        memset_s(recvBuffer, bufLen, 0, bufLen);
+        std::fill_n(recvBuffer, bufLen, 0);
         if (controller.RecvMsg(recvBuffer, bufLen) == 0) {
             fprintf(stderr, "Unexpected EOF %s\n", strerror(errno));
             exit(1);
@@ -330,22 +328,22 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
         }
     }
     switch (msgCmd) {
-        case MC_REQ_STATISTIC_INFO_QUERY:
-            StatisticInfoQueryRequest staInfoQueryReq;
-            memset_s(&staInfoQueryReq, sizeof(StatisticInfoQueryRequest), 0, sizeof(StatisticInfoQueryRequest));
+        case MC_REQ_STATISTIC_INFO_QUERY: {
+            StatisticInfoQueryRequest staInfoQueryReq = {{0}};
             staInfoQueryReq.logType = logType;
             staInfoQueryReq.domain = domain;
             SetMsgHead(&staInfoQueryReq.msgHeader, msgCmd, sizeof(StatisticInfoQueryRequest) - sizeof(MessageHeader));
             controller.WriteAll((char*)&staInfoQueryReq, sizeof(StatisticInfoQueryRequest));
             break;
-        case MC_REQ_STATISTIC_INFO_CLEAR:
-            StatisticInfoClearRequest staInfoClearReq;
-            memset_s(&staInfoClearReq, sizeof(StatisticInfoClearRequest), 0, sizeof(StatisticInfoClearRequest));
+        }
+        case MC_REQ_STATISTIC_INFO_CLEAR: {
+            StatisticInfoClearRequest staInfoClearReq = {{0}};
             staInfoClearReq.logType = logType;
             staInfoClearReq.domain = domain;
             SetMsgHead(&staInfoClearReq.msgHeader, msgCmd, sizeof(StatisticInfoClearRequest) - sizeof(MessageHeader));
             controller.WriteAll((char*)&staInfoClearReq, sizeof(StatisticInfoClearRequest));
             break;
+        }
         default:
             break;
     }

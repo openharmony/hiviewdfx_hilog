@@ -19,10 +19,6 @@ ohos_shared_library("libhilog_os_adapter") {
     "socket_server_adapter.cpp",
   ]
 
-  deps = [
-    "//utils/native/base:utilsecurec_shared",
-  ]
-
   defines = [ "USING_EXISTING_SOCKET" ]
 
   include_dirs = [
