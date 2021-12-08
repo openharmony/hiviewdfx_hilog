@@ -17,7 +17,6 @@
 #define HILOG_INNER_H
 
 #include "hilog/log.h"
-#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
