@@ -71,6 +71,10 @@ public:
         this->tv_sec += T.tv_sec;
         return *this;
     }
+    void SetTimeStamp(uint32_t sec, uint32_t nsec) {
+        this->tv_sec = sec;
+        this->tv_nsec = nsec;
+    }
 private:
     static constexpr timespec epoch = {0, 0};
     uint32_t tv_sec = 0;

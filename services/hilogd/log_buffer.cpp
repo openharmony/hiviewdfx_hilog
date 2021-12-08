@@ -104,9 +104,17 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     } else {
         // Find the place with right timestamp
         ++rit;
+        ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
         for (; rit != hilogDataList.rend() && (msgTimeStamp < measureTimeStamp
             || (ritTimeStamp -= msgTimeStamp) > LogTimeStamp(5)); ++rit) {
-            hilogDataList.emplace_front(msg);
+            ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
+            logReaderListMutex.lock_shared();
+            for (auto &itr :logReaderList) {
+                if (itr.lock()->readPos == std::prev(rit.base())) {
+                    hilogDataList.emplace_front(msg);
+                }
+            }
+            logReaderListMutex.unlock_shared();
         }
         hilogDataList.emplace(rit.base(), msg);
     }
