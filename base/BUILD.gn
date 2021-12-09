@@ -19,34 +19,24 @@ declare_args() {
 
 config("libhilog_source_base_cfg") {
   visibility = [ "*:*" ]
-  include_dirs = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//base/hiviewdfx/hilog/frameworks/native/include",
-  ]
+  include_dirs = ["."]
 
   defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_base_default_privacy" ]
   defines += [ "__RECV_MSG_WITH_UCRED_", "HILOG_PROHIBIT_ALLOCATION", "HILOG_USE_MUSL" ]
 }
 
-ohos_source_set("libhilog_source_base") {
+ohos_static_library("libhilog_base") {
   include_dirs = [
     "//base/hiviewdfx/hilog/frameworks/native",
+    "//base/hiviewdfx/hilog/frameworks/native/include",
   ]
   sources = [
-    "//base/hiviewdfx/hilog/frameworks/native/hilog.cpp",
-    "//base/hiviewdfx/hilog/frameworks/native/socket.cpp",
     "//base/hiviewdfx/hilog/frameworks/native/vsnprintf_s_p.cpp",
-    "dgram_socket_client_base.cpp",
-    "hilog_input_socket_client_base.cpp",
-    "hilog_printf_base.cpp",
-    "socket_client_base.cpp",
+    "hilog_base.cpp",
   ]
 
   public_configs = [ ":libhilog_source_base_cfg" ]
   configs = [ ":libhilog_source_base_cfg" ]
-  deps = [
-    "//third_party/bounds_checking_function:libsec_shared",
-  ]
 }
 
 
