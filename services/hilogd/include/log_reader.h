@@ -56,7 +56,6 @@ class LogReader : public std::enable_shared_from_this<LogReader> {
 public:
     std::list<HilogData>::iterator readPos;
     std::list<HilogData>::iterator lastPos;
-    std::list<HilogData> oldData;
     QueryCondition queryCondition;
     std::unique_ptr<Socket> hilogtoolConnectSocket;
     bool isNotified;

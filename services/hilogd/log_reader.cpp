@@ -29,7 +29,6 @@ using namespace std;
 HilogBuffer* LogReader::hilogBuffer = nullptr;
 LogReader::LogReader()
 {
-    oldData = {};
     isNotified = false;
 }
 
