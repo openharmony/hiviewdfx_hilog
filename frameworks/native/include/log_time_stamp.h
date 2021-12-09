@@ -22,7 +22,8 @@ public:
     LogTimeStamp() = default;
     ~LogTimeStamp() = default;
 #ifdef __linux__
-    explicit LogTimeStamp(clockid_t id) {
+    explicit LogTimeStamp(clockid_t id)
+    {
         timespec time;
         clock_gettime(id, &time);
         tv_sec = static_cast<uint32_t>(time.tv_sec);
@@ -35,27 +36,34 @@ public:
     explicit LogTimeStamp(uint32_t sec, uint32_t nsec = 0)
         : tv_sec(sec), tv_nsec(nsec) {};
     /* LogTimeStamp */
-    bool operator == (const LogTimeStamp& time) const {
+    bool operator == (const LogTimeStamp& time) const
+    {
         return (tv_sec == time.tv_sec) && (tv_nsec == time.tv_nsec);
     }
-    bool operator != (const LogTimeStamp& time) const {
+    bool operator != (const LogTimeStamp& time) const
+    {
         return !(*this == time);
     }
-    bool operator < (const LogTimeStamp& time) const {
+    bool operator < (const LogTimeStamp& time) const
+    {
         return (tv_sec < time.tv_sec) ||
         ((tv_sec == time.tv_sec) && (tv_nsec < time.tv_nsec));
     }
-    bool operator >= (const LogTimeStamp& time) const {
+    bool operator >= (const LogTimeStamp& time) const
+    {
         return !(*this < time);
     }
-    bool operator > (const LogTimeStamp& time) const {
+    bool operator > (const LogTimeStamp& time) const
+    {
         return (tv_sec > time.tv_sec) ||
         ((tv_sec == time.tv_sec) && (tv_nsec > time.tv_nsec));
     }
-    bool operator <= (const LogTimeStamp& time) const {
+    bool operator <= (const LogTimeStamp& time) const
+    {
         return !(*this > time);
     }
-    LogTimeStamp operator -= (const LogTimeStamp& time) {
+    LogTimeStamp operator -= (const LogTimeStamp& time)
+    {
         if (*this <= time) {
             return *this = LogTimeStamp(epoch);
         }
@@ -68,7 +76,8 @@ public:
         this->tv_sec -= time.tv_sec;
         return *this;
     }
-    LogTimeStamp operator += (const LogTimeStamp& time) {
+    LogTimeStamp operator += (const LogTimeStamp& time)
+    {
         this->tv_nsec += time.tv_nsec;
         if (this->tv_nsec >= NS_PER_SEC) {
             this->tv_nsec -= NS_PER_SEC;
@@ -77,7 +86,8 @@ public:
         this->tv_sec += time.tv_sec;
         return *this;
     }
-    void SetTimeStamp(uint32_t sec, uint32_t nsec) {
+    void SetTimeStamp(uint32_t sec, uint32_t nsec)
+    {
         this->tv_sec = sec;
         this->tv_nsec = nsec;
     }
