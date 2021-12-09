@@ -16,7 +16,6 @@
 #define LOG_TIME_STAMP_H
 
 #define NS_PER_SEC 1000000000ULL
-
 class LogTimeStamp {
 
 public:

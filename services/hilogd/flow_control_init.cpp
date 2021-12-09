@@ -173,7 +173,7 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
     if (it != g_domainMap.end()) {
         LogTimeStamp tsNow(CLOCK_MONOTONIC);
         /* in statistic period(1 second) */
-        if ((it->second->startTime -= tsNow) < LogTimeStamp(1)) {
+        if ((tsNow -= it->second->startTime) < LogTimeStamp(1)) {
             if (it->second->sumLen <= it->second->domainQuota) { /* under quota */
                 it->second->sumLen += logLen;
                 ret = 0;

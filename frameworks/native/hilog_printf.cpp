@@ -137,7 +137,7 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
     LogTimeStamp tsStart = atomic_load(&gStartTime);
     LogTimeStamp tsNow(CLOCK_MONOTONIC);
     /* in statistic period(1 second) */
-    if ((tsStart -= tsNow) <= LogTimeStamp(1)) {
+    if ((tsNow -= tsStart) <= LogTimeStamp(1)) {
         uint32_t sumLen = (uint32_t)atomic_load(&gSumLen);
         if (sumLen > processQuota) { /* over quota, -1 means don't print */
             atomic_fetch_add_explicit(&gDropped, 1, memory_order_relaxed);
@@ -232,11 +232,11 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     debug = IsDebugOn();
     priv = (!debug) && IsPrivateSwitchOn();
 #ifdef __clang__
-/*code specific to clang compiler*/
+/* code specific to clang compiler */
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
 #elif __GNUC__
-/*code for GNU C compiler */
+/* code for GNU C compiler */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif
