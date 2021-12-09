@@ -16,7 +16,17 @@
 #include "vsnprintf_s_p.h"
 
 #include <cstdlib>
-#include <securectype.h>
+#include <cstring>
+#include <stdio.h>
+
+/* Define the max length of the string */
+#ifndef SECUREC_STRING_MAX_LEN
+#define SECUREC_STRING_MAX_LEN 0x7fffffffUL
+#endif
+
+#if SECUREC_STRING_MAX_LEN > 0x7fffffffUL
+#error "max string is 2G"
+#endif
 
 #if defined(_DEBUG) || defined(DEBUG)
     #if defined(SECUREC_ERROR_HANDLER_BY_ASSERT)
