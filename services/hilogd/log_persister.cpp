@@ -296,7 +296,8 @@ int LogPersister::ThreadFunc()
         }
         if (!hilogBuffer->Query(shared_from_this())) {
             unique_lock<mutex> lk(cvMutex);
-            if (condVariable.wait_for(lk, sleepTime * 1s) ==
+
+            if (condVariable.wait_for(lk, std::chrono::seconds(sleepTime)) ==
                 cv_status::timeout) {
                 if (toExit) {
                     break;

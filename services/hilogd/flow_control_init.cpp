@@ -24,12 +24,12 @@
 #include <unistd.h>
 #include <hilog/log.h>
 #include "properties.h"
+#include "log_time_stamp.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 static const int DOMAIN_FILTER  = 0x00fffff;
 static const int DOMAIN_FILTER_SUBSYSTEM = 8;
-static const long long  NSEC_PER_SEC = 1000000000LL;
 
 using DomainInfo = struct {
     std::string domain;
@@ -37,7 +37,7 @@ using DomainInfo = struct {
     uint32_t domainQuota;
     uint32_t sumLen;
     uint32_t dropped;
-    struct timespec startTime;
+    LogTimeStamp startTime;
 };
 
 static std::unordered_map<uint32_t, DomainInfo*> g_domainMap;
@@ -125,7 +125,7 @@ void ParseDomainQuota(std::string &domainStr)
         domainInfo->domain = domainName;
         domainInfo->domainId = domainId;
         domainInfo->domainQuota = peak;
-        domainInfo->startTime = { .tv_sec = 0, .tv_nsec = 0};
+        domainInfo->startTime.SetTimeStamp(0, 0);
         domainInfo->sumLen = 0;
         domainInfo->dropped = 0;
         g_domainMap.insert({ domainId, domainInfo });
@@ -158,20 +158,12 @@ int32_t InitDomainFlowCtrl()
     return 0;
 }
 
-static long long TimespecSub(struct timespec a, struct timespec b)
-{
-    long long ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
-
-    ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
-    return ret;
-}
-
 int FlowCtrlDomain(HilogMsg* hilogMsg)
 {
     if (hilogMsg->type == LOG_APP || !IsDomainSwitchOn() || IsDebugOn()) {
         return 0;
     }
-    struct timespec tsNow = { 0, 0 };
+    LogTimeStamp tsNow(0, 0);
     std::unordered_map<uint32_t, DomainInfo*>::iterator it;
     uint32_t domain = hilogMsg->domain;
     uint32_t domainId = (domain & DOMAIN_FILTER) >> DOMAIN_FILTER_SUBSYSTEM;
@@ -179,9 +171,9 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
     int ret = 0;
     it = g_domainMap.find(domainId);
     if (it != g_domainMap.end()) {
-        clock_gettime(CLOCK_MONOTONIC, &tsNow);
+        LogTimeStamp tsNow(CLOCK_MONOTONIC);
         /* in statistic period(1 second) */
-        if (TimespecSub(it->second->startTime, tsNow) < NSEC_PER_SEC) {
+        if ((tsNow -= it->second->startTime) < LogTimeStamp(1)) {
             if (it->second->sumLen <= it->second->domainQuota) { /* under quota */
                 it->second->sumLen += logLen;
                 ret = 0;
