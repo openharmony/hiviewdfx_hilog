@@ -14,8 +14,6 @@
  */
 
 #include "log_kmsg.h"
-#include "hilog/log.h"
-#include "init_file.h"
 #include <cstdlib>
 #include <cinttypes>
 #include <iostream>
@@ -27,6 +25,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include "hilog/log.h"
+#include "init_file.h"
 
 namespace OHOS {
 namespace HiviewDFX {

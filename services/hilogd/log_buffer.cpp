@@ -89,19 +89,19 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     }
 
     // Insert new log into HilogBuffer
-    std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
-    std::list<HilogData>::reverse_iterator ritEnd = hilogDataList.rend(); 
+    std::list<HilogData>::reverse_iterator rit = msgList.rbegin();
+    std::list<HilogData>::reverse_iterator ritEnd = msgList.rend(); 
     LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
     LogTimeStamp ritTimeStamp(rit->tv_sec, rit->tv_nsec);
     LogTimeStamp measureTimeStamp(ritEnd->tv_sec, ritEnd->tv_nsec);
     if (msgTimeStamp >= ritTimeStamp || msgTimeStamp < measureTimeStamp ||
         (ritTimeStamp -= msgTimeStamp) > LogTimeStamp(MAX_TIME_DIFF)) {
-        hilogDataList.emplace_back(msg);
+        msgList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
         ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
-        for (; rit != hilogDataList.rend() && (msgTimeStamp < ritTimeStamp); ++rit) {
+        for (; rit != msgList.rend() && (msgTimeStamp < ritTimeStamp); ++rit) {
             ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
         }
         msgList.emplace(rit.base(), msg);
@@ -122,20 +122,20 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
 {
     uint16_t qTypes = reader->queryCondition.types;
-    std::list<HilogData> &list = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
+    std::list<HilogData> &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
     hilogBufferMutex.lock_shared();
     if (reader->GetReload()) {
-        reader->readPos = list.begin();
-        reader->lastPos = list.begin();
+        reader->readPos = msgList.begin();
+        reader->lastPos = msgList.begin();
         reader->SetReload(false);
     }
 
     if (reader->isNotified) {
-        if (reader->readPos == list.end()) {
+        if (reader->readPos == msgList.end()) {
             reader->readPos = std::next(reader->lastPos);
         }
     }
-    while (reader->readPos != hilogDataList.end()) {
+    while (reader->readPos != msgList.end()) {
         reader->lastPos = reader->readPos;
         if (ConditionMatch(reader)) {
             reader->SetSendId(SENDIDA);

@@ -16,7 +16,6 @@
 #define KMSG_PARSER_H
 
 #include "log_collector.h"
-#include <optional>
 
 namespace OHOS {
 namespace HiviewDFX {
