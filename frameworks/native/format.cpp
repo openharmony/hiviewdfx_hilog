@@ -31,9 +31,6 @@ static const int HILOG_COLOR_GREEN = 40;
 static const int HILOG_COLOR_ORANGE = 166;
 static const int HILOG_COLOR_RED = 196;
 static const int HILOG_COLOR_YELLOW = 226;
-static const long long NS = 1000000000LL;
-static const long long NS2US = 1000LL;
-static const long long NS2MS = 1000000LL;
 
 const char* ParsedFromLevel(uint16_t level)
 {
@@ -67,7 +64,7 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
     struct tm* ptm = nullptr;
     size_t timeLen = 0;
     int ret = 0;
-    nsecTime = (now < 0) ? (NS - nsecTime) : nsecTime;
+    nsecTime = (now < 0) ? (NSEC - nsecTime) : nsecTime;
 
     if ((showFormat & (1 << EPOCH_SHOWFORMAT)) || (showFormat & (1 << MONOTONIC_SHOWFORMAT))) {
         ret = snprintf_s(buffer, bufLen, bufLen - 1,

@@ -43,7 +43,7 @@ using namespace std;
 constexpr int MAX_DATA_LEN = 2048;
 string g_logPersisterDir = HILOG_FILE_DIR;
 constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
-constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE;
+constexpr int DEFAULT_LOG_TYPE = 1<<LOG_INIT | 1<<LOG_APP | 1<<LOG_CORE | 1<<LOG_KMSG;
 constexpr int SLEEP_TIME = 5;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 constexpr int INFO_SUFFIX = 5;
@@ -61,6 +61,17 @@ inline bool IsValidFileName(const std::string& strFileName)
     std::regex regExpress("[\\/:*?\"<>|]");
     bool bValid = !std::regex_search(strFileName, regExpress);
     return bValid;
+}
+
+inline bool LogTypeForbidden(uint16_t queryTypes)
+{
+    if (queryTypes == (0b01 << LOG_KMSG) || (queryTypes & (0b01 << LOG_KMSG)) == 0) {
+        return true;
+    } else {
+        cout << "queryTypes can not contain app/core/init and kmsg at the same time,\
+        try to -t app/core/init or -t kmsg separately" << endl;
+        return false;
+    }
 }
 
 LogPersisterRotator* MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
@@ -155,6 +166,8 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     string logPersisterPath;
     if (pLogPersistStartRst == nullptr) {
         return;
+    } else if (LogTypeForbidden(pLogPersistStartMsg->logType) == false) {
+        pLogPersistStartRst->result = ERR_QUERY_TYPE_INVALID;
     } else if (pLogPersistStartMsg->jobId  <= 0) {
         pLogPersistStartRst->result = ERR_LOG_PERSIST_JOBID_INVALID;
     } else if (pLogPersistStartMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
@@ -164,7 +177,9 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         cout << "FileName is not valid!" << endl;
         pLogPersistStartRst->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
     } else {
-        logPersisterPath = (strlen(pLogPersistStartMsg->filePath) == 0) ? (g_logPersisterDir + "hilog")
+        string logPersisterFileName = (pLogPersistStartMsg->logType == (0b01 << LOG_KMSG)) ? "hilog_kmsg" : "hilog";
+        cout << "logPersisterFileName" << logPersisterFileName << endl;
+        logPersisterPath = (strlen(pLogPersistStartMsg->filePath) == 0) ? (g_logPersisterDir + logPersisterFileName)
             : (g_logPersisterDir + string(pLogPersistStartMsg->filePath));
         if (strcpy_s(pLogPersistStartMsg->filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str()) != 0) {
             pLogPersistStartRst->result = RET_FAIL;
@@ -477,6 +492,9 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
             case LOG_QUERY_REQUEST:
                 qRstMsg = (LogQueryRequest*) g_tempBuffer;
                 SetCondition(logReader, *qRstMsg);
+                if (!LogTypeForbidden(logReader->queryCondition.types)) {
+                    return;
+                }
                 HandleLogQueryRequest(logReader, *hilogBuffer);
                 break;
             case NEXT_REQUEST:

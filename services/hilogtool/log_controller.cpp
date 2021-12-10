@@ -17,11 +17,11 @@
 
 #include <algorithm>
 #include <cstring>
+#include <cstdio>
 #include <iostream>
 #include <regex>
 #include <securec.h>
 #include <sstream>
-#include <string>
 #include <vector>
 #include "hilog/log.h"
 #include "hilog_common.h"
@@ -37,7 +37,7 @@ using namespace std;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
 const uint32_t DEFAULT_JOBID = 1;
-
+const uint32_t DEFAULT_KMSG_JOBID = 2;
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
@@ -82,6 +82,8 @@ uint16_t GetLogType(const string& logTypeStr)
         logType = LOG_CORE;
     } else if (logTypeStr == "app") {
         logType = LOG_APP;
+    } else if (logTypeStr == "kmsg") {
+        logType = LOG_KMSG;
     } else {
         return 0xffff;
     }
@@ -415,8 +417,13 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 }
                 pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
             }
-            pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
-            : stoi(logPersistParam->jobIdStr);
+            if (pLogPersistStartMsg->logType == (0b01 << LOG_KMSG)) {
+                pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_KMSG_JOBID : stoi(
+                    logPersistParam->jobIdStr);       
+            } else {
+                pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
+                    : stoi(logPersistParam->jobIdStr);
+            }
             if (pLogPersistStartMsg->jobId <= 0) {
                 cout << ParseErrorCode(ERR_LOG_PERSIST_JOBID_INVALID) << endl;
                 return RET_FAIL;
@@ -518,7 +525,19 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 return RET_FAIL;
             }
             break;
-
+        case OT_KMSG_SWITCH:
+            key = GetPropertyName(PROP_KMSG);
+            if (propertyParm->kmsgSwitchStr == "on") {
+                PropertySet(key.c_str(), "true");
+                std::cout << "hilog will store kmsg log" << std::endl;
+            } else if (propertyParm->kmsgSwitchStr == "off") {
+                PropertySet(key.c_str(), "false");
+                std::cout << "hilog will not store kmsg log" << std::endl;
+            } else {
+                std::cout << ParseErrorCode(ERR_KMSG_SWITCH_VALUE_INVALID) << std::endl;
+                return RET_FAIL;
+            }
+            break;
         case OT_LOG_LEVEL:
             if (propertyParm->tagStr != "" && propertyParm->domainStr != "") {
                 return RET_FAIL;

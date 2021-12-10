@@ -12,30 +12,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LOG_COLLECTOR_H
-#define LOG_COLLECTOR_H
-#include <list>
+#ifndef LOG_KMSG_H
+#define LOG_KMSG_H
 
 #include "log_buffer.h"
-#include "hilog_input_socket_server.h"
+#include "kmsg_parser.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-class LogCollector {
+class LogKmsg {
 public:
-    LogCollector(HilogBuffer &buffer) : m_hilogBuffer(buffer) {}
-    LogCollector(HilogBuffer &&) = delete;
-    void InsertDropInfo(const HilogMsg &msg, int droppedCount);
-    size_t InsertLogToBuffer(const HilogMsg& msg);
-#ifndef __RECV_MSG_WITH_UCRED_
-    void onDataRecv(std::vector<char>& data);
-#else
-    void onDataRecv(const ucred& cred, std::vector<char>& data);
-#endif
-    ~LogCollector() = default;
+    LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {};
+    LogKmsg(HilogBuffer&&) = delete;
+    ~LogKmsg();
+    ssize_t LinuxReadOneKmsg(KmsgParser& parser);
+    int LinuxReadAllKmsg();
+    void ReadAllKmsg();
+    void Start();
 private:
-    HilogBuffer& m_hilogBuffer;
+    int kmsgCtl = -1;
+    HilogBuffer& hilogBuffer;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
+

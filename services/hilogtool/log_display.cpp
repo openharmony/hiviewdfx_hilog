@@ -16,7 +16,6 @@
 #include <cstring>
 #include <iostream>
 #include <queue>
-#include <cstring>
 #include <vector>
 #include <regex>
 #include <unordered_map>
@@ -30,16 +29,13 @@ namespace HiviewDFX {
 using namespace std;
 
 using hash_t = std::uint64_t;
-
-constexpr hash_t PRIME = 0x100000001B3ull;
-constexpr hash_t BASIS = 0xCBF29CE484222325ull;
-
 unordered_map<uint16_t, std::string> errorMsg
 {
     {RET_FAIL, "Unexpected error"},
     {ERR_LOG_LEVEL_INVALID, "Invalid log level, the valid log levels include D/I/W/E/F"},
-    {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init"},
-    {ERR_QUERY_TYPE_INVALID, "Query condition on both types and excluded types is undefined"},
+    {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init/kmsg"},
+    {ERR_QUERY_TYPE_INVALID, "Query condition on both types and excluded types is undefined or\
+    queryTypes can not contain app/core/init and kmsg at the same time"},
     {ERR_QUERY_LEVEL_INVALID, "Query condition on both levels and excluded levels is undefined"},
     {ERR_QUERY_DOMAIN_INVALID, "Invalid domain format, a hexadecimal number is needed"},
     {ERR_QUERY_TAG_INVALID, "Query condition on both tags and excluded tags is undefined"},
@@ -68,8 +64,9 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_FORMAT_INVALID, "Invalid format parameter"},
     {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
     + to_string(MAX_BUFFER_SIZE)},
-    {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed each time"}
-};
+    {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed each time"},
+    {ERR_KMSG_SWITCH_VALUE_INVALID, "Invalid kmsg switch value, valid:on/off"}
+}; 
 
 string ParseErrorCode(ErrorCode errorCode)
 {
@@ -111,6 +108,9 @@ string GetLogTypeStr(uint16_t logType)
     if (logType == LOG_APP) {
         logTypeStr = "app";
     }
+    if (logType == LOG_KMSG) {
+        logTypeStr = "kmsg";
+    }
     return logTypeStr;
 }
 
@@ -125,6 +125,9 @@ string GetOrigType(uint16_t shiftType)
     }
     if (((1 << LOG_APP) & shiftType) != 0) {
         logType += "app,";
+    }
+    if (((1 << LOG_KMSG) & shiftType) != 0) {
+        logType += "kmsg,";
     }
     logType.erase(logType.end() - 1);
     return logType;

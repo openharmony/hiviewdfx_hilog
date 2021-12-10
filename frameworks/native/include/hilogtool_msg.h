@@ -55,6 +55,7 @@ typedef enum {
  */
 typedef enum {
     OT_PRIVATE_SWITCH = 0x01,
+    OT_KMSG_SWITCH,
     OT_LOG_LEVEL,
     OT_FLOW_SWITCH,
 } OperateType;
@@ -310,6 +311,7 @@ typedef struct {
 
 typedef struct {
     std::string privateSwitchStr;
+    std::string kmsgSwitchStr;
     std::string flowSwitchStr;
     std::string logLevelStr;
     std::string domainStr;

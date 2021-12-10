@@ -15,15 +15,7 @@
 
 #include "log_buffer.h"
 
-#include <algorithm>
 #include <cstring>
-#include <iostream>
-#include <iterator>
-#include <list>
-#include <mutex>
-#include <pthread.h>
-#include <vector>
-
 #include "hilog_common.h"
 #include "flow_control_init.h"
 #include "log_time_stamp.h"
@@ -61,13 +53,14 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         return 0;
     }
 
+    std::list<HilogData> &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
     // Delete old entries when full
     if (eleSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
         hilogBufferMutex.lock();
         // Drop 5% of maximum log when full
-        std::list<HilogData>::iterator it = hilogDataList.begin();
+        std::list<HilogData>::iterator it = msgList.begin();
         while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
-            it != hilogDataList.end()) {
+            it != msgList.end()) {
             if ((*it).type != msg.type) {    // Only remove old logs of the same type
                 ++it;
                 continue;
@@ -85,7 +78,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
             size_t cLen = it->len - it->tag_len;
             size -= cLen;
             sizeByType[(*it).type] -= cLen;
-            it = hilogDataList.erase(it);
+            it = msgList.erase(it);
         }
 
         // Re-confirm if enough elements has been removed
@@ -111,7 +104,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         for (; rit != hilogDataList.rend() && (msgTimeStamp < ritTimeStamp); ++rit) {
             ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
         }
-        hilogDataList.emplace(rit.base(), msg);
+        msgList.emplace(rit.base(), msg);
     }
     // Update current size of HilogBuffer
     size += eleSize;
@@ -128,15 +121,17 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
 bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
 {
+    uint16_t qTypes = reader->queryCondition.types;
+    std::list<HilogData> &list = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
     hilogBufferMutex.lock_shared();
     if (reader->GetReload()) {
-        reader->readPos = hilogDataList.begin();
-        reader->lastPos = hilogDataList.begin();
+        reader->readPos = list.begin();
+        reader->lastPos = list.begin();
         reader->SetReload(false);
     }
 
     if (reader->isNotified) {
-        if (reader->readPos == hilogDataList.end()) {
+        if (reader->readPos == list.end()) {
             reader->readPos = std::next(reader->lastPos);
         }
     }
