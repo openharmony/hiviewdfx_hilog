@@ -516,49 +516,51 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
     hilogBuffer->RemoveLogReader(logReader);
 }
 
-LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer* buffer)
+LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer& buffer)
 {
     hilogtoolConnectSocket = std::move(handler);
-    hilogBuffer = buffer;
+    hilogBuffer = &buffer;
 }
 
-int LogQuerier::WriteData(LogQueryResponse& rsp, HilogData* data)
+int LogQuerier::WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData)
 {
     iovec vec[3];
     vec[0].iov_base = &rsp;
     vec[0].iov_len = sizeof(LogQueryResponse);
-    if (data == nullptr) {
+    if (pData == std::nullopt) {
         return hilogtoolConnectSocket->WriteV(vec, 1);
     }
-    vec[1].iov_base = data->tag;
-    vec[1].iov_len = data->tag_len;
-    vec[2].iov_base = data->content;
-    vec[2].iov_len = data->len - data->tag_len;
+    const HilogData& data = pData->get();
+    vec[1].iov_base = data.tag;
+    vec[1].iov_len = data.tag_len;
+    vec[2].iov_base = data.content;
+    vec[2].iov_len = data.len - data.tag_len;
 
     return hilogtoolConnectSocket->WriteV(vec, 3);
 }
 
-int LogQuerier::WriteData(HilogData* data)
+int LogQuerier::WriteData(std::optional<std::reference_wrapper<HilogData>> pData)
 {
     LogQueryResponse rsp;
     MessageHeader* header = &(rsp.header);
     HilogDataMessage* msg = &(rsp.data);
 
+    HilogData& data = pData->get();
     /* set header */
-    SetMsgHead(header, cmd, sizeof(rsp) + ((data != nullptr) ? data->len : 0));
+    SetMsgHead(header, cmd, sizeof(rsp) + ((pData != std::nullopt) ? data.len : 0));
 
     /* set data */
     msg->sendId = sendId;
-    if (data != nullptr) {
-        msg->length = data->len; /* data len, equals tag_len plus content length, include '\0' */
-        msg->level = data->level;
-        msg->type = data->type;
-        msg->tag_len = data->tag_len; /* include '\0' */
-        msg->pid = data->pid;
-        msg->tid = data->tid;
-        msg->domain = data->domain;
-        msg->tv_sec = data->tv_sec;
-        msg->tv_nsec = data->tv_nsec;
+    if (pData != std::nullopt) {
+        msg->length = data.len; /* data len, equals tag_len plus content length, include '\0' */
+        msg->level = data.level;
+        msg->type = data.type;
+        msg->tag_len = data.tag_len; /* include '\0' */
+        msg->pid = data.pid;
+        msg->tid = data.tid;
+        msg->domain = data.domain;
+        msg->tv_sec = data.tv_sec;
+        msg->tv_nsec = data.tv_nsec;
     }
 
     /* write into socket */
@@ -576,7 +578,7 @@ void LogQuerier::NotifyForNewData()
     rsp.data.type = -1;
     /* set header */
     SetMsgHead(&(rsp.header), NEXT_RESPONSE, sizeof(rsp));
-    if (WriteData(rsp, nullptr) <= 0) {
+    if (WriteData(rsp, std::nullopt) <= 0) {
         isNotified = false;
     }
 }

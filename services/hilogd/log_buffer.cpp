@@ -142,7 +142,7 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
     // Look up in oldData first
     if (!reader->oldData.empty()) {
         reader->SetSendId(SENDIDA);
-        reader->WriteData(&(reader->oldData.back()));
+        reader->WriteData(reader->oldData.back());
         printLenByType[(reader->oldData.back()).type] += strlen(reader->oldData.back().content);
         if (printLenByDomain.count(reader->oldData.back().domain) == 0) {
             printLenByDomain.insert(pair<uint32_t, uint64_t>(reader->oldData.back().domain,
@@ -158,7 +158,7 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
         reader->lastPos = reader->readPos;
         if (ConditionMatch(reader)) {
             reader->SetSendId(SENDIDA);
-            reader->WriteData(&*(reader->readPos));
+            reader->WriteData(*(reader->readPos));
             printLenByType[reader->readPos->type] += strlen(reader->readPos->content);
             if (printLenByDomain.count(reader->readPos->domain) == 0) {
                 printLenByDomain.insert(pair<uint32_t, uint64_t>(reader->readPos->domain,
@@ -381,7 +381,7 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
 void HilogBuffer::ReturnNoLog(std::shared_ptr<LogReader> reader)
 {
     reader->SetSendId(SENDIDN);
-    reader->WriteData(nullptr);
+    reader->WriteData(std::nullopt);
 }
 
 void HilogBuffer::GetBufferLock()
