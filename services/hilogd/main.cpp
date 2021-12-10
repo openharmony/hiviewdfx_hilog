@@ -99,12 +99,12 @@ int HilogdEntry(int argc, char* argv[])
 
     std::thread startupCheckThread([&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, &hilogBuffer);
+        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, hilogBuffer);
         logQuerier->RestorePersistJobs(hilogBuffer);
     });
     startupCheckThread.detach();
 
-    CmdExecutor cmdExecutor(&hilogBuffer);
+    CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
 
     return 0;

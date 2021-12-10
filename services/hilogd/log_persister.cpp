@@ -248,18 +248,18 @@ bool LogPersister::writeUnCompressedBuffer(HilogData *data)
     return true;
 }
 
-int LogPersister::WriteData(HilogData *data)
+int LogPersister::WriteData(OptRef<HilogData> pData)
 {
-    if (data == nullptr)
+    if (pData == std::nullopt)
         return -1;
-    if (writeUnCompressedBuffer(data))
+    if (writeUnCompressedBuffer(&(pData->get())))
         return 0;
     if (compressor->Compress(buffer, compressBuffer) != 0) {
         cout << "COMPRESS Error" << endl;
         return RET_FAIL;
     };
     WriteFile();
-    return writeUnCompressedBuffer(data) ? 0 : -1;
+    return writeUnCompressedBuffer(&(pData->get())) ? 0 : -1;
 }
 
 void LogPersister::Start()

@@ -38,7 +38,7 @@ public:
     ~LogPersister();
     void SetBufferOffset(int off);
     void NotifyForNewData();
-    int WriteData(HilogData *data);
+    int WriteData(OptRef<HilogData> pData);
     int ThreadFunc();
     static int Kill(uint32_t id);
     void Exit();
