@@ -37,7 +37,7 @@ public:
     ~LogPersisterRotator();
     int Init();
     int Input(const char *buf, uint32_t length);
-    void FillInfo(uint32_t *size, uint32_t *num);
+    void FillInfo(uint32_t &size, uint32_t &num);
     void FinishInput();
     void SetIndex(int pIndex);
     void SetId(uint32_t pId);

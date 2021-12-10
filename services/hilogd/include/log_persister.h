@@ -47,8 +47,8 @@ public:
     int InitCompress();
     void Start();
     bool Identify(uint32_t id);
-    void FillInfo(LogPersistQueryResult *response);
-    bool writeUnCompressedBuffer(HilogData *data);
+    void FillInfo(LogPersistQueryResult &response);
+    bool writeUnCompressedBuffer(HilogData &data);
     uint8_t GetType() const;
     std::string getPath();
     LogPersisterBuffer *buffer;

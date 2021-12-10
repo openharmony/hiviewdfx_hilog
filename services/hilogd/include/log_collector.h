@@ -23,7 +23,7 @@ namespace OHOS {
 namespace HiviewDFX {
 class LogCollector {
 public:
-    LogCollector(HilogBuffer* buffer);
+    LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
     void InsertDropInfo(const HilogMsg &msg, int droppedCount);
     size_t InsertLogToBuffer(const HilogMsg& msg);
 #ifndef __RECV_MSG_WITH_UCRED_
@@ -33,7 +33,7 @@ public:
 #endif
     ~LogCollector() = default;
 private:
-    HilogBuffer* m_hilogBuffer = nullptr;
+    HilogBuffer& m_hilogBuffer;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
