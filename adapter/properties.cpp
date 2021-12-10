@@ -46,6 +46,7 @@ static pthread_mutex_t g_persistDebugLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_privateLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_kmsgLock = PTHREAD_MUTEX_INITIALIZER;
 
 using PropertyCache = struct {
     const void* pinfo;
@@ -114,6 +115,9 @@ string GetPropertyName(uint32_t propType)
         case PROP_SINGLE_DEBUG:
             key = "hilog.debug.on";
             break;
+        case PROP_KMSG:
+            key = "persist.sys.hilog.kmsg.on";
+            break;
         case PROP_PERSIST_DEBUG:
             key = "persist.sys.hilog.debug.on";
             break;
@@ -140,6 +144,8 @@ static int LockByProp(uint32_t propType)
             return pthread_mutex_trylock(&g_tagLevelLock);
         case PROP_SINGLE_DEBUG:
             return pthread_mutex_trylock(&g_debugLock);
+        case PROP_KMSG:
+            return pthread_mutex_trylock(&g_kmsgLock);
         case PROP_PERSIST_DEBUG:
             return pthread_mutex_trylock(&g_persistDebugLock);
         default:
@@ -170,6 +176,9 @@ static void UnlockByProp(uint32_t propType)
             break;
         case PROP_SINGLE_DEBUG:
             pthread_mutex_unlock(&g_debugLock);
+            break;
+        case PROP_KMSG:
+            pthread_mutex_unlock(&g_kmsgLock);
             break;
         case PROP_PERSIST_DEBUG:
             pthread_mutex_unlock(&g_persistDebugLock);
@@ -268,6 +277,14 @@ bool IsDomainSwitchOn()
     static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     bool isFirst = !isFirstFlag.test_and_set();
     return GetSwitchCache(isFirst, *switchCache, PROP_DOMAIN_FLOWCTRL, false);
+}
+
+bool IsKmsgSwitchOn()
+{
+    static SwitchCache* switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_KMSG, false);
 }
 
 static uint16_t GetCacheLevel(char propertyChar)

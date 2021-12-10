@@ -12,18 +12,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/prctl.h>
 #include <thread>
+#include <future>
 #include <unistd.h>
-#include <csignal>
 
 #include "cmd_executor.h"
 #include "log_querier.h"
 #include "hilog_input_socket_server.h"
 #include "log_collector.h"
+#include "log_kmsg.h"
 #include "flow_control_init.h"
+#include "properties.h"
 
 #ifdef DEBUG
 #include <fcntl.h>
@@ -41,19 +44,7 @@ constexpr int HILOG_FILE_MASK = 0026;
 static int g_fd = -1;
 #endif
 
-static void SigHandler(int sig)
-{
-    if (sig == SIGINT) {
-#ifdef DEBUG
-        if (g_fd > 0) {
-            close(g_fd);
-        }
-#endif
-        std::cout<<"Exited!"<<std::endl;
-    }
-}
-
-int HilogdEntry(int argc, char* argv[])
+int HilogdEntry()
 {
     HilogBuffer hilogBuffer;
     umask(HILOG_FILE_MASK);
@@ -65,22 +56,21 @@ int HilogdEntry(int argc, char* argv[])
         std::cout << "open file error:" <<  strerror(errno) << std::endl;
     }
 #endif
-    std::signal(SIGINT, SigHandler);
 
     InitDomainFlowCtrl();
 
     // Start log_collector
-#ifndef __RECV_MSG_WITH_UCRED_
+    #ifndef __RECV_MSG_WITH_UCRED_
     auto onDataReceive = [&hilogBuffer](std::vector<char>& data) {
-        static LogCollector logCollector(&hilogBuffer);
+        static LogCollector logCollector(hilogBuffer);
         logCollector.onDataRecv(data);
     };
-#else
+    #else
     auto onDataReceive = [&hilogBuffer](const ucred& cred, std::vector<char>& data) {
-        static LogCollector logCollector(&hilogBuffer);
+        static LogCollector logCollector(hilogBuffer);
         logCollector.onDataRecv(cred, data);
     };
-#endif
+    #endif
     
     HilogInputSocketServer incomingLogsServer(onDataReceive);
     if (incomingLogsServer.Init() < 0) {
@@ -88,32 +78,30 @@ int HilogdEntry(int argc, char* argv[])
         cout << "Failed to init input server socket ! error=" << strerror(errno) << std::endl;
 #endif
     } else {
-        if (chmod(INPUT_SOCKET, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) {
-            cout << "chmod input socket failed !\n";
-        }
 #ifdef DEBUG
         cout << "Begin to listen !\n";
 #endif
         incomingLogsServer.RunServingThread();
     }
 
-    std::thread startupCheckThread([&hilogBuffer]() {
+    auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
         std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, &hilogBuffer);
         logQuerier->RestorePersistJobs(hilogBuffer);
     });
-    startupCheckThread.detach();
-
+    auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
+        LogKmsg logKmsg(hilogBuffer);
+        logKmsg.ReadAllKmsg();
+    });
     CmdExecutor cmdExecutor(&hilogBuffer);
     cmdExecutor.MainLoop();
-
     return 0;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
 
-int main(int argc, char* argv[])
+int main()
 {
-    OHOS::HiviewDFX::HilogdEntry(argc, argv);
+    OHOS::HiviewDFX::HilogdEntry();
     return 0;
 }

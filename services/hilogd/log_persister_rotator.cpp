@@ -25,8 +25,6 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-constexpr uint64_t PRIME = 0x100000001B3ull;
-constexpr uint64_t BASIS = 0xCBF29CE484222325ull;
 uint64_t GetInfoHash(const PersistRecoveryInfo &info)
 {
     uint64_t ret {BASIS};

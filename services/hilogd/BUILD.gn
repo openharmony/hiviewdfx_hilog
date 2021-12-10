@@ -16,16 +16,18 @@ import("//build/ohos.gni")
 config("hilogd_config") {
   visibility = [ ":*" ]
 
-  include_dirs = [ "include" ]
+  include_dirs = [ "include","//base/startup/init_lite/interfaces/innerkits/include" ]
 }
 
 ohos_executable("hilogd") {
   sources = [
     "cmd_executor.cpp",
     "flow_control_init.cpp",
+    "kmsg_parser.cpp",
     "log_buffer.cpp",
     "log_collector.cpp",
     "log_compress.cpp",
+    "log_kmsg.cpp",
     "log_persister.cpp",
     "log_persister_rotator.cpp",
     "log_querier.cpp",
@@ -40,6 +42,8 @@ ohos_executable("hilogd") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/zlib:libz",
+    "//utils/native/base:utilsecurec_shared",
+    "//base/startup/init_lite/interfaces/innerkits/file:libfile",
   ]
 
   deps += [ "etc:hilogd_etc" ]

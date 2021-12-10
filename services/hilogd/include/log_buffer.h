@@ -53,6 +53,7 @@ private:
     size_t size;
     size_t sizeByType[LOG_TYPE_MAX];
     std::list<HilogData> hilogDataList;
+    std::list<HilogData> hilogKlogList;
     std::shared_mutex hilogBufferMutex;
     std::map<uint32_t, uint64_t> cacheLenByDomain;
     std::map<uint32_t, uint64_t> printLenByDomain;

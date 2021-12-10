@@ -51,6 +51,7 @@ typedef struct {
     std::string fileNameArgs;
     std::string jobIdArgs;
     std::string personalArgs;
+    std::string kmsgArgs;
     std::string logClearArgs;
     std::string logTypeArgs;
     std::string domainArgs;
