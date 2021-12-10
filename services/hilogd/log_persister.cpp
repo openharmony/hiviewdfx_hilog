@@ -170,23 +170,23 @@ void LogPersister::SetBufferOffset(int off)
     buffer->offset = off;
 }
 
-int GenPersistLogHeader(HilogData *data, list<string>& persistList)
+int GenPersistLogHeader(HilogData& data, list<string>& persistList)
 {
     char buffer[MAX_LOG_LEN + MAX_LOG_LEN];
     HilogShowFormatBuffer showBuffer;
-    showBuffer.level = data->level;
-    showBuffer.pid = data->pid;
-    showBuffer.tid = data->tid;
-    showBuffer.domain = data->domain;
-    showBuffer.tv_sec = data->tv_sec;
-    showBuffer.tv_nsec = data->tv_nsec;
+    showBuffer.level = data.level;
+    showBuffer.pid = data.pid;
+    showBuffer.tid = data.tid;
+    showBuffer.domain = data.domain;
+    showBuffer.tv_sec = data.tv_sec;
+    showBuffer.tv_nsec = data.tv_nsec;
 
-    int offset = data->tag_len;
-    char *dataCopy = (char*)calloc(data->len, sizeof(char));
+    int offset = data.tag_len;
+    char *dataCopy = (char*)calloc(data.len, sizeof(char));
     if (dataCopy == nullptr) {
         return 0;
     }
-    if (memcpy_s(dataCopy, data->len, data->tag, data->len)) {
+    if (memcpy_s(dataCopy, data.len, data.tag, data.len)) {
         free(dataCopy);
         return 0;
     }
@@ -219,7 +219,7 @@ int GenPersistLogHeader(HilogData *data, list<string>& persistList)
     return persistList.size();
 }
 
-bool LogPersister::writeUnCompressedBuffer(HilogData *data)
+bool LogPersister::writeUnCompressedBuffer(HilogData &data)
 {
     int listSize = persistList.size();
 
@@ -252,14 +252,14 @@ int LogPersister::WriteData(OptRef<HilogData> pData)
 {
     if (pData == std::nullopt)
         return -1;
-    if (writeUnCompressedBuffer(&(pData->get())))
+    if (writeUnCompressedBuffer(pData->get()))
         return 0;
     if (compressor->Compress(buffer, compressBuffer) != 0) {
         cout << "COMPRESS Error" << endl;
         return RET_FAIL;
     };
     WriteFile();
-    return writeUnCompressedBuffer(&(pData->get())) ? 0 : -1;
+    return writeUnCompressedBuffer(pData->get()) ? 0 : -1;
 }
 
 void LogPersister::Start()
@@ -326,21 +326,21 @@ int LogPersister::Query(uint16_t logType, list<LogPersistQueryResult> &results)
         if (((*it)->queryCondition.types & logType) != 0) {
             LogPersistQueryResult response;
             response.logType = (*it)->queryCondition.types;
-            (*it)->FillInfo(&response);
+            (*it)->FillInfo(response);
             results.push_back(response);
         }
     }
     return 0;
 }
 
-void LogPersister::FillInfo(LogPersistQueryResult *response)
+void LogPersister::FillInfo(LogPersistQueryResult &response)
 {
-    response->jobId = id;
-    if (strcpy_s(response->filePath, FILE_PATH_MAX_LEN, path.c_str())) {
+    response.jobId = id;
+    if (strcpy_s(response.filePath, FILE_PATH_MAX_LEN, path.c_str())) {
         return;
     }
-    response->compressAlg = compressAlg;
-    rotator->FillInfo(&response->fileSize, &response->fileNum);
+    response.compressAlg = compressAlg;
+    rotator->FillInfo(response.fileSize, response.fileNum);
     return;
 }
 
