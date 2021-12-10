@@ -26,7 +26,7 @@
 
 #include "hilog_common.h"
 #include "flow_control_init.h"
-
+#include "log_time_stamp.h"
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
@@ -37,6 +37,7 @@ static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144
 const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;
+const int MAX_TIME_DIFF = 5;
 
 HilogBuffer::HilogBuffer()
 {
@@ -96,19 +97,19 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
     // Insert new log into HilogBuffer
     std::list<HilogData>::reverse_iterator rit = hilogDataList.rbegin();
-    if (msg.tv_sec >= (rit->tv_sec)) {
+    std::list<HilogData>::reverse_iterator ritEnd = hilogDataList.rend(); 
+    LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
+    LogTimeStamp ritTimeStamp(rit->tv_sec, rit->tv_nsec);
+    LogTimeStamp measureTimeStamp(ritEnd->tv_sec, ritEnd->tv_nsec);
+    if (msgTimeStamp >= ritTimeStamp || msgTimeStamp < measureTimeStamp ||
+        (ritTimeStamp -= msgTimeStamp) > LogTimeStamp(MAX_TIME_DIFF)) {
         hilogDataList.emplace_back(msg);
     } else {
         // Find the place with right timestamp
         ++rit;
-        for (; rit != hilogDataList.rend() && msg.tv_sec < rit->tv_sec; ++rit) {
-            logReaderListMutex.lock_shared();
-            for (auto &itr :logReaderList) {
-                if (itr.lock()->readPos == std::prev(rit.base())) {
-                    itr.lock()->oldData.emplace_front(msg);
-                }
-            }
-            logReaderListMutex.unlock_shared();
+        ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
+        for (; rit != hilogDataList.rend() && (msgTimeStamp < ritTimeStamp); ++rit) {
+            ritTimeStamp.SetTimeStamp(rit->tv_sec, rit->tv_nsec);
         }
         hilogDataList.emplace(rit.base(), msg);
     }
@@ -138,21 +139,6 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
         if (reader->readPos == hilogDataList.end()) {
             reader->readPos = std::next(reader->lastPos);
         }
-    }
-    // Look up in oldData first
-    if (!reader->oldData.empty()) {
-        reader->SetSendId(SENDIDA);
-        reader->WriteData(reader->oldData.back());
-        printLenByType[(reader->oldData.back()).type] += strlen(reader->oldData.back().content);
-        if (printLenByDomain.count(reader->oldData.back().domain) == 0) {
-            printLenByDomain.insert(pair<uint32_t, uint64_t>(reader->oldData.back().domain,
-                strlen(reader->oldData.back().content)));
-        } else {
-            printLenByDomain[reader->oldData.back().domain] += strlen(reader->oldData.back().content);
-        }
-        reader->oldData.pop_back();
-        hilogBufferMutex.unlock_shared();
-        return true;
     }
     while (reader->readPos != hilogDataList.end()) {
         reader->lastPos = reader->readPos;
