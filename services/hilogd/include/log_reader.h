@@ -67,7 +67,7 @@ public:
     virtual void NotifyForNewData() = 0;
     void NotifyReload();
 
-    virtual int WriteData(HilogData* data) =0;
+    virtual int WriteData(OptRef<HilogData> pData) =0;
     void SetSendId(unsigned int value);
     void SetCmd(uint8_t value);
     virtual uint8_t GetType() const = 0;

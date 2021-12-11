@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <optional>
 
 #ifdef HILOG_USE_MUSL
 #define SOCKET_FILE_DIR "/dev/unix/socket/"
@@ -83,6 +84,9 @@ using HilogShowFormatBuffer = struct {
     uint32_t tv_nsec;
     const char* data;
 };
+
+template <typename T>
+using OptRef = std::optional<std::reference_wrapper<T>>;
 
 #define CONTENT_LEN(pMsg) (pMsg->len - sizeof(HilogMsg) - pMsg->tag_len) /* include '\0' */
 #define CONTENT_PTR(pMsg) (pMsg->tag + pMsg->tag_len)

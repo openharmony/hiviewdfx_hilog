@@ -32,7 +32,7 @@ struct ClientThread {
 
 class CmdExecutor {
 public:
-    CmdExecutor(HilogBuffer* buffer);
+    CmdExecutor(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
     ~CmdExecutor();
     void MainLoop();
 private:
@@ -40,7 +40,7 @@ private:
     void ClientEventLoop(std::unique_ptr<Socket> handler);
     void CleanFinishedClients();
 
-    HilogBuffer* m_hilogBuffer = nullptr;
+    HilogBuffer& m_hilogBuffer;
     std::list<std::unique_ptr<ClientThread>> m_clients;
     std::mutex m_clientAccess;
     std::vector<std::thread::id> m_finishedClients;

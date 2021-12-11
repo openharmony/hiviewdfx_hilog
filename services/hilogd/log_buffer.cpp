@@ -139,7 +139,7 @@ bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
         reader->lastPos = reader->readPos;
         if (ConditionMatch(reader)) {
             reader->SetSendId(SENDIDA);
-            reader->WriteData(&*(reader->readPos));
+            reader->WriteData(*(reader->readPos));
             printLenByType[reader->readPos->type] += strlen(reader->readPos->content);
             if (printLenByDomain.count(reader->readPos->domain) == 0) {
                 printLenByDomain.insert(pair<uint32_t, uint64_t>(reader->readPos->domain,
@@ -364,7 +364,7 @@ bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
 void HilogBuffer::ReturnNoLog(std::shared_ptr<LogReader> reader)
 {
     reader->SetSendId(SENDIDN);
-    reader->WriteData(nullptr);
+    reader->WriteData(std::nullopt);
 }
 
 void HilogBuffer::GetBufferLock()
