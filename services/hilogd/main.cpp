@@ -102,14 +102,15 @@ int HilogdEntry()
 
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, &hilogBuffer);
+        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, hilogBuffer);
         logQuerier->RestorePersistJobs(hilogBuffer);
     });
     auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
         LogKmsg logKmsg(hilogBuffer);
         logKmsg.ReadAllKmsg();
     });
-    CmdExecutor cmdExecutor(&hilogBuffer);
+    
+    CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
     return 0;
 }

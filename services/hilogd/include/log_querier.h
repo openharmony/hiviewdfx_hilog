@@ -14,6 +14,7 @@
  */
 #ifndef LOG_QUERIER_H
 #define LOG_QUERIER_H
+#include <optional>
 #include <sys/socket.h>
 #include "log_buffer.h"
 #include "log_reader.h"
@@ -22,10 +23,10 @@ namespace OHOS {
 namespace HiviewDFX {
 class LogQuerier : public LogReader {
 public:
-    LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer* buffer);
+    LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer& buffer);
     static void LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader);
-    int WriteData(LogQueryResponse& rsp, HilogData* data);
-    int WriteData(HilogData* data);
+    int WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData);
+    int WriteData(OptRef<HilogData> pData);
     void NotifyForNewData();
     uint8_t GetType() const;
     int RestorePersistJobs(HilogBuffer& _buffer);

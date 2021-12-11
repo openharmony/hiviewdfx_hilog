@@ -116,10 +116,10 @@ void LogPersisterRotator::Rotate()
     UpdateRotateNumber();
 }
 
-void LogPersisterRotator::FillInfo(uint32_t *size, uint32_t *num)
+void LogPersisterRotator::FillInfo(uint32_t &size, uint32_t &num)
 {
-    *size = fileSize;
-    *num = fileNum;
+    size = fileSize;
+    num = fileNum;
 }
 
 void LogPersisterRotator::FinishInput()
