@@ -72,12 +72,12 @@ int HilogdEntry(int argc, char* argv[])
     // Start log_collector
 #ifndef __RECV_MSG_WITH_UCRED_
     auto onDataReceive = [&hilogBuffer](std::vector<char>& data) {
-        static LogCollector logCollector(&hilogBuffer);
+        static LogCollector logCollector(hilogBuffer);
         logCollector.onDataRecv(data);
     };
 #else
     auto onDataReceive = [&hilogBuffer](const ucred& cred, std::vector<char>& data) {
-        static LogCollector logCollector(&hilogBuffer);
+        static LogCollector logCollector(hilogBuffer);
         logCollector.onDataRecv(cred, data);
     };
 #endif
@@ -99,12 +99,12 @@ int HilogdEntry(int argc, char* argv[])
 
     std::thread startupCheckThread([&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, &hilogBuffer);
+        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, hilogBuffer);
         logQuerier->RestorePersistJobs(hilogBuffer);
     });
     startupCheckThread.detach();
 
-    CmdExecutor cmdExecutor(&hilogBuffer);
+    CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
 
     return 0;

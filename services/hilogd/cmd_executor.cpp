@@ -34,11 +34,6 @@ namespace OHOS {
 namespace HiviewDFX {
 static const int MAX_CLIENT_CONNECTIONS = 100;
 
-CmdExecutor::CmdExecutor(HilogBuffer* buffer)
-{
-    m_hilogBuffer = buffer;
-}
-
 CmdExecutor::~CmdExecutor()
 {
     std::lock_guard<std::mutex> lg(m_clientAccess);

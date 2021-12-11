@@ -48,11 +48,11 @@ constexpr int SLEEP_TIME = 5;
 static char g_tempBuffer[MAX_DATA_LEN] = {0};
 constexpr int INFO_SUFFIX = 5;
 
-inline void SetMsgHead(MessageHeader* msgHeader, uint8_t msgCmd, uint16_t msgLen)
+inline void SetMsgHead(MessageHeader& msgHeader, uint8_t msgCmd, uint16_t msgLen)
 {
-    msgHeader->version = 0;
-    msgHeader->msgType = msgCmd;
-    msgHeader->msgLen = msgLen;
+    msgHeader.version = 0;
+    msgHeader.msgType = msgCmd;
+    msgHeader.msgLen = msgLen;
 }
 
 inline bool IsValidFileName(const std::string& strFileName)
@@ -174,7 +174,7 @@ void HandlePersistStartRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
     }
 
     pLogPersistStartRst->jobId = pLogPersistStartMsg->jobId;
-    SetMsgHead(&pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
+    SetMsgHead(pLogPersistStartRsp->msgHeader, MC_RSP_LOG_PERSIST_START, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
@@ -223,7 +223,7 @@ void HandlePersistDeleteRequest(char* reqMsg, std::shared_ptr<LogReader> logRead
             }
     }
     sendMsgLen = msgNum * sizeof(LogPersistStopResult);
-    SetMsgHead(&pLogPersistStopRsp->msgHeader, MC_RSP_LOG_PERSIST_STOP, sendMsgLen);
+    SetMsgHead(pLogPersistStopRsp->msgHeader, MC_RSP_LOG_PERSIST_STOP, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
@@ -277,7 +277,7 @@ void HandlePersistQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         recvMsgLen += sizeof(LogPersistQueryMsg);
     }
     sendMsgLen = msgNum * sizeof(LogPersistQueryResult);
-    SetMsgHead(&pLogPersistQueryRsp->msgHeader, MC_RSP_LOG_PERSIST_QUERY, sendMsgLen);
+    SetMsgHead(pLogPersistQueryRsp->msgHeader, MC_RSP_LOG_PERSIST_QUERY, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
@@ -311,7 +311,7 @@ void HandleBufferResizeRequest(char* reqMsg, std::shared_ptr<LogReader> logReade
         msgNum++;
     }
     sendMsgLen = msgNum * sizeof(BuffResizeResult);
-    SetMsgHead(&pBufferResizeRsp->msgHeader, MC_RSP_BUFFER_RESIZE, sendMsgLen);
+    SetMsgHead(pBufferResizeRsp->msgHeader, MC_RSP_BUFFER_RESIZE, sendMsgLen);
 
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
@@ -346,7 +346,7 @@ void HandleBufferSizeRequest(char* reqMsg, std::shared_ptr<LogReader> logReader,
         pBuffSizeMsg++;
     }
     sendMsgLen = msgNum * sizeof(BuffSizeResult);
-    SetMsgHead(&pBufferSizeRsp->msgHeader, MC_RSP_BUFFER_SIZE, sendMsgLen);
+    SetMsgHead(pBufferSizeRsp->msgHeader, MC_RSP_BUFFER_SIZE, sendMsgLen);
 
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
@@ -371,7 +371,7 @@ void HandleInfoQueryRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, 
             pStatisticInfoQueryRsp->cacheLen, pStatisticInfoQueryRsp->dropped);
         pStatisticInfoQueryRsp->result = (rst < 0) ? rst : RET_SUCCESS;
     }
-    SetMsgHead(&pStatisticInfoQueryRsp->msgHeader, MC_RSP_STATISTIC_INFO_QUERY, sizeof(StatisticInfoQueryResponse)
+    SetMsgHead(pStatisticInfoQueryRsp->msgHeader, MC_RSP_STATISTIC_INFO_QUERY, sizeof(StatisticInfoQueryResponse)
         - sizeof(MessageHeader));
     logReader->hilogtoolConnectSocket->Write(msgToSend, sizeof(StatisticInfoQueryResponse));
 }
@@ -394,7 +394,7 @@ void HandleInfoClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader, 
         rst = buffer->ClearStatisticInfoByDomain(pStatisticInfoClearReq->domain);
         pStatisticInfoClearRsp->result = (rst < 0) ? rst : RET_SUCCESS;
     }
-    SetMsgHead(&pStatisticInfoClearRsp->msgHeader, MC_RSP_STATISTIC_INFO_CLEAR, sizeof(StatisticInfoClearResponse) -
+    SetMsgHead(pStatisticInfoClearRsp->msgHeader, MC_RSP_STATISTIC_INFO_CLEAR, sizeof(StatisticInfoClearResponse) -
         sizeof(MessageHeader));
     logReader->hilogtoolConnectSocket->Write(msgToSend, sizeof(StatisticInfoClearResponse));
 }
@@ -428,7 +428,7 @@ void HandleBufferClearRequest(char* reqMsg, std::shared_ptr<LogReader> logReader
     }
 
     uint16_t sendMsgLen = msgNum * sizeof(LogClearResult);
-    SetMsgHead(&pLogClearRsp->msgHeader, MC_RSP_LOG_CLEAR, sendMsgLen);
+    SetMsgHead(pLogClearRsp->msgHeader, MC_RSP_LOG_CLEAR, sendMsgLen);
     logReader->hilogtoolConnectSocket->Write(msgToSend, sendMsgLen + sizeof(MessageHeader));
 }
 
@@ -516,49 +516,51 @@ void LogQuerier::LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader)
     hilogBuffer->RemoveLogReader(logReader);
 }
 
-LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer* buffer)
+LogQuerier::LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer& buffer)
 {
     hilogtoolConnectSocket = std::move(handler);
-    hilogBuffer = buffer;
+    hilogBuffer = &buffer;
 }
 
-int LogQuerier::WriteData(LogQueryResponse& rsp, HilogData* data)
+int LogQuerier::WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData)
 {
     iovec vec[3];
     vec[0].iov_base = &rsp;
     vec[0].iov_len = sizeof(LogQueryResponse);
-    if (data == nullptr) {
+    if (pData == std::nullopt) {
         return hilogtoolConnectSocket->WriteV(vec, 1);
     }
-    vec[1].iov_base = data->tag;
-    vec[1].iov_len = data->tag_len;
-    vec[2].iov_base = data->content;
-    vec[2].iov_len = data->len - data->tag_len;
+    const HilogData& data = pData->get();
+    vec[1].iov_base = data.tag;
+    vec[1].iov_len = data.tag_len;
+    vec[2].iov_base = data.content;
+    vec[2].iov_len = data.len - data.tag_len;
 
     return hilogtoolConnectSocket->WriteV(vec, 3);
 }
 
-int LogQuerier::WriteData(HilogData* data)
+int LogQuerier::WriteData(OptRef<HilogData> pData)
 {
     LogQueryResponse rsp;
-    MessageHeader* header = &(rsp.header);
-    HilogDataMessage* msg = &(rsp.data);
+    MessageHeader header = rsp.header;
+    HilogDataMessage msg = rsp.data;
 
+    HilogData& data = pData->get();
     /* set header */
-    SetMsgHead(header, cmd, sizeof(rsp) + ((data != nullptr) ? data->len : 0));
+    SetMsgHead(header, cmd, sizeof(rsp) + ((pData != std::nullopt) ? data.len : 0));
 
     /* set data */
-    msg->sendId = sendId;
-    if (data != nullptr) {
-        msg->length = data->len; /* data len, equals tag_len plus content length, include '\0' */
-        msg->level = data->level;
-        msg->type = data->type;
-        msg->tag_len = data->tag_len; /* include '\0' */
-        msg->pid = data->pid;
-        msg->tid = data->tid;
-        msg->domain = data->domain;
-        msg->tv_sec = data->tv_sec;
-        msg->tv_nsec = data->tv_nsec;
+    msg.sendId = sendId;
+    if (pData != std::nullopt) {
+        msg.length = data.len; /* data len, equals tag_len plus content length, include '\0' */
+        msg.level = data.level;
+        msg.type = data.type;
+        msg.tag_len = data.tag_len; /* include '\0' */
+        msg.pid = data.pid;
+        msg.tid = data.tid;
+        msg.domain = data.domain;
+        msg.tv_sec = data.tv_sec;
+        msg.tv_nsec = data.tv_nsec;
     }
 
     /* write into socket */
@@ -575,8 +577,8 @@ void LogQuerier::NotifyForNewData()
     rsp.data.sendId = SENDIDS;
     rsp.data.type = -1;
     /* set header */
-    SetMsgHead(&(rsp.header), NEXT_RESPONSE, sizeof(rsp));
-    if (WriteData(rsp, nullptr) <= 0) {
+    SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
+    if (WriteData(rsp, std::nullopt) <= 0) {
         isNotified = false;
     }
 }

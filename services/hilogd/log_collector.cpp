@@ -86,28 +86,24 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
     InsertLogToBuffer(*msg);
 }
 
-LogCollector::LogCollector(HilogBuffer* buffer) : m_hilogBuffer(buffer)
-{
-}
-
 size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
 {
     if (msg.type >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;
     }
-    size_t result = m_hilogBuffer->Insert(msg);
+    size_t result = m_hilogBuffer.Insert(msg);
     if (result <= 0) {
         return result;
     }
-    m_hilogBuffer->logReaderListMutex.lock_shared();
-    auto it = m_hilogBuffer->logReaderList.begin();
-    while (it != m_hilogBuffer->logReaderList.end()) {
+    m_hilogBuffer.logReaderListMutex.lock_shared();
+    auto it = m_hilogBuffer.logReaderList.begin();
+    while (it != m_hilogBuffer.logReaderList.end()) {
         if ((*it).lock()->GetType() != TYPE_CONTROL) {
             (*it).lock()->NotifyForNewData();
         }
         ++it;
     }
-    m_hilogBuffer->logReaderListMutex.unlock_shared();
+    m_hilogBuffer.logReaderListMutex.unlock_shared();
     return result;
 }
 } // namespace HiviewDFX
