@@ -202,7 +202,8 @@ size_t HilogBuffer::Delete(uint16_t logType)
 
 void HilogBuffer::AddLogReader(std::weak_ptr<LogReader> reader)
 {
-    std::list<HilogData> &msgList = (reader.lock()->queryCondition.types == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
+    std::list<HilogData> &msgList = (reader.lock()->queryCondition.types ==
+        (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
     logReaderListMutex.lock();
     // If reader not in logReaderList
     logReaderList.push_back(reader);
