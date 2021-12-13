@@ -19,10 +19,14 @@ declare_args() {
 
 config("libhilog_source_base_cfg") {
   visibility = [ "*:*" ]
-  include_dirs = ["."]
+  include_dirs = [ "." ]
 
   defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_base_default_privacy" ]
-  defines += [ "__RECV_MSG_WITH_UCRED_", "HILOG_PROHIBIT_ALLOCATION", "HILOG_USE_MUSL" ]
+  defines += [
+    "__RECV_MSG_WITH_UCRED_",
+    "HILOG_PROHIBIT_ALLOCATION",
+    "HILOG_USE_MUSL",
+  ]
 }
 
 ohos_static_library("libhilog_base") {
@@ -38,5 +42,3 @@ ohos_static_library("libhilog_base") {
   public_configs = [ ":libhilog_source_base_cfg" ]
   configs = [ ":libhilog_source_base_cfg" ]
 }
-
-
