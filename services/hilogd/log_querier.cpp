@@ -560,16 +560,16 @@ int LogQuerier::WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData)
 int LogQuerier::WriteData(OptRef<HilogData> pData)
 {
     LogQueryResponse rsp;
-    MessageHeader header = rsp.header;
-    HilogDataMessage msg = rsp.data;
+    MessageHeader& header = rsp.header;
+    HilogDataMessage& msg = rsp.data;
 
-    HilogData& data = pData->get();
     /* set header */
-    SetMsgHead(header, cmd, sizeof(rsp) + ((pData != std::nullopt) ? data.len : 0));
+    SetMsgHead(header, cmd, sizeof(rsp) + ((pData != std::nullopt) ? pData->get().len : 0));
 
     /* set data */
     msg.sendId = sendId;
     if (pData != std::nullopt) {
+        HilogData& data = pData->get();
         msg.length = data.len; /* data len, equals tag_len plus content length, include '\0' */
         msg.level = data.level;
         msg.type = data.type;
@@ -582,7 +582,7 @@ int LogQuerier::WriteData(OptRef<HilogData> pData)
     }
 
     /* write into socket */
-    return WriteData(rsp, data);
+    return WriteData(rsp, pData);
 }
 
 void LogQuerier::NotifyForNewData()
