@@ -16,7 +16,10 @@ import("//build/ohos.gni")
 config("hilogd_config") {
   visibility = [ ":*" ]
 
-  include_dirs = [ "include","//base/startup/init_lite/interfaces/innerkits/include" ]
+  include_dirs = [
+    "include",
+    "//base/startup/init_lite/interfaces/innerkits/include",
+  ]
 }
 
 ohos_executable("hilogd") {
