@@ -322,7 +322,7 @@ int LogPersister::Query(uint16_t logType, list<LogPersistQueryResult> &results)
     cout << "Persister.Query: logType " << logType << endl;
     for (auto it = logPersisters.begin(); it != logPersisters.end(); ++it) {
         cout << "Persister.Query: (*it)->queryCondition.types "
-             << (*it)->queryCondition.types << endl;
+             << unsigned((*it)->queryCondition.types) << endl;
         if (((*it)->queryCondition.types & logType) != 0) {
             LogPersistQueryResult response;
             response.logType = (*it)->queryCondition.types;

@@ -14,10 +14,12 @@
  */
 
 #include "log_collector.h"
+#include "log_kmsg.h"
 #include "flow_control_init.h"
 
 #include <cstdlib>
 #include <cstring>
+#include <cinttypes>
 #include <iostream>
 #include <string>
 #include <thread>

@@ -16,12 +16,11 @@
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 #include <getopt.h>
 #include <iostream>
 #include <iomanip>
-#include <string>
 #include <vector>
-#include <stdio.h>
 #include <sstream>
 #include <regex>
 
@@ -50,6 +49,10 @@ static void Helper()
     "                     set privacy formatter feature on or off.\n"
     "                     on  turn on\n"
     "                     off turn off\n"
+    "  -k\n"
+    "                     store log type kmsg or not\n"
+    "                     on  yes\n"
+    "                     off no\n"
     "  -s, --statistics   query hilogd statistic information.\n"
     "  -S                 clear hilogd statistic information.\n"
     "  -r                 remove the logs in hilog buffer, use -t to specify log type\n"
@@ -126,6 +129,8 @@ static int GetTypes(HilogArgs context, const string& typesArgs, bool exclude = f
         types |= 1<<LOG_APP;
     } else if (typesArgs ==  "core") {
         types |= 1<<LOG_CORE;
+    } else if (typesArgs ==  "kmsg") {
+        types |= 1<<LOG_KMSG;
     } else {
         std::cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
         exit(0);
@@ -327,6 +332,11 @@ int HilogEntry(int argc, char* argv[])
                 noLogOption = true;
                 controlCount++;
                 break;
+            case 'k':
+                context.kmsgArgs = optarg;
+                noLogOption = true;
+                controlCount++;
+                break;
             case 'r':
                 context.logClearArgs = "clear";
                 noLogOption = true;
@@ -522,6 +532,15 @@ int HilogEntry(int argc, char* argv[])
             if (ret == RET_FAIL) {
                 cout << "set private switch operation error!" << endl;
                 exit(-1);
+            }
+            exit(0);
+        } else if (context.kmsgArgs != "") {
+            SetPropertyParam propertyParam;
+            propertyParam.kmsgSwitchStr = context.kmsgArgs;
+            ret = SetPropertiesOp(controller, OT_KMSG_SWITCH, &propertyParam);
+            if (ret == RET_FAIL) {
+            std::cout << "set kmsg switch operation error!" << std::endl;
+            exit(-1);
             }
             exit(0);
         } else if (context.logClearArgs != "") {
