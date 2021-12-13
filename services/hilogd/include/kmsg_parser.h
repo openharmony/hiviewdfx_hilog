@@ -12,29 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LOG_COLLECTOR_H
-#define LOG_COLLECTOR_H
-#include <list>
+#ifndef KMSG_PARSER_H
+#define KMSG_PARSER_H
 
-#include "log_buffer.h"
-#include "hilog_input_socket_server.h"
+#include "log_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-class LogCollector {
+class KmsgParser {
 public:
-    LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
-    void InsertDropInfo(const HilogMsg &msg, int droppedCount);
-    size_t InsertLogToBuffer(const HilogMsg& msg);
-#ifndef __RECV_MSG_WITH_UCRED_
-    void onDataRecv(std::vector<char>& data);
-#else
-    void onDataRecv(const ucred& cred, std::vector<char>& data);
-#endif
-    ~LogCollector() = default;
-private:
-    HilogBuffer& m_hilogBuffer;
+    using BootTp = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>; 
+    std::optional <HilogMsgWrapper> ParseKmsg(std::vector<char>& kmsgBuffer);
+    BootTp BootTime();
 };
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
+

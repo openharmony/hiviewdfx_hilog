@@ -28,6 +28,7 @@ namespace HiviewDFX {
 
 class HilogInputSocketServer : public DgramSocketServer {
 public:
+
 #ifndef __RECV_MSG_WITH_UCRED_
     using HandlingFunc = std::function<void(std::vector<char>& data)>;
 #else

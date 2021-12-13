@@ -22,6 +22,7 @@
 #include <memory>
 #include <typeindex>
 #include "log_data.h"
+#include "log_msg_wrapper.h"
 #include "hilogtool_msg.h"
 #include "socket.h"
 

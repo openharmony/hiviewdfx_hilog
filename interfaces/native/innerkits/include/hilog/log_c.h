@@ -37,10 +37,10 @@ extern "C" {
 typedef enum {
     LOG_TYPE_MIN = 0,
     LOG_APP = 0,
-    // Log to kmsg, only used by init phase.
     LOG_INIT = 1,
     // Used by core service, framework.
     LOG_CORE = 3,
+    LOG_KMSG = 4,
     LOG_TYPE_MAX
 } LogType;
 

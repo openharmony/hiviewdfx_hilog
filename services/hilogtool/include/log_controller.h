@@ -30,7 +30,6 @@ constexpr int RECV_BUF_LEN = MAX_LOG_LEN * 2;
 
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen);
 int MultiQuerySplit(const std::string& src, const char& delim, std::vector<std::string>& vec);
-inline void PrintBuffer(void* pBuff, unsigned int nLen);
 void NextRequestOp(SeqPacketSocketClient& controller, uint16_t sendId);
 void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* context);
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,

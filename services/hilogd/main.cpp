@@ -12,18 +12,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/prctl.h>
 #include <thread>
+#include <future>
 #include <unistd.h>
 #include <csignal>
-
 #include "cmd_executor.h"
 #include "log_querier.h"
 #include "hilog_input_socket_server.h"
 #include "log_collector.h"
+#include "log_kmsg.h"
 #include "flow_control_init.h"
+#include "properties.h"
 
 #ifdef DEBUG
 #include <fcntl.h>
@@ -53,7 +56,7 @@ static void SigHandler(int sig)
     }
 }
 
-int HilogdEntry(int argc, char* argv[])
+int HilogdEntry()
 {
     HilogBuffer hilogBuffer;
     umask(HILOG_FILE_MASK);
@@ -97,23 +100,25 @@ int HilogdEntry(int argc, char* argv[])
         incomingLogsServer.RunServingThread();
     }
 
-    std::thread startupCheckThread([&hilogBuffer]() {
+    auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
         std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, hilogBuffer);
         logQuerier->RestorePersistJobs(hilogBuffer);
     });
-    startupCheckThread.detach();
-
+    auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
+        LogKmsg logKmsg(hilogBuffer);
+        logKmsg.ReadAllKmsg();
+    });
+    
     CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
-
     return 0;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
 
-int main(int argc, char* argv[])
+int main()
 {
-    OHOS::HiviewDFX::HilogdEntry(argc, argv);
+    OHOS::HiviewDFX::HilogdEntry();
     return 0;
 }

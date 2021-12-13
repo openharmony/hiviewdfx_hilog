@@ -30,6 +30,7 @@ using PropType = enum {
     PROP_DOMAIN_LOG_LEVEL,
     PROP_TAG_LOG_LEVEL,
     PROP_SINGLE_DEBUG,
+    PROP_KMSG,
     PROP_PERSIST_DEBUG,
 };
 
@@ -44,6 +45,7 @@ bool IsPersistDebugOn();
 bool IsPrivateSwitchOn();
 bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
+bool IsKmsgSwitchOn();
 uint16_t GetGlobalLevel();
 uint16_t GetDomainLevel(uint32_t domain);
 
