@@ -22,7 +22,7 @@ config("module_private_config") {
 ohos_moduletest("HiLogNDKTest") {
   module_out_path = module_output_path
 
-  sources = [ 
+  sources = [
     "moduletest/common/hilog_base_ndk_test.cpp",
     "moduletest/common/hilog_ndk_test.cpp",
   ]
