@@ -147,7 +147,8 @@ int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, 
     vec[1].iov_len = tagLen;                 // 1 : index of log tag
     vec[2].iov_base = (void*)fmt;            // 2 : index of log content
     vec[2].iov_len = fmtLen;                 // 2 : index of log content
-    return TEMP_FAILURE_RETRY(::writev(s_socketHandler.socketFd.load(), vec.data(), vec.size()));
+    ret = TEMP_FAILURE_RETRY(::writev(s_socketHandler.socketFd.load(), vec.data(), vec.size()));
+    return ret;
 }
 
 int HiLogBasePrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
@@ -167,18 +168,9 @@ int HiLogBasePrintArgs(const LogType type, const LogLevel level, const unsigned 
     }
 
     char buf[MAX_LOG_LEN] = {0};
-    int ret = vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, HILOG_DEFAULT_PRIVACY, fmt, ap);
-    if (ret == -1) {
-        std::cerr << __FILE__ << __LINE__ <<  "Error inside vsnprintfp_s. Provided fmt: " << fmt << "\n";
-        return -1;
-    }
-#ifdef DEBUG
-    else if (ret == -2) {
-        std::cerr << "Log was truncated\n";
-    }
-#endif
 
-    /* fill header info */
+    vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, HILOG_DEFAULT_PRIVACY, fmt, ap);
+
     int tagLen = strnlen(tag, MAX_TAG_LEN - 1);
     int logLen = strnlen(buf, MAX_LOG_LEN - 1);
     HilogMsg header = {0};

@@ -25,7 +25,6 @@
 #include <gtest/gtest.h>
 
 #include "hilog/log.h"
-#include "securec.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D00
