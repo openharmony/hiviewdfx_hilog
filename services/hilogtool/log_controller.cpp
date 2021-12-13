@@ -418,8 +418,8 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
             }
             if (pLogPersistStartMsg->logType == (0b01 << LOG_KMSG)) {
-                pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_KMSG_JOBID : stoi(
-                    logPersistParam->jobIdStr);       
+                pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_KMSG_JOBID
+                    : stoi(logPersistParam->jobIdStr);       
             } else {
                 pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
                     : stoi(logPersistParam->jobIdStr);
