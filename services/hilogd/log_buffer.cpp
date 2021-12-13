@@ -25,7 +25,7 @@ using namespace std;
 
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
-static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144};
+static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
 const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;

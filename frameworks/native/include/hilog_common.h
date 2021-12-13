@@ -135,28 +135,4 @@ typedef enum {
     ERR_KMSG_SWITCH_VALUE_INVALID = -33,
 } ErrorCode;
 
-class HilogMsgWrapper {
-public:
-    explicit HilogMsgWrapper(const std::vector<char> & _msgBuffer) : msgBuffer(_msgBuffer)
-    {};
-    explicit HilogMsgWrapper(std::vector<char> && _msgBuffer)
-    {
-        std::swap(msgBuffer, _msgBuffer);
-    }
-    HilogMsg& getHilogMsg()
-    {
-        return *reinterpret_cast<HilogMsg*>(msgBuffer.data());
-    }
-    bool IsValid()
-    {
-        return validity;
-    }
-    void SetInvalid()
-    {
-        validity = false;
-    }
-private:
-    std::vector<char> msgBuffer;
-    bool validity = true;  
-};
 #endif /* HILOG_COMMON_H */
