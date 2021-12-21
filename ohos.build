@@ -13,7 +13,8 @@
       "module_list": [
         "//base/hiviewdfx/hilog/frameworks/native/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog"
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base"
       ],
       "inner_kits": [
         {
@@ -23,6 +24,15 @@
               "hilog/log.h",
               "hilog/log_c.h",
               "hilog/log_cpp.h"
+            ],
+            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
+          }
+        },
+        {
+          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
+          "header": {
+            "header_files": [
+              "hilog_base/log_base.h"
             ],
             "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
           }
