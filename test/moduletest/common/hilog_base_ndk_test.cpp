@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 #include <hilog_common.h>
 
-#include "hilog_base.h"
+#include "hilog_base/log_base.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D00

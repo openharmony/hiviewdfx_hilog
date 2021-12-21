@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "hilog_base.h"
+#include "hilog_base/log_base.h"
 
 #include <hilog_common.h>
 #include <vsnprintf_s_p.h>
@@ -25,7 +25,6 @@
 #include <mutex>
 #include <sys/socket.h>
 #include <sys/time.h>
-//#include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <unistd.h>

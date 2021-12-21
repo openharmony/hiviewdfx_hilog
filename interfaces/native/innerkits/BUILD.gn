@@ -36,3 +36,33 @@ ohos_shared_library("libhilog") {
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
 }
+
+declare_args() {
+  ohos_hilog_base_default_privacy = true
+}
+
+config("libhilog_base_cfg") {
+  visibility = [ "*:*" ]
+  include_dirs = [ "include" ]
+
+  defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_base_default_privacy" ]
+  defines += [
+    "__RECV_MSG_WITH_UCRED_",
+    "HILOG_PROHIBIT_ALLOCATION",
+    "HILOG_USE_MUSL",
+  ]
+}
+
+ohos_static_library("libhilog_base") {
+  include_dirs = [
+    "//base/hiviewdfx/hilog/frameworks/native",
+    "//base/hiviewdfx/hilog/frameworks/native/include",
+  ]
+  sources = [
+    "//base/hiviewdfx/hilog/frameworks/native/hilog_base.cpp",
+    "//base/hiviewdfx/hilog/frameworks/native/vsnprintf_s_p.cpp",
+  ]
+
+  public_configs = [ ":libhilog_base_cfg" ]
+  configs = [ ":libhilog_base_cfg" ]
+}

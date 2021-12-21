@@ -30,11 +30,13 @@ ohos_moduletest("HiLogNDKTest") {
   configs = [ ":module_private_config" ]
 
   deps = [
-    "//base/hiviewdfx/hilog/base:libhilog_base",
     "//third_party/googletest:gtest_main",
   ]
 
-  external_deps = [ "hilog_native:libhilog" ]
+  external_deps = [
+    "hilog_native:libhilog",
+    "hilog_native:libhilog_base",
+  ]
 
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
