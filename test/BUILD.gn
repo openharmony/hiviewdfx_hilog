@@ -29,9 +29,7 @@ ohos_moduletest("HiLogNDKTest") {
 
   configs = [ ":module_private_config" ]
 
-  deps = [
-    "//third_party/googletest:gtest_main",
-  ]
+  deps = [ "//third_party/googletest:gtest_main" ]
 
   external_deps = [
     "hilog_native:libhilog",
