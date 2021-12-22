@@ -33,7 +33,6 @@ public:
 private:
     std::atomic_int fdHandler;
     uint32_t allowOption = SOCK_NONBLOCK | SOCK_CLOEXEC;
-    std::string serverPath;
     uint32_t socketType;
 };
 } // namespace HiviewDFX

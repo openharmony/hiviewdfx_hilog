@@ -232,6 +232,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     /* format log string */
     debug = IsDebugOn();
     priv = (!debug) && IsPrivateSwitchOn();
+    
 #ifdef __clang__
 /* code specific to clang compiler */
 #pragma clang diagnostic push
