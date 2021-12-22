@@ -27,11 +27,7 @@ ohos_prebuilt_etc("hilog_domains.conf") {
 }
 
 ohos_prebuilt_etc("hilogd.cfg") {
-  if (use_musl) {
-    source = "hilogd.cfg"
-  } else {
-    source = "hilogd.rc"
-  }
+  source = "hilogd.cfg"
   relative_install_dir = "init"
   part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
