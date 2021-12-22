@@ -25,7 +25,6 @@
 #include <gtest/gtest.h>
 
 #include "hilog/log.h"
-#include "securec.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D00
@@ -119,7 +118,7 @@ void HiLogNDKTest::SetUp()
     PopenToString("hilog -r");
 }
 
-static std::string RamdomStringGenerator()
+static std::string RandomStringGenerator()
 {
     std::string str;
     int logLen = 16;
@@ -134,7 +133,7 @@ static std::string RamdomStringGenerator()
 static void HiLogWriteTest(LogInterfaceType methodType, unsigned int count,
     const std::array<LogMethodFunc, METHODS_NUMBER> &logMethods)
 {
-    std::string logMsg(RamdomStringGenerator());
+    std::string logMsg(RandomStringGenerator());
     for (unsigned int i = 0; i < count; ++i) {
         logMethods.at(methodType)(logMsg + std::to_string(i));
     }

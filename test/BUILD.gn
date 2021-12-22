@@ -22,19 +22,22 @@ config("module_private_config") {
 ohos_moduletest("HiLogNDKTest") {
   module_out_path = module_output_path
 
-  sources = [ "moduletest/common/hilog_ndk_test.cpp" ]
+  sources = [
+    "moduletest/common/hilog_base_ndk_test.cpp",
+    "moduletest/common/hilog_ndk_test.cpp",
+  ]
 
   configs = [ ":module_private_config" ]
 
-  deps = [
-    "//third_party/googletest:gtest_main",
-    "//utils/native/base:utils",
-  ]
+  deps = [ "//third_party/googletest:gtest_main" ]
 
-  external_deps = [ "hilog_native:libhilog" ]
+  external_deps = [
+    "hilog_native:libhilog",
+    "hilog_native:libhilog_base",
+  ]
 
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//utils/native/base/include",
+    "//base/hiviewdfx/hilog/frameworks/native/include",
   ]
 }

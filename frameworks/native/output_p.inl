@@ -208,7 +208,7 @@ static int SecDecodeSize(SecChar ch, SecFormatAttr *attr, const SecChar **format
         attr->flags |= SECUREC_FLAG_INTMAX;
         break;
 #endif
-    case SECUREC_CHAR('q'):    /* fall-through */ /* FALLTHRU */
+    case SECUREC_CHAR('q'):  [[fallthrough]];
     case SECUREC_CHAR('L'):
         attr->flags |= SECUREC_FLAG_LONGLONG | SECUREC_FLAG_LONG_DOUBLE;
         break;
@@ -617,8 +617,7 @@ NORMAL_CHAR:
                     formatAttr.flags |= SECUREC_FLAG_WIDECHAR;
 #endif
                 }
-                /* fall-through */
-                /* FALLTHRU */
+                [[fallthrough]];
             case SECUREC_CHAR('c'):
                 {
                     unsigned int cValue = (unsigned int)va_arg(arglist, int);
@@ -642,8 +641,7 @@ NORMAL_CHAR:
                     formatAttr.flags |= SECUREC_FLAG_SHORT;
                 }
 #endif
-                /* fall-through */
-                /* FALLTHRU */
+                [[fallthrough]];
             case SECUREC_CHAR('s'):
                 {
                     char *argPtr = (char *)va_arg(arglist, char *);
@@ -665,8 +663,7 @@ NORMAL_CHAR:
             case SECUREC_CHAR('A'):    /* fall-through */ /* FALLTHRU */
                 /* convert format char to lower , use Explicit conversion to clean up compilation warning */
                 ch = (SecChar) (ch + ((SecChar) (SECUREC_CHAR('a')) - (SECUREC_CHAR('A'))));
-                /* fall-through */
-                /* FALLTHRU */
+                [[fallthrough]];
             case SECUREC_CHAR('e'):    /* fall-through */ /* FALLTHRU */
             case SECUREC_CHAR('f'):    /* fall-through */ /* FALLTHRU */
             case SECUREC_CHAR('g'):    /* fall-through */ /* FALLTHRU */
@@ -858,13 +855,11 @@ NORMAL_CHAR:
                 goto OUTPUT_HEX;
 #endif
 
-                /* fall-through */
-                /* FALLTHRU */
+                [[fallthrough]];
             case SECUREC_CHAR('X'):
                 /* unsigned upper hex output */
                 digits = itoaUpperDigits;
                 goto OUTPUT_HEX;
-
             case SECUREC_CHAR('x'):
                 /* unsigned lower hex output */
                 digits = itoaLowerDigits;
@@ -897,8 +892,7 @@ OUTPUT_HEX:
             case SECUREC_CHAR('d'):    /* fall-through */ /* FALLTHRU */
                 /* signed decimal output */
                 formatAttr.flags |= SECUREC_FLAG_SIGNED;
-                /* fall-through */
-                /* FALLTHRU */
+                [[fallthrough]];
             case SECUREC_CHAR('u'):
                 radix = 10;
                 goto OUTPUT_INT;
