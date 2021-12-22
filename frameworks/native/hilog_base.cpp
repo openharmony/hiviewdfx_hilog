@@ -58,7 +58,8 @@ constexpr sockaddr_un SOCKET_ADDR = {AF_UNIX, SOCKET_FILE_DIR INPUT_SOCKET_NAME}
 struct SocketHandler {
     std::atomic_int socketFd {INVALID_SOCKET};
     std::atomic_bool isConnected {false};
-    ~SocketHandler() {
+    ~SocketHandler()
+    {
         int currentFd = socketFd.exchange(INVALID_SOCKET);
         if (currentFd >= 0) {
             close(currentFd);
@@ -98,7 +99,8 @@ int CheckSocket()
     return fd;
 }
 
-int CheckConnection() {
+int CheckConnection()
+{
     bool isConnected = s_socketHandler.isConnected.load();
     if (isConnected) {
         return 0;
