@@ -67,11 +67,15 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
             }
             logReaderListMutex.lock_shared();
             for (auto &itr :logReaderList) {
-                if (itr.lock()->readPos == it) {
-                    itr.lock()->readPos = std::next(it);
+                auto reader = itr.lock();
+                if (reader == nullptr) {
+                    continue;
                 }
-                if (itr.lock()->lastPos == it) {
-                    itr.lock()->lastPos = std::next(it);
+                if (reader->readPos == it) {
+                    reader->readPos = std::next(it);
+                }
+                if (reader->lastPos == it) {
+                    reader->lastPos = std::next(it);
                 }
             }
             logReaderListMutex.unlock_shared();
@@ -178,14 +182,17 @@ size_t HilogBuffer::Delete(uint16_t logType)
         }
         // Delete corresponding logs
         logReaderListMutex.lock_shared();
-        for (auto itr = logReaderList.begin(); itr != logReaderList.end();) {
-            if ((*itr).lock()->readPos == it) {
-                (*itr).lock()->readPos = std::next(it);
-                }
-            if ((*itr).lock()->lastPos == it) {
-                (*itr).lock()->lastPos = std::next(it);
+        for (auto &itr :logReaderList) {
+            auto reader = itr.lock();
+            if (reader == nullptr) {
+                continue;
             }
-            ++itr;
+            if (reader->readPos == it) {
+                reader->readPos = std::next(it);
+            }
+            if (reader->lastPos == it) {
+                reader->lastPos = std::next(it);
+            }
         }
         logReaderListMutex.unlock_shared();
 
