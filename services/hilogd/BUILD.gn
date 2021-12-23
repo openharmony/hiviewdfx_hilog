@@ -16,10 +16,7 @@ import("//build/ohos.gni")
 config("hilogd_config") {
   visibility = [ ":*" ]
 
-  include_dirs = [
-    "include",
-    "//base/startup/init_lite/interfaces/innerkits/include",
-  ]
+  include_dirs = [ "include" ]
 }
 
 ohos_executable("hilogd") {
@@ -41,15 +38,17 @@ ohos_executable("hilogd") {
   defines = [ "__RECV_MSG_WITH_UCRED_" ]
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
+    "//base/hiviewdfx/hilog/frameworks/native:libhilog_socket_server",
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-    "//base/startup/init_lite/interfaces/innerkits/file:libfile",
     "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/zlib:libz",
     "//utils/native/base:utilsecurec_shared",
   ]
 
   deps += [ "etc:hilogd_etc" ]
+
+  external_deps = [ "init:libbegetutil" ]
 
   install_enable = true
   part_name = "hilog_service"
