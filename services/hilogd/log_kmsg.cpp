@@ -47,12 +47,11 @@ ssize_t LogKmsg::LinuxReadOneKmsg(KmsgParser& parser)
                 return result;
             }
             hilogBuffer.logReaderListMutex.lock_shared();
-            auto it = hilogBuffer.logReaderList.begin();
-            while (it != hilogBuffer.logReaderList.end()) {
-                if ((*it).lock()->GetType() != TYPE_CONTROL) {
-                    (*it).lock()->NotifyForNewData();
+            for (auto &itr :hilogBuffer.logReaderList) {
+                auto reader = itr.lock();
+                if ((reader != nullptr) && (reader->GetType() != TYPE_CONTROL)) {
+                    reader->NotifyForNewData();
                 }
-                ++it;
             }
             hilogBuffer.logReaderListMutex.unlock_shared();
         }
