@@ -32,7 +32,6 @@ ohos_source_set("libhilog_source") {
   sources = [
     "hilog.cpp",
     "hilog_input_socket_client.cpp",
-    "hilog_input_socket_server.cpp",
     "hilog_printf.cpp",
     "vsnprintf_s_p.cpp",
   ]
@@ -55,22 +54,41 @@ config("libhilogutil_config") {
     "//base/hiviewdfx/hilog/adapter",
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
+}
 
+ohos_static_library("libhilog_socket_server") {
+  sources = [
+    "dgram_socket_server.cpp",
+    "hilog_input_socket_server.cpp",
+    "seq_packet_socket_server.cpp",
+    "socket_server.cpp",
+  ]
+  public_configs = [ ":libhilogutil_config" ]
+  configs = [ ":libhilogutil_config" ]
+
+  deps = [
+    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
+    "//third_party/bounds_checking_function:libsec_shared",
+  ]
+
+  defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_default_privacy" ]
+  defines += [ "__RECV_MSG_WITH_UCRED_" ]
   if (use_musl) {
-    include_dirs += [ "//base/startup/init_lite/interfaces/innerkits/include" ]
+    defines += [ "HILOG_USE_MUSL" ]
+    external_deps = [ "init:libbegetutil" ]
   }
+
+  part_name = "hilog_native"
+  subsystem_name = "hiviewdfx"
 }
 
 ohos_shared_library("libhilogutil") {
   sources = [
     "dgram_socket_client.cpp",
-    "dgram_socket_server.cpp",
     "format.cpp",
     "seq_packet_socket_client.cpp",
-    "seq_packet_socket_server.cpp",
     "socket.cpp",
     "socket_client.cpp",
-    "socket_server.cpp",
   ]
   public_configs = [ ":libhilogutil_config" ]
   configs = [ ":libhilogutil_config" ]
@@ -82,7 +100,6 @@ ohos_shared_library("libhilogutil") {
 
   if (use_musl) {
     defines = [ "HILOG_USE_MUSL" ]
-    deps += [ "//base/startup/init_lite/interfaces/innerkits/socket:libsocket" ]
   }
 
   output_extension = "so"
