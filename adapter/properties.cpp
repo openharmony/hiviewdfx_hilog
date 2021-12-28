@@ -32,6 +32,8 @@
 #include <sys/uio.h>
 #include <unordered_map>
 #include <pthread.h>
+#include <parameter.h>
+#include <sysparam_errno.h>
 
 using namespace std;
 
@@ -74,15 +76,39 @@ using ProcessInfo = struct {
 
 void PropertyGet(const string &key, char *value, int len)
 {
-    if (len < HILOG_PROP_VALUE_MAX) {
+    if (len >= HILOG_PROP_VALUE_MAX) {
+        std::cerr << "PropertyGet(): len exceed maximum.\n";
         return;
     }
-    /* use OHOS interface */
+    static const char* emptyStr = "";
+    auto result = GetParameter(key.c_str(), emptyStr, value, len);
+    if (result < 0) {
+        if (result == EC_INVALID) {
+            std::cerr << "PropertyGet(): Invalid arguments.\n";
+        }
+        else {
+            std::cerr << "PropertyGet(): Error: " << result << "\n";
+        }
+    }
 }
 
 void PropertySet(const string &key, const char* value)
 {
-    /* use OHOS interface */
+    auto len = value ? strlen(value) : 0;
+    if (len >= HILOG_PROP_VALUE_MAX) {
+        std::cerr << "PropertyGet(): len exceed maximum.\n";
+        return;
+    }
+
+    auto result = SetParameter(key.c_str(), value);
+    if (result < 0) {
+        if (result == EC_INVALID) {
+            std::cerr << "PropertySet(): Invalid arguments.\n";
+        }
+        else {
+            std::cerr << "PropertySet(): Error: " << result << "\n";
+        }
+    }
 }
 
 string GetProgName()
