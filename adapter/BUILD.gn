@@ -33,4 +33,5 @@ ohos_shared_library("libhilog_os_adapter") {
     "system",
     "updater",
   ]
+  external_deps = [ "startup_l2:syspara" ]
 }
