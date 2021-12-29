@@ -16,11 +16,14 @@
 #include <array>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include <gtest/gtest.h>
 #include <properties.h>
+#include <hilog/log.h>
 
 using namespace testing::ext;
+using namespace std::chrono_literals;
 
 class PropertiesTest : public testing::Test {
 public:
@@ -103,3 +106,95 @@ HWTEST_F(PropertiesTest, PropertiesNoKeyTest, TestSize.Level1)
 
     EXPECT_TRUE(std::string(prop.data()).empty());
 }
+
+HWTEST_F(PropertiesTest, SwitchTest, TestSize.Level1)
+{
+    PropertySet(GetPropertyName(PROP_PRIVATE), "true");
+    PropertySet(GetPropertyName(PROP_PROCESS_FLOWCTRL), "true");
+    PropertySet(GetPropertyName(PROP_DOMAIN_FLOWCTRL), "true");
+    PropertySet(GetPropertyName(PROP_SINGLE_DEBUG), "true");
+    PropertySet(GetPropertyName(PROP_KMSG), "true");
+    PropertySet(GetPropertyName(PROP_PERSIST_DEBUG), "true");
+
+    std::this_thread::sleep_for(1000ms);
+
+    EXPECT_TRUE(IsDebugOn());
+    EXPECT_TRUE(IsSingleDebugOn());
+    EXPECT_TRUE(IsPersistDebugOn());
+    EXPECT_TRUE(IsPrivateSwitchOn());
+    EXPECT_TRUE(IsProcessSwitchOn());
+    EXPECT_TRUE(IsDomainSwitchOn());
+    EXPECT_TRUE(IsKmsgSwitchOn());
+
+    PropertySet(GetPropertyName(PROP_PRIVATE), "false");
+    PropertySet(GetPropertyName(PROP_PROCESS_FLOWCTRL), "false");
+    PropertySet(GetPropertyName(PROP_DOMAIN_FLOWCTRL), "false");
+    PropertySet(GetPropertyName(PROP_SINGLE_DEBUG), "false");
+    PropertySet(GetPropertyName(PROP_KMSG), "false");
+    PropertySet(GetPropertyName(PROP_PERSIST_DEBUG), "false");
+
+    std::cout << "Wait 3s\n";
+    std::this_thread::sleep_for(3000ms);
+
+    EXPECT_FALSE(IsDebugOn());
+    EXPECT_FALSE(IsSingleDebugOn());
+    EXPECT_FALSE(IsPersistDebugOn());
+    EXPECT_FALSE(IsPrivateSwitchOn());
+    EXPECT_FALSE(IsProcessSwitchOn());
+    EXPECT_FALSE(IsDomainSwitchOn());
+    EXPECT_FALSE(IsKmsgSwitchOn());
+
+    PropertySet(GetPropertyName(PROP_SINGLE_DEBUG), "true");
+    PropertySet(GetPropertyName(PROP_PERSIST_DEBUG), "false");
+    std::cout << "Wait 1s\n";
+    std::this_thread::sleep_for(1000ms);
+    EXPECT_TRUE(IsDebugOn());
+
+    PropertySet(GetPropertyName(PROP_SINGLE_DEBUG), "false");
+    PropertySet(GetPropertyName(PROP_PERSIST_DEBUG), "true");
+    std::cout << "Wait 1s\n";
+    std::this_thread::sleep_for(1000ms);
+    EXPECT_TRUE(IsDebugOn());
+}
+
+HWTEST_F(PropertiesTest, LevelTest, TestSize.Level1)
+{
+    static const std::array<const char*, 10> charLevels = {"d", "D", "f", "F", "e", "E", "w", "W", "i", "I"};
+    static const std::array<uint16_t, 10> expected = {
+        LOG_DEBUG, LOG_DEBUG,
+        LOG_FATAL, LOG_FATAL,
+        LOG_ERROR, LOG_ERROR,
+        LOG_WARN, LOG_WARN,
+        LOG_INFO, LOG_INFO,
+    };
+
+    for (size_t i = 0; i < charLevels.size(); ++i) {
+        PropertySet(GetPropertyName(PROP_GLOBAL_LOG_LEVEL), charLevels[i]);
+        std::this_thread::sleep_for(500ms);
+        EXPECT_EQ(GetGlobalLevel(), expected[i]);
+    }
+    PropertySet(GetPropertyName(PROP_GLOBAL_LOG_LEVEL), "z");
+    std::this_thread::sleep_for(500ms);
+    EXPECT_EQ(GetGlobalLevel(), LOG_LEVEL_MIN);
+
+    uint32_t domain = 12345;
+    for (size_t i = 0; i < charLevels.size(); ++i) {
+        PropertySet(GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + std::to_string(domain), charLevels[i]);
+        std::this_thread::sleep_for(500ms);
+        EXPECT_EQ(GetDomainLevel(domain), expected[i]);
+    }
+    PropertySet(GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + std::to_string(domain), "z");
+    std::this_thread::sleep_for(500ms);
+    EXPECT_EQ(GetDomainLevel(domain), LOG_LEVEL_MIN);
+
+    std::string tag = "test_tag";
+    for (size_t i = 0; i < charLevels.size(); ++i) {
+        PropertySet(GetPropertyName(PROP_TAG_LOG_LEVEL) + tag, charLevels[i]);
+        std::this_thread::sleep_for(500ms);
+        EXPECT_EQ(GetTagLevel(tag), expected[i]);
+    }
+    PropertySet(GetPropertyName(PROP_TAG_LOG_LEVEL) + tag, "z");
+    std::this_thread::sleep_for(500ms);
+    EXPECT_EQ(GetTagLevel(tag), LOG_LEVEL_MIN);
+}
+

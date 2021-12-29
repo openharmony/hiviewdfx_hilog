@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef HIVIEWDFX_HILOG_C_H
-#define HIVIEWDFX_HILOG_C_H
+#ifndef HIVIEWDFX_HILOG_BASE_C_H
+#define HIVIEWDFX_HILOG_BASE_C_H
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -74,4 +74,4 @@ bool HiLogBaseIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 }
 #endif
 
-#endif  // HIVIEWDFX_HILOG_C_H
+#endif  // HIVIEWDFX_HILOG_BASE_C_H
