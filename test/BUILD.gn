@@ -54,5 +54,7 @@ ohos_moduletest("HiLogAdapterTest") {
     "//third_party/googletest:gtest_main",
   ]
 
+  external_deps = [ "hilog_native:libhilog" ]
+
   include_dirs = [ "//base/hiviewdfx/hilog/adapter" ]
 }
