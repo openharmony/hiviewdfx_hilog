@@ -56,8 +56,7 @@ static pthread_mutex_t g_kmsgLock = PTHREAD_MUTEX_INITIALIZER;
 static int LockByProp(uint32_t propType);
 static void UnlockByProp(uint32_t propType);
 
-class PropertyTypeLocker 
-{
+class PropertyTypeLocker {
 public:
     PropertyTypeLocker(uint32_t propType)
         : m_propType(propType)
@@ -66,14 +65,17 @@ public:
         m_isLocked = !LockByProp(m_propType);
     }
 
-    ~PropertyTypeLocker() 
+    ~PropertyTypeLocker()
     {
         if (m_isLocked) {
             UnlockByProp(m_propType);
         }
     }
 
-    bool isLocked() const { return m_isLocked; }
+    bool isLocked() const
+    {
+        return m_isLocked;
+    }
 private:
     uint32_t m_propType;
     bool m_isLocked;
@@ -82,8 +84,7 @@ private:
 using RawPropertyData = std::array<char, HILOG_PROP_VALUE_MAX>;
 
 template<typename T>
-class CacheData
-{
+class CacheData {
 public:
     using DataConverter = std::function<T(const RawPropertyData&, const T& defaultVal)>;
 
@@ -113,13 +114,13 @@ public:
                 m_commit = currentCommit;
             }
             return m_value;
-        }
-        else {
+        } else {
             return getDirectValue();
         }
     }
 private:
-    bool getRawValue(char *value, unsigned int len) {
+    bool getRawValue(char *value, unsigned int len)
+    {
         auto res = GetParameterValue(m_handle, value, len);
         if (res < 0) {
             std::cerr << "CacheData -> GetParameterValue -> Can't get value for key: " << m_key;
@@ -129,7 +130,8 @@ private:
         return true;
     }
 
-    T getDirectValue() {
+    T getDirectValue()
+    {
         RawPropertyData tempData;
         if (!getRawValue(tempData.data(), tempData.size())) {
             return m_defaultValue;
@@ -137,7 +139,8 @@ private:
         return m_converter(tempData, m_defaultValue);
     }
 
-    void updateValue() {
+    void updateValue()
+    {
         if (!getRawValue(m_rawData.data(), m_rawData.size())) {
             m_value = m_defaultValue;
             return;
@@ -190,8 +193,7 @@ void PropertySet(const string &key, const char* value)
     if (result < 0) {
         if (result == EC_INVALID) {
             std::cerr << "PropertySet(): Invalid arguments.\n";
-        }
-        else {
+        } else {
             std::cerr << "PropertySet(): Error: " << result << "\n";
         }
     }
@@ -300,12 +302,11 @@ static void UnlockByProp(uint32_t propType)
     }
 }
 
-static bool textToBool(const RawPropertyData& data, bool defaultVal) 
+static bool textToBool(const RawPropertyData& data, bool defaultVal)
 {
     if (!strcmp(data.data(), "true")) {
         return true;
-    }
-    else if (!strcmp(data.data(), "false")) {
+    } else if (!strcmp(data.data(), "false")) {
         return false;
     }
     return defaultVal;
@@ -352,14 +353,14 @@ bool IsKmsgSwitchOn()
     return switchCache->getValue();
 }
 
-static uint16_t textToLogLevel(const RawPropertyData& data, uint16_t defaultVal) 
+static uint16_t textToLogLevel(const RawPropertyData& data, uint16_t defaultVal)
 {
-    static const std::unordered_map<char, uint16_t> logLevels = { 
-        {'d', LOG_DEBUG}, {'D', LOG_DEBUG},
-        {'i', LOG_INFO},  {'I', LOG_INFO},
-        {'w', LOG_WARN},  {'W', LOG_WARN},
-        {'e', LOG_ERROR}, {'E', LOG_ERROR},
-        {'f', LOG_FATAL}, {'F', LOG_FATAL},
+    static const std::unordered_map<char, uint16_t> logLevels = {
+        { 'd', LOG_DEBUG }, { 'D', LOG_DEBUG },
+        { 'i', LOG_INFO },  { 'I', LOG_INFO },
+        { 'w', LOG_WARN },  { 'W', LOG_WARN },
+        { 'e', LOG_ERROR }, { 'E', LOG_ERROR },
+        { 'f', LOG_FATAL }, { 'F', LOG_FATAL },
     };
     auto it = logLevels.find(data[0]);
     if (it != logLevels.end()) {
@@ -387,7 +388,7 @@ uint16_t GetDomainLevel(uint32_t domain)
         InsertLock lock(*mtx);
         it = domainMap->find(domain); // secured for two thread went across above condition
         if (it == domainMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_DOMAIN_LOG_LEVEL, 
+            LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_DOMAIN_LOG_LEVEL,
                 to_string(domain));
             auto result = domainMap->insert({ domain, levelCache });
             if (!result.second) {
@@ -415,7 +416,7 @@ uint16_t GetTagLevel(const string& tag)
         it = tagMap->find(tag); // secured for two thread went across above condition
         if (it == tagMap->end()) {
             LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_TAG_LOG_LEVEL, tag);
-            auto result = tagMap->insert({ tag, levelCache });
+            auto result = tagMap->insert( { tag, levelCache } );
             if (!result.second) {
                 std::cerr << "Can't insert new LogLevelCache for tag: " << tag << "\n";
                 return LOG_LEVEL_MIN;

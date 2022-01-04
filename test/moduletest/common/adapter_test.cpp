@@ -24,6 +24,8 @@
 using namespace testing::ext;
 using namespace std::chrono_literals;
 
+namespace {
+
 class PropertiesTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
@@ -182,3 +184,4 @@ HWTEST_F(PropertiesTest, LevelTest, TestSize.Level1)
     EXPECT_EQ(GetTagLevel(tag), LOG_LEVEL_MIN);
 }
 
+} // namespace
