@@ -92,83 +92,68 @@ public:
         , m_defaultValue(defaultValue)
         , m_propType(propType)
         , m_converter(converter)
-        , m_needUpdate(false)
     {
         m_key = GetPropertyName(m_propType) + suffix;
-        PropertyGet(m_key, m_rawData.data(), m_rawData.size());
-        m_value = m_converter(m_rawData, m_defaultValue);
-        auto res = WatchParameter(m_key.c_str(), CacheData<T>::onDataChanged, this);
-        if (res) {
-            std::cerr << "CacheData. Property: " << m_key << " can't be watched! ";
-            std::cerr << "Result: " << res << "\n";
-        }
     }
-
-    ~CacheData()
-    {
-        // This will clear all watchers for particular property key!
-        // I assume that thers is only one watcher for this property name
-        // otherwise function WatchParameter should not be used.
-        WatchParameter(m_key.c_str(), nullptr, nullptr);
-    }
-
-    static void onDataChanged(const char *key, const char *newValue, void* ctx)
-    {
-        if (!newValue) {
-            std::cerr << "CacheData. Invalid data on change!\n";
-            return;
-        }
-        if (!ctx) {
-            std::cerr << "CacheData. Invalid context!\n";
-            return;
-        }
-        auto obj = reinterpret_cast<CacheData<T>*>(ctx);
-        obj->onDataChanged(key, newValue);
-    } 
 
     T getValue()
     {
+        if (m_handle == -1) {
+            auto handle = FindParameter(m_key.c_str());
+            if (handle == -1) {
+                // std::cout << "CacheData -> FindParameter -> Can't find handle for key: " << m_key << "\n";
+                return m_defaultValue;
+            }
+            m_handle = handle;
+        }
+        auto currentCommit = GetParameterCommitId(m_handle);
         PropertyTypeLocker locker(m_propType);
         if (locker.isLocked()) {
-            bool expectedUpdate = true; // compare_exchange_strong expects reference value
-            if (m_needUpdate.compare_exchange_strong(expectedUpdate, false)) {
-                PropertyGet(m_key, m_rawData.data(), m_rawData.size());
-                m_value = m_converter(m_rawData, m_defaultValue);
+            if (currentCommit != m_commit) {
+                updateValue();
+                m_commit = currentCommit;
             }
             return m_value;
         }
-        RawPropertyData tempData = {0};
-        PropertyGet(m_key, tempData.data(), tempData.size()-1);
-        return m_converter(tempData, m_defaultValue);
+        else {
+            return getDirectValue();
+        }
     }
 private:
-    void onDataChanged(const char *key, const char *newValue) 
-    {
-        assert(m_key == key);
-        PropertyTypeLocker locker(m_propType);
-        if (locker.isLocked()) {
-            auto len = strlen(newValue);
-            if (len + 1 > HILOG_PROP_VALUE_MAX) {
-                std::cerr << "CacheData. New value is too long!\n";
-                return;
-            }
-            std::memcpy(m_rawData.data(), newValue, len);
-            m_rawData[len] = 0;
-            m_value = m_converter(m_rawData, m_defaultValue);
-            m_needUpdate.store(false);
+    bool getRawValue(char *value, unsigned int len) {
+        auto res = GetParameterValue(m_handle, value, len);
+        if (res < 0) {
+            std::cerr << "CacheData -> GetParameterValue -> Can't get value for key: " << m_key;
+            std::cerr << " handle: " << m_handle << " Result: " << res << "\n";
+            return false;
         }
-        else {
-            m_needUpdate.store(true);
+        return true;
+    }
+
+    T getDirectValue() {
+        RawPropertyData tempData;
+        if (!getRawValue(tempData.data(), tempData.size())) {
+            return m_defaultValue;
         }
+        return m_converter(tempData, m_defaultValue);
+    }
+
+    void updateValue() {
+        if (!getRawValue(m_rawData.data(), m_rawData.size())) {
+            m_value = m_defaultValue;
+            return;
+        }
+        m_value = m_converter(m_rawData, m_defaultValue);
     }
 
     RawPropertyData m_rawData = {0};
+    unsigned int m_handle = -1;
+    unsigned int m_commit = -1;
     T m_value;
     const T m_defaultValue;
     const uint32_t m_propType;
     std::string m_key;
     DataConverter m_converter;
-    std::atomic_bool m_needUpdate;
 };
 
 using SwitchCache = CacheData<bool>;
@@ -181,15 +166,17 @@ void PropertyGet(const string &key, char *value, int len)
         std::cerr << "PropertyGet(): len exceed maximum.\n";
         return;
     }
-    static const char* emptyStr = "";
-    auto result = GetParameter(key.c_str(), emptyStr, value, len);
-    if (result < 0) {
-        if (result == EC_INVALID) {
-            std::cerr << "PropertyGet(): Invalid arguments.\n";
-        }
-        else {
-            std::cerr << "PropertyGet(): Error: " << result << "\n";
-        }
+
+    auto handle = FindParameter(key.c_str());
+    if (handle == -1) {
+        //std::cout << "PropertyGet() -> FindParameter() -> Can't find handle for key:" << key << "\n";
+        return;
+    }
+
+    auto res = GetParameterValue(handle, value, len);
+    if (res < 0) {
+        std::cerr << "PropertyGet() -> GetParameterValue -> Can't get value for key: " << key;
+        std::cerr << " handle: " << handle << " Result: " << res << "\n";
     }
 }
 
