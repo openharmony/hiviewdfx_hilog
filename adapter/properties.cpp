@@ -101,7 +101,6 @@ public:
         if (m_handle == -1) {
             auto handle = FindParameter(m_key.c_str());
             if (handle == -1) {
-                // std::cout << "CacheData -> FindParameter -> Can't find handle for key: " << m_key << "\n";
                 return m_defaultValue;
             }
             m_handle = handle;
@@ -169,7 +168,6 @@ void PropertyGet(const string &key, char *value, int len)
 
     auto handle = FindParameter(key.c_str());
     if (handle == -1) {
-        //std::cout << "PropertyGet() -> FindParameter() -> Can't find handle for key:" << key << "\n";
         return;
     }
 
