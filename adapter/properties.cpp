@@ -14,7 +14,6 @@
  */
 
 #include "properties.h"
-#include "hilog/log.h"
 
 #include <array>
 #include <atomic>
@@ -35,6 +34,7 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#include <hilog/log.h>
 #include <parameter.h>
 #include <sysparam_errno.h>
 
@@ -58,7 +58,7 @@ static void UnlockByProp(uint32_t propType);
 
 class PropertyTypeLocker {
 public:
-    PropertyTypeLocker(uint32_t propType)
+    explicit PropertyTypeLocker(uint32_t propType)
         : m_propType(propType)
         , m_isLocked(false)
     {
@@ -357,8 +357,8 @@ static uint16_t textToLogLevel(const RawPropertyData& data, uint16_t defaultVal)
 {
     static const std::unordered_map<char, uint16_t> logLevels = {
         { 'd', LOG_DEBUG }, { 'D', LOG_DEBUG },
-        { 'i', LOG_INFO },  { 'I', LOG_INFO },
-        { 'w', LOG_WARN },  { 'W', LOG_WARN },
+        { 'i', LOG_INFO }, { 'I', LOG_INFO },
+        { 'w', LOG_WARN }, { 'W', LOG_WARN },
         { 'e', LOG_ERROR }, { 'E', LOG_ERROR },
         { 'f', LOG_FATAL }, { 'F', LOG_FATAL },
     };
@@ -416,7 +416,7 @@ uint16_t GetTagLevel(const string& tag)
         it = tagMap->find(tag); // secured for two thread went across above condition
         if (it == tagMap->end()) {
             LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_TAG_LOG_LEVEL, tag);
-            auto result = tagMap->insert( { tag, levelCache } );
+            auto result = tagMap->insert({ tag, levelCache });
             if (!result.second) {
                 std::cerr << "Can't insert new LogLevelCache for tag: " << tag << "\n";
                 return LOG_LEVEL_MIN;
