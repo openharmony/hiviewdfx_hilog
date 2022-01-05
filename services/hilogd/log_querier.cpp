@@ -74,7 +74,7 @@ inline bool LogTypeForbidden(uint16_t queryTypes)
     }
 }
 
-LogPersisterRotator* MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
+std::shared_ptr<LogPersisterRotator> MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
 {
     string fileSuffix = "";
     switch (pLogPersistStartMsg.compressAlg) {
@@ -87,7 +87,7 @@ LogPersisterRotator* MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
         default:
             break;
     };
-    return new LogPersisterRotator(
+    return make_shared<LogPersisterRotator>(
         pLogPersistStartMsg.filePath,
         pLogPersistStartMsg.fileSize,
         pLogPersistStartMsg.fileNum,
@@ -96,7 +96,7 @@ LogPersisterRotator* MakeRotator(const LogPersistStartMsg& pLogPersistStartMsg)
 
 int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool restore = false, int index = -1)
 {
-    LogPersisterRotator* rotator = MakeRotator(pMsg);
+    std::shared_ptr<LogPersisterRotator> rotator = MakeRotator(pMsg);
     rotator->SetId(pMsg.jobId);
     rotator->SetIndex(index);
     std::shared_ptr<LogPersister> persister = make_shared<LogPersister>(
