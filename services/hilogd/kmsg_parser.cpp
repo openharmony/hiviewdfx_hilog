@@ -52,7 +52,7 @@ void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
     if (std::regex_search(str.begin(), str.end(), res, express)) {
         *level = strtoul(res[1].str().c_str(), nullptr, DEC);
         *timestamp = strtoumax(res[3].str().c_str(), nullptr, DEC);
-        str = res.suffix();
+        str = res.suffix().str();
     }
 }
 
@@ -63,7 +63,7 @@ uint32_t ParsePid(std::string& str)
     static const std::regex express(pattern);
     std::match_results<std::string::iterator> res;
     if (std::regex_search(str.begin(), str.end(), res, express)) {
-        str = res.suffix();
+        str = res.suffix().str();
         return strtoumax(res[1].str().c_str(), nullptr, DEC);
     }
     return 0;
