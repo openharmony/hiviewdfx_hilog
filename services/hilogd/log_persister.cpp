@@ -51,9 +51,9 @@ static std::mutex g_listMutex;
     } while (0)
 
 LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t compressAlg, int sleepTime,
-                           LogPersisterRotator& rotator, HilogBuffer &_buffer)
+                           shared_ptr<LogPersisterRotator> rotator, HilogBuffer &_buffer)
     : id(id), path(path), fileSize(fileSize), compressAlg(compressAlg),
-      sleepTime(sleepTime), rotator(&rotator)
+      sleepTime(sleepTime), rotator(rotator)
 {
     toExit = false;
     hasExited = false;
@@ -66,7 +66,6 @@ LogPersister::LogPersister(uint32_t id, string path, uint32_t fileSize, uint16_t
 
 LogPersister::~LogPersister()
 {
-    SAFE_DELETE(rotator);
     SAFE_DELETE(compressor);
     SAFE_DELETE(compressBuffer);
 }
@@ -378,8 +377,7 @@ void LogPersister::Exit()
         cvhasExited.wait(lk);
     }
     rotator->RemoveInfo();
-    delete rotator;
-    this->rotator = nullptr;
+    rotator.reset();
     munmap(buffer, MAX_PERSISTER_BUFFER_SIZE);
     cout << "removed mmap file" << endl;
     remove(mmapPath.c_str());

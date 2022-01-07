@@ -104,7 +104,7 @@ int JobLauncher(const LogPersistStartMsg& pMsg, const HilogBuffer& buffer, bool 
         pMsg.filePath,
         pMsg.fileSize,
         pMsg.compressAlg,
-        SLEEP_TIME, *rotator, const_cast<HilogBuffer&>(buffer));
+        SLEEP_TIME, rotator, const_cast<HilogBuffer&>(buffer));
     persister->queryCondition.types = pMsg.logType;
     persister->queryCondition.levels = DEFAULT_LOG_LEVEL;
     rotator->SetRestore(restore);
