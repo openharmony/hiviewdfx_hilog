@@ -15,10 +15,10 @@ import("//build/ohos.gni")
 
 group("hilogd_etc") {
   deps = [
+    ":hilog.para",
+    ":hilog.para.dac",
     ":hilog_domains.conf",
     ":hilogd.cfg",
-    ":hilog.para",
-    ":hilog.para.dac"
   ]
 }
 
