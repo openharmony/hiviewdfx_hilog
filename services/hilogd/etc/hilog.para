@@ -19,8 +19,4 @@ persist.sys.hilog.debug.on=false
 hilog.flowctrl.pid.on=false
 hilog.flowctrl.domain.on=false
 
-hilog.loggable.global*=d
-hilog.loggable.domain*=d
-hilog.loggable.tag*=d
-
-
+hilog.loggable.global=d

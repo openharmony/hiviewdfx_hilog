@@ -12,13 +12,5 @@
 # limitations under the License.
 
 
-hilog.private.on  root:root:0777
-hilog.debug.on  root:root:0777
-persist.sys.hilog.kmsg.on  root:root:0777
-persist.sys.hilog.debug.on  root:root:0777
-hilog.flowctrl.pid.on  root:root:0777
-hilog.flowctrl.domain.on  root:root:0777
-
-hilog.loggable.global*  root:root:0777
-hilog.loggable.domain*  root:root:0777
-hilog.loggable.tag*  root:root:0777
+hilog.="shell:log:755"
+persist.sys.hilog.="shell:log:755"
