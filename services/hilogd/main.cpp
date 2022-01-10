@@ -20,13 +20,14 @@
 #include <future>
 #include <unistd.h>
 #include <csignal>
+
 #include "cmd_executor.h"
-#include "log_querier.h"
+#include "flow_control_init.h"
 #include "hilog_input_socket_server.h"
 #include "log_collector.h"
 #include "log_kmsg.h"
-#include "flow_control_init.h"
 #include "properties.h"
+#include "service_controller.h"
 
 #ifdef DEBUG
 #include <fcntl.h>
@@ -102,8 +103,7 @@ int HilogdEntry()
 
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        std::shared_ptr<LogQuerier> logQuerier = std::make_shared<LogQuerier>(nullptr, hilogBuffer);
-        logQuerier->RestorePersistJobs(hilogBuffer);
+        RestorePersistJobs(hilogBuffer);
     });
     auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
         LogKmsg logKmsg(hilogBuffer);

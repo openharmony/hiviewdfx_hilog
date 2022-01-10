@@ -21,25 +21,29 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
 #include <vector>
 
-#include "log_reader.h"
+#include "log_data.h"
+#include "log_filter.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 class HilogBuffer {
 public:
+    using LogMsgContainer = std::list<HilogData>;
+    using ReaderId = uintptr_t;
+
     HilogBuffer();
     ~HilogBuffer();
 
-    std::vector<std::weak_ptr<LogReader>> logReaderList;
-    std::shared_mutex logReaderListMutex;
     size_t Insert(const HilogMsg& msg);
-    bool Query(LogReader* reader);
-    bool Query(std::shared_ptr<LogReader> reader);
-    void AddLogReader(std::weak_ptr<LogReader>);
-    void RemoveLogReader(std::shared_ptr<LogReader> reader);
+    std::optional<HilogData> Query(const LogFilterExt& filter, const ReaderId& id);
+
+    ReaderId CreateBufReader(std::function<void()> onNewDataCallback);
+    void RemoveBufReader(const ReaderId& id);
+
     size_t Delete(uint16_t logType);
     size_t GetBuffLen(uint16_t logType);
     size_t SetBuffLen(uint16_t logType, uint64_t buffSize);
@@ -49,11 +53,25 @@ public:
     int32_t ClearStatisticInfoByDomain(uint32_t domain);
     void GetBufferLock();
     void ReleaseBufferLock();
+
+    static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData);
 private:
+    struct BufferReader {
+        LogMsgContainer::iterator m_pos;
+        LogMsgContainer* m_msgList = nullptr;
+        std::function<void()> m_onNewDataCallback;
+    };
+
+    void UpdateStatistics(const HilogData& logData);
+    void OnDeleteItem(LogMsgContainer::iterator itemPos);
+    void OnPushBackedItem(LogMsgContainer& msgList);
+    void OnNewItem(LogMsgContainer& msgList, LogMsgContainer::iterator itemPos);
+    std::shared_ptr<BufferReader> GetReader(const ReaderId& id);
+
     size_t size;
     size_t sizeByType[LOG_TYPE_MAX];
-    std::list<HilogData> hilogDataList;
-    std::list<HilogData> hilogKlogList;
+    LogMsgContainer hilogDataList;
+    LogMsgContainer hilogKlogList;
     std::shared_mutex hilogBufferMutex;
     std::map<uint32_t, uint64_t> cacheLenByDomain;
     std::map<uint32_t, uint64_t> printLenByDomain;
@@ -61,8 +79,9 @@ private:
     uint64_t cacheLenByType[LOG_TYPE_MAX];
     uint64_t droppedByType[LOG_TYPE_MAX];
     uint64_t printLenByType[LOG_TYPE_MAX];
-    bool ConditionMatch(std::shared_ptr<LogReader> reader);
-    void ReturnNoLog(std::shared_ptr<LogReader> reader);
+
+    std::map<ReaderId, std::shared_ptr<BufferReader>> m_logReaders;
+    std::shared_mutex m_logReaderMtx;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

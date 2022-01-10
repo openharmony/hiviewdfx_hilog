@@ -19,63 +19,98 @@
 #include <zlib.h>
 
 #include <condition_variable>
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <memory>
+#include <string>
+#include <thread>
+#include <variant>
 
+#include "log_buffer.h"
+#include "log_filter.h"
 #include "log_persister_rotator.h"
-#include "log_reader.h"
 #include "log_compress.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-class LogPersister : public LogReader {
+class LogPersister : std::enable_shared_from_this<LogPersister> {
 public:
-    LogPersister(uint32_t id, std::string path,  uint32_t fileSize, uint16_t compressAlg, int sleepTime,
-                 shared_ptr<LogPersisterRotator> rotator, HilogBuffer &buffer);
+    using InitData = std::variant<LogPersistStartMsg, PersistRecoveryInfo>;
+
+    [[nodiscard]] static std::shared_ptr<LogPersister> CreateLogPersister(HilogBuffer &buffer);
+
     ~LogPersister();
-    void SetBufferOffset(int off);
-    void NotifyForNewData();
-    int WriteData(OptRef<HilogData> pData);
-    int ThreadFunc();
+
     static int Kill(uint32_t id);
-    void Exit();
     static int Query(uint16_t logType, std::list<LogPersistQueryResult> &results);
-    int Init();
-    int InitCompress();
+
+    int Init(const InitData& initData);
+    int Deinit();
+    
     void Start();
-    bool Identify(uint32_t id);
+    void Stop();
+    
     void FillInfo(LogPersistQueryResult &response);
-    bool writeUnCompressedBuffer(HilogData &data);
-    uint8_t GetType() const;
-    std::string getPath();
-    LogPersisterBuffer *buffer;
-    LogPersisterBuffer *compressBuffer;
 private:
-    uint32_t id;
-    std::string path;
-    uint32_t fileSize;
-    std::string mmapPath;
-    uint16_t compressAlg;
-    int sleepTime;
-    std::mutex cvMutex;
-    std::condition_variable condVariable;
-    std::mutex mutexForhasExited;
-    std::condition_variable cvhasExited;
-    shared_ptr<LogPersisterRotator> rotator;
-    bool toExit;
-    bool hasExited;
-    inline void WriteFile();
-    bool isExited();
-    FILE* fd = nullptr;
-    LogCompress *compressor;
-    list<string> persistList;
-    uint32_t plainLogSize;
+    struct BaseData {
+        uint32_t id; 
+        std::string logPath;
+        uint32_t logFileSizeLimit;
+        uint16_t compressAlg;
+        uint32_t maxLogFileNum;
+        std::chrono::seconds newLogTimeout;
+    };
+
+    LogPersister(HilogBuffer &buffer);
+
+    static bool CheckRegistered(uint32_t id, const std::string& logPath);
+    static std::shared_ptr<LogPersister> GetLogPersisterById(uint32_t id);
+    static void RegisterLogPersister(const std::shared_ptr<LogPersister>& obj);
+    static void DeregisterLogPersister(const std::shared_ptr<LogPersister>& obj);
+
+    void NotifyNewLogAvailable();
+
+    int ReceiveLogLoop();
+
+    int InitCompression();
+    int InitFileRotator(const InitData& initData);
+    int WriteLogData(OptRef<HilogData> logDataOpt);
+    bool WriteUncompressedLogs(std::list<std::string>& formatedTextLogs);
+    void WriteCompressedLogs();
+
+    int PrepareUncompressedFile(const std::string& parentPath, bool restore);
+
+    BaseData m_baseData = {0};
+
+    std::string m_plainLogFilePath;
+    LogPersisterBuffer *m_mappedPlainLogFile;
+    uint32_t m_plainLogSize = 0;
+    std::unique_ptr<LogCompress> m_compressor;
+    std::unique_ptr<LogPersisterBuffer> m_compressBuffer;
+    std::unique_ptr<LogPersisterRotator> m_fileRotator;
+
+    std::mutex m_receiveLogCvMtx;
+    std::condition_variable m_receiveLogCv;
+
+    volatile bool m_stopThread = false;
+    std::thread m_persisterThread;
+
+    HilogBuffer &m_hilogBuffer;
+    HilogBuffer::ReaderId m_bufReader;
+    LogFilterExt m_filters;
+
+    std::mutex m_initMtx;
+    volatile bool m_inited = false;
+
+    static std::recursive_mutex s_logPersistersMtx;
+    static std::list<shared_ptr<LogPersister>> s_logPersisters;
 };
 
-int GenPersistLogHeader(HilogData *data, list<string>& persistList);
+std::list<std::string> LogDataToFormatedStrings(HilogData *data);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
