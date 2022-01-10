@@ -32,8 +32,8 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-using namespace std;
 using namespace std::chrono;
+using namespace std::literals;
 
 constexpr int  DEC = 10;
 
@@ -44,7 +44,7 @@ constexpr int  DEC = 10;
 #undef LOG_INFO
 #undef LOG_DEBUG
 
-void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
+static void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
 {
     static const std::string pattern = "(\\d+),(\\d+),(\\d+),(\\S);";
     static const std::regex express(pattern);
@@ -57,7 +57,7 @@ void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
 }
 
 // Parse pid if exists
-uint32_t ParsePid(std::string& str)
+static uint32_t ParsePid(std::string& str)
 {
     static const std::string pattern = "\\[pid=(\\d+)\\]";
     static const std::regex express(pattern);
@@ -70,7 +70,7 @@ uint32_t ParsePid(std::string& str)
     return 0;
 }
 
-std::string ParseTag(std::string& str)
+static std::string ParseTag(std::string& str)
 {
     static const std::string pattern = "\\[.*?\\]";
     static const std::regex express(pattern);
@@ -84,7 +84,7 @@ std::string ParseTag(std::string& str)
 }
 
 // Log levels are different in syslog.h and hilog log_c.h
-uint16_t KmsgLevelMap(uint16_t prio)
+static uint16_t KmsgLevelMap(uint16_t prio)
 {
     uint16_t level;
     switch (prio) {
@@ -110,7 +110,7 @@ uint16_t KmsgLevelMap(uint16_t prio)
     return level;
 }
 
-constexpr timespec TimepointToTimespec(time_point<system_clock, nanoseconds> tp)
+static constexpr timespec TimepointToTimespec(time_point<system_clock, nanoseconds> tp)
 {
     auto secs = time_point_cast<seconds>(tp);
     auto nsecs = time_point_cast<nanoseconds>(tp) - time_point_cast<nanoseconds>(secs);
@@ -127,7 +127,7 @@ KmsgParser::BootTp KmsgParser::BootTime()
     auto boottime = current - uptime;
     return boottime;
 }
-std::optional <HilogMsgWrapper> KmsgParser::ParseKmsg(std::vector<char>& kmsgBuffer)
+std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& kmsgBuffer)
 {
     std::string kmsgStr(kmsgBuffer.data());
     std::vector<char> mtag(MAX_TAG_LEN, '\0');
@@ -135,33 +135,28 @@ std::optional <HilogMsgWrapper> KmsgParser::ParseKmsg(std::vector<char>& kmsgBuf
     uint64_t timestamp = 0;
     ParseHeader(kmsgStr, &mLevel, &timestamp);
     // Parses pid if exists. Pid in kmsg content is like: [pid=xxx,...]
-    uint32_t mpid = 0;
-    mpid = ParsePid(kmsgStr);
+    uint32_t mpid = ParsePid(kmsgStr);
     // If there are some other content wrapped in square brackets "[]", parse it as tag
     // Otherwise, use default tag  "kmsg"
     int tagLen = 0;
     std::string tagStr = ParseTag(kmsgStr);
     if (!tagStr.empty()) {
         tagLen = tagStr.size();
-        if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, tagStr.c_str(), tagLen) != 0) {
-            HilogMsgWrapper nullMsg((std::vector<char>()));
-            nullMsg.SetInvalid();
-            return nullMsg;
+        if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, tagStr.c_str(), tagStr.size()) != 0) {
+            return {};
         }
     } else {
         constexpr auto defaultTag = "kmsg"sv;
         tagLen = defaultTag.size();
-        if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, "kmsg", defaultTag.size()) != 0) {
-            HilogMsgWrapper nullMsg((std::vector<char>()));
-            nullMsg.SetInvalid();
-            return nullMsg;
+        if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, defaultTag.data(), defaultTag.size()) != 0) {
+            return {};
         }
     }
     // Now build HilogMsg and insert it into buffer
     int len = kmsgStr.size() + 1;
     int msgLen = sizeof(HilogMsg) + tagLen + len + 1;
     HilogMsgWrapper msgWrap((std::vector<char>(msgLen, '\0')));
-    HilogMsg& msg = msgWrap.getHilogMsg();
+    HilogMsg& msg = msgWrap.GetHilogMsg();
     msg.len = msgLen;
     msg.tag_len = tagLen + 1;
     msg.type = LOG_KMSG;
@@ -174,12 +169,10 @@ std::optional <HilogMsgWrapper> KmsgParser::ParseKmsg(std::vector<char>& kmsgBuf
     msg.pid = mpid;
     msg.tid = mpid;
     if (strncpy_s(msg.tag, tagLen + 1, mtag.data(), tagLen) != 0) {
-        msgWrap.SetInvalid();
-        return msgWrap;
+        return {};
     }
     if (strncpy_s(CONTENT_PTR((&msg)), MAX_LOG_LEN, kmsgStr.c_str(), len) != 0) {
-        msgWrap.SetInvalid();
-        return msgWrap;
+        return {};
     }
     return msgWrap;
 }

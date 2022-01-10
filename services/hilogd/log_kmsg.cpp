@@ -40,20 +40,12 @@ ssize_t LogKmsg::LinuxReadOneKmsg(KmsgParser& parser)
         size = read(kmsgCtl, kmsgBuffer.data(), BUFSIZ - 1);
     } while (size < 0 && errno == EPIPE);
     if (size > 0) {
-        std::optional <HilogMsgWrapper> msgWrap = parser.ParseKmsg(kmsgBuffer);
-        if (msgWrap->IsValid()) {
-            size_t result = hilogBuffer.Insert(msgWrap->getHilogMsg());
+        std::optional<HilogMsgWrapper> msgWrap = parser.ParseKmsg(kmsgBuffer);
+        if (msgWrap.has_value()) {
+            size_t result = hilogBuffer.Insert(msgWrap->GetHilogMsg());
             if (result <= 0) {
                 return result;
             }
-            hilogBuffer.logReaderListMutex.lock_shared();
-            for (auto &itr :hilogBuffer.logReaderList) {
-                auto reader = itr.lock();
-                if ((reader != nullptr) && (reader->GetType() != TYPE_CONTROL)) {
-                    reader->NotifyForNewData();
-                }
-            }
-            hilogBuffer.logReaderListMutex.unlock_shared();
         }
     }
     return size;

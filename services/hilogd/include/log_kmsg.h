@@ -23,7 +23,6 @@ namespace HiviewDFX {
 class LogKmsg {
 public:
     LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {};
-    LogKmsg(HilogBuffer&&) = delete;
     ~LogKmsg();
     ssize_t LinuxReadOneKmsg(KmsgParser& parser);
     int LinuxReadAllKmsg();

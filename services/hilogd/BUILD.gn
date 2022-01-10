@@ -30,9 +30,8 @@ ohos_executable("hilogd") {
     "log_kmsg.cpp",
     "log_persister.cpp",
     "log_persister_rotator.cpp",
-    "log_querier.cpp",
-    "log_reader.cpp",
     "main.cpp",
+    "service_controller.cpp",
   ]
   configs = [ ":hilogd_config" ]
   defines = [ "__RECV_MSG_WITH_UCRED_" ]

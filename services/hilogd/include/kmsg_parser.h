@@ -16,14 +16,15 @@
 #define KMSG_PARSER_H
 
 #include "log_collector.h"
+#include "log_msg_wrapper.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 class KmsgParser {
 public:
     using BootTp = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>; 
-    std::optional <HilogMsgWrapper> ParseKmsg(std::vector<char>& kmsgBuffer);
-    BootTp BootTime();
+    static std::optional<HilogMsgWrapper> ParseKmsg(const std::vector<char>& kmsgBuffer);
+    static BootTp BootTime();
 };
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -31,36 +31,38 @@ typedef struct {
     uint32_t offset;
 } LogPersisterBuffer;
 
-const uint16_t CHUNK = 16384;
 
 class LogCompress {
 public:
-    LogCompress();
+    LogCompress() = default;
     virtual ~LogCompress() = default;
-    virtual int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer) = 0;
-    void DeleteZData();
-    unsigned char *zdata = nullptr;
-    char buffIn[CHUNK] = {0};
-    char buffOut[CHUNK] = {0};
+    virtual int Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressBuffer) = 0;
 };
 
 class NoneCompress : public LogCompress {
 public:
-    int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer);
+    int Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressBuffer) override;
 };
 
 class ZlibCompress : public LogCompress {
 public:
-    int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer);
+    int Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressBuffer) override;
 private:
+    static const uint16_t CHUNK = 16384;
+    char buffIn[CHUNK] = {0};
+    char buffOut[CHUNK] = {0};
+    
     z_stream cStream;
 };
 
 class ZstdCompress : public LogCompress {
 public:
-    int Compress(LogPersisterBuffer* &buffer, LogPersisterBuffer* &compressBuffer);
+    int Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressBuffer) override;
 private:
 #ifdef USING_ZSTD_COMPRESS
+    static const uint16_t CHUNK = 16384;
+    char buffIn[CHUNK] = {0};
+    char buffOut[CHUNK] = {0};
     ZSTD_CCtx* cctx;
 #endif
 };

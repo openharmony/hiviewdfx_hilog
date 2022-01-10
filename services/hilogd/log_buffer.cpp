@@ -46,16 +46,18 @@ HilogBuffer::~HilogBuffer() {}
 
 size_t HilogBuffer::Insert(const HilogMsg& msg)
 {
-    size_t eleSize = CONTENT_LEN((&msg)); /* include '\0' */
+    size_t elemSize = CONTENT_LEN((&msg)); /* include '\0' */
 
-    if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || eleSize > MAX_LOG_LEN || eleSize <= 0)) {
+    if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || elemSize > MAX_LOG_LEN || elemSize <= 0)) {
         return 0;
     }
 
-    std::list<HilogData> &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
+    LogMsgContainer &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
+
+    std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
+
     // Delete old entries when full
-    if (eleSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
-        hilogBufferMutex.lock();
+    if (elemSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
         // Drop 5% of maximum log when full
         std::list<HilogData>::iterator it = msgList.begin();
         while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
@@ -64,20 +66,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
                 ++it;
                 continue;
             }
-            logReaderListMutex.lock_shared();
-            for (auto &itr :logReaderList) {
-                auto reader = itr.lock();
-                if (reader == nullptr) {
-                    continue;
-                }
-                if (reader->readPos == it) {
-                    reader->readPos = std::next(it);
-                }
-                if (reader->lastPos == it) {
-                    reader->lastPos = std::next(it);
-                }
-            }
-            logReaderListMutex.unlock_shared();
+            OnDeleteItem(it);
             size_t cLen = it->len - it->tag_len;
             size -= cLen;
             sizeByType[(*it).type] -= cLen;
@@ -88,63 +77,84 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         if (sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
             std::cout << "Failed to clean old logs." << std::endl;
         }
-        hilogBufferMutex.unlock();
     }
 
     // Insert new log into HilogBuffer
-    msgList.emplace_back(msg);
+    if (msgList.empty()) {
+        msgList.emplace_back(msg);
+        OnPushBackedItem(msgList);
+        OnNewItem(msgList, msgList.begin());
+    } else {
+        LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
+        LogTimeStamp lastTimeStamp(msgList.back().tv_sec, msgList.back().tv_nsec);
+        if (msgTimeStamp >= lastTimeStamp) {
+            msgList.emplace_back(msg);
+            OnPushBackedItem(msgList);
+            OnNewItem(msgList, std::prev(msgList.end()));
+        } else if ((lastTimeStamp -= msgTimeStamp) > LogTimeStamp(MAX_TIME_DIFF)) {
+            // above operator is wrong - LogTimeStamp should be replaced with std chrono
+            std::cout << "Message skipped because it is outdated!\n";
+        }
+        else {
+            auto it = msgList.begin();
+            LogTimeStamp timeStamp(it->tv_sec, it->tv_nsec);
+            for (; it != msgList.end() && msgTimeStamp > timeStamp; ++it) {
+                timeStamp.SetTimeStamp(it->tv_sec, it->tv_nsec);
+            }
+            auto insertedIt = msgList.emplace(it, msg);
+            OnNewItem(msgList, insertedIt);
+        }
+    }
 
     // Update current size of HilogBuffer
-    size += eleSize;
-    sizeByType[msg.type] += eleSize;
-    cacheLenByType[msg.type] += eleSize;
+    size += elemSize;
+    sizeByType[msg.type] += elemSize;
+    cacheLenByType[msg.type] += elemSize;
     if (cacheLenByDomain.count(msg.domain) == 0) {
-        cacheLenByDomain.insert(pair<uint32_t, uint64_t>(msg.domain, eleSize));
+        cacheLenByDomain.insert(pair<uint32_t, uint64_t>(msg.domain, elemSize));
     } else {
-        cacheLenByDomain[msg.domain] += eleSize;
+        cacheLenByDomain[msg.domain] += elemSize;
     }
-    return eleSize;
+    return elemSize;
 }
 
-
-bool HilogBuffer::Query(std::shared_ptr<LogReader> reader)
+std::optional<HilogData> HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id)
 {
-    uint16_t qTypes = reader->queryCondition.types;
-    std::list<HilogData> &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
-    hilogBufferMutex.lock_shared();
-    if (reader->GetReload()) {
-        reader->readPos = msgList.begin();
-        reader->lastPos = msgList.begin();
-        reader->SetReload(false);
+    auto reader = GetReader(id);
+    if (!reader) {
+        std::cerr << "Reader not registered!\n";
+        return {};
+    }
+    uint16_t qTypes = filter.inclusions.types;
+    LogMsgContainer &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
+
+    std::shared_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
+
+    if (reader->m_msgList != &msgList) {
+        reader->m_msgList = &msgList;
+        reader->m_pos = msgList.begin();
     }
 
-    if (reader->isNotified) {
-        if (reader->readPos == msgList.end()) {
-            reader->readPos = std::next(reader->lastPos);
+    while (reader->m_pos != msgList.end()) {
+        const HilogData& logData = *reader->m_pos;
+        reader->m_pos++;
+        if (LogMatchFilter(filter, logData)) {
+            UpdateStatistics(logData);
+            return logData;
         }
     }
-    while (reader->readPos != msgList.end()) {
-        reader->lastPos = reader->readPos;
-        if (ConditionMatch(reader)) {
-            reader->SetSendId(SENDIDA);
-            reader->WriteData(*(reader->readPos));
-            printLenByType[reader->readPos->type] += strlen(reader->readPos->content);
-            if (printLenByDomain.count(reader->readPos->domain) == 0) {
-                printLenByDomain.insert(pair<uint32_t, uint64_t>(reader->readPos->domain,
-                    strlen(reader->readPos->content)));
-            } else {
-                printLenByDomain[reader->readPos->domain] += strlen(reader->readPos->content);
-            }
-            reader->readPos++;
-            hilogBufferMutex.unlock_shared();
-            return true;
-        }
-        reader->readPos++;
+    return {};
+}
+
+void HilogBuffer::UpdateStatistics(const HilogData& logData)
+{
+    printLenByType[logData.type] += strlen(logData.content);
+    auto it = printLenByDomain.find(logData.domain);
+    if (it == printLenByDomain.end()) {
+        printLenByDomain.insert(pair<uint32_t, uint64_t>(logData.domain, strlen(logData.content)));
+    } else {
+        printLenByDomain[logData.domain] += strlen(logData.content);
     }
-    reader->isNotified = false;
-    ReturnNoLog(reader);
-    hilogBufferMutex.unlock_shared();
-    return false;
 }
 
 size_t HilogBuffer::Delete(uint16_t logType)
@@ -165,20 +175,7 @@ size_t HilogBuffer::Delete(uint16_t logType)
             continue;
         }
         // Delete corresponding logs
-        logReaderListMutex.lock_shared();
-        for (auto &itr :logReaderList) {
-            auto reader = itr.lock();
-            if (reader == nullptr) {
-                continue;
-            }
-            if (reader->readPos == it) {
-                reader->readPos = std::next(it);
-            }
-            if (reader->lastPos == it) {
-                reader->lastPos = std::next(it);
-            }
-        }
-        logReaderListMutex.unlock_shared();
+        OnDeleteItem(it);
 
         size_t cLen = it->len - it->tag_len;
         sum += cLen;
@@ -191,33 +188,62 @@ size_t HilogBuffer::Delete(uint16_t logType)
     return sum;
 }
 
-void HilogBuffer::AddLogReader(std::weak_ptr<LogReader> reader)
+HilogBuffer::ReaderId HilogBuffer::CreateBufReader(std::function<void()> onNewDataCallback)
 {
-    std::list<HilogData> &msgList = (reader.lock()->queryCondition.types ==
-        (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
-    logReaderListMutex.lock();
-    // If reader not in logReaderList
-    logReaderList.push_back(reader);
-    reader.lock()->lastPos = msgList.end();
-    logReaderListMutex.unlock();
+    std::unique_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
+    auto reader = std::make_shared<BufferReader>();
+    reader->m_onNewDataCallback = onNewDataCallback;
+    ReaderId id = reinterpret_cast<ReaderId>(reader.get());
+    m_logReaders.insert(std::make_pair(id, reader));
+    return id;
 }
 
-void HilogBuffer::RemoveLogReader(std::shared_ptr<LogReader> reader)
+void HilogBuffer::RemoveBufReader(const ReaderId& id)
 {
-    logReaderListMutex.lock();
-    const auto findIter = std::find_if(logReaderList.begin(), logReaderList.end(),
-        [&reader](const std::weak_ptr<LogReader>& ptr0) {
-        return ptr0.lock() == reader;
-    });
-    if (findIter != logReaderList.end()) {
-        logReaderList.erase(findIter);
+    std::unique_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
+    auto it = m_logReaders.find(id);
+    if (it != m_logReaders.end()) {
+        m_logReaders.erase(it);
     }
-    logReaderListMutex.unlock();
 }
 
-bool HilogBuffer::Query(LogReader* reader)
+void HilogBuffer::OnDeleteItem(LogMsgContainer::iterator itemPos)
 {
-    return Query(std::shared_ptr<LogReader>(reader));
+    std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
+    for (auto& [id, readerPtr] : m_logReaders) {
+        if (readerPtr->m_pos == itemPos) {
+            readerPtr->m_pos = std::next(itemPos);
+        }
+    }
+}
+
+void HilogBuffer::OnPushBackedItem(LogMsgContainer& msgList)
+{
+    std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
+    for (auto& [id, readerPtr] : m_logReaders) {
+        if (readerPtr->m_pos == msgList.end()) {
+            readerPtr->m_pos = std::prev(msgList.end());
+        }
+    }
+}
+
+void HilogBuffer::OnNewItem(LogMsgContainer& msgList, LogMsgContainer::iterator /*itemPos*/)
+{
+    for (auto& [id, readerPtr] : m_logReaders) {
+        if (readerPtr->m_msgList == &msgList && readerPtr->m_onNewDataCallback) {
+            readerPtr->m_onNewDataCallback();
+        }
+    }
+}
+
+std::shared_ptr<HilogBuffer::BufferReader> HilogBuffer::GetReader(const ReaderId& id)
+{
+    std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
+    auto it = m_logReaders.find(id);
+    if (it != m_logReaders.end()) {
+        return it->second;
+    }
+    return std::shared_ptr<HilogBuffer::BufferReader>();
 }
 
 size_t HilogBuffer::GetBuffLen(uint16_t logType)
@@ -283,80 +309,64 @@ int32_t HilogBuffer::ClearStatisticInfoByDomain(uint32_t domain)
     return 0;
 }
 
-bool HilogBuffer::ConditionMatch(std::shared_ptr<LogReader> reader)
+bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& logData)
 {
     /* domain patterns:
      * strict mode: 0xdxxxxxx   (full)
      * fuzzy mode: 0xdxxxx      (using last 2 digits of full domain as mask)
      */
-    if (((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.types)) == 0) ||
-        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.levels)) == 0)))
+    // inclusions
+    if (((static_cast<uint8_t>((0b01 << (logData.type)) & (filter.inclusions.types)) == 0) ||
+        (static_cast<uint8_t>((0b01 << (logData.level)) & (filter.inclusions.levels)) == 0)))
         return false;
 
-    int ret = 0;
-    if (reader->queryCondition.nPid > 0) {
-        for (int i = 0; i < reader->queryCondition.nPid; i++) {
-            if (reader->readPos->pid == reader->queryCondition.pids[i]) {
-                ret = 1;
-                break;
-            }
-        }
-        if (ret == 0) return false;
-        ret = 0;
+    if (!filter.inclusions.pids.empty()) {
+        auto it = std::find(filter.inclusions.pids.begin(), filter.inclusions.pids.end(), logData.pid);
+        if (it == filter.inclusions.pids.end()) 
+            return false;
+    }    
+    if (!filter.inclusions.domains.empty()) {
+        auto it = std::find_if(filter.inclusions.domains.begin(), filter.inclusions.domains.end(), 
+            [&] (uint32_t domain) {
+                return !((domain >= DOMAIN_STRICT_MASK && domain != logData.domain) ||
+                    (domain <= DOMAIN_FUZZY_MASK && domain != (logData.domain >> DOMAIN_MODULE_BITS)));
+            });
+        if (it == filter.inclusions.domains.end()) 
+            return false;
     }
-    if (reader->queryCondition.nDomain > 0) {
-        for (int i = 0; i < reader->queryCondition.nDomain; i++) {
-            uint32_t domains = reader->queryCondition.domains[i];
-            if (!((domains >= DOMAIN_STRICT_MASK && domains != reader->readPos->domain) ||
-                (domains <= DOMAIN_FUZZY_MASK && domains != (reader->readPos->domain >> DOMAIN_MODULE_BITS)))) {
-                ret = 1;
-                break;
-            }
-        }
-        if (ret == 0) return false;
-        ret = 0;
-    }
-    if (reader->queryCondition.nTag > 0) {
-        for (int i = 0; i < reader->queryCondition.nTag; i++) {
-            if (reader->readPos->tag == reader->queryCondition.tags[i]) {
-                ret = 1;
-                break;
-            }
-        }
-        if (ret == 0) return false;
-        ret = 0;
+    if (!filter.inclusions.tags.empty()) {
+        auto it = std::find(filter.inclusions.tags.begin(), filter.inclusions.tags.end(), logData.tag);
+        if (it == filter.inclusions.tags.end()) 
+            return false;
     }
 
+
     // exclusion
-    if (reader->queryCondition.nNoPid > 0) {
-        for (int i = 0; i < reader->queryCondition.nNoPid; i++) {
-            if (reader->readPos->pid == reader->queryCondition.noPids[i]) return false;
-        }
+    if (!filter.exclusions.pids.empty()) {
+        auto it = std::find(filter.exclusions.pids.begin(), filter.exclusions.pids.end(), logData.pid);
+        if (it != filter.exclusions.pids.end()) 
+            return false;
     }
-    if (reader->queryCondition.nNoDomain != 0) {
-        for (int i = 0; i < reader->queryCondition.nNoDomain; i++) {
-            uint32_t noDomains = reader->queryCondition.noDomains[i];
-            if (((noDomains >= DOMAIN_STRICT_MASK && noDomains == reader->readPos->domain) ||
-                (noDomains <= DOMAIN_FUZZY_MASK && noDomains == (reader->readPos->domain >> DOMAIN_MODULE_BITS))))
-                return false;
-        }
+
+    if (!filter.exclusions.domains.empty()) {
+        auto it = std::find_if(filter.exclusions.domains.begin(), filter.exclusions.domains.end(), 
+            [&] (uint32_t domain) {
+                return ((domain >= DOMAIN_STRICT_MASK && domain == logData.domain) ||
+                    (domain <= DOMAIN_FUZZY_MASK && domain == (logData.domain >> DOMAIN_MODULE_BITS)));
+            });
+        if (it != filter.exclusions.domains.end()) 
+            return false;
     }
-    if (reader->queryCondition.nNoTag > 0) {
-        for (int i = 0; i < reader->queryCondition.nNoTag; i++) {
-            if (reader->readPos->tag == reader->queryCondition.noTags[i]) return false;
-        }
+    if (!filter.exclusions.tags.empty()) {
+        auto it = std::find(filter.exclusions.tags.begin(), filter.exclusions.tags.end(), logData.tag);
+        if (it != filter.exclusions.tags.end()) 
+            return false;
     }
-    if ((static_cast<uint8_t>((0b01 << (reader->readPos->type)) & (reader->queryCondition.noTypes)) != 0) ||
-        (static_cast<uint8_t>((0b01 << (reader->readPos->level)) & (reader->queryCondition.noLevels)) != 0)) {
+    if ((static_cast<uint8_t>((0b01 << (logData.type)) & (filter.exclusions.types)) != 0) ||
+        (static_cast<uint8_t>((0b01 << (logData.level)) & (filter.exclusions.levels)) != 0)) {
         return false;
     }
     return true;
-}
-
-void HilogBuffer::ReturnNoLog(std::shared_ptr<LogReader> reader)
-{
-    reader->SetSendId(SENDIDN);
-    reader->WriteData(std::nullopt);
 }
 
 void HilogBuffer::GetBufferLock()

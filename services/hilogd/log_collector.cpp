@@ -93,19 +93,7 @@ size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
     if (msg.type >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;
     }
-    size_t result = m_hilogBuffer.Insert(msg);
-    if (result <= 0) {
-        return result;
-    }
-    m_hilogBuffer.logReaderListMutex.lock_shared();
-    for (auto &itr :m_hilogBuffer.logReaderList) {
-        auto reader = itr.lock();
-        if ((reader != nullptr) && (reader->GetType() != TYPE_CONTROL)) {
-            reader->NotifyForNewData();
-        }
-    }
-    m_hilogBuffer.logReaderListMutex.unlock_shared();
-    return result;
+    return m_hilogBuffer.Insert(msg);
 }
 } // namespace HiviewDFX
 } // namespace OHOS
