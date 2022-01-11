@@ -14,7 +14,8 @@
         "//base/hiviewdfx/hilog/frameworks/native/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base"
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
+        "//base/hiviewdfx/hilog/interfaces/js/kits/napi:libhilognapi"
       ],
       "inner_kits": [
         {
