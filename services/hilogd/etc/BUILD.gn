@@ -15,6 +15,8 @@ import("//build/ohos.gni")
 
 group("hilogd_etc") {
   deps = [
+    ":hilog.para",
+    ":hilog.para.dac",
     ":hilog_domains.conf",
     ":hilogd.cfg",
   ]
@@ -29,6 +31,20 @@ ohos_prebuilt_etc("hilog_domains.conf") {
 ohos_prebuilt_etc("hilogd.cfg") {
   source = "hilogd.cfg"
   relative_install_dir = "init"
+  part_name = "hilog_service"
+  subsystem_name = "hiviewdfx"
+}
+
+ohos_prebuilt_etc("hilog.para") {
+  source = "hilog.para"
+  relative_install_dir = "param"
+  part_name = "hilog_service"
+  subsystem_name = "hiviewdfx"
+}
+
+ohos_prebuilt_etc("hilog.para.dac") {
+  source = "hilog.para.dac"
+  relative_install_dir = "param"
   part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
 }
