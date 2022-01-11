@@ -14,29 +14,24 @@
  */
 
 #include "properties.h"
-
-#include <array>
+#include "hilog/log.h"
+#include <string>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <strstream>
 #include <atomic>
-#include <cassert>
+#include <fstream>
 #include <climits>
 #include <cstdio>
 #include <cstring>
-#include <ctime>
 #include <fstream>
-#include <functional>
-#include <iostream>
-#include <pthread.h>
 #include <shared_mutex>
-#include <sstream>
-#include <string>
-#include <strstream>
-#include <sys/uio.h>
 #include <unistd.h>
+#include <sys/uio.h>
 #include <unordered_map>
-
-#include <hilog/log.h>
-#include <parameter.h>
-#include <sysparam_errno.h>
+#include <pthread.h>
 
 using namespace std;
 
@@ -53,150 +48,41 @@ static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_kmsgLock = PTHREAD_MUTEX_INITIALIZER;
 
-static int LockByProp(uint32_t propType);
-static void UnlockByProp(uint32_t propType);
-
-class PropertyTypeLocker {
-public:
-    explicit PropertyTypeLocker(uint32_t propType)
-        : m_propType(propType)
-        , m_isLocked(false)
-    {
-        m_isLocked = !LockByProp(m_propType);
-    }
-
-    ~PropertyTypeLocker()
-    {
-        if (m_isLocked) {
-            UnlockByProp(m_propType);
-        }
-    }
-
-    bool isLocked() const
-    {
-        return m_isLocked;
-    }
-private:
-    uint32_t m_propType;
-    bool m_isLocked;
+using PropertyCache = struct {
+    const void* pinfo;
+    uint32_t serial;
+    char propertyValue[HILOG_PROP_VALUE_MAX];
 };
 
-using RawPropertyData = std::array<char, HILOG_PROP_VALUE_MAX>;
-
-template<typename T>
-class CacheData {
-public:
-    using DataConverter = std::function<T(const RawPropertyData&, const T& defaultVal)>;
-
-    CacheData(DataConverter converter, const T& defaultValue, uint32_t propType, const std::string& suffix = "")
-        : m_value(defaultValue)
-        , m_defaultValue(defaultValue)
-        , m_propType(propType)
-        , m_converter(converter)
-    {
-        m_key = GetPropertyName(m_propType) + suffix;
-    }
-
-    T getValue()
-    {
-        if (m_handle == -1) {
-            auto handle = FindParameter(m_key.c_str());
-            if (handle == -1) {
-                return m_defaultValue;
-            }
-            m_handle = handle;
-        }
-        auto currentCommit = GetParameterCommitId(m_handle);
-        PropertyTypeLocker locker(m_propType);
-        if (locker.isLocked()) {
-            if (currentCommit != m_commit) {
-                updateValue();
-                m_commit = currentCommit;
-            }
-            return m_value;
-        } else {
-            return getDirectValue();
-        }
-    }
-private:
-    bool getRawValue(char *value, unsigned int len)
-    {
-        auto res = GetParameterValue(m_handle, value, len);
-        if (res < 0) {
-            std::cerr << "CacheData -> GetParameterValue -> Can't get value for key: " << m_key;
-            std::cerr << " handle: " << m_handle << " Result: " << res << "\n";
-            return false;
-        }
-        return true;
-    }
-
-    T getDirectValue()
-    {
-        RawPropertyData tempData;
-        if (!getRawValue(tempData.data(), tempData.size())) {
-            return m_defaultValue;
-        }
-        return m_converter(tempData, m_defaultValue);
-    }
-
-    void updateValue()
-    {
-        if (!getRawValue(m_rawData.data(), m_rawData.size())) {
-            m_value = m_defaultValue;
-            return;
-        }
-        m_value = m_converter(m_rawData, m_defaultValue);
-    }
-
-    RawPropertyData m_rawData = {0};
-    unsigned int m_handle = -1;
-    unsigned int m_commit = -1;
-    T m_value;
-    const T m_defaultValue;
-    const uint32_t m_propType;
-    std::string m_key;
-    DataConverter m_converter;
+using SwitchCache = struct {
+    PropertyCache cache;
+    bool isOn;
 };
 
-using SwitchCache = CacheData<bool>;
-using LogLevelCache = CacheData<uint16_t>;
+using LogLevelCache = struct {
+    PropertyCache cache;
+    uint16_t logLevel;
+};
 
+using ProcessInfo = struct {
+    PropertyCache cache;
+    string propertyKey;
+    string process;
+    string processHashPre;
+    uint32_t processQuota;
+};
 
 void PropertyGet(const string &key, char *value, int len)
 {
-    if (len > HILOG_PROP_VALUE_MAX) {
-        std::cerr << "PropertyGet(): len exceed maximum.\n";
+    if (len < HILOG_PROP_VALUE_MAX) {
         return;
     }
-
-    auto handle = FindParameter(key.c_str());
-    if (handle == -1) {
-        return;
-    }
-
-    auto res = GetParameterValue(handle, value, len);
-    if (res < 0) {
-        std::cerr << "PropertyGet() -> GetParameterValue -> Can't get value for key: " << key;
-        std::cerr << " handle: " << handle << " Result: " << res << "\n";
-    }
+    /* use OHOS interface */
 }
 
 void PropertySet(const string &key, const char* value)
 {
-    auto len = value ? strlen(value) : 0;
-    if (len > HILOG_PROP_VALUE_MAX) {
-        std::cerr << "PropertyGet(): len exceed maximum.\n";
-        return;
-    }
-
-    auto result = SetParameter(key.c_str(), value);
-    if (result < 0) {
-        if (result == EC_INVALID) {
-            std::cerr << "PropertySet(): Invalid arguments.\n";
-        } else {
-            std::cerr << "PropertySet(): Error: " << result << "\n";
-        }
-    }
+    /* use OHOS interface */
 }
 
 string GetProgName()
@@ -302,14 +188,50 @@ static void UnlockByProp(uint32_t propType)
     }
 }
 
-static bool textToBool(const RawPropertyData& data, bool defaultVal)
+static void RefreshCacheBuf(PropertyCache *cache, const char *key)
 {
-    if (!strcmp(data.data(), "true")) {
-        return true;
-    } else if (!strcmp(data.data(), "false")) {
-        return false;
+    /* use OHOS interface */
+}
+
+static bool CheckCache(const PropertyCache *cache)
+{
+    return true;
+    /* use OHOS interface */
+}
+
+static bool GetSwitchCache(bool isFirst, SwitchCache& switchCache, uint32_t propType, bool defaultValue)
+{
+    int notLocked;
+    string key = GetPropertyName(propType);
+
+    if (isFirst || CheckCache(&switchCache.cache)) {
+        notLocked = LockByProp(propType);
+        if (!notLocked) {
+            RefreshCacheBuf(&switchCache.cache, key.c_str());
+            if (strcmp(switchCache.cache.propertyValue, "true") == 0) {
+                switchCache.isOn = true;
+            } else if (strcmp(switchCache.cache.propertyValue, "false") == 0) {
+                switchCache.isOn = false;
+            } else {
+                switchCache.isOn = defaultValue;
+            }
+            UnlockByProp(propType);
+            return switchCache.isOn;
+        } else {
+            SwitchCache tmpCache = {{nullptr, 0xffffffff, ""}, defaultValue};
+            RefreshCacheBuf(&tmpCache.cache, key.c_str());
+            if (strcmp(tmpCache.cache.propertyValue, "true") == 0) {
+                tmpCache.isOn = true;
+            } else if (strcmp(tmpCache.cache.propertyValue, "false") == 0) {
+                tmpCache.isOn = false;
+            } else {
+                tmpCache.isOn = defaultValue;
+            }
+            return tmpCache.isOn;
+        }
+    } else {
+        return switchCache.isOn;
     }
-    return defaultVal;
 }
 
 bool IsDebugOn()
@@ -319,111 +241,173 @@ bool IsDebugOn()
 
 bool IsSingleDebugOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_SINGLE_DEBUG);
-    return switchCache->getValue();
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_SINGLE_DEBUG, false);
 }
 
 bool IsPersistDebugOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_PERSIST_DEBUG);
-    return switchCache->getValue();
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_PERSIST_DEBUG, false);
 }
 
 bool IsPrivateSwitchOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, true, PROP_PRIVATE);
-    return switchCache->getValue();
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, true};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_PRIVATE, true);
 }
 
 bool IsProcessSwitchOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_PROCESS_FLOWCTRL);
-    return switchCache->getValue();
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_PROCESS_FLOWCTRL, false);
 }
 
 bool IsDomainSwitchOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_DOMAIN_FLOWCTRL);
-    return switchCache->getValue();
+    static SwitchCache *switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_DOMAIN_FLOWCTRL, false);
 }
 
 bool IsKmsgSwitchOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_KMSG);
-    return switchCache->getValue();
+    static SwitchCache* switchCache = new SwitchCache {{nullptr, 0xffffffff, ""}, false};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    bool isFirst = !isFirstFlag.test_and_set();
+    return GetSwitchCache(isFirst, *switchCache, PROP_KMSG, false);
 }
 
-static uint16_t textToLogLevel(const RawPropertyData& data, uint16_t defaultVal)
+static uint16_t GetCacheLevel(char propertyChar)
 {
-    static const std::unordered_map<char, uint16_t> logLevels = {
-        { 'd', LOG_DEBUG }, { 'D', LOG_DEBUG },
-        { 'i', LOG_INFO }, { 'I', LOG_INFO },
-        { 'w', LOG_WARN }, { 'W', LOG_WARN },
-        { 'e', LOG_ERROR }, { 'E', LOG_ERROR },
-        { 'f', LOG_FATAL }, { 'F', LOG_FATAL },
-    };
-    auto it = logLevels.find(data[0]);
-    if (it != logLevels.end()) {
-        return it->second;
+    uint16_t cacheLevel = LOG_LEVEL_MIN;
+    switch (propertyChar) {
+        case 'D':
+        case 'd':
+            cacheLevel = LOG_DEBUG;
+            break;
+        case 'I':
+        case 'i':
+            cacheLevel = LOG_INFO;
+            break;
+        case 'W':
+        case 'w':
+            cacheLevel = LOG_WARN;
+            break;
+        case 'E':
+        case 'e':
+            cacheLevel = LOG_ERROR;
+            break;
+        case 'F':
+        case 'f':
+            cacheLevel = LOG_FATAL;
+            break;
+        default:
+            break;
     }
-    return LOG_LEVEL_MIN;
+    return cacheLevel;
 }
 
 uint16_t GetGlobalLevel()
 {
-    static auto *logLevelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_GLOBAL_LOG_LEVEL);
-    return logLevelCache->getValue();
+    string key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
+    static LogLevelCache *levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
+    static atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
+    int notLocked;
+
+    if (!isFirstFlag.test_and_set() || CheckCache(&levelCache->cache)) {
+        notLocked = LockByProp(PROP_GLOBAL_LOG_LEVEL);
+        if (!notLocked) {
+            RefreshCacheBuf(&levelCache->cache, key.c_str());
+            levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+            UnlockByProp(PROP_GLOBAL_LOG_LEVEL);
+            return levelCache->logLevel;
+        } else {
+            LogLevelCache tmpCache = {{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
+            RefreshCacheBuf(&tmpCache.cache, key.c_str());
+            tmpCache.logLevel = GetCacheLevel(tmpCache.cache.propertyValue[0]);
+            return tmpCache.logLevel;
+        }
+    } else {
+        return levelCache->logLevel;
+    }
 }
 
 uint16_t GetDomainLevel(uint32_t domain)
 {
-    static auto *domainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
+    static unordered_map<uint32_t, LogLevelCache*> *domainMap = new unordered_map<uint32_t, LogLevelCache*>();
+    unordered_map<uint32_t, LogLevelCache*>::iterator it;
+    string key = GetPropertyName(PROP_DOMAIN_LOG_LEVEL) + to_string(domain);
+
     static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*domainMap)>::type::iterator it;
     {
         ReadLock lock(*mtx);
         it = domainMap->find(domain);
     }
     if (it == domainMap->end()) { // new domain
         InsertLock lock(*mtx);
-        it = domainMap->find(domain); // secured for two thread went across above condition
-        if (it == domainMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_DOMAIN_LOG_LEVEL,
-                to_string(domain));
-            auto result = domainMap->insert({ domain, levelCache });
-            if (!result.second) {
-                std::cerr << "Can't insert new LogLevelCache for domain: " << domain << "\n";
-                return LOG_LEVEL_MIN;
-            }
-            it = result.first;
+        LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
+        RefreshCacheBuf(&levelCache->cache, key.c_str());
+        levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+        uint16_t lvl = levelCache->logLevel;
+        pair<unordered_map<uint32_t, LogLevelCache*>::iterator, bool> ret = domainMap->insert({ domain, levelCache });
+        if (!ret.second) {
+            delete levelCache;
+            levelCache = nullptr;
+        }
+        return lvl;
+    } else { // existed domain
+        if (CheckCache(&it->second->cache)) { // changed
+            InsertLock lock(*mtx);
+            RefreshCacheBuf(&it->second->cache, key.c_str());
+            it->second->logLevel = GetCacheLevel(it->second->cache.propertyValue[0]);
+            return it->second->logLevel;
+        } else { // not changed
+            return it->second->logLevel;
         }
     }
-    LogLevelCache* levelCache = it->second;
-    return levelCache->getValue();
 }
 
 uint16_t GetTagLevel(const string& tag)
 {
-    static auto *tagMap = new std::unordered_map<std::string, LogLevelCache*>();
+    static unordered_map<string, LogLevelCache*> *tagMap = new unordered_map<string, LogLevelCache*>();
+    unordered_map<string, LogLevelCache*>::iterator it;
+    string key = GetPropertyName(PROP_TAG_LOG_LEVEL) + tag;
+
     static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*tagMap)>::type::iterator it;
     {
         ReadLock lock(*mtx);
         it = tagMap->find(tag);
     }
     if (it == tagMap->end()) { // new tag
         InsertLock lock(*mtx);
-        it = tagMap->find(tag); // secured for two thread went across above condition
-        if (it == tagMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_TAG_LOG_LEVEL, tag);
-            auto result = tagMap->insert({ tag, levelCache });
-            if (!result.second) {
-                std::cerr << "Can't insert new LogLevelCache for tag: " << tag << "\n";
-                return LOG_LEVEL_MIN;
-            }
-            it = result.first;
+        LogLevelCache* levelCache = new LogLevelCache{{nullptr, 0xffffffff, ""}, LOG_LEVEL_MIN};
+        RefreshCacheBuf(&levelCache->cache, key.c_str());
+        levelCache->logLevel = GetCacheLevel(levelCache->cache.propertyValue[0]);
+        uint16_t lvl = levelCache->logLevel;
+        pair<unordered_map<string, LogLevelCache*>::iterator, bool> ret = tagMap->insert({ tag, levelCache });
+        if (!ret.second) {
+            delete(levelCache);
+            levelCache = nullptr;
+        }
+        return lvl;
+    } else { // existed tag
+        if (CheckCache(&it->second->cache)) { // changed
+            InsertLock lock(*mtx);
+            RefreshCacheBuf(&it->second->cache, key.c_str());
+            it->second->logLevel = GetCacheLevel(it->second->cache.propertyValue[0]);
+            return it->second->logLevel;
+        } else { // not changed
+            return it->second->logLevel;
         }
     }
-    LogLevelCache* levelCache = it->second;
-    return levelCache->getValue();
 }
