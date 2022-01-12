@@ -34,7 +34,7 @@ using namespace std;
 class LogPersister : public LogReader {
 public:
     LogPersister(uint32_t id, std::string path,  uint32_t fileSize, uint16_t compressAlg, int sleepTime,
-                 LogPersisterRotator& rotator, HilogBuffer &buffer);
+                 shared_ptr<LogPersisterRotator> rotator, HilogBuffer &buffer);
     ~LogPersister();
     void SetBufferOffset(int off);
     void NotifyForNewData();
@@ -64,7 +64,7 @@ private:
     std::condition_variable condVariable;
     std::mutex mutexForhasExited;
     std::condition_variable cvhasExited;
-    LogPersisterRotator *rotator;
+    shared_ptr<LogPersisterRotator> rotator;
     bool toExit;
     bool hasExited;
     inline void WriteFile();

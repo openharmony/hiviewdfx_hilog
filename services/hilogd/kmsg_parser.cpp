@@ -52,7 +52,7 @@ void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
     if (std::regex_search(str.begin(), str.end(), res, express)) {
         *level = strtoul(res[1].str().c_str(), nullptr, DEC);
         *timestamp = strtoumax(res[3].str().c_str(), nullptr, DEC);
-        str = res.suffix();
+        str.erase(res.position(), res.length());
     }
 }
 
@@ -63,8 +63,9 @@ uint32_t ParsePid(std::string& str)
     static const std::regex express(pattern);
     std::match_results<std::string::iterator> res;
     if (std::regex_search(str.begin(), str.end(), res, express)) {
-        str = res.suffix();
-        return strtoumax(res[1].str().c_str(), nullptr, DEC);
+        uint32_t ret = strtoumax(res[1].str().c_str(), nullptr, DEC);
+        str.erase(res.position(), res.length());
+        return ret;
     }
     return 0;
 }
@@ -76,10 +77,10 @@ std::string ParseTag(std::string& str)
     std::match_results<std::string::iterator> res;
     if (std::regex_search(str.begin(), str.end(), res, express)) {
         std::string ret = res[0].str();
-        str = res.suffix().str();
+        str.erase(res.position(), res.length());
         return ret;
     }
-    return "";
+    return {};
 }
 
 // Log levels are different in syslog.h and hilog log_c.h
@@ -140,7 +141,7 @@ std::optional <HilogMsgWrapper> KmsgParser::ParseKmsg(std::vector<char>& kmsgBuf
     // Otherwise, use default tag  "kmsg"
     int tagLen = 0;
     std::string tagStr = ParseTag(kmsgStr);
-    if (tagStr != "") {
+    if (!tagStr.empty()) {
         tagLen = tagStr.size();
         if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, tagStr.c_str(), tagLen) != 0) {
             HilogMsgWrapper nullMsg((std::vector<char>()));
@@ -149,6 +150,7 @@ std::optional <HilogMsgWrapper> KmsgParser::ParseKmsg(std::vector<char>& kmsgBuf
         }
     } else {
         constexpr auto defaultTag = "kmsg"sv;
+        tagLen = defaultTag.size();
         if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, "kmsg", defaultTag.size()) != 0) {
             HilogMsgWrapper nullMsg((std::vector<char>()));
             nullMsg.SetInvalid();
