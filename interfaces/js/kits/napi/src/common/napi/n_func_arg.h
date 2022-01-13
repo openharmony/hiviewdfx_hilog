@@ -20,8 +20,6 @@
 
 #include <functional>
 #include <map>
-#include <memory>
-#include <vector>
 #include "n_val.h"
 #include "uni_header.h"
 

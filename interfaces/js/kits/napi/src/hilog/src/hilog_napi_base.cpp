@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
+#include "properties.h"
 
-#include "../include/context/hilog_napi_base.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "../../common/napi/n_func_arg.h"
@@ -22,6 +22,7 @@
 #include "hilog/log.h"
 #include "hilog/log_c.h"
 #include "securec.h"
+#include "../include/context/hilog_napi_base.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,21 +31,74 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 #define DEFAULT_LOG_TYPE LOG_CORE
-#define MIN_NUMBER 3
-#define MAX_NUMBER 100
+const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "Hilog_JS" };
+static constexpr int MIN_NUMBER = 3;
+static constexpr int MAX_NUMBER = 100;
+static constexpr int PUBLIC_LEN = 6;
+static constexpr int PRIVATE_LEN = 7;
+static constexpr int PROPERTY_POS = 2;
 
-void ReplaceOnce(string& base, string src, string dst, bool& flag)
+void ParseLogContent(string& formatStr, vector<string>& params, string& logContent)
 {
-    if (flag == true) {
+    string& ret = logContent;
+    if (params.empty()) {
         return;
     }
-    size_t pos = 0;
-    size_t srclen = src.size();
-    size_t dstlen = dst.size();
-    if ((pos = base.find(src, pos)) != string::npos) {
-        base.replace(pos, srclen, dst);
-        pos += dstlen;
-        flag = true;
+    int32_t size = params.size();
+    int32_t len = formatStr.size();
+    int32_t pos = 0;
+    int32_t count = 0;
+    bool debug = IsDebugOn();
+    bool priv = (!debug) && IsPrivateSwitchOn();
+
+    for (; pos < len; ++pos) {
+        bool showPriv = false;
+        if (count > size) {
+            break;
+        }
+        if (formatStr[pos] == '%') {
+            if (formatStr[pos + 1] == '{') {
+                if (formatStr.substr(pos + PROPERTY_POS, PUBLIC_LEN) == "public") {
+                    pos += (PUBLIC_LEN + PROPERTY_POS);
+                }
+                if (formatStr.substr(pos + PROPERTY_POS, PRIVATE_LEN) == "private") {
+                    pos += (PRIVATE_LEN + PROPERTY_POS);
+                    if (priv) {
+                        showPriv = true ;
+                    }
+                }
+            }
+            if (pos + 1 >= len) {
+                break;
+            }
+            string privStr = "<private>";
+            switch (formatStr[pos + 1]) {
+                case 's':
+                case 'j':
+                case 'd':
+                case 'O':
+                case 'o':
+                case 'i':
+                case 'f':
+                case 'c':
+                    ret += showPriv ? privStr : params[count];
+                    count++;
+                    ++pos;
+                    break;
+                case '%':
+                    ret += showPriv ? *privStr.data() : formatStr[pos];
+                    ++pos;
+                    break;
+                default:
+                    ret += showPriv ? *privStr.data()  : formatStr[pos];
+                    break;
+            }
+        } else {
+            ret += formatStr[pos];
+        }
+    }
+    if (pos < len) {
+        ret += formatStr.substr(pos, len - pos);
     }
     return;
 }
@@ -102,12 +156,11 @@ napi_value HilogNapiBase::fatal(napi_env env, napi_callback_info info)
 }
 
 napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
-    napi_value element, string& newString)
+    napi_value element, vector<string>& params)
 {
     bool succ = false;
     napi_valuetype type;
     napi_status typeStatus = napi_typeof(env, element, &type);
-    bool flag = false;
     if (typeStatus != napi_ok) {
         return nullptr;
     }
@@ -122,21 +175,14 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
         if (!succ) {
             return nullptr;
         }
-        ReplaceOnce(newString, "%{public}d", name.get(), flag);
-        ReplaceOnce(newString, "%{private}d", name.get(), flag);
-        ReplaceOnce(newString, "%d", name.get(), flag);
-        ReplaceOnce(newString, "%{public}f", name.get(), flag);
-        ReplaceOnce(newString, "%{private}f", name.get(), flag);
-        ReplaceOnce(newString, "%f", name.get(), flag);
+        params.emplace_back(name.get());
     } else if (type == napi_string) {
         unique_ptr<char[]> name;
         tie(succ, name, ignore) = NVal(env, element).ToUTF8String();
         if (!succ) {
             return nullptr;
         }
-        ReplaceOnce(newString, "%{public}s", name.get(), flag);
-        ReplaceOnce(newString, "%{private}s", name.get(), flag);
-        ReplaceOnce(newString, "%s", name.get(), flag);
+        params.emplace_back(name.get());
     } else if (type == napi_object) {
         napi_value elmString;
         napi_status objectStatus = napi_coerce_to_string(env, element, &elmString);
@@ -148,14 +194,13 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
         if (!succ) {
             return nullptr;
         }
-        ReplaceOnce(newString, "%{public}o", name.get(), flag);
-        ReplaceOnce(newString, "%{private}o", name.get(), flag);
-        ReplaceOnce(newString, "%o", name.get(), flag);
+        params.emplace_back(name.get());
     } else {
         NAPI_ASSERT(env, false, "type mismatch");
     }
     return nullptr;
 }
+
 napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int level)
 {
     NFuncArg funcArg(env, info);
@@ -164,31 +209,36 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
     int32_t domain;
     tie(succ, domain) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
     if (!succ) {
+        HiLog::Info(LABEL, "%{public}s", "domain mismatch");
         return nullptr;
     }
     unique_ptr<char[]> tag;
     tie(succ, tag, ignore) = NVal(env, funcArg[NARG_POS::SECOND]).ToUTF8String();
     if (!succ) {
+        HiLog::Info(LABEL, "%{public}s", "tag mismatch");
         return nullptr;
     }
     unique_ptr<char[]> fmt;
     tie(succ, fmt, ignore) = NVal(env, funcArg[NARG_POS::THIRD]).ToUTF8String();
     if (!succ) {
+        HiLog::Info(LABEL, "%{public}s", "Format mismatch");
         return nullptr;
     }
     string fmtString = fmt.get();
     bool res = false;
     napi_value array = funcArg[NARG_POS::FOURTH];
     napi_is_array(env, array, &res);
-    string newString = fmtString;
-    if (res == false) {
+    string logContent;
+    vector<string> params;
+    if (!res) {
         for (size_t i = MIN_NUMBER; i < funcArg.GetArgc(); i++) {
             napi_value argsVal = funcArg[i];
-            parseNapiValue(env, info, argsVal, newString);
+            parseNapiValue(env, info, argsVal, params);
         }
     } else {
         if (funcArg.GetArgc() != MIN_NUMBER + 1) {
             NAPI_ASSERT(env, false, "Argc mismatch");
+            HiLog::Info(LABEL, "%{public}s", "Argc mismatch");
             return nullptr;
         }
         uint32_t length;
@@ -203,11 +253,12 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
             if (eleStatus != napi_ok) {
                 return nullptr;
             }
-            parseNapiValue(env, info, element, newString);
+            parseNapiValue(env, info, element, params);
         }
     }
+    ParseLogContent(fmtString, params, logContent);
     HiLogPrint(DEFAULT_LOG_TYPE, static_cast<LogLevel>(level), domain, tag.get(),
-        newString.c_str(), "");
+        logContent.c_str(), "");
     return nullptr;
 }
 }  // namespace HiviewDFX

@@ -23,6 +23,7 @@ ohos_source_set("libhilognapi_src") {
   include_dirs = [
     "//third_party/node/src",
     "//utils/native/base/include",
+    "//base/hiviewdfx/hilog/adapter",
   ]
   sources = [
     "src/common/napi/n_class.cpp",
@@ -31,15 +32,20 @@ ohos_source_set("libhilognapi_src") {
     "src/hilog/module.cpp",
     "src/hilog/src/hilog_napi.cpp",
     "src/hilog/src/hilog_napi_base.cpp",
-     #"src/hilog/src/js_hilog.cpp",
   ]
-
-  deps = [ "//utils/native/base:utilsecurec" ]
-
+  deps = [
+    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
+    "//utils/native/base:utilsecurec",
+  ]
   external_deps = [
     "hilog_native:libhilog",
     "napi:ace_napi",
   ]
+}
+
+config("libhilog_js_cfg") {
+  visibility = [ "*:*" ]
+  include_dirs = [ "include" ]
 }
 
 ohos_shared_library("libhilognapi") {
@@ -48,4 +54,6 @@ ohos_shared_library("libhilognapi") {
   relative_install_dir = "module"
   subsystem_name = "hiviewdfx"
   part_name = "hilog_native"
+  public_configs = [ ":libhilog_js_cfg" ]
+  configs = [ ":libhilog_js_cfg" ]
 }

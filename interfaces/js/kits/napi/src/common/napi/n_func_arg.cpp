@@ -14,8 +14,6 @@
  */
 
 #include "n_func_arg.h"
-#include <iostream>
-#include <sstream>
 
 namespace OHOS {
 namespace HiviewDFX {

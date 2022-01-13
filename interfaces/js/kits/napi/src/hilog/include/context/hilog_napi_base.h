@@ -32,8 +32,9 @@ public:
     static napi_value warn(napi_env env, napi_callback_info info);
     static napi_value fatal(napi_env env, napi_callback_info info);
     static napi_value isLoggable(napi_env env, napi_callback_info info);
+private:
     static napi_value parseNapiValue(napi_env env, napi_callback_info info,
-    napi_value element, std::string& newString);
+        napi_value element, std::vector<std::string>& params);
 };
 }  // namespace HiviewDFX
 }  // namespace OHOS

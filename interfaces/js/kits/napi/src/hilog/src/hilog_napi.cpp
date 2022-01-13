@@ -38,8 +38,7 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
     napi_create_int32(env, LogLevel::LOG_WARN, &WARN);
     napi_create_int32(env, LogLevel::LOG_ERROR, &ERROR);
     napi_create_int32(env, LogLevel::LOG_FATAL, &FATAL);
-    return exports_.AddProp(
-    {
+    return exports_.AddProp({
         NVal::DeclareNapiFunction("debug", HilogNapiBase::debug),
         NVal::DeclareNapiFunction("info", HilogNapiBase::info),
         NVal::DeclareNapiFunction("error", HilogNapiBase::error),

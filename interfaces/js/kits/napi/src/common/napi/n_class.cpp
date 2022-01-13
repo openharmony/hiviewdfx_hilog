@@ -15,9 +15,6 @@
 
 #include "n_class.h"
 
-#include <iostream>
-#include <sstream>
-
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;

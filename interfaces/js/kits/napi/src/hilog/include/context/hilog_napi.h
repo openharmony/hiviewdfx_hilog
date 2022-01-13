@@ -28,7 +28,7 @@ public:
     std::string GetClassName() override;
     HilogNapi(napi_env env, napi_value exports) : NExporter(env, exports) {};
     explicit HilogNapi() {};
-    ~HilogNapi() {};
+    ~HilogNapi() override {};
 };
 }  // namespace HiviewDFX
 }  // namespace OHOS
