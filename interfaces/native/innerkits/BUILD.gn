@@ -49,7 +49,6 @@ config("libhilog_base_cfg") {
   defines += [
     "__RECV_MSG_WITH_UCRED_",
     "HILOG_PROHIBIT_ALLOCATION",
-    "HILOG_USE_MUSL",
   ]
 }
 

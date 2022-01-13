@@ -26,6 +26,10 @@ ohos_shared_library("libhilog_os_adapter") {
     "//base/hiviewdfx/hilog/adapter",
   ]
 
+  if (use_musl) {
+    defines += [ "HILOG_USE_MUSL" ]
+  }
+
   install_enable = true
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
