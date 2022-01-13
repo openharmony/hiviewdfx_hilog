@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef HIVIEW_NAPI_HEADER
-#define HIVIEW_NAPI_HEADER
+#ifndef INTERFACES_JS_KITS_NAPI_SRC_COMMON_NAPI_UNI_HEADER_H
+#define INTERFACES_JS_KITS_NAPI_SRC_COMMON_NAPI_UNI_HEADER_H
 
 #pragma once
 
@@ -22,4 +22,4 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
-#endif // HIVIEW_NAPI_HEADER
+#endif // INTERFACES_JS_KITS_NAPI_SRC_COMMON_NAPI_UNI_HEADER_H

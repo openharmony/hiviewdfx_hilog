@@ -22,7 +22,6 @@ using namespace std;
 
 namespace OHOS {
 namespace HiviewDFX {
-
 static napi_value Export(napi_env env, napi_value exports)
 {
     std::vector<unique_ptr<NExporter>> products;
