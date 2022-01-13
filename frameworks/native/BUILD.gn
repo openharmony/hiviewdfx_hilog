@@ -73,10 +73,7 @@ ohos_static_library("libhilog_socket_server") {
 
   defines = [ "HILOG_DEFAULT_PRIVACY=$ohos_hilog_default_privacy" ]
   defines += [ "__RECV_MSG_WITH_UCRED_" ]
-  if (use_musl) {
-    defines += [ "HILOG_USE_MUSL" ]
-    external_deps = [ "init:libbegetutil" ]
-  }
+  external_deps = [ "init:libbegetutil" ]
 
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
@@ -97,10 +94,6 @@ ohos_shared_library("libhilogutil") {
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
     "//third_party/bounds_checking_function:libsec_shared",
   ]
-
-  if (use_musl) {
-    defines = [ "HILOG_USE_MUSL" ]
-  }
 
   output_extension = "so"
   install_enable = true

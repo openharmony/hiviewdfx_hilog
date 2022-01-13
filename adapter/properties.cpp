@@ -87,7 +87,11 @@ void PropertySet(const string &key, const char* value)
 
 string GetProgName()
 {
+#ifdef HILOG_USE_MUSL
     return program_invocation_short_name; /* use HOS interface */
+#else
+    return getprogname();
+#endif
 }
 
 string GetPropertyName(uint32_t propType)

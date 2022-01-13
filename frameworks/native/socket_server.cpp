@@ -26,11 +26,9 @@
 
 #include "socket_server_adapter.h"
 
-#ifdef HILOG_USE_MUSL
 extern "C" {
 #include "init_socket.h"
 }
-#endif
 namespace OHOS {
 namespace HiviewDFX {
 SocketServer::SocketServer(const std::string& _socketName, uint32_t socketType)
@@ -49,11 +47,7 @@ SocketServer::SocketServer(const std::string& _socketName, uint32_t socketType)
 int SocketServer::Init()
 {
     if (socketName.length()) {
-#ifdef HILOG_USE_MUSL
         socketHandler = GetControlSocket(socketName.c_str());
-#else
-        socketHandler = GetExistingSocketServer(socketName.c_str(), socketType);
-#endif
         if (socketHandler >= 0) {
             return socketHandler;
         }
