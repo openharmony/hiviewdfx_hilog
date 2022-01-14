@@ -79,32 +79,10 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         }
     }
 
-    // Insert new log into HilogBuffer
-    if (msgList.empty()) {
-        msgList.emplace_back(msg);
-        OnPushBackedItem(msgList);
-        OnNewItem(msgList, msgList.begin());
-    } else {
-        LogTimeStamp msgTimeStamp(msg.tv_sec, msg.tv_nsec);
-        LogTimeStamp lastTimeStamp(msgList.back().tv_sec, msgList.back().tv_nsec);
-        if (msgTimeStamp >= lastTimeStamp) {
-            msgList.emplace_back(msg);
-            OnPushBackedItem(msgList);
-            OnNewItem(msgList, std::prev(msgList.end()));
-        } else if ((lastTimeStamp -= msgTimeStamp) > LogTimeStamp(MAX_TIME_DIFF)) {
-            // above operator is wrong - LogTimeStamp should be replaced with std chrono
-            std::cout << "Message skipped because it is outdated!\n";
-        }
-        else {
-            auto it = msgList.begin();
-            LogTimeStamp timeStamp(it->tv_sec, it->tv_nsec);
-            for (; it != msgList.end() && msgTimeStamp > timeStamp; ++it) {
-                timeStamp.SetTimeStamp(it->tv_sec, it->tv_nsec);
-            }
-            auto insertedIt = msgList.emplace(it, msg);
-            OnNewItem(msgList, insertedIt);
-        }
-    }
+    // Append new log into HilogBuffer
+    msgList.emplace_back(msg);
+    OnPushBackedItem(msgList);
+    OnNewItem(msgList, std::prev(msgList.end()));
 
     // Update current size of HilogBuffer
     size += elemSize;
