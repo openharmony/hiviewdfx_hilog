@@ -35,7 +35,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-
 class LogPersister : public std::enable_shared_from_this<LogPersister> {
 public:
     using InitData = std::variant<LogPersistStartMsg, PersistRecoveryInfo>;
@@ -56,7 +55,7 @@ public:
     void FillInfo(LogPersistQueryResult &response);
 private:
     struct BaseData {
-        uint32_t id; 
+        uint32_t id;
         std::string logPath;
         uint32_t logFileSizeLimit;
         uint16_t compressAlg;

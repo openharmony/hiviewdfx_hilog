@@ -56,8 +56,11 @@ static bool isEmptyThread(const std::thread& th)
 std::recursive_mutex LogPersister::s_logPersistersMtx;
 std::list<std::shared_ptr<LogPersister>> LogPersister::s_logPersisters;
 
-std::shared_ptr<LogPersister> LogPersister::CreateLogPersister(HilogBuffer &buffer) 
+std::shared_ptr<LogPersister> LogPersister::CreateLogPersister(HilogBuffer &buffer)
 {
+    // Because of:
+    // -  static_assert(is_constructible<_Tp, _Args...>::value, "Can't construct object in make_shared");
+    // make shared can't be used!
     return std::shared_ptr<LogPersister>(new LogPersister(buffer));
 }
 
@@ -74,19 +77,19 @@ LogPersister::~LogPersister()
 
 int LogPersister::InitCompression()
 {
-    m_compressBuffer = std::unique_ptr<LogPersisterBuffer>(new LogPersisterBuffer);
+    m_compressBuffer = std::make_unique<LogPersisterBuffer>();
     if (!m_compressBuffer) {
         return RET_FAIL;
     }
     switch (m_baseData.compressAlg) {
         case COMPRESS_TYPE_NONE:
-            m_compressor = std::unique_ptr<LogCompress>(new NoneCompress());
+            m_compressor = std::make_unique<NoneCompress>();
             break;
         case COMPRESS_TYPE_ZLIB:
-            m_compressor = std::unique_ptr<LogCompress>(new ZlibCompress());
+            m_compressor = std::make_unique<ZlibCompress>();
             break;
         case COMPRESS_TYPE_ZSTD:
-            m_compressor = std::unique_ptr<LogCompress>(new ZstdCompress());
+            m_compressor = std::make_unique<ZstdCompress>();
             break;
         default:
             break;
@@ -110,7 +113,7 @@ int LogPersister::InitFileRotator(const InitData& initData)
         default:
             break;
     };
-    m_fileRotator = std::make_unique<LogPersisterRotator>(m_baseData.logPath, m_baseData.id, 
+    m_fileRotator = std::make_unique<LogPersisterRotator>(m_baseData.logPath, m_baseData.id,
         m_baseData.maxLogFileNum, fileSuffix);
     if (!m_fileRotator) {
         std::cerr << "Not enough memory!\n";
@@ -123,7 +126,7 @@ int LogPersister::InitFileRotator(const InitData& initData)
         info.msg = std::get<LogPersistStartMsg>(initData);
         info.types = m_filters.inclusions.types;
         info.levels = m_filters.inclusions.levels;
-    } else if(std::holds_alternative<PersistRecoveryInfo>(initData)) {
+    } else if (std::holds_alternative<PersistRecoveryInfo>(initData)) {
         info = std::get<PersistRecoveryInfo>(initData);
         restore = true;
     }
@@ -154,7 +157,7 @@ int LogPersister::Init(const InitData& initData)
     if (std::holds_alternative<LogPersistStartMsg>(initData)) {
         const LogPersistStartMsg& msg = std::get<LogPersistStartMsg>(initData);
         initByMsg(msg);
-    } else if(std::holds_alternative<PersistRecoveryInfo>(initData)) {
+    } else if (std::holds_alternative<PersistRecoveryInfo>(initData)) {
         const LogPersistStartMsg& msg = std::get<PersistRecoveryInfo>(initData).msg;
         initByMsg(msg);
         restore = true;
@@ -198,7 +201,7 @@ int LogPersister::Init(const InitData& initData)
     return 0;
 }
 
-int LogPersister::Deinit() 
+int LogPersister::Deinit()
 {
     std::cout << __PRETTY_FUNCTION__  << " Begin\n";
     std::lock_guard<decltype(m_initMtx)> lock(m_initMtx);
@@ -481,7 +484,7 @@ void LogPersister::Stop()
 bool LogPersister::CheckRegistered(uint32_t id, const std::string& logPath)
 {
     std::lock_guard<decltype(s_logPersistersMtx)> lock(s_logPersistersMtx);
-    auto it = std::find_if(s_logPersisters.begin(), s_logPersisters.end(), 
+    auto it = std::find_if(s_logPersisters.begin(), s_logPersisters.end(),
         [&](const std::shared_ptr<LogPersister>& logPersister) {
             if (logPersister->m_baseData.logPath == logPath || logPersister->m_baseData.id == id) {
                 return true;
@@ -495,7 +498,7 @@ std::shared_ptr<LogPersister> LogPersister::GetLogPersisterById(uint32_t id)
 {
     std::lock_guard<decltype(s_logPersistersMtx)> guard(s_logPersistersMtx);
 
-    auto it = std::find_if(s_logPersisters.begin(), s_logPersisters.end(), 
+    auto it = std::find_if(s_logPersisters.begin(), s_logPersisters.end(),
         [&](const std::shared_ptr<LogPersister>& logPersister) {
             if (logPersister->m_baseData.id == id) {
                 return true;
@@ -521,7 +524,7 @@ void LogPersister::DeregisterLogPersister(const std::shared_ptr<LogPersister>& o
         return;
     }
     std::lock_guard<decltype(s_logPersistersMtx)> lock(s_logPersistersMtx);
-    auto it = std::find_if(s_logPersisters.begin(), s_logPersisters.end(), 
+    auto it = std::find_if(s_logPersisters.begin(), s_logPersisters.end(),
         [&](const std::shared_ptr<LogPersister>& logPersister) {
             if (logPersister->m_baseData.id == obj->m_baseData.id) {
                 return true;
