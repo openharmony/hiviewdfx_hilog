@@ -42,6 +42,7 @@ void ParseLogContent(string& formatStr, vector<string>& params, string& logConte
 {
     string& ret = logContent;
     if (params.empty()) {
+        ret += formatStr;
         return;
     }
     int32_t size = params.size();
@@ -86,11 +87,11 @@ void ParseLogContent(string& formatStr, vector<string>& params, string& logConte
                     ++pos;
                     break;
                 case '%':
-                    ret += showPriv ? *privStr.data() : formatStr[pos];
+                    ret += formatStr[pos];
                     ++pos;
                     break;
                 default:
-                    ret += showPriv ? *privStr.data()  : formatStr[pos];
+                    ret += formatStr[pos];
                     break;
             }
         } else {
