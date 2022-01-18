@@ -82,10 +82,10 @@ int StartPersistStoreJob(const LogPersister::InitData& initData, HilogBuffer& hi
     int persistRes = persister->Init(initData);
     if (persistRes != RET_SUCCESS) {
         if (persistRes == ERR_LOG_PERSIST_TASK_FAIL) {
-            std::cout << "Log persist task exists!\n";
+            std::cerr << __PRETTY_FUNCTION__ << " Log persist task exists!\n";
         }
         else {
-            std::cout << "LogPersister failed to initialize!\n";
+            std::cerr << __PRETTY_FUNCTION__ << " LogPersister failed to initialize!\n";
         }
         return persistRes;
     }
@@ -109,10 +109,10 @@ void ServiceController::HandlePersistStartRequest(const PacketBuf& rawData)
     } else if (requestMsg->jobId  <= 0) {
         respondMsg->result = ERR_LOG_PERSIST_JOBID_INVALID;
     } else if (requestMsg->fileSize < MAX_PERSISTER_BUFFER_SIZE) {
-        cout << "Persist log file size less than min size" << std::endl;
+        std::cout << __PRETTY_FUNCTION__ << " Persist log file size less than min size\n";
         respondMsg->result = ERR_LOG_PERSIST_FILE_SIZE_INVALID;
     } else if (!IsValidFileName(requestMsg->filePath)) {
-        cout << "FileName is not valid!" << endl;
+        std::cout << __PRETTY_FUNCTION__ << " FileName is not valid!\n";
         respondMsg->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
     } else {
         LogPersister::InitData initData = *requestMsg;
@@ -120,13 +120,13 @@ void ServiceController::HandlePersistStartRequest(const PacketBuf& rawData)
 
         bool isKmsg = (requestMsgCpy.logType == (0b01 << LOG_KMSG));
         std::string logPersisterFileName = isKmsg ? "hilog_kmsg" : "hilog";
-        std::cout << "logPersisterFileName: " << logPersisterFileName << "\n";
+        std::cout << __PRETTY_FUNCTION__ << " logPersisterFileName: " << logPersisterFileName << "\n";
         bool isPathEmpty = requestMsgCpy.filePath[0] == '\0' ? true : false;
         std::string logPersisterPath = isPathEmpty
             ? (g_logPersisterDir + logPersisterFileName)
             : (g_logPersisterDir + string(requestMsgCpy.filePath));
         if (strcpy_s(requestMsgCpy.filePath, FILE_PATH_MAX_LEN, logPersisterPath.c_str()) != 0) {
-            std::cerr << "Can't copy request msg filePath for log persister\n";
+            std::cerr << __PRETTY_FUNCTION__ << " Can't copy request msg filePath for log persister\n";
             respondMsg->result = RET_FAIL;
         } else {
             respondMsg->result = StartPersistStoreJob(initData, m_hilogBuffer);
@@ -390,16 +390,14 @@ ServiceController::~ServiceController()
 
 void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
 {
-    std::cout << "Start ServiceController::CommunicationLoop !\n";
+    std::cout << __PRETTY_FUNCTION__ << " Begin\n";
     if (!m_communicationSocket) {
-        std::cerr << "Invalid socket handler!\n";
+        std::cerr << __PRETTY_FUNCTION__ << " Invalid socket handler!\n";
         return;
     }
     PacketBuf rawDataBuffer = {0};
-
-    std::cout << "ServiceController: Waiting socket data\n";
+;
     while (!stopLoop.load() && m_communicationSocket->Read(rawDataBuffer.data(), rawDataBuffer.size() - 1) > 0) {
-        std::cout << "ServiceController: New socket data\n";
         MessageHeader *header = reinterpret_cast<MessageHeader *>(rawDataBuffer.data());
         switch (header->msgType) {
             case LOG_QUERY_REQUEST:
@@ -437,12 +435,11 @@ void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
                 HandleBufferClearRequest(rawDataBuffer);
                 break;
             default:
-                std::cout << "Unknown message. Skipped!\n";
+                std::cout << __PRETTY_FUNCTION__ << " Unknown message. Skipped!\n";
                 break;
         }
-        std::cout << "ServiceController: Waiting socket data\n";
     }
-    std::cout << "ServiceController: Work is done!\n";
+    std::cout << __PRETTY_FUNCTION__ << " Done\n";
 }
 
 void ServiceController::SetFilters(const PacketBuf& rawData)
@@ -492,8 +489,10 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData)
 {
     const NextRequest& nRstMsg = *reinterpret_cast<const NextRequest*>(rawData.data());
     if (nRstMsg.sendId != SENDIDA) {
+        m_notifyNewData = false;
         return;
     }
+    m_notifyNewData = true;
 
     auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
     if (result.has_value()) {
@@ -550,24 +549,22 @@ int ServiceController::WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData)
 
 void ServiceController::NotifyForNewData()
 {
-    if (m_notifyNewData) {
-        // this should be timeouted
+    if (!m_notifyNewData) {
         return;
     }
-    m_notifyNewData = true;
     LogQueryResponse rsp;
     rsp.data.sendId = SENDIDS;
     rsp.data.type = -1;
     /* set header */
     SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
     if (WriteData(rsp, std::nullopt) <= 0) {
-        m_notifyNewData = false;
+        std::cerr << __PRETTY_FUNCTION__ << " Can't send notification about new logs\n";
     }
 }
 
 int RestorePersistJobs(HilogBuffer& hilogBuffer)
 {
-    std::cout << "Start restoring persist jobs!\n";
+    std::cout << __PRETTY_FUNCTION__ << " Start restoring persist jobs!\n";
     DIR *dir = opendir(g_logPersisterDir.c_str());
     struct dirent *ent = nullptr;
     if (dir != nullptr) {
@@ -576,10 +573,10 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
             std::string pPath(ent->d_name, length);
             if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
                 if (pPath == "hilog.info") continue;
-                std::cout << "Found a persist job! Path: " << g_logPersisterDir + pPath << "\n";
+                std::cout << __PRETTY_FUNCTION__ << " Found a persist job! Path: " << g_logPersisterDir + pPath << "\n";
                 FILE* infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
                 if (infile == NULL) {
-                    std::cout << "Error opening recovery info file!" << std::endl;
+                    std::cerr << __PRETTY_FUNCTION__ << " Error opening recovery info file!\n";
                     continue;
                 }
                 LogPersister::InitData initData = PersistRecoveryInfo();
@@ -590,13 +587,16 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
                 fclose(infile);
                 uint64_t hash = GenerateHash(info);
                 if (hash != hashSum) {
-                    std::cout << "Info file checksum Failed!" << std::endl;
+                    std::cout << __PRETTY_FUNCTION__ << " Info file checksum Failed!\n";
                     continue;
                 }
-                StartPersistStoreJob(initData, hilogBuffer);
-                std::cout << "Recovery Info:" << std::endl <<
-                "jobId=" << (unsigned)(info.msg.jobId) << std::endl <<
-                "filePath=" << (info.msg.filePath) << std::endl;
+                int result = StartPersistStoreJob(initData, hilogBuffer);
+                std::cout << __PRETTY_FUNCTION__ << " Recovery Info:\n"
+                    << "  restoring result: " << (result == RET_SUCCESS
+                        ? std::string("Success\n")
+                        : std::string("Failed(") + std::to_string(result) + ")\n")
+                    << "  jobId=" << (unsigned)(info.msg.jobId) << "\n"
+                    << "  filePath=" << (info.msg.filePath) << "\n";
             }
         }
         closedir(dir);
@@ -604,7 +604,7 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
         perror("Failed to open persister directory!");
         return ERR_LOG_PERSIST_DIR_OPEN_FAIL;
     }
-    std::cout << "Finished restoring persist jobs!\n";
+    std::cout << __PRETTY_FUNCTION__ << " Finished restoring persist jobs!\n";
     return EXIT_SUCCESS;
 }
 } // namespace HiviewDFX
