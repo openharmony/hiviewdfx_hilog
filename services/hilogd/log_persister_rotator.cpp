@@ -83,8 +83,11 @@ int LogPersisterRotator::OpenInfoFile()
 
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
-    std::cout << __func__ << " " << m_logsPath << " " << m_currentLogFileIdx
-        << " " << length << "\n";
+    std::cout << __PRETTY_FUNCTION__
+        << " Log location: " << m_logsPath
+        << " idx: " << m_currentLogFileIdx << "/" << m_maxLogFileNum
+        << " buf: " <<  (void*) buf << " len: " << length
+        << " needRotate: " << (m_needRotate ? 'T' : 'F') << "\n";
     if (length <= 0 || buf == nullptr) {
         return ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP;
     }
@@ -101,7 +104,7 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
 
 void LogPersisterRotator::Rotate()
 {
-    std::cout << __func__ << "\n";
+    std::cout << __PRETTY_FUNCTION__ << "\n";
     if (m_currentLogFileIdx + 1 >= m_maxLogFileNum) {
         PhysicalShiftFile();
     } else {
@@ -120,6 +123,7 @@ std::string LogPersisterRotator::CreateLogFileName(uint32_t logIndex)
 
 void LogPersisterRotator::CreateLogFile()
 {
+    std::cout << __PRETTY_FUNCTION__ << "\n";
     std::string newFile = CreateLogFileName(m_currentLogFileIdx);
     std::cout << "Creating file: " << newFile << "\n";
     m_currentLogOutput.open(newFile, std::ios::out | std::ios::trunc);
@@ -127,6 +131,7 @@ void LogPersisterRotator::CreateLogFile()
 
 void LogPersisterRotator::PhysicalShiftFile()
 {
+    std::cout << __PRETTY_FUNCTION__ << "\n";
     std::string oldestFile = CreateLogFileName(0);
     remove(oldestFile.c_str());
 
@@ -148,6 +153,8 @@ void LogPersisterRotator::UpdateRotateNumber()
 
 void LogPersisterRotator::FinishInput()
 {
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+
     m_currentLogOutput.close();
     m_needRotate = true;
 }

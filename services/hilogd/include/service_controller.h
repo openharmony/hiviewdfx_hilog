@@ -55,18 +55,14 @@ private:
     void HandleBufferClearRequest(const PacketBuf& rawData);
 
     int WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData);
-    int WriteData(unsigned int sendId, OptRef<HilogData> pData);
+    int WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptRef<HilogData> pData);
     void NotifyForNewData();
-    bool IsControlRespond() const;
 
     std::unique_ptr<Socket> m_communicationSocket;
     HilogBuffer& m_hilogBuffer;
     HilogBuffer::ReaderId m_bufReader;
-    //unsigned int m_sendId = SENDIDA;
 
     LogFilterExt m_filters;
-
-    uint32_t m_currentRespond;
 
     bool m_notifyNewData = false;
 };

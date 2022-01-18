@@ -35,9 +35,8 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-using namespace std;
 
-class LogPersister : std::enable_shared_from_this<LogPersister> {
+class LogPersister : public std::enable_shared_from_this<LogPersister> {
 public:
     using InitData = std::variant<LogPersistStartMsg, PersistRecoveryInfo>;
 
@@ -107,7 +106,7 @@ private:
     volatile bool m_inited = false;
 
     static std::recursive_mutex s_logPersistersMtx;
-    static std::list<shared_ptr<LogPersister>> s_logPersisters;
+    static std::list<std::shared_ptr<LogPersister>> s_logPersisters;
 };
 
 std::list<std::string> LogDataToFormatedStrings(HilogData *data);

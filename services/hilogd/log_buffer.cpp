@@ -346,15 +346,5 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
     }
     return true;
 }
-
-void HilogBuffer::GetBufferLock()
-{
-    hilogBufferMutex.lock();
-}
-
-void HilogBuffer::ReleaseBufferLock()
-{
-    hilogBufferMutex.unlock();
-}
 } // namespace HiviewDFX
 } // namespace OHOS
