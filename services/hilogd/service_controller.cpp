@@ -476,10 +476,10 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
 
 void ServiceController::HandleLogQueryRequest()
 {
-    auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
-    if (result.has_value()) {
-        WriteLogQueryRespond(SENDIDA, LOG_QUERY_RESPONSE, result.value());
-    } else {
+    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData){
+        WriteLogQueryRespond(SENDIDA, LOG_QUERY_RESPONSE, logData);
+    });
+    if (!result) {
         WriteLogQueryRespond(SENDIDN, LOG_QUERY_RESPONSE, std::nullopt);
     }
 }
@@ -493,15 +493,15 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData)
     }
     m_notifyNewData = true;
 
-    auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
-    if (result.has_value()) {
-        WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, result.value());
-    } else {
+    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData){
+        WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, logData);
+    });
+    if (!result) {
         WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
     }
 }
 
-int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptRef<HilogData> pData)
+int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptCRef<HilogData> pData)
 {
     LogQueryResponse rsp;
     MessageHeader& header = rsp.header;
@@ -513,7 +513,7 @@ int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respon
     /* set data */
     msg.sendId = sendId;
     if (pData != std::nullopt) {
-        HilogData& data = pData->get();
+        const HilogData& data = pData->get();
         msg.length = data.len; /* data len, equals tag_len plus content length, include '\0' */
         msg.level = data.level;
         msg.type = data.type;
@@ -529,7 +529,7 @@ int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respon
     return WriteData(rsp, pData);
 }
 
-int ServiceController::WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData)
+int ServiceController::WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData)
 {
     iovec vec[3];
     vec[0].iov_base = &rsp;

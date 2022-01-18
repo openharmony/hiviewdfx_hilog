@@ -76,7 +76,7 @@ private:
 
     int InitCompression();
     int InitFileRotator(const InitData& initData);
-    int WriteLogData(OptRef<HilogData> logDataOpt);
+    int WriteLogData(const HilogData& logData);
     bool WriteUncompressedLogs(std::list<std::string>& formatedTextLogs);
     void WriteCompressedLogs();
 

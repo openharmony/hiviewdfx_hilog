@@ -17,6 +17,7 @@
 #define LOG_BUFFER_H
 
 #include <cstdint>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -34,12 +35,13 @@ class HilogBuffer {
 public:
     using LogMsgContainer = std::list<HilogData>;
     using ReaderId = uintptr_t;
+    using OnFound = std::function<void(const HilogData&)>;
 
     HilogBuffer();
     ~HilogBuffer();
 
     size_t Insert(const HilogMsg& msg);
-    std::optional<HilogData> Query(const LogFilterExt& filter, const ReaderId& id);
+    bool Query(const LogFilterExt& filter, const ReaderId& id, OnFound onFound);
 
     ReaderId CreateBufReader(std::function<void()> onNewDataCallback);
     void RemoveBufReader(const ReaderId& id);

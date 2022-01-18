@@ -54,8 +54,8 @@ private:
     void HandleInfoClearRequest(const PacketBuf& rawData);
     void HandleBufferClearRequest(const PacketBuf& rawData);
 
-    int WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData);
-    int WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptRef<HilogData> pData);
+    int WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData);
+    int WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptCRef<HilogData> pData);
     void NotifyForNewData();
 
     std::unique_ptr<Socket> m_communicationSocket;

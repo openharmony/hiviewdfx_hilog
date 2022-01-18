@@ -345,12 +345,8 @@ bool LogPersister::WriteUncompressedLogs(std::list<std::string>& formatedTextLog
     return true;
 }
 
-int LogPersister::WriteLogData(OptRef<HilogData> logDataOpt)
+int LogPersister::WriteLogData(const HilogData& logData)
 {
-    if (logDataOpt == std::nullopt)
-        return RET_FAIL;
-    const HilogData& logData = logDataOpt->get();
-
     std::list<std::string> formatedTextLogs = LogDataToFormatedStrings(logData);
 
     // Firstly gather uncompressed logs in auxiliary file
@@ -411,16 +407,16 @@ int LogPersister::ReceiveLogLoop()
             break;
         }
 
-        auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
-
-        if (!result.has_value()) {
-            std::unique_lock<decltype(m_receiveLogCvMtx)> lk(m_receiveLogCvMtx);
-            m_receiveLogCv.wait_for(lk, m_baseData.newLogTimeout);
-        } else {
-            if (WriteLogData(result.value())) {
+        auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData) {
+            if (WriteLogData(logData)) {
                 std::cerr << __PRETTY_FUNCTION__ << " Can't write new log data!\n";
             }
-        }
+        });
+
+        if (!result) {
+            std::unique_lock<decltype(m_receiveLogCvMtx)> lk(m_receiveLogCvMtx);
+            m_receiveLogCv.wait_for(lk, m_baseData.newLogTimeout);
+        } 
     }
     WriteCompressedLogs();
     m_fileRotator->FinishInput();
