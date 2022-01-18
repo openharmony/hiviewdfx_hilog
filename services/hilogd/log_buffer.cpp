@@ -96,12 +96,12 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     return elemSize;
 }
 
-std::optional<HilogData> HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id)
+bool HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id, OnFound onFound)
 {
     auto reader = GetReader(id);
     if (!reader) {
         std::cerr << "Reader not registered!\n";
-        return {};
+        return false;
     }
     uint16_t qTypes = filter.inclusions.types;
     LogMsgContainer &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
@@ -118,10 +118,13 @@ std::optional<HilogData> HilogBuffer::Query(const LogFilterExt& filter, const Re
         reader->m_pos++;
         if (LogMatchFilter(filter, logData)) {
             UpdateStatistics(logData);
-            return logData;
+            if (onFound) {
+                onFound(logData);
+            }
+            return true;
         }
     }
-    return {};
+    return false;
 }
 
 void HilogBuffer::UpdateStatistics(const HilogData& logData)
