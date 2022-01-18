@@ -71,11 +71,18 @@ struct HilogData {
         tag(nullptr), content(nullptr)
     {
         init(msg.tag, msg.tag_len, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
-    };
+    }
+    HilogData(const HilogData& cpy)
+        : len(0), version(cpy.version), type(cpy.type), level(cpy.level), tag_len(cpy.tag_len),
+        tv_sec(cpy.tv_sec), tv_nsec(cpy.tv_nsec), pid(cpy.pid), tid(cpy.tid), domain(cpy.domain),
+        tag(nullptr), content(nullptr)
+    {
+        init(cpy.tag, cpy.tag_len, cpy.content, cpy.len - cpy.tag_len);
+    }
     ~HilogData()
     {
         deinit();
-    };
+    }
 };
 } // namespace HiviewDFX
 } // namespace OHOS

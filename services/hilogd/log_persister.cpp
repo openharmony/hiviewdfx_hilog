@@ -54,7 +54,7 @@ static bool isEmptyThread(const std::thread& th)
 }
 
 std::recursive_mutex LogPersister::s_logPersistersMtx;
-std::list<shared_ptr<LogPersister>> LogPersister::s_logPersisters;
+std::list<std::shared_ptr<LogPersister>> LogPersister::s_logPersisters;
 
 std::shared_ptr<LogPersister> LogPersister::CreateLogPersister(HilogBuffer &buffer) 
 {
@@ -132,6 +132,7 @@ int LogPersister::InitFileRotator(const InitData& initData)
 
 int LogPersister::Init(const InitData& initData)
 {
+    std::cout << __PRETTY_FUNCTION__  << " Begin\n";
     std::lock_guard<decltype(m_initMtx)> lock(m_initMtx);
     if (m_inited) {
         return 0;
@@ -158,7 +159,7 @@ int LogPersister::Init(const InitData& initData)
         initByMsg(msg);
         restore = true;
     } else {
-        std::cerr << "Init data not provided\n";
+        std::cerr << __PRETTY_FUNCTION__  << "Init data not provided\n";
         return RET_FAIL;
     }
 
@@ -166,15 +167,18 @@ int LogPersister::Init(const InitData& initData)
     if (separatorPos == std::string::npos) {
         return ERR_LOG_PERSIST_FILE_PATH_INVALID;
     }
+
     std::string parentPath = m_baseData.logPath.substr(0, separatorPos);
     if (access(parentPath.c_str(), F_OK) != 0) {
         perror("persister directory does not exist.");
         return ERR_LOG_PERSIST_FILE_PATH_INVALID;
     }
+
     // below guard is needed to have sure only one Path and Id is reqistered till end of init!
     std::lock_guard<decltype(s_logPersistersMtx)> guard(s_logPersistersMtx);
     if (CheckRegistered(m_baseData.id, m_baseData.logPath)) {
-        std::cerr << "Log persister already registered. Path:" << m_baseData.logPath << " id:" << m_baseData.id << "\n";
+        std::cerr << __PRETTY_FUNCTION__ << "Log persister already registered. Path:" << m_baseData.logPath
+            << " id:" << m_baseData.id << "\n";
         return ERR_LOG_PERSIST_TASK_FAIL;
     }
     if (InitCompression() !=  RET_SUCCESS) {
@@ -187,14 +191,16 @@ int LogPersister::Init(const InitData& initData)
     if (int result = PrepareUncompressedFile(parentPath, restore)) {
         return result;
     }
-    
+
     RegisterLogPersister(shared_from_this());
     m_inited = true;
+    std::cout << __PRETTY_FUNCTION__  << " Done\n";
     return 0;
 }
 
 int LogPersister::Deinit() 
 {
+    std::cout << __PRETTY_FUNCTION__  << " Begin\n";
     std::lock_guard<decltype(m_initMtx)> lock(m_initMtx);
     if (!m_inited) {
         return 0;
@@ -208,6 +214,7 @@ int LogPersister::Deinit()
 
     DeregisterLogPersister(shared_from_this());
     m_inited = false;
+    std::cout << __PRETTY_FUNCTION__  << " Done\n";
     return 0;
 }
 
@@ -218,7 +225,7 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
     FILE* plainTextFile = fopen(m_plainLogFilePath.c_str(), restore ? "r+" : "w+");
 
     if (!plainTextFile) {
-        std::cerr << "Open uncompressed log file(" << m_plainLogFilePath << ") failed: " 
+        std::cerr << __PRETTY_FUNCTION__ << " Open uncompressed log file(" << m_plainLogFilePath << ") failed: "
             << strerror(errno) << "\n";
         return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
     }
@@ -232,17 +239,17 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
         MAP_SHARED, fileno(plainTextFile), 0);
     fclose(plainTextFile);
     if (m_mappedPlainLogFile == MAP_FAILED) {
-        std::cerr << "mmap file failed: " << strerror(errno) << "\n";
+        std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: " << strerror(errno) << "\n";
         return RET_FAIL;
     }
     if (restore == true) {
 #ifdef DEBUG
-        std::cout << "Recovered persister, Offset=" << m_mappedPlainLogFile->offset << "\n";
+        std::cout << __PRETTY_FUNCTION__ << " Recovered persister, Offset=" << m_mappedPlainLogFile->offset << "\n";
 #endif
         // try to store previous uncompressed logs
         auto compressionResult = m_compressor->Compress(*m_mappedPlainLogFile, *m_compressBuffer);
         if (compressionResult != 0) {
-            std::cerr << "Compression error. Result:" << compressionResult << "\n";
+            std::cerr << __PRETTY_FUNCTION__ << " Compression error. Result:" << compressionResult << "\n";
             return RET_FAIL;
         };
         WriteCompressedLogs();
@@ -323,7 +330,7 @@ bool LogPersister::WriteUncompressedLogs(std::list<std::string>& formatedTextLog
         uint32_t remainingSpace = MAX_PERSISTER_BUFFER_SIZE - m_mappedPlainLogFile->offset;
         int r = memcpy_s(currentContentPos, remainingSpace, logLine.c_str(), logLine.length());
         if (r != 0) {
-            std::cerr << "Can't copy part of memory!\n";
+            std::cerr << __PRETTY_FUNCTION__ << " Can't copy part of memory!\n";
             m_mappedPlainLogFile->offset = origOffset;
             return true; // ???
         }
@@ -349,7 +356,7 @@ int LogPersister::WriteLogData(OptRef<HilogData> logDataOpt)
     // Try to compress auxiliary file
     auto compressionResult = m_compressor->Compress(*m_mappedPlainLogFile, *m_compressBuffer);
     if (compressionResult != 0) {
-        std::cerr << "Compression error. Result:" << compressionResult << "\n";
+        std::cerr <<  __PRETTY_FUNCTION__ << " Compression error. Result:" << compressionResult << "\n";
         return RET_FAIL;
     };
     // Write compressed buffor and clear counters
@@ -365,6 +372,8 @@ inline void LogPersister::WriteCompressedLogs()
         return;
     m_fileRotator->Input(m_compressBuffer->content, m_compressBuffer->offset);
     m_plainLogSize += m_mappedPlainLogFile->offset;
+    std::cout << __PRETTY_FUNCTION__ <<  " Stored plain log bytes: " << m_plainLogSize
+        << " from: " << m_baseData.logFileSizeLimit << "\n";
     if (m_plainLogSize >= m_baseData.logFileSizeLimit) {
         m_plainLogSize = 0;
         m_fileRotator->FinishInput();
@@ -378,7 +387,7 @@ void LogPersister::Start()
     {
         std::lock_guard<decltype(m_initMtx)> lock(m_initMtx);
         if (!m_inited) {
-            std::cerr << "Log persister wasn't inited!\n";
+            std::cerr << __PRETTY_FUNCTION__ << " Log persister wasn't inited!\n";
             return;
         }
     }
@@ -386,14 +395,14 @@ void LogPersister::Start()
     if (isEmptyThread(m_persisterThread)) {
         m_persisterThread = std::thread(&LogPersister::ReceiveLogLoop, shared_from_this());
     } else {
-        std::cout << "Persister thread already started!\n";
+        std::cout << __PRETTY_FUNCTION__ << " Persister thread already started!\n";
     }
 }
 
 int LogPersister::ReceiveLogLoop()
 {
     prctl(PR_SET_NAME, "hilogd.pst");
-    std::cout << __func__ << " " << std::this_thread::get_id() << endl;
+    std::cout << __PRETTY_FUNCTION__ << " " << std::this_thread::get_id() << "\n";
     for (;;) {
         if (m_stopThread) {
             break;
@@ -402,11 +411,11 @@ int LogPersister::ReceiveLogLoop()
         auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
 
         if (!result.has_value()) {
-            unique_lock<decltype(m_receiveLogCvMtx)> lk(m_receiveLogCvMtx);
+            std::unique_lock<decltype(m_receiveLogCvMtx)> lk(m_receiveLogCvMtx);
             m_receiveLogCv.wait_for(lk, m_baseData.newLogTimeout);
         } else {
             if (WriteLogData(result.value())) {
-                std::cerr << "Can't write new log data!\n";
+                std::cerr << __PRETTY_FUNCTION__ << " Can't write new log data!\n";
             }
         }
     }
@@ -415,13 +424,13 @@ int LogPersister::ReceiveLogLoop()
     return 0;
 }
 
-int LogPersister::Query(uint16_t logType, list<LogPersistQueryResult> &results)
+int LogPersister::Query(uint16_t logType, std::list<LogPersistQueryResult> &results)
 {
     std::lock_guard<decltype(s_logPersistersMtx)> guard(s_logPersistersMtx);
-    std::cout << "Persister.Query: logType " << logType << "\n";
+    std::cout << __PRETTY_FUNCTION__ << " Persister.Query: logType " << logType << "\n";
     for (auto& logPersister : s_logPersisters) {
         uint16_t currentType = logPersister->m_filters.inclusions.types;
-        std::cout << "Persister.Query: (*it)->queryCondition.types " << currentType << "\n";
+        std::cout << __PRETTY_FUNCTION__ << " Persister.Query: (*it)->queryCondition.types " << currentType << "\n";
         if (currentType & logType) {
             LogPersistQueryResult response;
             response.logType = currentType;
@@ -449,15 +458,15 @@ int LogPersister::Kill(uint32_t id)
     if (logPersisterPtr) {
         return logPersisterPtr->Deinit();
     }
-    std::cerr << "Log persister with id: " << id << " does not exist.\n";
+    std::cerr << __PRETTY_FUNCTION__ << " Log persister with id: " << id << " does not exist.\n";
     return ERR_LOG_PERSIST_JOBID_FAIL;
 }
 
 void LogPersister::Stop()
 {
-    std::cout << "Exiting LogPersister!\n";
+    std::cout << __PRETTY_FUNCTION__ << " Exiting LogPersister!\n";
     if (isEmptyThread(m_persisterThread)) {
-        std::cout << "Thread was exited or not started!\n";
+        std::cout << __PRETTY_FUNCTION__ << " Thread was exited or not started!\n";
         return;
     }
 
@@ -508,7 +517,7 @@ void LogPersister::RegisterLogPersister(const std::shared_ptr<LogPersister>& obj
 void LogPersister::DeregisterLogPersister(const std::shared_ptr<LogPersister>& obj)
 {
     if (!obj) {
-        std::cerr << "Invalid invoke - this should never happened!\n";
+        std::cerr << __PRETTY_FUNCTION__ << " Invalid invoke - this should never happened!\n";
         return;
     }
     std::lock_guard<decltype(s_logPersistersMtx)> lock(s_logPersistersMtx);
@@ -520,7 +529,7 @@ void LogPersister::DeregisterLogPersister(const std::shared_ptr<LogPersister>& o
             return false;
         });
     if (it == s_logPersisters.end()) {
-        std::cerr << "Inconsistent data - this should never happended!\n";
+        std::cerr << __PRETTY_FUNCTION__ << " Inconsistent data - this should never happended!\n";
         return;
     }
     s_logPersisters.erase(it);

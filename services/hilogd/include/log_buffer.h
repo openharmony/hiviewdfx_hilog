@@ -51,8 +51,6 @@ public:
     int32_t GetStatisticInfoByDomain(uint32_t domain, uint64_t& printLen, uint64_t& cacheLen, int32_t& dropped);
     int32_t ClearStatisticInfoByLog(uint16_t logType);
     int32_t ClearStatisticInfoByDomain(uint32_t domain);
-    void GetBufferLock();
-    void ReleaseBufferLock();
 
     static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData);
 private:

@@ -20,11 +20,8 @@
 #include <string>
 #include <vector>
 
-#include <hilog_common.h>
-
 namespace OHOS {
 namespace HiviewDFX {
-
 struct LogFilter {
     uint16_t levels = 0;
     uint16_t types = 0;

@@ -397,7 +397,9 @@ void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
     }
     PacketBuf rawDataBuffer = {0};
 
+    std::cout << "ServiceController: Waiting socket data\n";
     while (!stopLoop.load() && m_communicationSocket->Read(rawDataBuffer.data(), rawDataBuffer.size() - 1) > 0) {
+        std::cout << "ServiceController: New socket data\n";
         MessageHeader *header = reinterpret_cast<MessageHeader *>(rawDataBuffer.data());
         switch (header->msgType) {
             case LOG_QUERY_REQUEST:
@@ -438,7 +440,9 @@ void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
                 std::cout << "Unknown message. Skipped!\n";
                 break;
         }
+        std::cout << "ServiceController: Waiting socket data\n";
     }
+    std::cout << "ServiceController: Work is done!\n";
 }
 
 void ServiceController::SetFilters(const PacketBuf& rawData)
@@ -476,13 +480,11 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
 
 void ServiceController::HandleLogQueryRequest()
 {
-    m_currentRespond = LOG_QUERY_RESPONSE;
-
     auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
     if (result.has_value()) {
-        WriteData(SENDIDA, result.value());
+        WriteLogQueryRespond(SENDIDA, LOG_QUERY_RESPONSE, result.value());
     } else {
-        WriteData(SENDIDN, std::nullopt);
+        WriteLogQueryRespond(SENDIDN, LOG_QUERY_RESPONSE, std::nullopt);
     }
 }
 
@@ -493,23 +495,22 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData)
         return;
     }
 
-    m_currentRespond = NEXT_RESPONSE;
     auto result = m_hilogBuffer.Query(m_filters, m_bufReader);
     if (result.has_value()) {
-        WriteData(SENDIDA, result.value());
+        WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, result.value());
     } else {
-        WriteData(SENDIDN, std::nullopt);
+        WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
     }
 }
 
-int ServiceController::WriteData(unsigned int sendId, OptRef<HilogData> pData)
+int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptRef<HilogData> pData)
 {
     LogQueryResponse rsp;
     MessageHeader& header = rsp.header;
     HilogDataMessage& msg = rsp.data;
 
     /* set header */
-    SetMsgHead(header, m_currentRespond, sizeof(rsp) + ((pData != std::nullopt) ? pData->get().len : 0));
+    SetMsgHead(header, respondCmd, sizeof(rsp) + ((pData != std::nullopt) ? pData->get().len : 0));
 
     /* set data */
     msg.sendId = sendId;
@@ -549,10 +550,6 @@ int ServiceController::WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData)
 
 void ServiceController::NotifyForNewData()
 {
-    if (IsControlRespond()) {
-        // this propbably should be removed when control and data socet become separated
-        return;
-    }
     if (m_notifyNewData) {
         // this should be timeouted
         return;
@@ -568,20 +565,9 @@ void ServiceController::NotifyForNewData()
     }
 }
 
-bool ServiceController::IsControlRespond() const
-{
-    switch (m_currentRespond) {
-        case LOG_QUERY_RESPONSE:
-            return false;
-        case NEXT_RESPONSE:
-            return false;
-        default:
-            return true;
-    }
-}
-
 int RestorePersistJobs(HilogBuffer& hilogBuffer)
 {
+    std::cout << "Start restoring persist jobs!\n";
     DIR *dir = opendir(g_logPersisterDir.c_str());
     struct dirent *ent = nullptr;
     if (dir != nullptr) {
@@ -590,7 +576,7 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
             std::string pPath(ent->d_name, length);
             if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
                 if (pPath == "hilog.info") continue;
-                std::cout << "Found a persist job!" << std::endl;
+                std::cout << "Found a persist job! Path: " << g_logPersisterDir + pPath << "\n";
                 FILE* infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
                 if (infile == NULL) {
                     std::cout << "Error opening recovery info file!" << std::endl;
@@ -618,7 +604,7 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
         perror("Failed to open persister directory!");
         return ERR_LOG_PERSIST_DIR_OPEN_FAIL;
     }
-    cout << "Finished restoring persist jobs!" << endl;
+    std::cout << "Finished restoring persist jobs!\n";
     return EXIT_SUCCESS;
 }
 } // namespace HiviewDFX
