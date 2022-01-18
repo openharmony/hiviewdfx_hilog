@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include "log_compress.h"
-#include "malloc.h"
 
 #include <iostream>
 #include <cstring>

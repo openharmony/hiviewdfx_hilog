@@ -302,9 +302,9 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
         auto it = std::find(filter.inclusions.pids.begin(), filter.inclusions.pids.end(), logData.pid);
         if (it == filter.inclusions.pids.end()) 
             return false;
-    }    
+    }
     if (!filter.inclusions.domains.empty()) {
-        auto it = std::find_if(filter.inclusions.domains.begin(), filter.inclusions.domains.end(), 
+        auto it = std::find_if(filter.inclusions.domains.begin(), filter.inclusions.domains.end(),
             [&] (uint32_t domain) {
                 return !((domain >= DOMAIN_STRICT_MASK && domain != logData.domain) ||
                     (domain <= DOMAIN_FUZZY_MASK && domain != (logData.domain >> DOMAIN_MODULE_BITS)));
@@ -337,7 +337,7 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
     }
     if (!filter.exclusions.tags.empty()) {
         auto it = std::find(filter.exclusions.tags.begin(), filter.exclusions.tags.end(), logData.tag);
-        if (it != filter.exclusions.tags.end()) 
+        if (it != filter.exclusions.tags.end())
             return false;
     }
     if ((static_cast<uint8_t>((0b01 << (logData.type)) & (filter.exclusions.types)) != 0) ||

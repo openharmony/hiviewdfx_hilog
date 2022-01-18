@@ -83,8 +83,7 @@ int StartPersistStoreJob(const LogPersister::InitData& initData, HilogBuffer& hi
     if (persistRes != RET_SUCCESS) {
         if (persistRes == ERR_LOG_PERSIST_TASK_FAIL) {
             std::cerr << __PRETTY_FUNCTION__ << " Log persist task exists!\n";
-        }
-        else {
+        } else {
             std::cerr << __PRETTY_FUNCTION__ << " LogPersister failed to initialize!\n";
         }
         return persistRes;
@@ -339,7 +338,7 @@ void ServiceController::HandleInfoClearRequest(const PacketBuf& rawData)
     m_communicationSocket->Write(respondRaw.data(), sizeof(*respond));
 }
 
-void ServiceController::HandleBufferClearRequest(const PacketBuf& rawData) //char* reqMsg, std::shared_ptr<LogReader> logReader, HilogBuffer* buffer)
+void ServiceController::HandleBufferClearRequest(const PacketBuf& rawData)
 {
     const LogClearRequest* request = reinterpret_cast<const LogClearRequest*>(rawData.data());
     const LogClearMsg* requestMsg = reinterpret_cast<const LogClearMsg*>(&request->logClearMsg);
@@ -466,7 +465,7 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
     std::copy(qRstMsg.noPids, qRstMsg.noPids+m_filters.exclusions.pids.size(), m_filters.exclusions.pids.begin());
 
     m_filters.exclusions.domains.resize(std::min(qRstMsg.nNoDomain, static_cast<uint8_t>(MAX_DOMAINS)));
-    std::copy(qRstMsg.noDomains, qRstMsg.noDomains+m_filters.exclusions.pids.size(), 
+    std::copy(qRstMsg.noDomains, qRstMsg.noDomains+m_filters.exclusions.pids.size(),
         m_filters.exclusions.domains.begin());
 
     m_filters.exclusions.tags.resize(std::min(qRstMsg.nNoTag, static_cast<uint8_t>(MAX_TAGS)));

@@ -39,13 +39,13 @@ public:
         return *reinterpret_cast<HilogMsg*>(msgBuffer.data());
     }
 
-    const std::vector<char> & GetRawData() const 
+    const std::vector<char> & GetRawData() const
     {
         return msgBuffer;
     }
 
 private:
-    std::vector<char> msgBuffer;  
+    std::vector<char> msgBuffer;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

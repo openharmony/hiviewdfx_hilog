@@ -37,7 +37,7 @@ uint64_t GenerateHash(const PersistRecoveryInfo &info)
     return ret;
 }
 
-LogPersisterRotator::LogPersisterRotator(const std::string& logsPath, uint32_t id, uint32_t maxFiles, 
+LogPersisterRotator::LogPersisterRotator(const std::string& logsPath, uint32_t id, uint32_t maxFiles,
     const std::string& fileNameSuffix)
     : m_maxLogFileNum(maxFiles)
     , m_logsPath(logsPath)
@@ -202,6 +202,5 @@ void LogPersisterRotator::WriteRecoveryInfo()
     m_infoFile.flush();
     m_infoFile.sync();
 }
-
 } // namespace HiviewDFX
 } // namespace OHOS

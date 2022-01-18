@@ -22,7 +22,7 @@ namespace OHOS {
 namespace HiviewDFX {
 class KmsgParser {
 public:
-    using BootTp = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>; 
+    using BootTp = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
     static std::optional<HilogMsgWrapper> ParseKmsg(const std::vector<char>& kmsgBuffer);
     static BootTp BootTime();
 };
