@@ -482,7 +482,7 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
 
 void ServiceController::HandleLogQueryRequest()
 {
-    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData){
+    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData) {
         WriteLogQueryRespond(SENDIDA, LOG_QUERY_RESPONSE, logData);
     });
     if (!result) {
@@ -588,14 +588,14 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
     DIR *dir = opendir(g_logPersisterDir.c_str());
     struct dirent *ent = nullptr;
     if (dir != nullptr) {
-        while ((ent = readdir(dir)) != NULL) {
+        while ((ent = readdir(dir)) != nullptr) {
             size_t length = strlen(ent->d_name);
             std::string pPath(ent->d_name, length);
             if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
                 if (pPath == "hilog.info") continue;
                 std::cout << __PRETTY_FUNCTION__ << " Found a persist job! Path: " << g_logPersisterDir + pPath << "\n";
                 FILE* infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
-                if (infile == NULL) {
+                if (infile == nullptr) {
                     std::cerr << __PRETTY_FUNCTION__ << " Error opening recovery info file!\n";
                     continue;
                 }
