@@ -28,6 +28,7 @@
 #include <regex>
 #include <sstream>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <thread>
 
 #include <unistd.h>
@@ -385,6 +386,11 @@ ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket
 ServiceController::~ServiceController()
 {
     m_hilogBuffer.RemoveBufReader(m_bufReader);
+
+    if (m_scheduleNotification.valid()) {
+        m_scheduleNotification.wait();
+        m_scheduleNotification.get();
+    }
 }
 
 void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
@@ -551,14 +557,29 @@ void ServiceController::NotifyForNewData()
     if (!m_notifyNewData) {
         return;
     }
-    LogQueryResponse rsp;
-    rsp.data.sendId = SENDIDS;
-    rsp.data.type = -1;
-    /* set header */
-    SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
-    if (WriteData(rsp, std::nullopt) <= 0) {
-        std::cerr << __PRETTY_FUNCTION__ << " Can't send notification about new logs\n";
+    m_notifyNewData = false;
+
+    bool expected(false);
+    if (!m_scheduleCtrl.compare_exchange_strong(expected, true)) {
+        return;
     }
+    if (m_scheduleNotification.valid()) {
+        m_scheduleNotification.get(); // getting clear 'future' obj
+    }
+
+    m_scheduleNotification = std::async(std::launch::async, [this]() {
+        prctl(PR_SET_NAME, "hilogd.notif_sched");
+        std::this_thread::sleep_for(500ms);
+        LogQueryResponse rsp;
+        rsp.data.sendId = SENDIDS;
+        rsp.data.type = -1;
+        /* set header */
+        SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
+        if (WriteData(rsp, std::nullopt) <= 0) {
+            std::cerr << __PRETTY_FUNCTION__ << " Can't send notification about new logs\n";
+        }
+        m_scheduleCtrl.store(false);
+    });
 }
 
 int RestorePersistJobs(HilogBuffer& hilogBuffer)
