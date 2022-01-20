@@ -302,7 +302,7 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
 
     if (!filter.inclusions.pids.empty()) {
         auto it = std::find(filter.inclusions.pids.begin(), filter.inclusions.pids.end(), logData.pid);
-        if (it == filter.inclusions.pids.end()) 
+        if (it == filter.inclusions.pids.end())
             return false;
     }
     if (!filter.inclusions.domains.empty()) {
@@ -311,12 +311,12 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
                 return !((domain >= DOMAIN_STRICT_MASK && domain != logData.domain) ||
                     (domain <= DOMAIN_FUZZY_MASK && domain != (logData.domain >> DOMAIN_MODULE_BITS)));
             });
-        if (it == filter.inclusions.domains.end()) 
+        if (it == filter.inclusions.domains.end())
             return false;
     }
     if (!filter.inclusions.tags.empty()) {
         auto it = std::find(filter.inclusions.tags.begin(), filter.inclusions.tags.end(), logData.tag);
-        if (it == filter.inclusions.tags.end()) 
+        if (it == filter.inclusions.tags.end())
             return false;
     }
 
@@ -324,17 +324,17 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
     // exclusion
     if (!filter.exclusions.pids.empty()) {
         auto it = std::find(filter.exclusions.pids.begin(), filter.exclusions.pids.end(), logData.pid);
-        if (it != filter.exclusions.pids.end()) 
+        if (it != filter.exclusions.pids.end())
             return false;
     }
 
     if (!filter.exclusions.domains.empty()) {
-        auto it = std::find_if(filter.exclusions.domains.begin(), filter.exclusions.domains.end(), 
+        auto it = std::find_if(filter.exclusions.domains.begin(), filter.exclusions.domains.end(),
             [&] (uint32_t domain) {
                 return ((domain >= DOMAIN_STRICT_MASK && domain == logData.domain) ||
                     (domain <= DOMAIN_FUZZY_MASK && domain == (logData.domain >> DOMAIN_MODULE_BITS)));
             });
-        if (it != filter.exclusions.domains.end()) 
+        if (it != filter.exclusions.domains.end())
             return false;
     }
     if (!filter.exclusions.tags.empty()) {

@@ -23,7 +23,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-
 int NoneCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressedBuffer)
 {
     void *dest = compressedBuffer.content + compressedBuffer.offset;

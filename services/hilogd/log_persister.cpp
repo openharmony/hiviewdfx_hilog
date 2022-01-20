@@ -416,7 +416,7 @@ int LogPersister::ReceiveLogLoop()
         if (!result) {
             std::unique_lock<decltype(m_receiveLogCvMtx)> lk(m_receiveLogCvMtx);
             m_receiveLogCv.wait_for(lk, m_baseData.newLogTimeout);
-        } 
+        }
     }
     WriteCompressedLogs();
     m_fileRotator->FinishInput();
