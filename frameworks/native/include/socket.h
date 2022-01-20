@@ -34,7 +34,7 @@ public:
     int Poll();
     int Write(const char *data, unsigned int len);
     int WriteAll(const char *data, unsigned int len);
-    int WriteV(iovec *vec, unsigned int len);
+    int WriteV(const iovec *vec, unsigned int len);
     int Read(char *buffer, unsigned int len);
     int Recv(void *buffer, unsigned int bufferLen, int flags = MSG_PEEK);
 protected:
