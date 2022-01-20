@@ -11,31 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build/ohos.gni")
 
-ohos_shared_library("libhilog_os_adapter") {
-  sources = [
-    "properties.cpp",
-    "socket_server_adapter.cpp",
-  ]
+hilog.private.on=true
+hilog.debug.on=false
+persist.sys.hilog.kmsg.on=false
+persist.sys.hilog.debug.on=false
+hilog.flowctrl.pid.on=false
+hilog.flowctrl.domain.on=false
 
-  defines = [ "USING_EXISTING_SOCKET" ]
-
-  include_dirs = [
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//base/hiviewdfx/hilog/adapter",
-  ]
-
-  if (use_musl) {
-    defines += [ "HILOG_USE_MUSL" ]
-  }
-
-  install_enable = true
-  part_name = "hilog_native"
-  subsystem_name = "hiviewdfx"
-  install_images = [
-    "system",
-    "updater",
-  ]
-  external_deps = [ "startup_l2:syspara" ]
-}
+hilog.loggable.global=d
