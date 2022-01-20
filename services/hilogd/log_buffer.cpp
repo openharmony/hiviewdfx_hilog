@@ -16,6 +16,7 @@
 #include "log_buffer.h"
 
 #include <cstring>
+#include <thread>
 #include "hilog_common.h"
 #include "flow_control_init.h"
 #include "log_time_stamp.h"
@@ -42,7 +43,6 @@ HilogBuffer::HilogBuffer()
 }
 
 HilogBuffer::~HilogBuffer() {}
-
 
 size_t HilogBuffer::Insert(const HilogMsg& msg)
 {
@@ -145,7 +145,7 @@ size_t HilogBuffer::Delete(uint16_t logType)
         return ERR_LOG_TYPE_INVALID;
     }
     size_t sum = 0;
-    hilogBufferMutex.lock();
+    std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
     std::list<HilogData>::iterator it = msgList.begin();
 
     // Delete logs corresponding to queryCondition
@@ -164,8 +164,6 @@ size_t HilogBuffer::Delete(uint16_t logType)
         size -= cLen;
         it = msgList.erase(it);
     }
-
-    hilogBufferMutex.unlock();
     return sum;
 }
 
@@ -210,6 +208,7 @@ void HilogBuffer::OnPushBackedItem(LogMsgContainer& msgList)
 
 void HilogBuffer::OnNewItem(LogMsgContainer& msgList, LogMsgContainer::iterator /*itemPos*/)
 {
+    std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
     for (auto& [id, readerPtr] : m_logReaders) {
         if (readerPtr->m_msgList == &msgList && readerPtr->m_onNewDataCallback) {
             readerPtr->m_onNewDataCallback();

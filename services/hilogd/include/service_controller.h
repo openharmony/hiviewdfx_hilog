@@ -16,6 +16,8 @@
 #define LOG_QUERIER_H
 
 #include <array>
+#include <atomic>
+#include <future>
 #include <memory>
 
 #include <hilog_common.h>
@@ -61,6 +63,9 @@ private:
     std::unique_ptr<Socket> m_communicationSocket;
     HilogBuffer& m_hilogBuffer;
     HilogBuffer::ReaderId m_bufReader;
+
+    std::future<void> m_scheduleNotification;
+    std::atomic_bool m_scheduleCtrl;
 
     LogFilterExt m_filters;
 
