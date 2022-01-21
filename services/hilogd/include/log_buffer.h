@@ -65,7 +65,7 @@ private:
     void UpdateStatistics(const HilogData& logData);
     void OnDeleteItem(LogMsgContainer::iterator itemPos);
     void OnPushBackedItem(LogMsgContainer& msgList);
-    void OnNewItem(LogMsgContainer& msgList, LogMsgContainer::iterator itemPos);
+    void OnNewItem(LogMsgContainer& msgList);
     std::shared_ptr<BufferReader> GetReader(const ReaderId& id);
 
     size_t size;

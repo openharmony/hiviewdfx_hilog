@@ -53,36 +53,37 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     }
 
     LogMsgContainer &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
+    HilogData msgAsData(msg);
+    {
+        std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
-    std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
-
-    // Delete old entries when full
-    if (elemSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
-        // Drop 5% of maximum log when full
-        std::list<HilogData>::iterator it = msgList.begin();
-        while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
-            it != msgList.end()) {
-            if ((*it).type != msg.type) {    // Only remove old logs of the same type
-                ++it;
-                continue;
+        // Delete old entries when full
+        if (elemSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
+            // Drop 5% of maximum log when full
+            std::list<HilogData>::iterator it = msgList.begin();
+            while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
+                it != msgList.end()) {
+                if ((*it).type != msg.type) {    // Only remove old logs of the same type
+                    ++it;
+                    continue;
+                }
+                OnDeleteItem(it);
+                size_t cLen = it->len - it->tag_len;
+                size -= cLen;
+                sizeByType[(*it).type] -= cLen;
+                it = msgList.erase(it);
             }
-            OnDeleteItem(it);
-            size_t cLen = it->len - it->tag_len;
-            size -= cLen;
-            sizeByType[(*it).type] -= cLen;
-            it = msgList.erase(it);
+
+            // Re-confirm if enough elements has been removed
+            if (sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
+                std::cout << "Failed to clean old logs." << std::endl;
+            }
         }
 
-        // Re-confirm if enough elements has been removed
-        if (sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
-            std::cout << "Failed to clean old logs." << std::endl;
-        }
+        // Append new log into HilogBuffer
+        msgList.push_back(std::move(msgAsData));
+        OnPushBackedItem(msgList);
     }
-
-    // Append new log into HilogBuffer
-    msgList.emplace_back(msg);
-    OnPushBackedItem(msgList);
-    OnNewItem(msgList, std::prev(msgList.end()));
 
     // Update current size of HilogBuffer
     size += elemSize;
@@ -93,6 +94,9 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     } else {
         cacheLenByDomain[msg.domain] += elemSize;
     }
+
+    // Notify readers about new element added
+    OnNewItem(msgList);
     return elemSize;
 }
 
@@ -206,7 +210,7 @@ void HilogBuffer::OnPushBackedItem(LogMsgContainer& msgList)
     }
 }
 
-void HilogBuffer::OnNewItem(LogMsgContainer& msgList, LogMsgContainer::iterator /*itemPos*/)
+void HilogBuffer::OnNewItem(LogMsgContainer& msgList)
 {
     std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
     for (auto& [id, readerPtr] : m_logReaders) {
