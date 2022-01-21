@@ -569,7 +569,7 @@ void ServiceController::NotifyForNewData()
 
     m_scheduleNotification = std::async(std::launch::async, [this]() {
         prctl(PR_SET_NAME, "hilogd.notif_sched");
-        std::this_thread::sleep_for(500ms);
+        std::this_thread::sleep_for(250ms);
         LogQueryResponse rsp;
         rsp.data.sendId = SENDIDS;
         rsp.data.type = -1;
