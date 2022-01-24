@@ -57,6 +57,7 @@ private:
     void HandleBufferClearRequest(const PacketBuf& rawData);
 
     int WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData);
+    int WriteV(const iovec* vec, size_t len);
     int WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptCRef<HilogData> pData);
     void NotifyForNewData();
 
