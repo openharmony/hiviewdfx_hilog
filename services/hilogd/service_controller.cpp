@@ -535,13 +535,35 @@ int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respon
     return WriteData(rsp, pData);
 }
 
+int PackAndSend(const iovec* vec, size_t len, Socket& communicationSocket)
+{
+    static thread_local std::vector<char> dataBuf;
+
+    size_t allSize = 0;
+    for (uint32_t i = 0; i < len; ++i) {
+        allSize += vec[i].iov_len;
+    }
+
+    if (dataBuf.size() < allSize)
+        dataBuf.resize(allSize);
+
+    uint32_t offset = 0;
+    for (uint32_t i = 0; i < len; ++i) {
+        auto src_address = (char*)vec[i].iov_base;
+        std::copy(src_address, src_address + vec[i].iov_len, dataBuf.data() + offset);
+        offset += vec[i].iov_len;
+    }
+    return communicationSocket.Write(dataBuf.data(), allSize);
+}
+
 int ServiceController::WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData)
 {
     iovec vec[3];
     vec[0].iov_base = &rsp;
     vec[0].iov_len = sizeof(LogQueryResponse);
     if (pData == std::nullopt) {
-        return m_communicationSocket->WriteV(vec, 1);
+        //return m_communicationSocket->WriteV(vec, 1);
+        return PackAndSend(vec, 1, *m_communicationSocket);
     }
     const HilogData& data = pData->get();
     vec[1].iov_base = data.tag;
@@ -549,7 +571,8 @@ int ServiceController::WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData
     vec[2].iov_base = data.content;
     vec[2].iov_len = data.len - data.tag_len;
 
-    return m_communicationSocket->WriteV(vec, 3);
+    //return m_communicationSocket->WriteV(vec, 3);
+    return PackAndSend(vec, 3, *m_communicationSocket);
 }
 
 void ServiceController::NotifyForNewData()
@@ -569,7 +592,8 @@ void ServiceController::NotifyForNewData()
 
     m_scheduleNotification = std::async(std::launch::async, [this]() {
         prctl(PR_SET_NAME, "hilogd.notif_sched");
-        std::this_thread::sleep_for(250ms);
+        //std::this_thread::sleep_for(250ms);
+        std::this_thread::sleep_for(16ms);
         LogQueryResponse rsp;
         rsp.data.sendId = SENDIDS;
         rsp.data.type = -1;
