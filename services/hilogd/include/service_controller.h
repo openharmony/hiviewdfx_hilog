@@ -70,7 +70,7 @@ private:
 
     LogFilterExt m_filters;
 
-    bool m_notifyNewData = false;
+    volatile bool m_notifyNewData = false;
 };
 
 int RestorePersistJobs(HilogBuffer& _buffer);
