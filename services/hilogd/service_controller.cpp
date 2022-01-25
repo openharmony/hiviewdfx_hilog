@@ -387,10 +387,7 @@ ServiceController::~ServiceController()
 {
     m_hilogBuffer.RemoveBufReader(m_bufReader);
 
-    if (m_scheduleNotification.valid()) {
-        m_scheduleNotification.wait();
-        m_scheduleNotification.get();
-    }
+    m_notifyNewDataCv.notify_all();
 }
 
 void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
@@ -413,7 +410,7 @@ void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
                 HandleLogQueryRequest();
                 break;
             case NEXT_REQUEST:
-                HandleNextRequest(rawDataBuffer);
+                HandleNextRequest(rawDataBuffer, stopLoop);
                 break;
             case MC_REQ_LOG_PERSIST_START:
                 HandlePersistStartRequest(rawDataBuffer);
@@ -490,20 +487,41 @@ void ServiceController::HandleLogQueryRequest()
     }
 }
 
-void ServiceController::HandleNextRequest(const PacketBuf& rawData)
+void ServiceController::HandleNextRequest(const PacketBuf& rawData, const std::atomic<bool>& stopLoop)
 {
     const NextRequest& nRstMsg = *reinterpret_cast<const NextRequest*>(rawData.data());
     if (nRstMsg.sendId != SENDIDA) {
-        m_notifyNewData = false;
         return;
     }
-    m_notifyNewData = true;
 
     auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData){
         WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, logData);
     });
     if (!result) {
         WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
+    } else {
+        return;
+    }
+
+    std::unique_lock<decltype(m_notifyNewDataMtx)> ul(m_notifyNewDataMtx);
+    for (;;) {
+        bool isStopped = stopLoop.load();
+        if (isStopped) {
+            return;
+        }
+
+        bool isNotified = m_notifyNewDataCv.wait_for(ul, 100ms) == std::cv_status::no_timeout;
+        if (isNotified) {
+            break;
+        }
+    }
+    LogQueryResponse rsp;
+    rsp.data.sendId = SENDIDS;
+    rsp.data.type = -1;
+    /* set header */
+    SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
+    if (WriteData(rsp, std::nullopt) <= 0) {
+        std::cerr << __PRETTY_FUNCTION__ << " Can't send notification about new logs\n";
     }
 }
 
@@ -576,32 +594,7 @@ int ServiceController::WriteV(const iovec* vec, size_t len)
 
 void ServiceController::NotifyForNewData()
 {
-    if (!m_notifyNewData) {
-        return;
-    }
-    m_notifyNewData = false;
-
-    bool expected(false);
-    if (!m_scheduleCtrl.compare_exchange_strong(expected, true)) {
-        return;
-    }
-    if (m_scheduleNotification.valid()) {
-        m_scheduleNotification.get(); // getting clear 'future' obj
-    }
-
-    m_scheduleNotification = std::async(std::launch::async, [this]() {
-        prctl(PR_SET_NAME, "hilogd.notif_sched");
-        std::this_thread::sleep_for(16ms);
-        LogQueryResponse rsp;
-        rsp.data.sendId = SENDIDS;
-        rsp.data.type = -1;
-        /* set header */
-        SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
-        if (WriteData(rsp, std::nullopt) <= 0) {
-            std::cerr << __PRETTY_FUNCTION__ << " Can't send notification about new logs\n";
-        }
-        m_scheduleCtrl.store(false);
-    });
+    m_notifyNewDataCv.notify_one();
 }
 
 int RestorePersistJobs(HilogBuffer& hilogBuffer)

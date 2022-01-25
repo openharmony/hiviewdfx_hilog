@@ -17,8 +17,10 @@
 
 #include <array>
 #include <atomic>
+#include <condition_variable>
 #include <future>
 #include <memory>
+#include <mutex>
 
 #include <hilog_common.h>
 #include <socket.h>
@@ -40,7 +42,7 @@ private:
     void SetFilters(const PacketBuf& rawData);
 
     void HandleLogQueryRequest();
-    void HandleNextRequest(const PacketBuf& rawData);
+    void HandleNextRequest(const PacketBuf& rawData, const std::atomic<bool>& stopLoop);
 
     // persist storage
     void HandlePersistStartRequest(const PacketBuf& rawData);
@@ -65,12 +67,10 @@ private:
     HilogBuffer& m_hilogBuffer;
     HilogBuffer::ReaderId m_bufReader;
 
-    std::future<void> m_scheduleNotification;
-    std::atomic_bool m_scheduleCtrl;
+    std::condition_variable m_notifyNewDataCv;
+    std::mutex m_notifyNewDataMtx;
 
     LogFilterExt m_filters;
-
-    volatile bool m_notifyNewData = false;
 };
 
 int RestorePersistJobs(HilogBuffer& _buffer);
