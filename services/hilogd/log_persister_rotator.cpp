@@ -132,13 +132,17 @@ void LogPersisterRotator::PhysicalShiftFile()
 {
     std::cout << __PRETTY_FUNCTION__ << "\n";
     std::string oldestFile = CreateLogFileName(0);
-    remove(oldestFile.c_str());
+    if (remove(oldestFile.c_str())) {
+        std::cerr << "File: " << oldestFile << " can't be removed. Errno: " << errno << " " << strerror(errno) << "\n";
+    }
 
     for (uint32_t i = 1; i < m_maxLogFileNum; ++i) {
         std::string olderFile = CreateLogFileName(i-1);
         std::string newerFile = CreateLogFileName(i);
         std::cout << "Rename from: " << newerFile << " to: " << olderFile << "\n";
-        rename(newerFile.c_str(), olderFile.c_str());
+        if (rename(newerFile.c_str(), olderFile.c_str())) {
+            std::cerr << "Can't rename file. Errno: " << errno << " " << strerror(errno) << "\n";
+        }
     }
     std::string newestFile = CreateLogFileName(m_maxLogFileNum - 1);
     m_currentLogOutput.open(newestFile, std::ios::out | std::ios::trunc);

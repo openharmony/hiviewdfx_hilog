@@ -213,7 +213,10 @@ int LogPersister::Deinit()
 
     munmap(m_mappedPlainLogFile, MAX_PERSISTER_BUFFER_SIZE);
     std::cout << "Removing unmapped plain log file: " << m_plainLogFilePath << "\n";
-    remove(m_plainLogFilePath.c_str());
+    if (remove(m_plainLogFilePath.c_str())) {
+        std::cerr << "File: " << m_plainLogFilePath << " can't be removed. "
+            << "Errno: " << errno << " " << strerror(errno) << "\n";
+    }
 
     DeregisterLogPersister(shared_from_this());
     m_inited = false;
@@ -240,7 +243,10 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
     }
     m_mappedPlainLogFile = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
         MAP_SHARED, fileno(plainTextFile), 0);
-    fclose(plainTextFile);
+    if (fclose(plainTextFile)) {
+        std::cerr << "File: " << plainTextFile << " can't be closed. "
+            << "Errno: " << errno << " " << strerror(errno) << "\n";
+    }
     if (m_mappedPlainLogFile == MAP_FAILED) {
         std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: " << strerror(errno) << "\n";
         return RET_FAIL;
@@ -335,7 +341,7 @@ bool LogPersister::WriteUncompressedLogs(std::list<std::string>& formatedTextLog
         if (r != 0) {
             std::cerr << __PRETTY_FUNCTION__ << " Can't copy part of memory!\n";
             m_mappedPlainLogFile->offset = origOffset;
-            return true; // ???
+            return true;
         }
         formatedTextLogs.pop_front();
         m_mappedPlainLogFile->offset += logLine.length();
