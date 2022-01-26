@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,26 +12,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LOG_QUERIER_H
-#define LOG_QUERIER_H
-#include <optional>
-#include <sys/socket.h>
-#include "log_buffer.h"
-#include "log_reader.h"
+
+#ifndef LOG_FILTER_H
+#define LOG_FILTER_H
+
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {
-class LogQuerier : public LogReader {
-public:
-    LogQuerier(std::unique_ptr<Socket> handler, HilogBuffer& buffer);
-    static void LogQuerierThreadFunc(std::shared_ptr<LogReader> logReader);
-    int WriteData(LogQueryResponse& rsp, OptRef<HilogData> pData);
-    int WriteData(OptRef<HilogData> pData);
-    void NotifyForNewData();
-    uint8_t GetType() const;
-    int RestorePersistJobs(HilogBuffer& _buffer);
-    ~LogQuerier() = default;
+struct LogFilter {
+    uint16_t levels = 0;
+    uint16_t types = 0;
+    std::vector<uint32_t> pids;
+    std::vector<uint32_t> domains;
+    std::vector<std::string> tags;
+};
+struct LogFilterExt {
+    LogFilter inclusions;
+    LogFilter exclusions;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif
+#endif // LOG_FILTER_H
