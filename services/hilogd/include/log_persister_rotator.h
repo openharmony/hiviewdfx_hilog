@@ -16,10 +16,11 @@
 #define _HILOG_PERSISTER_ROTATOR_H
 #include <fstream>
 #include <string>
+
 #include <zlib.h>
 #include "hilog_common.h"
 #include "hilogtool_msg.h"
-#include "log_buffer.h"
+#include "log_filter.h"
 namespace OHOS {
 namespace HiviewDFX {
 typedef struct {
@@ -29,41 +30,42 @@ typedef struct {
     LogPersistStartMsg msg;
 } PersistRecoveryInfo;
 
-const std::string ANXILLARY_FILE_NAME = "persisterInfo_";
-uint64_t GetInfoHash(const PersistRecoveryInfo &info);
+static constexpr const char* AUXILLARY_PERSISTER_PREFIX = "persisterInfo_";
+
+uint64_t GenerateHash(const PersistRecoveryInfo &info);
+
 class LogPersisterRotator {
 public:
-    LogPersisterRotator(std::string path, uint32_t fileSize, uint32_t fileNum, std::string suffix = "");
+    LogPersisterRotator(const std::string& path, uint32_t id, uint32_t maxFiles, const std::string& suffix = "");
     ~LogPersisterRotator();
-    int Init();
+    int Init(const PersistRecoveryInfo& info, bool restore = false);
     int Input(const char *buf, uint32_t length);
-    void FillInfo(uint32_t &size, uint32_t &num);
     void FinishInput();
-    void SetIndex(int pIndex);
-    void SetId(uint32_t pId);
-    void OpenInfoFile();
-    void UpdateRotateNumber();
-    int SaveInfo(const LogPersistStartMsg& pMsg, const QueryCondition queryCondition);
-    void WriteRecoveryInfo();
-    void SetRestore(bool flag);
-    bool GetRestore();
-    void RemoveInfo();
-protected:
-    void InternalRotate();
-    uint32_t fileNum;
-    uint32_t fileSize;
-    std::string fileName;
-    std::string fileSuffix;
-    int index;
-    std::fstream output;
+
+    void SetFileIndex(uint32_t index, bool forceRotate);
 private:
+    int OpenInfoFile();
+    void UpdateRotateNumber();
+    void WriteRecoveryInfo();
+    int SetInfo(const LogPersistStartMsg& pMsg, uint16_t logType, uint8_t logLevel);
+
+    std::string CreateLogFileName(uint32_t logIndex);
+    void CreateLogFile();
     void Rotate();
-    bool needRotate = false;
-    FILE* fdinfo = nullptr;
-    uint32_t id = 0;
-    std::string infoPath;
-    PersistRecoveryInfo info;
-    bool restore = false;
+    void PhysicalShiftFile();
+
+    uint32_t m_maxLogFileNum = 0;
+    std::string m_logsPath;
+    std::string m_fileNameSuffix;
+    uint32_t m_currentLogFileIdx = 0;
+    std::fstream m_currentLogOutput;
+    
+    uint32_t m_id = 0;
+    std::fstream m_infoFile;
+    std::string m_infoFilePath;
+    PersistRecoveryInfo m_info = {0};
+
+    bool m_needRotate = false;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -71,11 +71,21 @@ struct HilogData {
         tag(nullptr), content(nullptr)
     {
         init(msg.tag, msg.tag_len, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
-    };
+    }
+    HilogData(const HilogData&) = delete;
+    HilogData& operator=(const HilogData&) = delete;
+
+    HilogData(HilogData&& cpy)
+    {
+        std::memcpy(this, &cpy, sizeof(HilogData));
+        cpy.tag = nullptr;
+        cpy.content = nullptr;
+    }
+
     ~HilogData()
     {
         deinit();
-    };
+    }
 };
 } // namespace HiviewDFX
 } // namespace OHOS

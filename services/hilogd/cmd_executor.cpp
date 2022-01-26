@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "cmd_executor.h"
-#include "log_querier.h"
+#include "service_controller.h"
 
 #include <seq_packet_socket_server.h>
 
@@ -120,8 +120,8 @@ void CmdExecutor::ClientEventLoop(std::unique_ptr<Socket> handler)
     assert(clientInfoIt != m_clients.end());
 
     prctl(PR_SET_NAME, "hilogd.query");
-    auto logQuerier = std::make_shared<LogQuerier>(std::move(handler), m_hilogBuffer);
-    logQuerier->LogQuerierThreadFunc(logQuerier);
+    ServiceController serviceCtrl(std::move(handler), m_hilogBuffer);
+    serviceCtrl.CommunicationLoop((*clientInfoIt)->m_stopThread);
 
     std::lock_guard<std::mutex> ul(m_finishedClientAccess);
     m_finishedClients.push_back(std::this_thread::get_id());
@@ -151,6 +151,5 @@ void CmdExecutor::CleanFinishedClients()
         }
     }
 }
-
 } // namespace HiviewDFX
 } // namespace OHOS

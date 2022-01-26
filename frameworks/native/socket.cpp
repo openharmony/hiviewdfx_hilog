@@ -96,7 +96,7 @@ int Socket::WriteAll(const char *data, unsigned int len)
 }
 
 
-int Socket::WriteV(iovec *vec, unsigned int len)
+int Socket::WriteV(const iovec *vec, unsigned int len)
 {
     return TEMP_FAILURE_RETRY(::writev(socketHandler, vec, len));
 }

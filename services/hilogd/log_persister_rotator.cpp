@@ -23,9 +23,7 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-using namespace std;
-
-uint64_t GetInfoHash(const PersistRecoveryInfo &info)
+uint64_t GenerateHash(const PersistRecoveryInfo &info)
 {
     uint64_t ret {BASIS};
     const char *p = (char *)&info;
@@ -38,160 +36,173 @@ uint64_t GetInfoHash(const PersistRecoveryInfo &info)
     return ret;
 }
 
-LogPersisterRotator::LogPersisterRotator(string path, uint32_t fileSize, uint32_t fileNum, string suffix)
-    : fileNum(fileNum), fileSize(fileSize), fileName(path), fileSuffix(suffix)
+LogPersisterRotator::LogPersisterRotator(const std::string& logsPath, uint32_t id, uint32_t maxFiles,
+    const std::string& fileNameSuffix)
+    : m_maxLogFileNum(maxFiles)
+    , m_logsPath(logsPath)
+    , m_fileNameSuffix(fileNameSuffix)
+    , m_id(id)
 {
-    index = -1;
-    needRotate = true;
-    memset_s(&info, sizeof(info), 0, sizeof(info));
-}
-
-void LogPersisterRotator::RemoveInfo()
-{
-    remove(infoPath.c_str());
 }
 
 LogPersisterRotator::~LogPersisterRotator()
 {
-    if (fdinfo != nullptr) {
-        fclose(fdinfo);
-    }
+    m_infoFile.close();
+    remove(m_infoFilePath.c_str());
 }
 
-int LogPersisterRotator::Init()
+int LogPersisterRotator::Init(const PersistRecoveryInfo& info, bool restore)
 {
-    OpenInfoFile();
-    if (fdinfo == nullptr) return RET_FAIL;
+    if (!m_infoFile.is_open()) {
+        if (int result = OpenInfoFile(); result != RET_SUCCESS) {
+            return result;
+        }
+    }
+
+    m_info = info;
+    SetFileIndex(m_info.index, restore);
+    UpdateRotateNumber();
     return RET_SUCCESS;
+}
+
+int LogPersisterRotator::OpenInfoFile()
+{
+    auto lastSeparatorIdx = m_logsPath.find_last_of('/');
+    std::string parentDirPath = m_logsPath.substr(0, lastSeparatorIdx);
+    if (access(parentDirPath.c_str(), F_OK) != 0) {
+        if (errno == ENOENT) {
+            mkdir(parentDirPath.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+        }
+    }
+    std::string infoFileName = std::string(".") + AUXILLARY_PERSISTER_PREFIX + std::to_string(m_id) + ".info";
+    m_infoFilePath = parentDirPath + "/" + infoFileName;
+    m_infoFile.open(m_infoFilePath, std::ios::binary | std::ios::out | std::ios::trunc);
+    return m_infoFile.is_open() ? RET_SUCCESS : RET_FAIL;
 }
 
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
-    cout << __func__ << " " << fileName << " " << index
-        << " " << length  << " need: " << needRotate << endl;
-    if (length <= 0 || buf == nullptr) return ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP;
-    if (needRotate) {
-        output.close();
+    std::cout << __PRETTY_FUNCTION__
+        << " Log location: " << m_logsPath
+        << " idx: " << m_currentLogFileIdx << "/" << m_maxLogFileNum
+        << " buf: " <<  (void*) buf << " len: " << length
+        << " needRotate: " << (m_needRotate ? 'T' : 'F') << "\n";
+    if (length <= 0 || buf == nullptr) {
+        return ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP;
+    }
+    if (m_needRotate) {
         Rotate();
-        needRotate = false;
+        m_needRotate = false;
+    } else if (!m_currentLogOutput.is_open()) {
+        CreateLogFile();
     }
-    output.write(buf, length);
-    output.flush();
+    m_currentLogOutput.write(buf, length);
+    m_currentLogOutput.flush();
     return 0;
-}
-
-void LogPersisterRotator::InternalRotate()
-{
-    stringstream ss;
-    ss << fileName << ".";
-    int pos = ss.tellp();
-    ss << 0 << fileSuffix;
-    remove(ss.str().c_str());
-
-    for (uint32_t i = 1; i < fileNum; ++i) {
-        ss.seekp(pos);
-        ss << (i - 1) << fileSuffix;
-        string newName = ss.str();
-        ss.seekp(pos);
-        ss << i << fileSuffix;
-        string oldName = ss.str();
-        cout << "OLD NAME " << oldName << " NEW NAME " << newName << endl;
-        rename(oldName.c_str(), newName.c_str());
-    }
-    output.open(ss.str(), ios::out | ios::trunc);
 }
 
 void LogPersisterRotator::Rotate()
 {
-    cout << __func__ << endl;
-    if (index >= (int)(fileNum - 1)) {
-        InternalRotate();
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+    if (m_currentLogFileIdx + 1 >= m_maxLogFileNum) {
+        PhysicalShiftFile();
     } else {
-        index += 1;
-        stringstream ss;
-        ss << fileName << "." << index << fileSuffix;
-        cout << "THE FILE NAME !!!!!!! " << ss.str() << endl;
-        output.open(ss.str(), ios::out | ios::trunc);
+        m_currentLogFileIdx++;
+        CreateLogFile();
     }
     UpdateRotateNumber();
 }
 
-void LogPersisterRotator::FillInfo(uint32_t &size, uint32_t &num)
+std::string LogPersisterRotator::CreateLogFileName(uint32_t logIndex)
 {
-    size = fileSize;
-    num = fileNum;
+    std::stringstream ss;
+    ss << m_logsPath << "." << logIndex << m_fileNameSuffix;
+    return ss.str();
 }
 
-void LogPersisterRotator::FinishInput()
+void LogPersisterRotator::CreateLogFile()
 {
-    needRotate = true;
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+    std::string newFile = CreateLogFileName(m_currentLogFileIdx);
+    std::cout << "Creating file: " << newFile << "\n";
+    m_currentLogOutput.open(newFile, std::ios::out | std::ios::trunc);
 }
 
-void LogPersisterRotator::SetIndex(int pIndex)
+void LogPersisterRotator::PhysicalShiftFile()
 {
-    index = pIndex;
-}
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+    std::string oldestFile = CreateLogFileName(0);
+    if (remove(oldestFile.c_str())) {
+        std::cerr << "File: " << oldestFile << " can't be removed. Errno: " << errno << " " << strerror(errno) << "\n";
+    }
 
-void LogPersisterRotator::SetId(uint32_t pId)
-{
-    id = pId;
-}
-
-void LogPersisterRotator::OpenInfoFile()
-{
-    int nPos = fileName.find_last_of('/');
-    std::string mmapPath = fileName.substr(0, nPos) + "/." + ANXILLARY_FILE_NAME + to_string(id);
-    if (access(fileName.substr(0, nPos).c_str(), F_OK) != 0) {
-        if (errno == ENOENT) {
-            mkdir(fileName.substr(0, nPos).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRWXO);
+    for (uint32_t i = 1; i < m_maxLogFileNum; ++i) {
+        std::string olderFile = CreateLogFileName(i-1);
+        std::string newerFile = CreateLogFileName(i);
+        std::cout << "Rename from: " << newerFile << " to: " << olderFile << "\n";
+        if (rename(newerFile.c_str(), olderFile.c_str())) {
+            std::cerr << "Can't rename file. Errno: " << errno << " " << strerror(errno) << "\n";
         }
     }
-    infoPath = mmapPath + ".info";
-    if (restore) {
-        fdinfo = fopen(infoPath.c_str(), "r+");
-    } else {
-        fdinfo = fopen(infoPath.c_str(), "w+");
-    }
+    std::string newestFile = CreateLogFileName(m_maxLogFileNum - 1);
+    m_currentLogOutput.open(newestFile, std::ios::out | std::ios::trunc);
 }
 
 void LogPersisterRotator::UpdateRotateNumber()
 {
-    info.index = index;
+    m_info.index = static_cast<uint8_t>(m_currentLogFileIdx);
     WriteRecoveryInfo();
 }
 
-int LogPersisterRotator::SaveInfo(const LogPersistStartMsg& pMsg, const QueryCondition queryCondition)
+void LogPersisterRotator::FinishInput()
 {
-    info.msg = pMsg;
-    info.types = queryCondition.types;
-    info.levels = queryCondition.levels;
-    if (strcpy_s(info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
-        cout << "Failed to save persister file path" << endl;
+    std::cout << __PRETTY_FUNCTION__ << "\n";
+
+    m_currentLogOutput.close();
+    m_needRotate = true;
+}
+
+void LogPersisterRotator::SetFileIndex(uint32_t index, bool forceRotate)
+{
+    m_currentLogOutput.close();
+    if (index >= m_maxLogFileNum) {
+        m_currentLogFileIdx = m_maxLogFileNum - 1;
+    } else {
+        m_currentLogFileIdx = index;
+    }
+    if (forceRotate) {
+        m_needRotate = true;
+    }
+}
+
+int LogPersisterRotator::SetInfo(const LogPersistStartMsg& pMsg, uint16_t logType, uint8_t logLevel)
+{
+    m_info.msg = pMsg;
+    m_info.types = logType;
+    m_info.levels = logLevel;
+    if (strcpy_s(m_info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
+        std::cout << "Failed to copy persister file path\n";
         return RET_FAIL;
     }
-    cout << "Saved Path=" << info.msg.filePath << endl;
+    std::cout << "Saving info path=" << m_info.msg.filePath << "\n";
     return RET_SUCCESS;
 }
 
 void LogPersisterRotator::WriteRecoveryInfo()
 {
-    std::cout << "Save Info file!" << std::endl;
-    uint64_t hash = GetInfoHash(info);
-    fseek(fdinfo, 0, SEEK_SET);
-    fwrite(&info, sizeof(PersistRecoveryInfo), 1, fdinfo);
-    fwrite(&hash, sizeof(hash), 1, fdinfo);
-    fflush(fdinfo);
-    fsync(fileno(fdinfo));
-}
+    if (!m_infoFile.is_open()) {
+        std::cerr << "LogPersisterRotator has not been initialized!\n";
+        return;
+    }
 
-void LogPersisterRotator::SetRestore(bool flag)
-{
-    restore = flag;
-}
+    std::cout << "Save Info file!\n";
+    uint64_t hash = GenerateHash(m_info);
 
-bool LogPersisterRotator::GetRestore()
-{
-    return restore;
+    m_infoFile.seekp(0);
+    m_infoFile.write(reinterpret_cast<const char*>(&m_info), sizeof(m_info));
+    m_infoFile.write(reinterpret_cast<const char*>(&hash), sizeof(hash));
+    m_infoFile.flush();
+    m_infoFile.sync();
 }
 } // namespace HiviewDFX
 } // namespace OHOS
