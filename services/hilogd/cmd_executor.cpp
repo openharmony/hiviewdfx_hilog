@@ -151,6 +151,5 @@ void CmdExecutor::CleanFinishedClients()
         }
     }
 }
-
 } // namespace HiviewDFX
 } // namespace OHOS

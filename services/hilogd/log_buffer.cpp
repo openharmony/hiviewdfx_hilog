@@ -324,7 +324,6 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
             return false;
     }
 
-
     // exclusion
     if (!filter.exclusions.pids.empty()) {
         auto it = std::find(filter.exclusions.pids.begin(), filter.exclusions.pids.end(), logData.pid);

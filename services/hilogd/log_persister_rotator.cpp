@@ -23,7 +23,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-
 uint64_t GenerateHash(const PersistRecoveryInfo &info)
 {
     uint64_t ret {BASIS};
@@ -164,8 +163,7 @@ void LogPersisterRotator::SetFileIndex(uint32_t index, bool forceRotate)
     m_currentLogOutput.close();
     if (index >= m_maxLogFileNum) {
         m_currentLogFileIdx = m_maxLogFileNum - 1;
-    }
-    else {
+    } else {
         m_currentLogFileIdx = index;
     }
     if (forceRotate) {
