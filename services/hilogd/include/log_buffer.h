@@ -21,10 +21,7 @@
 #include <list>
 #include <map>
 #include <memory>
-#include <mutex>
-#include <optional>
 #include <shared_mutex>
-#include <vector>
 
 #include "log_data.h"
 #include "log_filter.h"

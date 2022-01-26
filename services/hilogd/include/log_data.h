@@ -75,7 +75,8 @@ struct HilogData {
     HilogData(const HilogData&) = delete;
     HilogData& operator=(const HilogData&) = delete;
 
-    HilogData(HilogData&& cpy) {
+    HilogData(HilogData&& cpy)
+    {
         std::memcpy(this, &cpy, sizeof(HilogData));
         cpy.tag = nullptr;
         cpy.content = nullptr;

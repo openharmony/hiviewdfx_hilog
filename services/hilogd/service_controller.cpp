@@ -494,7 +494,7 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData, const std::a
         return;
     }
 
-    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData){
+    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData) {
         WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, logData);
     });
     if (!result) {
