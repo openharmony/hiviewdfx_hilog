@@ -85,19 +85,19 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
             timeLen = strftime(buffer, bufLen, "%z %m-%d %H:%M:%S", ptm);
             timeLen = strlen(buffer);
         }
-        if (showFormat & (1 << TIME_NSEC_SHOWFORMAT)) {
-            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                ".%09ld", nsecTime);
-            timeLen += ((ret > 0) ? ret : 0);
-        } else if (showFormat & (1 << TIME_USEC_SHOWFORMAT)) {
-            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                ".%06llu", nsecTime / NS2US);
-            timeLen += ((ret > 0) ? ret : 0);
-        } else {
-            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                ".%03llu", nsecTime / NS2MS);
-            timeLen += ((ret > 0) ? ret : 0);
-        }
+    }
+    if (showFormat & (1 << TIME_NSEC_SHOWFORMAT)) {
+        ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+            ".%09ld", nsecTime);
+        timeLen += ((ret > 0) ? ret : 0);
+    } else if (showFormat & (1 << TIME_USEC_SHOWFORMAT)) {
+        ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+            ".%06llu", nsecTime / NS2US);
+        timeLen += ((ret > 0) ? ret : 0);
+    } else {
+        ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+            ".%03llu", nsecTime / NS2MS);
+        timeLen += ((ret > 0) ? ret : 0);
     }
     return timeLen;
 }
