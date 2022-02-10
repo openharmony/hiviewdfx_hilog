@@ -13,13 +13,18 @@
  * limitations under the License.
  */
 #include "log_persister_rotator.h"
-#include <sys/stat.h>
-#include <unistd.h>
-#include <iostream>
-#include <sstream>
-#include <fstream>
 #include <cstdio>
+#include <dirent.h>
+#include <fstream>
+#include <iostream>
 #include <securec.h>
+#include <sstream>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+constexpr uint8_t MAX_TIME_BUF_SIZE = 32;
+constexpr uint8_t MAX_LOG_INDEX_LEN = 4;
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -35,6 +40,25 @@ uint64_t GenerateHash(const PersistRecoveryInfo &info)
     }
     return ret;
 }
+
+std::string GetFileNameIndex(const int index)
+{
+    char res[MAX_LOG_INDEX_LEN];
+    (void)snprintf_s(res, sizeof(res), sizeof(res) - 1, "%03d", index % MAX_LOG_FILE_NUM);
+    std::string fileNameIndex(res);
+    return fileNameIndex;
+}
+
+bool LogPersisterRotator::IsOldFile(const std::string& logName, const int index)
+{
+    std::string fileNameHead = m_logsPath.substr(strlen(HILOG_FILE_DIR), m_logsPath.size());
+    fileNameHead = fileNameHead + "." + GetFileNameIndex(index + 1 - m_maxLogFileNum);
+    if (logName.find(fileNameHead) == std::string::npos) {
+        return false;
+    }
+    return true;
+}
+
 
 LogPersisterRotator::LogPersisterRotator(const std::string& logsPath, uint32_t id, uint32_t maxFiles,
     const std::string& fileNameSuffix)
@@ -101,56 +125,52 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
     return 0;
 }
 
+void LogPersisterRotator::RemoveOldFile()
+{
+    DIR *dir;
+    struct dirent *ent = nullptr;
+    if ((dir = opendir(HILOG_FILE_DIR)) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            size_t length = strlen(ent->d_name);
+            std::string pPath(ent->d_name, length);
+            if (IsOldFile(pPath, m_currentLogFileIdx)) {
+                remove((HILOG_FILE_DIR + pPath).c_str());
+                break;
+            }
+        } 
+    }
+    closedir(dir);
+}
+
 void LogPersisterRotator::Rotate()
 {
     std::cout << __PRETTY_FUNCTION__ << "\n";
     if (m_currentLogFileIdx + 1 >= m_maxLogFileNum) {
-        PhysicalShiftFile();
-    } else {
-        m_currentLogFileIdx++;
-        CreateLogFile();
+        RemoveOldFile();
     }
+    m_currentLogFileIdx++;
+    CreateLogFile();
     UpdateRotateNumber();
-}
-
-std::string LogPersisterRotator::CreateLogFileName(uint32_t logIndex)
-{
-    std::stringstream ss;
-    ss << m_logsPath << "." << logIndex << m_fileNameSuffix;
-    return ss.str();
 }
 
 void LogPersisterRotator::CreateLogFile()
 {
     std::cout << __PRETTY_FUNCTION__ << "\n";
-    std::string newFile = CreateLogFileName(m_currentLogFileIdx);
-    std::cout << "Creating file: " << newFile << "\n";
-    m_currentLogOutput.open(newFile, std::ios::out | std::ios::trunc);
-}
-
-void LogPersisterRotator::PhysicalShiftFile()
-{
-    std::cout << __PRETTY_FUNCTION__ << "\n";
-    std::string oldestFile = CreateLogFileName(0);
-    if (remove(oldestFile.c_str())) {
-        std::cerr << "File: " << oldestFile << " can't be removed. Errno: " << errno << " " << strerror(errno) << "\n";
+    time_t tnow = time(nullptr);
+    struct tm *tmNow = localtime(&tnow);
+    char timeBuf[MAX_TIME_BUF_SIZE] = {0};
+    if (tmNow != nullptr) {
+        strftime(timeBuf, sizeof(timeBuf), "%Y%m%d-%H%M%S", tmNow);
     }
-
-    for (uint32_t i = 1; i < m_maxLogFileNum; ++i) {
-        std::string olderFile = CreateLogFileName(i-1);
-        std::string newerFile = CreateLogFileName(i);
-        std::cout << "Rename from: " << newerFile << " to: " << olderFile << "\n";
-        if (rename(newerFile.c_str(), olderFile.c_str())) {
-            std::cerr << "Can't rename file. Errno: " << errno << " " << strerror(errno) << "\n";
-        }
-    }
-    std::string newestFile = CreateLogFileName(m_maxLogFileNum - 1);
-    m_currentLogOutput.open(newestFile, std::ios::out | std::ios::trunc);
+    std::stringstream newFile;
+    newFile << m_logsPath << "." << GetFileNameIndex(m_currentLogFileIdx) << "." << timeBuf << m_fileNameSuffix;
+    std::cout << "THE FILE NAME !!!!!!! " << newFile.str() << std::endl;
+    m_currentLogOutput.open(newFile.str(), std::ios::out | std::ios::trunc);
 }
 
 void LogPersisterRotator::UpdateRotateNumber()
 {
-    m_info.index = static_cast<uint8_t>(m_currentLogFileIdx);
+    m_info.index = static_cast<uint32_t>(m_currentLogFileIdx);
     WriteRecoveryInfo();
 }
 
@@ -165,11 +185,7 @@ void LogPersisterRotator::FinishInput()
 void LogPersisterRotator::SetFileIndex(uint32_t index, bool forceRotate)
 {
     m_currentLogOutput.close();
-    if (index >= m_maxLogFileNum) {
-        m_currentLogFileIdx = m_maxLogFileNum - 1;
-    } else {
-        m_currentLogFileIdx = index;
-    }
+    m_currentLogFileIdx = index;
     if (forceRotate) {
         m_needRotate = true;
     }
