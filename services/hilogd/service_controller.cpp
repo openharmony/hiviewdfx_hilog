@@ -114,6 +114,9 @@ void ServiceController::HandlePersistStartRequest(const PacketBuf& rawData)
     } else if (!IsValidFileName(requestMsg->filePath)) {
         std::cout << __PRETTY_FUNCTION__ << " FileName is not valid!\n";
         respondMsg->result = ERR_LOG_PERSIST_FILE_NAME_INVALID;
+    } else if (requestMsg->fileNum > MAX_LOG_FILE_NUM || requestMsg->fileNum < MIN_LOG_FILE_NUM) {
+        cout << "File number is not valid!" << endl;
+        respondMsg->result = ERR_LOG_FILE_NUM_INVALID;
     } else {
         LogPersister::InitData initData = *requestMsg;
         auto& requestMsgCpy = std::get<LogPersistStartMsg>(initData);
@@ -631,7 +634,8 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
                         ? std::string("Success\n")
                         : std::string("Failed(") + std::to_string(result) + ")\n")
                     << "  jobId=" << (unsigned)(info.msg.jobId) << "\n"
-                    << "  filePath=" << (info.msg.filePath) << "\n";
+                    << "  filePath=" << (info.msg.filePath) << "\n"
+                    << "  index=" << (info.index) << "\n";
             }
         }
         closedir(dir);

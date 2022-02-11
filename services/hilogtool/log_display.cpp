@@ -65,7 +65,9 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_BUFF_SIZE_INVALID, "Invalid buffer size, buffer size should be more than 0 and less than "
     + to_string(MAX_BUFFER_SIZE)},
     {ERR_COMMAND_INVALID, "Invalid command, only one control command can be executed each time"},
-    {ERR_KMSG_SWITCH_VALUE_INVALID, "Invalid kmsg switch value, valid:on/off"}
+    {ERR_KMSG_SWITCH_VALUE_INVALID, "Invalid kmsg switch value, valid:on/off"},
+    {ERR_LOG_FILE_NUM_INVALID, "Invalid log number, log number should be more than " + to_string(MIN_LOG_FILE_NUM)
+    + " and less than " + to_string(MAX_LOG_FILE_NUM)},
 }; 
 
 string ParseErrorCode(ErrorCode errorCode)
