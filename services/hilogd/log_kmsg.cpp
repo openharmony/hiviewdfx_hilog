@@ -72,6 +72,7 @@ int LogKmsg::LinuxReadAllKmsg()
             sleep(1);
             continue;
         }
+        rdFailTimes = 0;
     }
     return 1;
 }
