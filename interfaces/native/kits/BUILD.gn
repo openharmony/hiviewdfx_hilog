@@ -17,6 +17,7 @@ ohos_ndk_library("libhilog_ndk") {
   output_name = "hilog_ndk"
   ndk_description_file = "./libhilog.ndk.json"
   min_compact_version = "1"
+  system_capability = "SystemCapability.HiviewDFX.HiLog"
 }
 
 ohos_ndk_headers("hilog_header") {
