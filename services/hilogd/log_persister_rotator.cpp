@@ -137,7 +137,7 @@ void LogPersisterRotator::RemoveOldFile()
                 remove((HILOG_FILE_DIR + pPath).c_str());
                 break;
             }
-        } 
+        }
     }
     closedir(dir);
 }
