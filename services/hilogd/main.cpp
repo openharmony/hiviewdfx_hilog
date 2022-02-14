@@ -20,6 +20,7 @@
 #include <future>
 #include <unistd.h>
 #include <csignal>
+#include <chrono>
 
 #include "cmd_executor.h"
 #include "flow_control_init.h"
@@ -38,8 +39,10 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+using namespace std::chrono;
 
 constexpr int HILOG_FILE_MASK = 0026;
+constexpr int WAITING_DATA_MS = 5000;
 
 #ifdef DEBUG
 static int g_fd = -1;
@@ -57,16 +60,37 @@ static void SigHandler(int sig)
     }
 }
 
+static int WaitingDataMounted(int max)
+{
+    chrono::steady_clock::time_point start = chrono::steady_clock::now();
+    chrono::milliseconds wait(max);
+
+    while (true) {
+        struct stat st;
+        if (stat(HILOG_FILE_DIR, &st) != -1) {
+            cout << "waiting for " << HILOG_FILE_DIR << " successfully!" << endl;
+            return 0;
+        }
+        std::this_thread::sleep_for(10ms);
+        if ((chrono::steady_clock::now() - start) > wait) {
+            cerr << "waiting for " << HILOG_FILE_DIR << " failed!" << endl;
+            return -1;
+        }
+    }
+}
+
 int HilogdEntry()
 {
     HilogBuffer hilogBuffer;
     umask(HILOG_FILE_MASK);
 #ifdef DEBUG
+    if (WaitingDataMounted(WAITING_DATA_MS) == 0) {
     int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
-    if (fd > 0) {
-        g_fd = dup2(fd, fileno(stdout));
-    } else {
-        std::cout << "open file error:" <<  strerror(errno) << std::endl;
+        if (fd > 0) {
+            g_fd = dup2(fd, fileno(stdout));
+        } else {
+            std::cout << "open file error:" <<  strerror(errno) << std::endl;
+        }
     }
 #endif
     std::signal(SIGINT, SigHandler);
@@ -103,7 +127,9 @@ int HilogdEntry()
 
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        RestorePersistJobs(hilogBuffer);
+        if (WaitingDataMounted(WAITING_DATA_MS) == 0) {
+            RestorePersistJobs(hilogBuffer);
+        }
     });
     auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
         LogKmsg logKmsg(hilogBuffer);

@@ -48,6 +48,8 @@ const long long NS2US = 1000LL;
 const long long NS2MS = 1000000LL;
 const uint32_t MAX_BUFFER_SIZE = 1UL<<30;
 const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
+constexpr int MIN_LOG_FILE_NUM = 2;
+constexpr int MAX_LOG_FILE_NUM = 1000;
 const int MSG_MAX_LEN = 2048;
 constexpr uint64_t PRIME = 0x100000001B3ull;
 constexpr uint64_t BASIS = 0xCBF29CE484222325ull;
@@ -132,6 +134,7 @@ typedef enum {
     ERR_COMMAND_INVALID = -31,
     ERR_LOG_PERSIST_TASK_FAIL = -32,
     ERR_KMSG_SWITCH_VALUE_INVALID = -33,
+    ERR_LOG_FILE_NUM_INVALID = -34,
 } ErrorCode;
 
 #endif /* HILOG_COMMON_H */

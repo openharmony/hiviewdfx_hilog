@@ -53,15 +53,26 @@ ssize_t LogKmsg::LinuxReadOneKmsg(KmsgParser& parser)
 
 int LogKmsg::LinuxReadAllKmsg()
 {
+    ssize_t rdFailTimes = 0;
+    const ssize_t maxFailTime = 10;
     kmsgCtl = GetControlFile("/dev/kmsg");
     if (kmsgCtl < 0) {
         std::cout << "Cannot open kmsg! Err=" << strerror(errno) << std::endl;
         return -1;
     }
     std::unique_ptr<KmsgParser> parser = std::make_unique<KmsgParser>();
-    ssize_t sz = LinuxReadOneKmsg(*parser);
-    while (sz > 0) {
-        sz = LinuxReadOneKmsg(*parser);
+    while (true) {
+        ssize_t sz = LinuxReadOneKmsg(*parser);
+        if (sz < 0) {
+            rdFailTimes++;
+            if (maxFailTime < rdFailTimes) {
+                std::cout << "Read kmsg failed more than maxFailTime" << std::endl;
+                return -1;
+            }
+            sleep(1);
+            continue;
+        }
+        rdFailTimes = 0;
     }
     return 1;
 }
