@@ -24,7 +24,7 @@
 namespace OHOS {
 namespace HiviewDFX {
 typedef struct {
-    uint8_t index;
+    uint32_t index;
     uint16_t types;
     uint8_t levels;
     LogPersistStartMsg msg;
@@ -44,15 +44,15 @@ public:
 
     void SetFileIndex(uint32_t index, bool forceRotate);
 private:
+    void RemoveOldFile();
+    bool IsOldFile(const std::string& logName, const int index);
     int OpenInfoFile();
     void UpdateRotateNumber();
     void WriteRecoveryInfo();
     int SetInfo(const LogPersistStartMsg& pMsg, uint16_t logType, uint8_t logLevel);
 
-    std::string CreateLogFileName(uint32_t logIndex);
     void CreateLogFile();
     void Rotate();
-    void PhysicalShiftFile();
 
     uint32_t m_maxLogFileNum = 0;
     std::string m_logsPath;
