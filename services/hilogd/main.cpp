@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <csignal>
 #include <chrono>
+#include <fcntl.h>
 
 #include "cmd_executor.h"
 #include "flow_control_init.h"
@@ -79,6 +80,45 @@ static int WaitingDataMounted(int max)
     }
 }
 
+static bool WriteStringToFile(int fd, const std::string& content)
+{
+    const char *p = content.data();
+    size_t remaining = content.size();
+    while (remaining > 0) {
+        ssize_t n = write(fd, p, remaining);
+        if(n == -1) {
+            return false;
+        }
+        p += n;
+        remaining -= n;
+    }
+    return true;
+}
+
+static bool WriteStringToFile(int max, const std::string& content, const std::string& filePath)
+{
+    chrono::steady_clock::time_point start = chrono::steady_clock::now();
+    chrono::milliseconds wait(max);
+    int fd;
+    while (true) {
+        if (access(filePath.c_str(), W_OK)) {
+            fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
+            if (fd >= 0) {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(10ms);
+        if ((chrono::steady_clock::now() - start) > wait) {
+            cerr << "waiting for " << HILOG_FILE_DIR << " failed!" << endl;
+            return -1;
+        }
+    }
+    cout << "waiting for " << filePath << " successfully!" << endl;
+    bool result =  WriteStringToFile(fd, content);
+    close(fd);
+    return result;
+}
+
 int HilogdEntry()
 {
     HilogBuffer hilogBuffer;
@@ -135,7 +175,14 @@ int HilogdEntry()
         LogKmsg logKmsg(hilogBuffer);
         logKmsg.ReadAllKmsg();
     });
-    
+
+    auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
+        string myPid = to_string(getpid())
+        WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_STUNE);
+        WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_CPUSET);
+        WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_BLKIO);
+    });
+
     CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
     return 0;
