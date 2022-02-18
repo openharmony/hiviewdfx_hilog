@@ -101,7 +101,7 @@ static bool WriteStringToFile(int max, const std::string& content, const std::st
     chrono::milliseconds wait(max);
     int fd;
     while (true) {
-        if (access(filePath.c_str(), W_OK)) {
+        if (!access(filePath.c_str(), W_OK)) {
             fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
             if (fd >= 0) {
                 break;
@@ -110,7 +110,7 @@ static bool WriteStringToFile(int max, const std::string& content, const std::st
         std::this_thread::sleep_for(10ms);
         if ((chrono::steady_clock::now() - start) > wait) {
             cerr << "waiting for " << HILOG_FILE_DIR << " failed!" << endl;
-            return -1;
+            return false;
         }
     }
     cout << "waiting for " << filePath << " successfully!" << endl;
