@@ -175,9 +175,8 @@ int HilogdEntry()
         LogKmsg logKmsg(hilogBuffer);
         logKmsg.ReadAllKmsg();
     });
-
     auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
-        string myPid = to_string(getpid())
+        string myPid = to_string(getpid());
         WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_STUNE);
         WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_CPUSET);
         WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_BLKIO);
