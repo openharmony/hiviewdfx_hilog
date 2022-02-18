@@ -86,7 +86,7 @@ static bool WriteStringToFile(int fd, const std::string& content)
     size_t remaining = content.size();
     while (remaining > 0) {
         ssize_t n = write(fd, p, remaining);
-        if(n == -1) {
+        if (n == -1) {
             return false;
         }
         p += n;
