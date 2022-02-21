@@ -65,7 +65,7 @@ struct SocketHandler {
             close(currentFd);
         }
     }
-} s_socketHandler;
+};
 
 int GenerateFD()
 {
@@ -78,9 +78,9 @@ int GenerateFD()
     return res;
 }
 
-int CheckSocket()
+int CheckSocket(SocketHandler& socketHandler)
 {
-    int currentFd = s_socketHandler.socketFd.load();
+    int currentFd = socketHandler.socketFd.load();
     if (currentFd >= 0) {
         return currentFd;
     }
@@ -92,44 +92,43 @@ int CheckSocket()
     }
 
     currentFd = INVALID_SOCKET;
-    if (!s_socketHandler.socketFd.compare_exchange_strong(currentFd, fd)) {
+    if (!socketHandler.socketFd.compare_exchange_strong(currentFd, fd)) {
         close(fd);
         return currentFd;
     }
     return fd;
 }
 
-int CheckConnection()
+int CheckConnection(SocketHandler& socketHandler)
 {
-    bool isConnected = s_socketHandler.isConnected.load();
+    bool isConnected = socketHandler.isConnected.load();
     if (isConnected) {
         return 0;
     }
 
-    static std::mutex mtx;
-    std::scoped_lock sl(mtx);
-    isConnected = s_socketHandler.isConnected.load();
+    isConnected = socketHandler.isConnected.load();
     if (isConnected) {
         return 0;
     }
 
-    auto result = TEMP_FAILURE_RETRY(connect(s_socketHandler.socketFd.load(), 
+    auto result = TEMP_FAILURE_RETRY(connect(socketHandler.socketFd.load(), 
         reinterpret_cast<const sockaddr*>(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
     if (result < 0) {
         std::cerr << __FILE__ << __LINE__ << " Can't connect to server. Errno: " << errno << "\n";
         return result;
     }
-    s_socketHandler.isConnected.store(true);
+    socketHandler.isConnected.store(true);
     return 0;
 }
 
 int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, int fmtLen)
 {
-    int ret = CheckSocket();
+    SocketHandler socketHandler;
+    int ret = CheckSocket(socketHandler);
     if (ret < 0) {
         return ret;
     }
-    ret = CheckConnection();
+    ret = CheckConnection(socketHandler);
     if (ret < 0) {
         return ret;
     }
@@ -148,7 +147,7 @@ int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, 
     vec[1].iov_len = tagLen;                 // 1 : index of log tag
     vec[2].iov_base = (void*)fmt;            // 2 : index of log content
     vec[2].iov_len = fmtLen;                 // 2 : index of log content
-    ret = TEMP_FAILURE_RETRY(::writev(s_socketHandler.socketFd.load(), vec.data(), vec.size()));
+    ret = TEMP_FAILURE_RETRY(::writev(socketHandler.socketFd.load(), vec.data(), vec.size()));
     return ret;
 }
 
