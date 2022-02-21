@@ -114,7 +114,7 @@ static bool WriteStringToFile(int max, const std::string& content, const std::st
         }
     }
     cout << "waiting for " << filePath << " successfully!" << endl;
-    bool result =  WriteStringToFile(fd, content);
+    bool result = WriteStringToFile(fd, content);
     close(fd);
     return result;
 }
@@ -129,7 +129,7 @@ int HilogdEntry()
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
         } else {
-            std::cout << "open file error:" <<  strerror(errno) << std::endl;
+            std::cout << "open file error:" << strerror(errno) << std::endl;
         }
     }
 #endif
