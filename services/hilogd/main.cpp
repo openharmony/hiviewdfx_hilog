@@ -109,7 +109,7 @@ static bool WriteStringToFile(int max, const std::string& content, const std::st
         }
         std::this_thread::sleep_for(10ms);
         if ((chrono::steady_clock::now() - start) > wait) {
-            cerr << "waiting for " << HILOG_FILE_DIR << " failed!" << endl;
+            cerr << "waiting for " << filePath << " failed!" << endl;
             return false;
         }
     }
@@ -176,6 +176,7 @@ int HilogdEntry()
         logKmsg.ReadAllKmsg();
     });
     auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
+        prctl(PR_SET_NAME, "hilogd.cgroup_set");
         string myPid = to_string(getpid());
         WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_STUNE);
         WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_CPUSET);
