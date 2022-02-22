@@ -26,6 +26,9 @@
 #define CONTROL_SOCKET_NAME "hilogControl"
 #define CONTROL_SOCKET SOCKET_FILE_DIR CONTROL_SOCKET_NAME
 #define HILOG_FILE_DIR "/data/log/hilog/"
+#define SYSTEM_BG_STUNE "/dev/stune/system-background/cgroup.procs"
+#define SYSTEM_BG_CPUSET "/dev/cpuset/system-background/cgroup.procs"
+#define SYSTEM_BG_BLKIO "/dev/blkio/system-background/cgroup.procs"
 
 #define SENDIDN 0    // hilogd: reached end of log;  hilogtool: exit log reading
 #define SENDIDA 1    // hilogd & hilogtool: normal log reading
