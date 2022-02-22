@@ -65,9 +65,7 @@ static int WaitingToDo(int max, const string& path, function<int(const string &p
 {
     chrono::steady_clock::time_point start = chrono::steady_clock::now();
     chrono::milliseconds wait(max);
-
     while (true) {
-        struct stat st;
         if (func(path) != -1) {
             cout << "waiting for " << path << " successfully!" << endl;
             return 0;
@@ -83,7 +81,7 @@ static int WaitingToDo(int max, const string& path, function<int(const string &p
 static int WaitingDataMounted(const string &path)
 {
     struct stat st;
-    if (stat(HILOG_FILE_DIR, &st) != -1) {
+    if (stat(path.c_str(), &st) != -1) {
         return 0;
     }
     return -1;
@@ -92,8 +90,8 @@ static int WaitingDataMounted(const string &path)
 static int WaitingCgroupMounted(const string &path)
 {
     int fd;
-    if (!access(filePath.c_str(), W_OK)) {
-        fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
+    if (!access(path.c_str(), W_OK)) {
+        fd = open(path.c_str(), O_WRONLY | O_CLOEXEC);
         if (fd >= 0) {
             close(fd);
             return 0;
@@ -117,7 +115,7 @@ static bool WriteStringToFile(int fd, const std::string& content)
     return true;
 }
 
-static bool WriteStringToFile(int max, const std::string& content, const std::string& filePath)
+static bool WriteStringToFile(const std::string& content, const std::string& filePath)
 {
     if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingCgroupMounted) == -1) {
         return false;
@@ -127,7 +125,6 @@ static bool WriteStringToFile(int max, const std::string& content, const std::st
     }
     int fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
     if (fd < 0) {
-        PGCGS_LOGE("WriteStringToFile fail. file: %{public}s, fd = %{public}d", filePath.c_str(), fd);
         return false;
     }
     bool result =  WriteStringToFile(fd, content);
@@ -140,7 +137,7 @@ int HilogdEntry()
     HilogBuffer hilogBuffer;
     umask(HILOG_FILE_MASK);
 #ifdef DEBUG
-    if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingDataMounted) == 0) {
+    if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
     int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
@@ -183,7 +180,7 @@ int HilogdEntry()
 
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingDataMounted) == 0) {
+        if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
             RestorePersistJobs(hilogBuffer);
         }
     });
@@ -198,7 +195,7 @@ int HilogdEntry()
         WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
         WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
-
+    
     CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
     return 0;
