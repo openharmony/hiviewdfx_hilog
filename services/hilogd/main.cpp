@@ -61,23 +61,45 @@ static void SigHandler(int sig)
     }
 }
 
-static int WaitingDataMounted(int max)
+static int WaitingToDo(int max, const string& path, function<int(const string &path)> func)
 {
     chrono::steady_clock::time_point start = chrono::steady_clock::now();
     chrono::milliseconds wait(max);
 
     while (true) {
         struct stat st;
-        if (stat(HILOG_FILE_DIR, &st) != -1) {
-            cout << "waiting for " << HILOG_FILE_DIR << " successfully!" << endl;
+        if (func(path) != -1) {
+            cout << "waiting for " << path << " successfully!" << endl;
             return 0;
         }
         std::this_thread::sleep_for(10ms);
         if ((chrono::steady_clock::now() - start) > wait) {
-            cerr << "waiting for " << HILOG_FILE_DIR << " failed!" << endl;
+            cerr << "waiting for " << path << " failed!" << endl;
             return -1;
         }
     }
+}
+
+static int WaitingDataMounted(const string &path)
+{
+    struct stat st;
+    if (stat(HILOG_FILE_DIR, &st) != -1) {
+        return 0;
+    }
+    return -1;
+}
+
+static int WaitingCgroupMounted(const string &path)
+{
+    int fd;
+    if (!access(filePath.c_str(), W_OK)) {
+        fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
+        if (fd >= 0) {
+            close(fd);
+            return 0;
+        }
+    }
+    return -1;
 }
 
 static bool WriteStringToFile(int fd, const std::string& content)
@@ -97,24 +119,18 @@ static bool WriteStringToFile(int fd, const std::string& content)
 
 static bool WriteStringToFile(int max, const std::string& content, const std::string& filePath)
 {
-    chrono::steady_clock::time_point start = chrono::steady_clock::now();
-    chrono::milliseconds wait(max);
-    int fd;
-    while (true) {
-        if (!access(filePath.c_str(), W_OK)) {
-            fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
-            if (fd >= 0) {
-                break;
-            }
-        }
-        std::this_thread::sleep_for(10ms);
-        if ((chrono::steady_clock::now() - start) > wait) {
-            cerr << "waiting for " << filePath << " failed!" << endl;
-            return false;
-        }
+    if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingCgroupMounted) == -1) {
+        return false;
     }
-    cout << "waiting for " << filePath << " successfully!" << endl;
-    bool result = WriteStringToFile(fd, content);
+    if (access(filePath.c_str(), W_OK)) {
+        return false;
+    }
+    int fd = open(filePath.c_str(), O_WRONLY | O_CLOEXEC);
+    if (fd < 0) {
+        PGCGS_LOGE("WriteStringToFile fail. file: %{public}s, fd = %{public}d", filePath.c_str(), fd);
+        return false;
+    }
+    bool result =  WriteStringToFile(fd, content);
     close(fd);
     return result;
 }
@@ -124,7 +140,7 @@ int HilogdEntry()
     HilogBuffer hilogBuffer;
     umask(HILOG_FILE_MASK);
 #ifdef DEBUG
-    if (WaitingDataMounted(WAITING_DATA_MS) == 0) {
+    if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingDataMounted) == 0) {
     int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
@@ -167,7 +183,7 @@ int HilogdEntry()
 
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        if (WaitingDataMounted(WAITING_DATA_MS) == 0) {
+        if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingDataMounted) == 0) {
             RestorePersistJobs(hilogBuffer);
         }
     });
@@ -178,9 +194,9 @@ int HilogdEntry()
     auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cgroup_set");
         string myPid = to_string(getpid());
-        WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_STUNE);
-        WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_CPUSET);
-        WriteStringToFile(WAITING_DATA_MS, myPid, SYSTEM_BG_BLKIO);
+        WriteStringToFile(myPid, SYSTEM_BG_STUNE);
+        WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
+        WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
 
     CmdExecutor cmdExecutor(hilogBuffer);
