@@ -214,6 +214,7 @@ static inline int SecVsnprintfPImpl(char *string, size_t count, int priv, const 
  * If there is a runtime-constraint violation, strDest[0] will be set to the '\0' when strDest and destMax valid
  *******************************************************************************
  */
+ HILOG_LOCAL_API
 int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, va_list arglist)
 {
     int retVal;
