@@ -400,6 +400,7 @@ static int SecDecodeTypeS(SecFormatAttr *attr, char *argPtr, SecFormatBuf *forma
     return textLen;
 }
 
+HILOG_LOCAL_API
 int SecOutputPS(SecPrintfStream *stream, int priv, const char *cformat, va_list arglist)
 {
     const SecChar *format = cformat;

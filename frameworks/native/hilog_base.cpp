@@ -22,32 +22,11 @@
 #include <atomic>
 #include <cstring>
 #include <iostream>
-#include <mutex>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <unistd.h>
-
-#ifdef DEBUG
-static const int MAX_PATH_LEN = 1024;
-
-static size_t GetExecutablePath(char *processdir, char *processname, size_t len)
-{
-    char* path_end = nullptr;
-    if (readlink("/proc/self/exe", processdir, len) <= 0)
-        return -1;
-    path_end = strrchr(processdir, '/');
-    if (path_end == NULL)
-        return -1;
-    ++path_end;
-    if (strncpy_s(processname, MAX_PATH_LEN, path_end, MAX_PATH_LEN - 1)) {
-        return 0;
-    }
-    *path_end = '\0';
-    return (size_t)(path_end - processdir);
-}
-#endif
 
 namespace {
 
@@ -67,7 +46,7 @@ struct SocketHandler {
     }
 };
 
-int GenerateFD()
+static int GenerateFD()
 {
     int tmpFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
     int res = tmpFd;
@@ -78,7 +57,7 @@ int GenerateFD()
     return res;
 }
 
-int CheckSocket(SocketHandler& socketHandler)
+static int CheckSocket(SocketHandler& socketHandler)
 {
     int currentFd = socketHandler.socketFd.load();
     if (currentFd >= 0) {
@@ -99,7 +78,7 @@ int CheckSocket(SocketHandler& socketHandler)
     return fd;
 }
 
-int CheckConnection(SocketHandler& socketHandler)
+static int CheckConnection(SocketHandler& socketHandler)
 {
     bool isConnected = socketHandler.isConnected.load();
     if (isConnected) {
@@ -121,7 +100,7 @@ int CheckConnection(SocketHandler& socketHandler)
     return 0;
 }
 
-int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, int fmtLen)
+static int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, int fmtLen)
 {
     SocketHandler socketHandler;
     int ret = CheckSocket(socketHandler);
@@ -151,18 +130,9 @@ int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, 
     return ret;
 }
 
-int HiLogBasePrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
+static int HiLogBasePrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
-#ifdef DEBUG
-    char dir[MAX_PATH_LEN] = {0};
-    char name[MAX_PATH_LEN] = {0};
-    (void)GetExecutablePath(dir, name, MAX_PATH_LEN);
-    if (strcmp(name, "hilog_test") != 0) {
-        return -1;
-    }
-#endif
-
     if (!HiLogBaseIsLoggable(domain, tag, level)) {
         return -1;
     }
