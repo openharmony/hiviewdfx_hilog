@@ -98,6 +98,14 @@ using OptCRef = std::optional<std::reference_wrapper<const T>>;
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+    #define HILOG_PUBLIC_API __attribute__((visibility ("default")))
+    #define HILOG_LOCAL_API __attribute__((visibility("hidden")))
+#else
+    #define HILOG_PUBLIC_API
+    #define HILOG_LOCAL_API
+#endif
+
 /*
  * ********************************************
  *  Error codes list
