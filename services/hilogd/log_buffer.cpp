@@ -312,8 +312,8 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
     if (!filter.inclusions.domains.empty()) {
         auto it = std::find_if(filter.inclusions.domains.begin(), filter.inclusions.domains.end(),
             [&] (uint32_t domain) {
-                return !((domain >= DOMAIN_STRICT_MASK && domain != logData.domain) ||
-                    (domain <= DOMAIN_FUZZY_MASK && domain != (logData.domain >> DOMAIN_MODULE_BITS)));
+                return ((domain >= DOMAIN_STRICT_MASK && domain == logData.domain) ||
+                    (domain <= DOMAIN_FUZZY_MASK && domain == (logData.domain >> DOMAIN_MODULE_BITS)));
             });
         if (it == filter.inclusions.domains.end())
             return false;
