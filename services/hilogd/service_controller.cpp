@@ -457,7 +457,8 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
     std::copy(qRstMsg.pids, qRstMsg.pids+m_filters.inclusions.pids.size(), m_filters.inclusions.pids.begin());
 
     m_filters.inclusions.domains.resize(std::min(qRstMsg.nDomain, static_cast<uint8_t>(MAX_DOMAINS)));
-    std::copy(qRstMsg.domains, qRstMsg.domains+m_filters.inclusions.pids.size(), m_filters.inclusions.domains.begin());
+    std::copy(qRstMsg.domains, qRstMsg.domains+m_filters.inclusions.domains.size(),
+        m_filters.inclusions.domains.begin());
 
     m_filters.inclusions.tags.resize(std::min(qRstMsg.nTag, static_cast<uint8_t>(MAX_TAGS)));
     for (size_t i = 0; i < m_filters.inclusions.tags.size(); ++i) {
@@ -471,7 +472,7 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
     std::copy(qRstMsg.noPids, qRstMsg.noPids+m_filters.exclusions.pids.size(), m_filters.exclusions.pids.begin());
 
     m_filters.exclusions.domains.resize(std::min(qRstMsg.nNoDomain, static_cast<uint8_t>(MAX_DOMAINS)));
-    std::copy(qRstMsg.noDomains, qRstMsg.noDomains+m_filters.exclusions.pids.size(),
+    std::copy(qRstMsg.noDomains, qRstMsg.noDomains+m_filters.exclusions.domains.size(),
         m_filters.exclusions.domains.begin());
 
     m_filters.exclusions.tags.resize(std::min(qRstMsg.nNoTag, static_cast<uint8_t>(MAX_TAGS)));
