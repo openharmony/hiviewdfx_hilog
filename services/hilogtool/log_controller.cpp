@@ -223,7 +223,8 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
     while(1) {
         std::fill_n(recvBuffer, bufLen, 0);
         if (controller.RecvMsg(recvBuffer, bufLen) == 0) {
-            fprintf(stderr, "Unexpected EOF %s\n", HilogStrerror(errno).c_str());
+            fprintf(stderr, "Unexpected EOF ");
+            HilogPrintError(errno);
             exit(1);
             return;
         }

@@ -144,7 +144,8 @@ int HilogdEntry()
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
         } else {
-            std::cout << "open file error:" << HilogStrerror(errno) << std::endl;
+            std::cout << "open file error: ";
+            HilogPrintError(errno);
         }
     }
 #endif
@@ -168,7 +169,8 @@ int HilogdEntry()
     HilogInputSocketServer incomingLogsServer(onDataReceive);
     if (incomingLogsServer.Init() < 0) {
 #ifdef DEBUG
-    cout << "Failed to init input server socket ! error=" << HilogStrerror(errno) << std::endl;
+    cout << "Failed to init input server socket ! ";
+    HilogPrintError(errno);
 #endif
     } else {
         if (chmod(INPUT_SOCKET, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) {

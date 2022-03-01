@@ -17,8 +17,8 @@
 #define HILOG_COMMON_H
 
 #include <cstdint>
+#include <iostream>
 #include <optional>
-#include <string>
 #include <vector>
 
 #define SOCKET_FILE_DIR "/dev/unix/socket/"
@@ -149,12 +149,12 @@ typedef enum {
     ERR_LOG_FILE_NUM_INVALID = -34,
 } ErrorCode;
 
-inline const std::string HilogStrerror(int errnum)
+inline void HilogPrintError(int errnum)
 {
     constexpr int bufSize = 1024;
     char buf[bufSize] = { 0 };
     strerror_r(errnum, buf, bufSize);
-    return std::string(buf);
+    std::cerr << "Errno: " << errnum << ", " << buf << "\n";
 }
 
 #endif /* HILOG_COMMON_H */
