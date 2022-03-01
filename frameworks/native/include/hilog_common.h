@@ -17,8 +17,9 @@
 #define HILOG_COMMON_H
 
 #include <cstdint>
-#include <vector>
+#include <iostream>
 #include <optional>
+#include <vector>
 
 #define SOCKET_FILE_DIR "/dev/unix/socket/"
 #define INPUT_SOCKET_NAME "hilogInput"
@@ -147,5 +148,13 @@ typedef enum {
     ERR_KMSG_SWITCH_VALUE_INVALID = -33,
     ERR_LOG_FILE_NUM_INVALID = -34,
 } ErrorCode;
+
+inline void HilogPrintError(int errnum)
+{
+    constexpr int bufSize = 1024;
+    char buf[bufSize] = { 0 };
+    strerror_r(errnum, buf, bufSize);
+    std::cerr << "Errno: " << errnum << ", " << buf << "\n";
+}
 
 #endif /* HILOG_COMMON_H */

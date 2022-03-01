@@ -112,8 +112,8 @@ void ParseDomainQuota(std::string &domainStr)
         return;
     }
     peakStr = domainStr.substr(domainNameEnd);
-    uint32_t domain = std::stoi(domainIdStr, nullptr, 0);
-    uint32_t peak = std::stoi(peakStr, nullptr, 0);
+    uint32_t domain = static_cast<uint32_t>(std::stoi(domainIdStr, nullptr, 0));
+    uint32_t peak = static_cast<uint32_t>(std::stoi(peakStr, nullptr, 0));
     if (domain <= 0 || peak <= 0) {
         return;
     }
@@ -167,7 +167,7 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
     std::unordered_map<uint32_t, DomainInfo*>::iterator it;
     uint32_t domain = hilogMsg->domain;
     uint32_t domainId = (domain & DOMAIN_FILTER) >> DOMAIN_FILTER_SUBSYSTEM;
-    int logLen = hilogMsg->len - sizeof(HilogMsg) - 1 - 1; /* quota length exclude '\0' of tag and log content */
+    auto logLen = hilogMsg->len - sizeof(HilogMsg) - 1 - 1; /* quota length exclude '\0' of tag and log content */
     int ret = 0;
     it = g_domainMap.find(domainId);
     if (it != g_domainMap.end()) {
@@ -185,7 +185,7 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
         } else { /* new statistic period */
             it->second->startTime = tsNow;
             it->second->sumLen = logLen;
-            ret = it->second->dropped;
+            ret = static_cast<int>(it->second->dropped);
             it->second->dropped = 0;
         }
     }

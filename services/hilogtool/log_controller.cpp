@@ -93,7 +93,7 @@ uint16_t GetLogType(const string& logTypeStr)
 uint64_t GetBuffSize(const string& buffSizeStr)
 {
     uint64_t index = buffSizeStr.size() - 1;
-    uint64_t buffSize;
+    long int buffSize;
     std::regex reg("[0-9]+[bBkKmMgGtT]?");
     if (!std::regex_match(buffSizeStr, reg)) {
         std::cout << ParseErrorCode(ERR_BUFF_SIZE_INVALID) << std::endl;
@@ -112,7 +112,7 @@ uint64_t GetBuffSize(const string& buffSizeStr)
     } else {
         buffSize = stol(buffSizeStr.substr(0, index + 1));
     }
-    return buffSize;
+    return static_cast<uint64_t>(buffSize);
 }
 
 uint16_t GetCompressAlg(const std::string& pressAlg)
@@ -223,7 +223,8 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
     while(1) {
         std::fill_n(recvBuffer, bufLen, 0);
         if (controller.RecvMsg(recvBuffer, bufLen) == 0) {
-            fprintf(stderr, "Unexpected EOF %s\n", strerror(errno));
+            fprintf(stderr, "Unexpected EOF ");
+            HilogPrintError(errno);
             exit(1);
             return;
         }
@@ -419,10 +420,10 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             }
             if (pLogPersistStartMsg->logType == (0b01 << LOG_KMSG)) {
                 pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_KMSG_JOBID
-                    : stoi(logPersistParam->jobIdStr);       
+                    : static_cast<uint32_t>(stoi(logPersistParam->jobIdStr));
             } else {
                 pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_JOBID
-                    : stoi(logPersistParam->jobIdStr);
+                    : static_cast<uint32_t>(stoi(logPersistParam->jobIdStr));
             }
             if (pLogPersistStartMsg->jobId <= 0) {
                 cout << ParseErrorCode(ERR_LOG_PERSIST_JOBID_INVALID) << endl;
@@ -433,7 +434,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? fileSizeDefault : GetBuffSize(
                 logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? fileNumDefault
-                : stoi(logPersistParam->fileNumStr);
+                : static_cast<uint32_t>(stoi(logPersistParam->fileNumStr));
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 cout << ParseErrorCode(ERR_LOG_PERSIST_FILE_NAME_INVALID) << endl;
                 return RET_FAIL;
@@ -462,7 +463,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                 return RET_FAIL;
             }
             for (iter = 0; iter < jobIdNum; iter++) {
-                pLogPersistStopMsg->jobId = stoi(vecJobId[iter]);
+                pLogPersistStopMsg->jobId = static_cast<uint32_t>(stoi(vecJobId[iter]));
                 pLogPersistStopMsg++;
             }
             SetMsgHead(&pLogPersistStopReq->msgHeader, msgCmd, sizeof(LogPersistStopMsg) * jobIdNum);
@@ -603,14 +604,14 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
 
 int MultiQuerySplit(const std::string& src, const char& delim, std::vector<std::string>& vecSplit)
 {
-    int srcSize = src.length();
-    int findPos = 0;
-    int getPos = 0;
+    auto srcSize = src.length();
+    string::size_type findPos = 0;
+    string::size_type getPos = 0;
     vecSplit.clear();
 
     while (getPos < srcSize) {
         findPos = src.find(delim, findPos);
-        if (-1 == findPos) {
+        if (string::npos == findPos) {
             if (getPos < srcSize) {
                 vecSplit.push_back(src.substr(getPos, srcSize - getPos));
                 return 0;

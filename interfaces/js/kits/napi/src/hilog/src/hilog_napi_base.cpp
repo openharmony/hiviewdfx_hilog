@@ -45,8 +45,8 @@ void ParseLogContent(string& formatStr, vector<string>& params, string& logConte
         ret += formatStr;
         return;
     }
-    int32_t size = params.size();
-    int32_t len = formatStr.size();
+    auto size = params.size();
+    auto len = formatStr.size();
     int32_t pos = 0;
     int32_t count = 0;
     bool debug = IsDebugOn();

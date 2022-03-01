@@ -26,7 +26,7 @@ using namespace std;
 
 const float DROP_RATIO = 0.05;
 static int g_maxBufferSize = 4194304;
-static int g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
+static size_t g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
 const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;
@@ -58,7 +58,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
         // Delete old entries when full
-        if (elemSize + sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
+        if (elemSize + sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
             // Drop 5% of maximum log when full
             std::list<HilogData>::iterator it = msgList.begin();
             while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
@@ -75,7 +75,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
             }
 
             // Re-confirm if enough elements has been removed
-            if (sizeByType[msg.type] >= (size_t)g_maxBufferSizeByType[msg.type]) {
+            if (sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
                 std::cout << "Failed to clean old logs." << std::endl;
             }
         }
@@ -142,7 +142,7 @@ void HilogBuffer::UpdateStatistics(const HilogData& logData)
     }
 }
 
-size_t HilogBuffer::Delete(uint16_t logType)
+int32_t HilogBuffer::Delete(uint16_t logType)
 {
     std::list<HilogData> &msgList = (logType == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
     if (logType >= LOG_TYPE_MAX) {
@@ -230,7 +230,7 @@ std::shared_ptr<HilogBuffer::BufferReader> HilogBuffer::GetReader(const ReaderId
     return std::shared_ptr<HilogBuffer::BufferReader>();
 }
 
-size_t HilogBuffer::GetBuffLen(uint16_t logType)
+int64_t HilogBuffer::GetBuffLen(uint16_t logType)
 {
     if (logType >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;
@@ -239,7 +239,7 @@ size_t HilogBuffer::GetBuffLen(uint16_t logType)
     return buffSize;
 }
 
-size_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
+int32_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
 {
     if (logType >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;

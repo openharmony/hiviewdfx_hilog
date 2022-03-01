@@ -115,7 +115,7 @@ static void Helper()
     );
 }
 
-static int GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
+static uint16_t GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
 {
     uint16_t types = 0;
     if (exclude) {
@@ -138,7 +138,7 @@ static int GetTypes(HilogArgs context, const string& typesArgs, bool exclude = f
     return types;
 }
 
-static int GetLevels(HilogArgs context, const string& levelsArgs, bool exclude = false)
+static uint16_t GetLevels(HilogArgs context, const string& levelsArgs, bool exclude = false)
 {
     uint16_t levels = 0;
     if (exclude) {
@@ -230,10 +230,10 @@ int HilogEntry(int argc, char* argv[])
                 context.regexArgs = optarg;
                 break;
             case 'a':
-                context.headLines = atoi(optarg);
+                context.headLines = static_cast<uint16_t>(atoi(optarg));
                 break;
             case 'z':
-                context.tailLines = atoi(optarg);
+                context.tailLines = static_cast<uint16_t>(atoi(optarg));
                 context.noBlockMode = 1;
                 break;
             case 't':
@@ -595,9 +595,10 @@ int HilogEntry(int argc, char* argv[])
 
     char recvBuffer[RECV_BUF_LEN] = {0};
     if (controller.RecvMsg(recvBuffer, RECV_BUF_LEN) == 0) {
-            fprintf(stderr, "Unexpected EOF %s\n", strerror(errno));
-            exit(1);
-            return 0;
+        fprintf(stderr, "Unexpected EOF ");
+        HilogPrintError(errno);
+        exit(1);
+        return 0;
     }
 
     MessageHeader* msgHeader = reinterpret_cast<MessageHeader*>(recvBuffer);
