@@ -595,7 +595,8 @@ int HilogEntry(int argc, char* argv[])
 
     char recvBuffer[RECV_BUF_LEN] = {0};
     if (controller.RecvMsg(recvBuffer, RECV_BUF_LEN) == 0) {
-        fprintf(stderr, "Unexpected EOF %s\n", HilogStrerror(errno).c_str());
+        fprintf(stderr, "Unexpected EOF ");
+        HilogPrintError(errno);
         exit(1);
         return 0;
     }

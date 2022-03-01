@@ -215,8 +215,8 @@ int LogPersister::Deinit()
     munmap(m_mappedPlainLogFile, MAX_PERSISTER_BUFFER_SIZE);
     std::cout << "Removing unmapped plain log file: " << m_plainLogFilePath << "\n";
     if (remove(m_plainLogFilePath.c_str())) {
-        std::cerr << "File: " << m_plainLogFilePath << " can't be removed. "
-            << "Errno: " << errno << " " << HilogStrerror(errno) << "\n";
+        std::cerr << "File: " << m_plainLogFilePath << " can't be removed. ";
+        HilogPrintError(errno);
     }
 
     DeregisterLogPersister(shared_from_this());
@@ -232,8 +232,8 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
     FILE* plainTextFile = fopen(m_plainLogFilePath.c_str(), restore ? "r+" : "w+");
 
     if (!plainTextFile) {
-        std::cerr << __PRETTY_FUNCTION__ << " Open uncompressed log file(" << m_plainLogFilePath << ") failed: "
-            << HilogStrerror(errno) << "\n";
+        std::cerr << __PRETTY_FUNCTION__ << " Open uncompressed log file(" << m_plainLogFilePath << ") failed: ";
+        HilogPrintError(errno);
         return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
     }
 
@@ -245,11 +245,12 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
     m_mappedPlainLogFile = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
         MAP_SHARED, fileno(plainTextFile), 0);
     if (fclose(plainTextFile)) {
-        std::cerr << "File: " << plainTextFile << " can't be closed. "
-            << "Errno: " << errno << " " << HilogStrerror(errno) << "\n";
+        std::cerr << "File: " << plainTextFile << " can't be closed. ";
+        HilogPrintError(errno);
     }
     if (m_mappedPlainLogFile == MAP_FAILED) {
-        std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: " << HilogStrerror(errno) << "\n";
+        std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: ";
+        HilogPrintError(errno);
         return RET_FAIL;
     }
     if (restore == true) {
