@@ -68,7 +68,7 @@ unordered_map<uint16_t, std::string> errorMsg
     {ERR_KMSG_SWITCH_VALUE_INVALID, "Invalid kmsg switch value, valid:on/off"},
     {ERR_LOG_FILE_NUM_INVALID, "Invalid log number, log number should be more than " + to_string(MIN_LOG_FILE_NUM)
     + " and less than " + to_string(MAX_LOG_FILE_NUM)},
-}; 
+};
 
 string ParseErrorCode(ErrorCode errorCode)
 {
@@ -476,7 +476,7 @@ void HilogShowLog(uint32_t showFormat, HilogDataMessage* data, const HilogArgs* 
     showBuffer.tag_len = data->tag_len;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-    int offset = data->tag_len;
+    auto offset = data->tag_len;
     const char *dataBegin = data->data + offset;
     char *dataPos = data->data + offset;
     while (*dataPos != 0) {

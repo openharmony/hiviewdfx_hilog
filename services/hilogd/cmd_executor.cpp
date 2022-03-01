@@ -58,7 +58,7 @@ void CmdExecutor::MainLoop()
     int listeningStatus = cmdServer.Listen(MAX_CLIENT_CONNECTIONS);
     if (listeningStatus < 0) {
         std::cerr << "Socket listen failed: " << listeningStatus << "\n";
-        std::cerr << strerror(listeningStatus) << "\n";
+        std::cerr << HilogStrerror(listeningStatus) << "\n";
         return;
     }
     std::cout << "Server started to listen !\n";
@@ -74,7 +74,7 @@ void CmdExecutor::MainLoop()
         } else if (pollResult < 0) {
             int pollError = errno;
             std::cerr << "Socket polling error: " << pollError << "\n";
-            std::cerr << strerror(pollError) << "\n";
+            std::cerr << HilogStrerror(pollError) << "\n";
             break;
         } else if (pollResult != 1 || outEvent != POLLIN) {
             std::cerr << "Wrong poll result data."
@@ -92,7 +92,7 @@ void CmdExecutor::MainLoop()
         } else {
             int acceptError = errno;
             std::cerr << "Socket accept failed: " << acceptError << "\n";
-            std::cerr << strerror(acceptError) << "\n";
+            std::cerr << HilogStrerror(acceptError) << "\n";
             break;
         }
     }

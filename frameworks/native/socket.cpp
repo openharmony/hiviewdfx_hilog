@@ -76,7 +76,7 @@ int Socket::Write(const char *data, unsigned int len)
 int Socket::WriteAll(const char *data, unsigned int len)
 {
     const char *ptr = data;
-    int sizeLeft = len;
+    int sizeLeft = static_cast<int>(len);
     int midRes = 0;
 
     if (data == nullptr) {
