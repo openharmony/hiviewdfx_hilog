@@ -57,7 +57,8 @@ int LogKmsg::LinuxReadAllKmsg()
     const ssize_t maxFailTime = 10;
     kmsgCtl = GetControlFile("/dev/kmsg");
     if (kmsgCtl < 0) {
-        std::cout << "Cannot open kmsg! Err=" << strerror(errno) << std::endl;
+        std::cout << "Cannot open kmsg! ";
+        HilogPrintError(errno);
         return -1;
     }
     std::unique_ptr<KmsgParser> parser = std::make_unique<KmsgParser>();

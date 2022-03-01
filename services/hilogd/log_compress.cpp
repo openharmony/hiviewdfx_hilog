@@ -44,8 +44,8 @@ int ZlibCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
         return -1;
     }
     size_t const toRead = CHUNK;
-    auto src_pos = 0;
-    auto dst_pos = 0;
+    size_t src_pos = 0;
+    size_t dst_pos = 0;
     size_t read = inBuffer.offset;
     int flush = 0;
     cStream.zalloc = Z_NULL;
