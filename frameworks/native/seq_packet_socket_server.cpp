@@ -27,7 +27,7 @@ int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted)
     if (listeningStatus < 0) {
 #ifdef DEBUG
         std::cerr << "Socket listen failed: " << listeningStatus << "\n";
-        std::cerr << strerror(listeningStatus) << "\n";
+        std::cerr << HilogStrerror(listeningStatus) << "\n";
 #endif
         return listeningStatus;
     }
@@ -46,7 +46,7 @@ int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func)
     int acceptError = errno;
 #ifdef DEBUG
     std::cerr << "Socket accept failed: " << acceptError << "\n";
-    std::cerr <<strerror(acceptError) << "\n";
+    std::cerr << HilogStrerror(acceptError) << "\n";
 #endif
 
     return acceptError;

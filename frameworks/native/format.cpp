@@ -61,7 +61,6 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
 {
     time_t now = contentOut.tv_sec;
     unsigned long nsecTime = contentOut.tv_nsec;
-    struct tm* ptm = nullptr;
     size_t timeLen = 0;
     int ret = 0;
     nsecTime = (now < 0) ? (NSEC - nsecTime) : nsecTime;
@@ -71,24 +70,24 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
             (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%19lld", (long long)now);
         timeLen += ((ret > 0) ? ret : 0);
     } else {
-        ptm = localtime(&now);
-        if (ptm == nullptr) {
+        struct tm tmLocal;
+        if (localtime_r(&now, &tmLocal) == nullptr) {
             return 0;
         }
-        timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", ptm);
+        timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", &tmLocal);
         timeLen = strlen(buffer);
         if (showFormat & (1 << YEAR_SHOWFORMAT)) {
-            timeLen = strftime(buffer, bufLen, "%Y-%m-%d %H:%M:%S", ptm);
+            timeLen = strftime(buffer, bufLen, "%Y-%m-%d %H:%M:%S", &tmLocal);
             timeLen = strlen(buffer);
         }
         if (showFormat & (1 << ZONE_SHOWFORMAT)) {
-            timeLen = strftime(buffer, bufLen, "%z %m-%d %H:%M:%S", ptm);
+            timeLen = strftime(buffer, bufLen, "%z %m-%d %H:%M:%S", &tmLocal);
             timeLen = strlen(buffer);
         }
     }
     if (showFormat & (1 << TIME_NSEC_SHOWFORMAT)) {
         ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-            ".%09ld", nsecTime);
+            ".%09lu", nsecTime);
         timeLen += ((ret > 0) ? ret : 0);
     } else if (showFormat & (1 << TIME_USEC_SHOWFORMAT)) {
         ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,

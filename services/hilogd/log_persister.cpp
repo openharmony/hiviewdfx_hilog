@@ -66,6 +66,7 @@ std::shared_ptr<LogPersister> LogPersister::CreateLogPersister(HilogBuffer &buff
 
 LogPersister::LogPersister(HilogBuffer &buffer) : m_hilogBuffer(buffer)
 {
+    m_mappedPlainLogFile = nullptr;
     m_bufReader = m_hilogBuffer.CreateBufReader([this]() { NotifyNewLogAvailable(); });
 }
 
@@ -215,7 +216,7 @@ int LogPersister::Deinit()
     std::cout << "Removing unmapped plain log file: " << m_plainLogFilePath << "\n";
     if (remove(m_plainLogFilePath.c_str())) {
         std::cerr << "File: " << m_plainLogFilePath << " can't be removed. "
-            << "Errno: " << errno << " " << strerror(errno) << "\n";
+            << "Errno: " << errno << " " << HilogStrerror(errno) << "\n";
     }
 
     DeregisterLogPersister(shared_from_this());
@@ -232,7 +233,7 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
 
     if (!plainTextFile) {
         std::cerr << __PRETTY_FUNCTION__ << " Open uncompressed log file(" << m_plainLogFilePath << ") failed: "
-            << strerror(errno) << "\n";
+            << HilogStrerror(errno) << "\n";
         return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
     }
 
@@ -245,10 +246,10 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
         MAP_SHARED, fileno(plainTextFile), 0);
     if (fclose(plainTextFile)) {
         std::cerr << "File: " << plainTextFile << " can't be closed. "
-            << "Errno: " << errno << " " << strerror(errno) << "\n";
+            << "Errno: " << errno << " " << HilogStrerror(errno) << "\n";
     }
     if (m_mappedPlainLogFile == MAP_FAILED) {
-        std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: " << strerror(errno) << "\n";
+        std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: " << HilogStrerror(errno) << "\n";
         return RET_FAIL;
     }
     if (restore == true) {

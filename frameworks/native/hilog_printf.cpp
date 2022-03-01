@@ -232,7 +232,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     /* format log string */
     debug = IsDebugOn();
     priv = (!debug) && IsPrivateSwitchOn();
-    
+
 #ifdef __clang__
 /* code specific to clang compiler */
 #pragma clang diagnostic push
@@ -250,14 +250,14 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #endif
 
     /* fill header info */
-    int tagLen = strnlen(tag, MAX_TAG_LEN - 1);
-    int logLen = strnlen(buf, MAX_LOG_LEN - 1);
+    auto tagLen = strnlen(tag, MAX_TAG_LEN - 1);
+    auto logLen = strnlen(buf, MAX_LOG_LEN - 1);
     header.type = type;
     header.level = level;
 #ifndef __RECV_MSG_WITH_UCRED_
     header.pid = getpid();
 #endif
-    header.tid = syscall(SYS_gettid);
+    header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
     header.domain = domain;
 
     /* flow control */
