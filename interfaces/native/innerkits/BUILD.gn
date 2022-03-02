@@ -64,4 +64,7 @@ ohos_static_library("libhilog_base") {
 
   public_configs = [ ":libhilog_base_cfg" ]
   configs = [ ":libhilog_base_cfg" ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog_native"
 }
