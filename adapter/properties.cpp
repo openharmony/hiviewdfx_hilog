@@ -100,8 +100,12 @@ public:
     T getValue()
     {
         if (m_handle == -1) {
+            if (m_commit == 0) { // temparary solution, after sysparam supply get_global_commitid, FIXME
+                return m_defaultValue;
+            }
             auto handle = FindParameter(m_key.c_str());
             if (handle == -1) {
+                m_commit = 0; // temparary solution, after sysparam supply get_global_commitid, FIXME
                 return m_defaultValue;
             }
             m_handle = handle;
