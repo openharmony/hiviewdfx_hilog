@@ -114,7 +114,7 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
 
     struct timeval tv = {0};
     gettimeofday(&tv, nullptr);
-    header->tv_sec = tv.tv_sec;
+    header->tv_sec = static_cast<uint32_t>(tv.tv_sec);
     header->tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
