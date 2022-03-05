@@ -111,7 +111,7 @@ static bool WriteStringToFile(int fd, const std::string& content)
             return false;
         }
         p += n;
-        remaining -= n;
+        remaining -= static_cast<size_t>(n);
     }
     return true;
 }
