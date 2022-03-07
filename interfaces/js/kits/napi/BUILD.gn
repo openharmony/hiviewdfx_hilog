@@ -41,6 +41,9 @@ ohos_source_set("libhilognapi_src") {
     "hilog_native:libhilog",
     "napi:ace_napi",
   ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog_native"
 }
 
 config("libhilog_js_cfg") {
