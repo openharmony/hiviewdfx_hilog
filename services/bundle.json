@@ -12,6 +12,9 @@
   "component": {
     "name": "hilog_service",
     "subsystem": "hiviewdfx",
+    "syscap": [
+      "SystemCapability.HiviewDFX.HiLog"
+    ],
     "adapted_system_type": [
       "standard"
     ],
