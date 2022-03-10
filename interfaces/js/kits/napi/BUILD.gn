@@ -22,7 +22,7 @@ config("libhilog_pub_config") {
 ohos_source_set("libhilognapi_src") {
   include_dirs = [
     "//third_party/node/src",
-    "//utils/native/base/include",
+    "//third_party/bounds_checking_function/include",
     "//base/hiviewdfx/hilog/adapter",
   ]
   sources = [
@@ -35,7 +35,7 @@ ohos_source_set("libhilognapi_src") {
   ]
   deps = [
     "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//utils/native/base:utilsecurec",
+    "//third_party/bounds_checking_function:libsec_shared",
   ]
   external_deps = [
     "hilog_native:libhilog",
