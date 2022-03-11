@@ -77,7 +77,9 @@ struct HilogData {
 
     HilogData(HilogData&& cpy)
     {
-        std::memcpy(this, &cpy, sizeof(HilogData));
+        if (memcpy_s(this, sizeof(HilogData), &cpy, sizeof(HilogData)) != 0) {
+            std::cerr << "HilogData memcpy_s call failed.\n";
+        }
         cpy.tag = nullptr;
         cpy.content = nullptr;
     }

@@ -138,7 +138,7 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     uint32_t mpid = ParsePid(kmsgStr);
     // If there are some other content wrapped in square brackets "[]", parse it as tag
     // Otherwise, use default tag  "kmsg"
-    int tagLen = 0;
+    size_t tagLen = 0;
     std::string tagStr = ParseTag(kmsgStr);
     if (!tagStr.empty()) {
         tagLen = tagStr.size();
@@ -153,8 +153,8 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
         }
     }
     // Now build HilogMsg and insert it into buffer
-    int len = kmsgStr.size() + 1;
-    int msgLen = sizeof(HilogMsg) + tagLen + len + 1;
+    auto len = kmsgStr.size() + 1;
+    auto msgLen = sizeof(HilogMsg) + tagLen + len + 1;
     HilogMsgWrapper msgWrap((std::vector<char>(msgLen, '\0')));
     HilogMsg& msg = msgWrap.GetHilogMsg();
     msg.len = msgLen;
@@ -164,8 +164,8 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     msg.level = KmsgLevelMap(mLevel);
     time_point<system_clock, nanoseconds> logtime = BootTime() + microseconds{timestamp};
     struct timespec logts = TimepointToTimespec(logtime);
-    msg.tv_sec = logts.tv_sec;
-    msg.tv_nsec = logts.tv_nsec;
+    msg.tv_sec = static_cast<uint32_t>(logts.tv_sec);
+    msg.tv_nsec = static_cast<uint32_t>(logts.tv_nsec);
     msg.pid = mpid;
     msg.tid = mpid;
     if (strncpy_s(msg.tag, tagLen + 1, mtag.data(), tagLen) != 0) {

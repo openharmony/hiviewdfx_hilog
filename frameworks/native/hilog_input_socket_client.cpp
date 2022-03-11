@@ -22,13 +22,14 @@
 namespace OHOS {
 namespace HiviewDFX {
 static HilogInputSocketClient g_hilogInputSocketClient;
-extern "C" int HilogWriteLogMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, int fmtLen)
+extern "C" int HilogWriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt,
+    uint16_t fmtLen)
 {
     return g_hilogInputSocketClient.WriteLogMessage(header, tag, tagLen, fmt, fmtLen);
 }
 
-int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt,
-    int fmtLen)
+int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt,
+    uint16_t fmtLen)
 {
     int ret = CheckSocket();
     if (ret < 0) {
@@ -37,8 +38,8 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, i
 
     struct timeval tv = {0};
     gettimeofday(&tv, nullptr);
-    header->tv_sec = tv.tv_sec;
-    header->tv_nsec = tv.tv_usec * 1000;     // 1000 : usec convert to nsec
+    header->tv_sec = static_cast<uint32_t>(tv.tv_sec);
+    header->tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
 
