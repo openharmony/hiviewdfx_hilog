@@ -111,7 +111,7 @@ static bool WriteStringToFile(int fd, const std::string& content)
             return false;
         }
         p += n;
-        remaining -= n;
+        remaining -= static_cast<size_t>(n);
     }
     return true;
 }
@@ -144,7 +144,8 @@ int HilogdEntry()
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
         } else {
-            std::cout << "open file error:" << strerror(errno) << std::endl;
+            std::cout << "open file error: ";
+            HilogPrintError(errno);
         }
     }
 #endif
@@ -164,11 +165,12 @@ int HilogdEntry()
         logCollector.onDataRecv(cred, data);
     };
 #endif
-    
+
     HilogInputSocketServer incomingLogsServer(onDataReceive);
     if (incomingLogsServer.Init() < 0) {
 #ifdef DEBUG
-        cout << "Failed to init input server socket ! error=" << strerror(errno) << std::endl;
+    cout << "Failed to init input server socket ! ";
+    HilogPrintError(errno);
 #endif
     } else {
         if (chmod(INPUT_SOCKET, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) {
@@ -190,7 +192,7 @@ int HilogdEntry()
         LogKmsg logKmsg(hilogBuffer);
         logKmsg.ReadAllKmsg();
     });
-    
+
     auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cgroup_set");
         string myPid = to_string(getpid());
@@ -198,7 +200,7 @@ int HilogdEntry()
         WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
         WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
-    
+
     CmdExecutor cmdExecutor(hilogBuffer);
     cmdExecutor.MainLoop();
     return 0;

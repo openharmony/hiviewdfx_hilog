@@ -286,7 +286,7 @@ void ServiceController::HandleBufferSizeRequest(const PacketBuf& rawData)
         int64_t buffLen = m_hilogBuffer.GetBuffLen(requestMsg->logType);
         if (pBuffSizeRst) {
             pBuffSizeRst->logType = requestMsg->logType;
-            pBuffSizeRst->buffSize = buffLen;
+            pBuffSizeRst->buffSize = static_cast<uint64_t>(buffLen);
             pBuffSizeRst->result = (buffLen < 0) ? buffLen : RET_SUCCESS;
             pBuffSizeRst++;
         }

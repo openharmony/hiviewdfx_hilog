@@ -100,7 +100,7 @@ static int CheckConnection(SocketHandler& socketHandler)
     return 0;
 }
 
-static int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char *fmt, int fmtLen)
+static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
     SocketHandler socketHandler;
     int ret = CheckSocket(socketHandler);
@@ -114,8 +114,8 @@ static int SendMessage(HilogMsg *header, const char *tag, int tagLen, const char
 
     struct timeval tv = {0};
     gettimeofday(&tv, nullptr);
-    header->tv_sec = tv.tv_sec;
-    header->tv_nsec = tv.tv_usec * 1000;     // 1000 : usec convert to nsec
+    header->tv_sec = static_cast<uint32_t>(tv.tv_sec);
+    header->tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
 
@@ -141,15 +141,15 @@ static int HiLogBasePrintArgs(const LogType type, const LogLevel level, const un
 
     vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, HILOG_DEFAULT_PRIVACY, fmt, ap);
 
-    int tagLen = strnlen(tag, MAX_TAG_LEN - 1);
-    int logLen = strnlen(buf, MAX_LOG_LEN - 1);
+    auto tagLen = strnlen(tag, MAX_TAG_LEN - 1);
+    auto logLen = strnlen(buf, MAX_LOG_LEN - 1);
     HilogMsg header = {0};
     header.type = type;
     header.level = level;
 #ifndef __RECV_MSG_WITH_UCRED_
     header.pid = getpid();
 #endif
-    header.tid = gettid();
+    header.tid = static_cast<uint32_t>(gettid());
     header.domain = domain;
 
     return SendMessage(&header, tag, tagLen + 1, buf, logLen + 1);
