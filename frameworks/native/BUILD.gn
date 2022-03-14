@@ -44,6 +44,9 @@ ohos_source_set("libhilog_source") {
     "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
     "//third_party/bounds_checking_function:libsec_shared",
   ]
+
+  part_name = "hilog_native"
+  subsystem_name = "hiviewdfx"
 }
 
 config("libhilogutil_config") {
