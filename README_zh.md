@@ -50,6 +50,7 @@ HiLog是OpenHarmony日志系统，提供给系统框架、服务、以及应用�
 │   └── native          # 对外C/C++接口
 │       └── innerkits   # 对内部子系统暴露的头文件
 │       └── kits        # 对应用暴露的头文件
+│   └── js              # 对外js接口
 ├── services
 │   └── hilogd          # 日志常驻服务实现
 │   └── hilogtool       # 日志工具实现
