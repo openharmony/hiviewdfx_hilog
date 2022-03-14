@@ -18,7 +18,6 @@
 #include <seq_packet_socket_server.h>
 
 #include <algorithm>
-#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -115,7 +114,10 @@ void CmdExecutor::ClientEventLoop(std::unique_ptr<Socket> handler)
                 return ct->m_clientThread.get_id() == std::this_thread::get_id();
             });
     }
-    assert(clientInfoIt != m_clients.end());
+    if (clientInfoIt == m_clients.end()) {
+        std::cerr << "Failed to find client\n";
+        return;
+    }
 
     prctl(PR_SET_NAME, "hilogd.query");
     ServiceController serviceCtrl(std::move(handler), m_hilogBuffer);
