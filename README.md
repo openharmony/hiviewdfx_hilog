@@ -48,6 +48,7 @@ Supported functions:
 │   └── native          # External C/C++ APIs
 │       └── innerkits   # Header files opened to internal subsystems
 │       └── kits        # Header files opened to applications
+│   └── js              # External js APIs
 ├── services
 │   └── hilogd          # HiLog resident service implementation
 │   └── hilogtool       # HiLog tool implementation
