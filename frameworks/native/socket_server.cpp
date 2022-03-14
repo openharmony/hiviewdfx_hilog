@@ -94,7 +94,7 @@ int SocketServer::Poll(short inEvent, short& outEvent, const std::chrono::millis
 
 int SocketServer::Accept()
 {
-    socklen_t addressSize = sizeof(serverAddr);
+    socklen_t addressSize = static_cast<socklen_t>(sizeof(serverAddr));
     return TEMP_FAILURE_RETRY(accept(socketHandler, (struct sockaddr*)&serverAddr, &addressSize));
 }
 
