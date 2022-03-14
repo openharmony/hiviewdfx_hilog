@@ -75,7 +75,7 @@ static void GetSocketFds(std::vector<int> &fds)
 static bool CheckSocketType(int fd, int type)
 {
     int soType = -1;
-    socklen_t optlen = sizeof(soType);
+    socklen_t optlen = static_cast<socklen_t>(sizeof(soType));
     if (getsockopt(fd, SOL_SOCKET,SO_TYPE, &soType, &optlen)) {
         return false;
     }
@@ -96,7 +96,7 @@ int GetExistingSocketServer(const char *name, int type)
 
     for (auto fd : fds) {
         struct sockaddr_un addr;
-        socklen_t addrLen = sizeof(addr);
+        socklen_t addrLen = static_cast<socklen_t>(sizeof(addr));
 
         if (CheckSocketType(fd, type) == false) {
             continue;
