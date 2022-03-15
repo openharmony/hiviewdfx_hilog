@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,9 +37,8 @@
  * Before outputting logs, you must define the service domain, and log tag, use the function with
  * the specified log type and level, and specify the privacy identifier.\n
  * <ul><li>Service domain: used to identify the subsystem and module of a service. Its value is a hexadecimal
- * integer ranging from 0x0 to 0xFFFF. The recommended format is 0xAAABB, where AAA indicates the subsystem
- * and BB indicates the module.</li> \n
- * <li>Log tag: a string used to identify the class, file, or service behavior.</li> \n
+ * integer ranging from 0x0 to 0xFFFF. \n
+ * <li>Log tag: a string used to identify the class, file, or service.</li> \n
  * <li>Log level: <b>DEBUG</b>, <b>INFO</b>, <b>WARN</b>, <b>ERROR</b>, and <b>FATAL</b></li> \n
  * <li>Parameter format: a printf format string that starts with a % character, including format specifiers
  * and variable parameters.</li> \n
@@ -49,14 +48,13 @@
  *
  * Sample code:\n
  * Defining the service domain and log tag:\n
- *     #include <hilog/log.h>
- *     #define LOG_DOMAIN MY_SUBSYSTEM_MODULE // MY_SUBSYSTEM_MODULE=0x00201, where 002 indicates the subsystem and
- * 01 indicates the module.\n
+ *     #include <hilog/log.h>\n
+ *     #define LOG_DOMAIN 0x0201\n
  *     #define LOG_TAG "MY_TAG"\n
  * Outputting logs:\n
  *     HILOG_WARN({@link LOG_APP}, "Failed to visit %{private}s, reason:%{public}d.", url, errno);\n
  * Output result:\n
- *     05-06 15:01:06.870 1051 1051 W 00201/MY_TAG: Failed to visit <private>, reason:503.\n
+ *     05-06 15:01:06.870 1051 1051 W 0201/MY_TAG: Failed to visit <private>, reason:503.\n
  *
  * @since 8
  */
@@ -72,7 +70,6 @@ extern "C" {
  *
  * The service domain is used to identify the subsystem and module of a service. Its value is a hexadecimal integer
  * ranging from 0x0 to 0xFFFF. If the value is beyond the range, its significant bits are automatically truncated. \n
- * The recommended format is 0xAAABB, where AAA indicates the subsystem and BB indicates the module. \n
  *
  * @since 8
  */
@@ -81,7 +78,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Defines a string constant used to identify the class, file, or service behavior.
+ * @brief Defines a string constant used to identify the class, file, or service.
  *
  * @since 8
  */
@@ -118,15 +115,15 @@ enum LogType {
  * @since 8
  */
 enum LogLevel {
-    /** Debug level to be used by {@link HILOG_DEBUG} */
+    /** Debug level to be used by {@link OH_LOG_DEBUG} */
     LOG_DEBUG = 3,
-    /** Informational level to be used by {@link HILOG_INFO} */
+    /** Informational level to be used by {@link OH_LOG_INFO} */
     LOG_INFO = 4,
-    /** Warning level to be used by {@link HILOG_WARN} */
+    /** Warning level to be used by {@link OH_LOG_WARN} */
     LOG_WARN = 5,
-    /** Error level to be used by {@link HILOG_ERROR} */
+    /** Error level to be used by {@link OH_LOG_ERROR} */
     LOG_ERROR = 6,
-    /** Fatal level to be used by {@link HILOG_FATAL} */
+    /** Fatal level to be used by {@link OH_LOG_FATAL} */
     LOG_FATAL = 7,
 };
 
@@ -140,12 +137,11 @@ enum LogLevel {
  * @param level Indicates the log level, which can be <b>LOG_DEBUG</b>, <b>LOG_INFO</b>, <b>LOG_WARN</b>,
  * <b>LOG_ERROR</b>, and <b>LOG_FATAL</b>.
  * @param domain Indicates the service domain of logs. Its value is a hexadecimal integer ranging from 0x0 to 0xFFFF.
- * The recommended format is 0xAAABB, where AAA indicates the subsystem and BB indicates the module.
  * @param tag Indicates the log tag, which is a string used to identify the class, file, or service behavior.
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the privacy
  * identifier. Specifically, {public} or {private} is added between the % character and the format specifier
  * in each parameter. \n
- * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * @param ... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
  * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
  * than <b>0</b> otherwise.
@@ -175,7 +171,7 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the
  * privacy identifier. Specifically, {public} or {private} is added between the % character and the format specifier
  * in each parameter. \n
- * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * @param ... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
  * @see OH_LOG_Print
  * @since 8
@@ -192,7 +188,7 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the privacy
  * identifier. Specifically, {public} or {private} is added between the % character and the format specifier in
  * each parameter. \n
- * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * @param ... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
  * @see OH_LOG_Print
  * @since 8
@@ -209,7 +205,7 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the
  * privacy identifier. Specifically, {public} or {private} is added between the % character and the format specifier
  * in each parameter. \n
- * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * @param ... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
  * @see OH_LOG_Print
  * @since 8
@@ -226,7 +222,7 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the privacy
  * identifier. Specifically, {public} or {private} is added between the % character and the format specifier in each
  * parameter. \n
- * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * @param ... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
  * @see OH_LOG_Print
  * @since 8
@@ -243,7 +239,7 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the privacy
  * identifier. Specifically, {public} or {private} is added between the % character and the format specifier in
  * each parameter. \n
- * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * @param ... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
  * @see OH_LOG_Print
  * @since 8
