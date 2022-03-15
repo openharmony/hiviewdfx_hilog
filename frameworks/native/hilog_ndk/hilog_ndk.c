@@ -18,7 +18,7 @@
 #include "hilog_inner.h"
 #include "hilog/log_c.h"
 
-int OHOSHiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
+int OH_LOG_Print(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
 {
     int ret;
     va_list ap;
@@ -28,7 +28,7 @@ int OHOSHiLogPrint(LogType type, LogLevel level, unsigned int domain, const char
     return ret;
 }
 
-bool OHOSHiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
+bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
     return HiLogIsLoggable(domain, tag, level);
 }
