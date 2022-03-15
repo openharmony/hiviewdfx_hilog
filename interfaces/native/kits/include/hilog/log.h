@@ -26,8 +26,7 @@
  *
  * @syscap SystemCapability.HiviewDFX.HiLog
  *
- * @since 2
- * @version 1.0
+ * @since 8
  */
 
 /**
@@ -38,7 +37,7 @@
  * Before outputting logs, you must define the service domain, and log tag, use the function with
  * the specified log type and level, and specify the privacy identifier.\n
  * <ul><li>Service domain: used to identify the subsystem and module of a service. Its value is a hexadecimal
- * integer ranging from 0x0 to 0xFFFFF. The recommended format is 0xAAABB, where AAA indicates the subsystem
+ * integer ranging from 0x0 to 0xFFFF. The recommended format is 0xAAABB, where AAA indicates the subsystem
  * and BB indicates the module.</li> \n
  * <li>Log tag: a string used to identify the class, file, or service behavior.</li> \n
  * <li>Log level: <b>DEBUG</b>, <b>INFO</b>, <b>WARN</b>, <b>ERROR</b>, and <b>FATAL</b></li> \n
@@ -59,8 +58,7 @@
  * Output result:\n
  *     05-06 15:01:06.870 1051 1051 W 00201/MY_TAG: Failed to visit <private>, reason:503.\n
  *
- * @since 2
- * @version 1.0
+ * @since 8
  */
 #include <stdarg.h>
 #include <stdbool.h>
@@ -73,11 +71,10 @@ extern "C" {
  * @brief Defines the service domain for a log file.
  *
  * The service domain is used to identify the subsystem and module of a service. Its value is a hexadecimal integer
- * ranging from 0x0 to 0xFFFFF. If the value is beyond the range, its significant bits are automatically truncated. \n
+ * ranging from 0x0 to 0xFFFF. If the value is beyond the range, its significant bits are automatically truncated. \n
  * The recommended format is 0xAAABB, where AAA indicates the subsystem and BB indicates the module. \n
  *
- * @since 2
- * @version 1.0
+ * @since 8
  */
 #ifndef LOG_DOMAIN
 #define LOG_DOMAIN 0
@@ -86,8 +83,7 @@ extern "C" {
 /**
  * @brief Defines a string constant used to identify the class, file, or service behavior.
  *
- * @since 2
- * @version 1.0
+ * @since 8
  */
 #ifndef LOG_TAG
 #define LOG_TAG NULL
@@ -98,8 +94,7 @@ extern "C" {
  *
  * Currently, <b>LOG_APP</b> is available. \n
  *
- * @since 2
- * @version 1.0
+ * @since 8
  */
 enum LogType {
     /** Third-party application logs */
@@ -120,8 +115,7 @@ enum LogType {
  * <li><b>FATAL</b>: used for logging major exceptions that have severely affected user experience and should
  * not occur.</li></ul> \n
  *
- * @since 2
- * @version 1.0
+ * @since 8
  */
 enum LogLevel {
     /** Debug level to be used by {@link HILOG_DEBUG} */
@@ -136,15 +130,6 @@ enum LogLevel {
     LOG_FATAL = 7,
 };
 
-#define HOS_C_NAMESPACE OHOS
-
-#define HOS_CONCAT(a, b) a##b
-#define HOS_NS_IMPL(ns, name) HOS_CONCAT(ns, name)
-#define HOS_NS(name) HOS_NS_IMPL(HOS_C_NAMESPACE, name)
-
-#define HiLogPrint         HOS_NS(HiLogPrint)
-#define HiLogIsLoggable    HOS_NS(HiLogIsLoggable)
-
 /**
  * @brief Outputs logs.
  *
@@ -154,7 +139,7 @@ enum LogLevel {
  * @param type Indicates the log type. The type for third-party applications is defined by {@link LOG_APP}.
  * @param level Indicates the log level, which can be <b>LOG_DEBUG</b>, <b>LOG_INFO</b>, <b>LOG_WARN</b>,
  * <b>LOG_ERROR</b>, and <b>LOG_FATAL</b>.
- * @param domain Indicates the service domain of logs. Its value is a hexadecimal integer ranging from 0x0 to 0xFFFFF.
+ * @param domain Indicates the service domain of logs. Its value is a hexadecimal integer ranging from 0x0 to 0xFFFF.
  * The recommended format is 0xAAABB, where AAA indicates the subsystem and BB indicates the module.
  * @param tag Indicates the log tag, which is a string used to identify the class, file, or service behavior.
  * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the privacy
@@ -164,10 +149,9 @@ enum LogLevel {
  * in the format string.
  * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
  * than <b>0</b> otherwise.
- * @since 2
- * @version 1.0
+ * @since 8
  */
-int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
+int OH_LOG_Print(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
 
 /**
@@ -177,10 +161,9 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
  * @param tag Indicates the log tag.
  * @param level Indicates the log level.
  * @return Returns <b>true</b> if the specified logs can be output; returns <b>false</b> otherwise.
- * @since 2
- * @version 1.0
+ * @since 8
  */
-bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
+bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
 
 /**
  * @brief Outputs debug logs. This is a function-like macro.
@@ -194,13 +177,10 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * in each parameter. \n
  * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
- * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller than <b>0</b>
- * otherwise.
- * @see HiLogPrint
- * @since 2
- * @version 1.0
+ * @see OH_LOG_Print
+ * @since 8
  */
-#define HILOG_DEBUG(type, ...) ((void)HiLogPrint((type), LOG_DEBUG, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define OH_LOG_DEBUG(type, ...) ((void)OH_LOG_Print((type), LOG_DEBUG, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
 /**
  * @brief Outputs informational logs. This is a function-like macro.
@@ -214,13 +194,10 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * each parameter. \n
  * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
- * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller than
- * <b>0</b> otherwise.
- * @see HiLogPrint
- * @since 2
- * @version 1.0
+ * @see OH_LOG_Print
+ * @since 8
  */
-#define HILOG_INFO(type, ...) ((void)HiLogPrint((type), LOG_INFO, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define OH_LOG_INFO(type, ...) ((void)OH_LOG_Print((type), LOG_INFO, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
 /**
  * @brief Outputs warning logs. This is a function-like macro.
@@ -234,13 +211,10 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * in each parameter. \n
  * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
- * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller than
- * <b>0</b> otherwise.
- * @see HiLogPrint
- * @since 2
- * @version 1.0
+ * @see OH_LOG_Print
+ * @since 8
  */
-#define HILOG_WARN(type, ...) ((void)HiLogPrint((type), LOG_WARN, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define OH_LOG_WARN(type, ...) ((void)OH_LOG_Print((type), LOG_WARN, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
 /**
  * @brief Outputs error logs. This is a function-like macro.
@@ -254,13 +228,10 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * parameter. \n
  * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
- * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller than
- * <b>0</b> otherwise.
- * @see HiLogPrint
- * @since 2
- * @version 1.0
+ * @see OH_LOG_Print
+ * @since 8
  */
-#define HILOG_ERROR(type, ...) ((void)HiLogPrint((type), LOG_ERROR, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define OH_LOG_ERROR(type, ...) ((void)OH_LOG_Print((type), LOG_ERROR, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
 /**
  * @brief Outputs fatal logs. This is a function-like macro.
@@ -274,13 +245,10 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
  * each parameter. \n
  * @param... Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
  * in the format string.
- * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller than
- * <b>0</b> otherwise.
- * @see HiLogPrint
- * @since 2
- * @version 1.0
+ * @see OH_LOG_Print
+ * @since 8
  */
-#define HILOG_FATAL(type, ...) ((void)HiLogPrint((type), LOG_FATAL, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define OH_LOG_FATAL(type, ...) ((void)OH_LOG_Print((type), LOG_FATAL, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
 #ifdef __cplusplus
 }
