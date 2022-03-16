@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,7 @@
 #include "hilog_inner.h"
 #include "hilog/log_c.h"
 
-int OHOSHiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
+int OH_LOG_Print(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
 {
     int ret;
     va_list ap;
@@ -28,7 +28,7 @@ int OHOSHiLogPrint(LogType type, LogLevel level, unsigned int domain, const char
     return ret;
 }
 
-bool OHOSHiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
+bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
     return HiLogIsLoggable(domain, tag, level);
 }
