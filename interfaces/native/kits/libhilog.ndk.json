@@ -1,8 +1,8 @@
 [
     {
-        "name": "OHOSHiLogPrint"
+        "name": "OH_LOG_Print"
     },
     {
-        "name": "OHOSHiLogIsLoggable"
+        "name": "OH_LOG_IsLoggable"
     }
 ]
