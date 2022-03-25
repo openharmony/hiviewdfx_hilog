@@ -32,6 +32,7 @@ using PropType = enum {
     PROP_SINGLE_DEBUG,
     PROP_KMSG,
     PROP_PERSIST_DEBUG,
+    PROP_BUFFER_SIZE,
 };
 
 std::string GetPropertyName(uint32_t propType);
@@ -48,5 +49,6 @@ bool IsDomainSwitchOn();
 bool IsKmsgSwitchOn();
 uint16_t GetGlobalLevel();
 uint16_t GetDomainLevel(uint32_t domain);
-
+size_t GetBufferSize(uint16_t type, bool persist);
+void SetBufferSize(uint16_t type, bool persist, size_t size);
 #endif
