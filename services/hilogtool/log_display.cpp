@@ -22,6 +22,7 @@
 #include "hilog/log.h"
 #include "format.h"
 #include "log_controller.h"
+#include "properties.h"
 #include "log_display.h"
 
 namespace OHOS {
@@ -224,6 +225,7 @@ int32_t ControlCmdResult(const char* message)
                     outputStr += " buffer size is ";
                     outputStr += GetByteLenStr(pBuffResizeRst->buffSize);
                     outputStr += "\n";
+                    SetBufferSize((LogType)pBuffResizeRst->logType, true, (size_t)pBuffResizeRst->buffSize);
                 }
                 pBuffResizeRst++;
                 resultLen += sizeof(BuffSizeResult);

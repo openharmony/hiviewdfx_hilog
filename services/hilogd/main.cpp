@@ -185,10 +185,13 @@ int HilogdEntry()
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
         if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
+            hilogBuffer.InitBuffLen();
             RestorePersistJobs(hilogBuffer);
         }
     });
+
     auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
+        prctl(PR_SET_NAME, "hilogd.rd_kmsg");
         LogKmsg logKmsg(hilogBuffer);
         logKmsg.ReadAllKmsg();
     });

@@ -20,12 +20,12 @@
 #include "hilog_common.h"
 #include "flow_control_init.h"
 #include "log_time_stamp.h"
+#include "properties.h"
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-const float DROP_RATIO = 0.05;
-static size_t g_maxBufferSize = 4194304;
+static const float DROP_RATIO = 0.05;
 static size_t g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
 const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
@@ -40,6 +40,7 @@ HilogBuffer::HilogBuffer()
         printLenByType[i] = 0;
         droppedByType[i] = 0;
     }
+    InitBuffLen();
 }
 
 HilogBuffer::~HilogBuffer() {}
@@ -230,6 +231,20 @@ std::shared_ptr<HilogBuffer::BufferReader> HilogBuffer::GetReader(const ReaderId
     return std::shared_ptr<HilogBuffer::BufferReader>();
 }
 
+void HilogBuffer::InitBuffLen()
+{
+    size_t global_size = GetBufferSize(LOG_TYPE_MAX, false);
+    size_t persist_global_size = GetBufferSize(LOG_TYPE_MAX, true);
+    for (int i = 0; i < LOG_TYPE_MAX; i++) {
+        size_t size = GetBufferSize(i, false);
+        size_t persist_size = GetBufferSize(i, true);
+        SetBuffLen(i, global_size);
+        SetBuffLen(i, persist_global_size);
+        SetBuffLen(i, size);
+        SetBuffLen(i, persist_size);
+    }
+}
+
 int64_t HilogBuffer::GetBuffLen(uint16_t logType)
 {
     if (logType >= LOG_TYPE_MAX) {
@@ -244,11 +259,11 @@ int32_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
     if (logType >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;
     }
-    if (buffSize <= 0 || buffSize > MAX_BUFFER_SIZE) {
+    if (buffSize < MIN_BUFFER_SIZE || buffSize > MAX_BUFFER_SIZE) {
         return ERR_BUFF_SIZE_INVALID;
     }
+    std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
     g_maxBufferSizeByType[logType] = buffSize;
-    g_maxBufferSize += (buffSize - sizeByType[logType]);
     return buffSize;
 }
 

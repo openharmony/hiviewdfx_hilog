@@ -85,7 +85,7 @@ uint16_t GetLogType(const string& logTypeStr)
     } else if (logTypeStr == "kmsg") {
         logType = LOG_KMSG;
     } else {
-        return 0xffff;
+        logType = LOG_TYPE_MAX;
     }
     return logType;
 }
@@ -272,7 +272,7 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const st
             }
             for (iter = 0; iter < logTypeNum; iter++) {
                 pBuffSizeMsg->logType = GetLogType(vecLogType[iter]);
-                if (pBuffSizeMsg->logType == 0xffff) {
+                if (pBuffSizeMsg->logType == LOG_TYPE_MAX) {
                     cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
@@ -291,7 +291,7 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const st
             }
             for (iter = 0; iter < logTypeNum; iter++) {
                 pBuffResizeMsg->logType = GetLogType(vecLogType[iter]);
-                if (pBuffResizeMsg->logType == 0xffff) {
+                if (pBuffResizeMsg->logType == LOG_TYPE_MAX) {
                     cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
@@ -319,7 +319,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     uint32_t domain;
     if (domainStr == "") {
         domain = 0xffffffff;
-        if (logType == 0xffff) {
+        if (logType == LOG_TYPE_MAX) {
             cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
             return RET_FAIL;
         }
@@ -374,7 +374,7 @@ int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std:
     }
     for (iter = 0; iter < logTypeNum; iter++) {
         pLogClearMsg->logType = GetLogType(vecLogType[iter]);
-        if (pLogClearMsg->logType == 0xffff) {
+        if (pLogClearMsg->logType == LOG_TYPE_MAX) {
             cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
             return RET_FAIL;
         }
@@ -412,7 +412,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             }
             for (iter = 0; iter < logTypeNum; iter++) {
                 uint16_t tmpType = GetLogType(vecLogType[iter]);
-                if (tmpType == 0xffff) {
+                if (tmpType == LOG_TYPE_MAX) {
                     cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
@@ -479,7 +479,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
 
             for (iter = 0; iter < logTypeNum; iter++) {
                 uint16_t tmpType = GetLogType(vecLogType[iter]);
-                if (tmpType == 0xffff) {
+                if (tmpType == LOG_TYPE_MAX) {
                     cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
