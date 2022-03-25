@@ -103,14 +103,14 @@ public:
             if (m_commit == 0) { // temparary solution, after sysparam supply get_global_commitid, FIXME
                 return m_defaultValue;
             }
-            auto handle = FindParameter(m_key.c_str());
+            int handle = static_cast<int>(FindParameter(m_key.c_str()));
             if (handle == -1) {
                 m_commit = 0; // temparary solution, after sysparam supply get_global_commitid, FIXME
                 return m_defaultValue;
             }
             m_handle = handle;
         }
-        auto currentCommit = GetParameterCommitId(m_handle);
+        int currentCommit = static_cast<int>(GetParameterCommitId(m_handle));
         PropertyTypeLocker locker(m_propType);
         if (locker.isLocked()) {
             if (currentCommit != m_commit) {
@@ -153,8 +153,8 @@ private:
     }
 
     RawPropertyData m_rawData = {0};
-    unsigned int m_handle = -1;
-    unsigned int m_commit = -1;
+    int m_handle = -1;
+    int m_commit = -1;
     T m_value;
     const T m_defaultValue;
     const uint32_t m_propType;
@@ -173,7 +173,7 @@ void PropertyGet(const string &key, char *value, int len)
         return;
     }
 
-    auto handle = FindParameter(key.c_str());
+    int handle = static_cast<int>(FindParameter(key.c_str()));
     if (handle == -1) {
         return;
     }
@@ -189,7 +189,7 @@ void PropertySet(const string &key, const char* value)
 {
     auto len = value ? strlen(value) : 0;
     if (len > HILOG_PROP_VALUE_MAX) {
-        std::cerr << "PropertyGet(): len exceed maximum.\n";
+        std::cerr << "PropertySet(): len exceed maximum.\n";
         return;
     }
 
@@ -198,7 +198,7 @@ void PropertySet(const string &key, const char* value)
         if (result == EC_INVALID) {
             std::cerr << "PropertySet(): Invalid arguments.\n";
         } else {
-            std::cerr << "PropertySet(): Error: " << result << "\n";
+            std::cerr << "PropertySet(): key: " << key.c_str() << "value: " << value << ",  error: " << result << "\n";
         }
     }
 }
@@ -206,7 +206,7 @@ void PropertySet(const string &key, const char* value)
 string GetProgName()
 {
 #ifdef HILOG_USE_MUSL
-    return program_invocation_short_name; /* use HOS interface */
+    return program_invocation_short_name;
 #else
     return getprogname();
 #endif
@@ -243,6 +243,8 @@ string GetPropertyName(uint32_t propType)
         case PROP_PERSIST_DEBUG:
             key = "persist.sys.hilog.debug.on";
             break;
+        case PROP_BUFFER_SIZE:
+            key = "hilog.buffersize.";
         default:
             break;
     }
@@ -434,4 +436,41 @@ uint16_t GetTagLevel(const string& tag)
     }
     LogLevelCache* levelCache = it->second;
     return levelCache->getValue();
+}
+
+static string GetBufferSizePropName(uint16_t type, bool persist)
+{
+    string name = persist ? "persist.sys." : "";
+
+    static const string logTypeStr[LOG_TYPE_MAX + 1] = {
+        "app", "init", "", "core", "kmsg", "global"
+    };
+    name += (GetPropertyName(PROP_BUFFER_SIZE) + logTypeStr[type]);
+    return name;
+}
+
+size_t GetBufferSize(uint16_t type, bool persist)
+{
+    char value[HILOG_PROP_VALUE_MAX] = {0};
+
+    if (type > LOG_TYPE_MAX || type < LOG_TYPE_MIN) {
+        return 0;
+    }
+
+    PropertyGet(GetBufferSizePropName(type, persist), value, HILOG_PROP_VALUE_MAX);
+    if (value[0] == 0) {
+        return 0;
+    }
+
+    return std::stoi(value);
+}
+
+void SetBufferSize(uint16_t type, bool persist, size_t size)
+{
+    if (type > LOG_TYPE_MAX || type < LOG_TYPE_MIN) {
+        return;
+    }
+
+    PropertySet(GetBufferSizePropName(type, persist), to_string(size).c_str());
+    return;
 }
