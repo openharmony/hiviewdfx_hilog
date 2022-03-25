@@ -20,3 +20,4 @@ hilog.flowctrl.pid.on=false
 hilog.flowctrl.domain.on=false
 
 hilog.loggable.global=d
+hilog.buffersize.global=262144
