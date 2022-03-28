@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef KMSG_PARSER_H
 #define KMSG_PARSER_H
 
@@ -29,4 +30,3 @@ public:
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
-

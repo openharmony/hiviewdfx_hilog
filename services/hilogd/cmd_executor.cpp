@@ -85,8 +85,10 @@ void CmdExecutor::MainLoop()
         if (acceptResult > 0) {
             int acceptedSockedFd = acceptResult;
             std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
-            handler->setHandler(acceptedSockedFd);
-            OnAcceptedConnection(std::move(handler));
+            if (handler != nullptr) {
+                handler->setHandler(acceptedSockedFd);
+                OnAcceptedConnection(std::move(handler));
+            }
         } else {
             std::cerr << "Socket accept failed: ";
             HilogPrintError(errno);
@@ -99,9 +101,11 @@ void CmdExecutor::OnAcceptedConnection(std::unique_ptr<Socket> handler)
 {
     std::lock_guard<std::mutex> lg(m_clientAccess);
     auto newVal = std::make_unique<ClientThread>();
-    newVal->m_stopThread.store(false);
-    newVal->m_clientThread = std::thread(&CmdExecutor::ClientEventLoop, this, std::move(handler));
-    m_clients.push_back(std::move(newVal));
+    if (newVal != nullptr) {
+        newVal->m_stopThread.store(false);
+        newVal->m_clientThread = std::thread(&CmdExecutor::ClientEventLoop, this, std::move(handler));
+        m_clients.push_back(std::move(newVal));
+    }
 }
 
 void CmdExecutor::ClientEventLoop(std::unique_ptr<Socket> handler)

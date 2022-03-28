@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef CMD_EXECUTOR_H
 #define CMD_EXECUTOR_H
 
@@ -32,7 +33,7 @@ struct ClientThread {
 
 class CmdExecutor {
 public:
-    CmdExecutor(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
+    explicit CmdExecutor(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
     ~CmdExecutor();
     void MainLoop();
 private:

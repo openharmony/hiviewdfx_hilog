@@ -40,8 +40,10 @@ int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func)
     int acceptedSockedFd = 0;
     while ((acceptedSockedFd = Accept()) > 0) {
         std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
-        handler->setHandler(acceptedSockedFd);
-        func(std::move(handler));
+        if (handler != nullptr) {
+            handler->setHandler(acceptedSockedFd);
+            func(std::move(handler));
+        }
     }
     int acceptError = errno;
 #ifdef DEBUG

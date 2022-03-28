@@ -90,7 +90,7 @@ static int CheckConnection(SocketHandler& socketHandler)
         return 0;
     }
 
-    auto result = TEMP_FAILURE_RETRY(connect(socketHandler.socketFd.load(), 
+    auto result = TEMP_FAILURE_RETRY(connect(socketHandler.socketFd.load(),
         reinterpret_cast<const sockaddr*>(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
     if (result < 0) {
         std::cerr << __FILE__ << __LINE__ << " Can't connect to server. Errno: " << errno << "\n";
@@ -120,12 +120,12 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
     header->tag_len = tagLen;
 
     std::array<iovec,3> vec;
-    vec[0].iov_base = header;                // 0 : index of hos log header
-    vec[0].iov_len = sizeof(HilogMsg);       // 0 : index of hos log header
-    vec[1].iov_base = (void*)tag;            // 1 : index of log tag
-    vec[1].iov_len = tagLen;                 // 1 : index of log tag
-    vec[2].iov_base = (void*)fmt;            // 2 : index of log content
-    vec[2].iov_len = fmtLen;                 // 2 : index of log content
+    vec[0].iov_base = header;                                             // 0 : index of hos log header
+    vec[0].iov_len = sizeof(HilogMsg);                                    // 0 : index of hos log header
+    vec[1].iov_base = reinterpret_cast<void*>(const_cast<char*>(tag));    // 1 : index of log tag
+    vec[1].iov_len = tagLen;                                              // 1 : index of log tag
+    vec[2].iov_base = reinterpret_cast<void*>(const_cast<char*>(fmt));    // 2 : index of log content
+    vec[2].iov_len = fmtLen;                                              // 2 : index of log content
     ret = TEMP_FAILURE_RETRY(::writev(socketHandler.socketFd.load(), vec.data(), vec.size()));
     return ret;
 }

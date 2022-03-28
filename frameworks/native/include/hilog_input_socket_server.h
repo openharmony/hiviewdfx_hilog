@@ -50,6 +50,7 @@ public:
 
     ServerThreadState RunServingThread();
     void StopServingThread();
+
 private:
     void ServingThread();
 

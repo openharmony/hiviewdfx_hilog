@@ -83,6 +83,9 @@ string ParseErrorCode(ErrorCode errorCode)
 hash_t Hash(char const *str)
 {
     hash_t ret {BASIS};
+    if (str == nullptr) {
+        return ret;
+    }
     while (*str) {
         ret ^= *str;
         ret *= PRIME;
@@ -92,6 +95,9 @@ hash_t Hash(char const *str)
 }
 constexpr hash_t HashCompileTime(char const *str, hash_t lastValue = BASIS)
 {
+    if (str == nullptr) {
+        return lastValue;
+    }
     return *str ? HashCompileTime(str + 1, (*str ^ lastValue) * PRIME) : lastValue;
 }
 constexpr unsigned long long operator "" _hash(char const *p, size_t)
@@ -179,18 +185,24 @@ string GetByteLenStr(uint64_t buffSize)
  */
 int32_t ControlCmdResult(const char* message)
 {
-    MessageHeader* msgHeader = (MessageHeader*)message;
+    if (message == nullptr) {
+        return RET_FAIL;
+    }
+    MessageHeader* msgHeader =
+        reinterpret_cast<MessageHeader*>(const_cast<char*>(message));
     uint8_t msgCmd = msgHeader->msgType;
     uint16_t msgLen = msgHeader->msgLen;
     string outputStr = "";
     uint32_t resultLen = 0;
     switch (msgCmd) {
         case MC_RSP_BUFFER_SIZE: {
-            BufferSizeResponse* pBuffSizeRsp = (BufferSizeResponse*)message;
+            BufferSizeResponse* pBuffSizeRsp =
+                reinterpret_cast<BufferSizeResponse*>(const_cast<char*>(message));
             if (!pBuffSizeRsp) {
                 return RET_FAIL;
             }
-            BuffSizeResult* pBuffSizeRst = (BuffSizeResult*)&pBuffSizeRsp->buffSizeRst;
+            BuffSizeResult* pBuffSizeRst =
+                reinterpret_cast<BuffSizeResult*>(&pBuffSizeRsp->buffSizeRst);
             while (pBuffSizeRst && resultLen < msgLen) {
                 if (pBuffSizeRst->result < 0) {
                     outputStr += GetLogTypeStr(pBuffSizeRst->logType);
@@ -209,11 +221,13 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_BUFFER_RESIZE: {
-            BufferResizeResponse* pBuffResizeRsp = (BufferResizeResponse*)message;
+            BufferResizeResponse* pBuffResizeRsp =
+                reinterpret_cast<BufferResizeResponse*>(const_cast<char*>(message));
             if (!pBuffResizeRsp) {
                 return RET_FAIL;
             }
-            BuffResizeResult* pBuffResizeRst = (BuffResizeResult*)&pBuffResizeRsp->buffResizeRst;
+            BuffResizeResult* pBuffResizeRst =
+                reinterpret_cast<BuffResizeResult*>(&pBuffResizeRsp->buffResizeRst);
             while (pBuffResizeRst && resultLen < msgLen) {
                 if (pBuffResizeRst->result < 0) {
                     outputStr += GetLogTypeStr(pBuffResizeRst->logType);
@@ -233,7 +247,8 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_STATISTIC_INFO_QUERY: {
-            StatisticInfoQueryResponse* staInfoQueryRsp = (StatisticInfoQueryResponse*)message;
+            StatisticInfoQueryResponse* staInfoQueryRsp =
+                reinterpret_cast<StatisticInfoQueryResponse*>(const_cast<char*>(message));
             string logOrDomain;
             if (!staInfoQueryRsp) {
                 return RET_FAIL;
@@ -263,7 +278,8 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_STATISTIC_INFO_CLEAR: {
-            StatisticInfoClearResponse* staInfoClearRsp = (StatisticInfoClearResponse*)message;
+            StatisticInfoClearResponse* staInfoClearRsp =
+                reinterpret_cast<StatisticInfoClearResponse*>(const_cast<char*>(message));
             string logOrDomain;
             if (!staInfoClearRsp) {
                 return RET_FAIL;
@@ -284,11 +300,12 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_LOG_CLEAR: {
-            LogClearResponse* pLogClearRsp = (LogClearResponse*)message;
+            LogClearResponse* pLogClearRsp =
+                reinterpret_cast<LogClearResponse*>(const_cast<char*>(message));
             if (!pLogClearRsp) {
-                RET_FAIL;
+                return RET_FAIL;
             }
-            LogClearResult* pLogClearRst = (LogClearResult*)&pLogClearRsp->logClearRst;
+            LogClearResult* pLogClearRst = reinterpret_cast<LogClearResult*>(&pLogClearRsp->logClearRst);
             while (pLogClearRst && resultLen < msgLen) {
                 if (pLogClearRst->result < 0) {
                     outputStr += GetLogTypeStr(pLogClearRst->logType);
@@ -306,12 +323,13 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_LOG_PERSIST_START: {
-            LogPersistStartResponse* pLogPersistStartRsp = (LogPersistStartResponse*)message;
+            LogPersistStartResponse* pLogPersistStartRsp =
+                reinterpret_cast<LogPersistStartResponse*>(const_cast<char*>(message));
             if (!pLogPersistStartRsp) {
                 return RET_FAIL;
             }
             LogPersistStartResult* pLogPersistStartRst =
-                (LogPersistStartResult*)&pLogPersistStartRsp->logPersistStartRst;
+                reinterpret_cast<LogPersistStartResult*>(&pLogPersistStartRsp->logPersistStartRst);
             while (pLogPersistStartRst && resultLen < msgLen) {
                 if (pLogPersistStartRst->result < 0) {
                     outputStr += "Persist task [jobid:";
@@ -329,11 +347,13 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_LOG_PERSIST_STOP: {
-            LogPersistStopResponse* pLogPersistStopRsp = (LogPersistStopResponse*)message;
+            LogPersistStopResponse* pLogPersistStopRsp =
+                reinterpret_cast<LogPersistStopResponse*>(const_cast<char*>(message));
             if (!pLogPersistStopRsp) {
                 return RET_FAIL;
             }
-            LogPersistStopResult* pLogPersistStopRst = (LogPersistStopResult*)&pLogPersistStopRsp->logPersistStopRst;
+            LogPersistStopResult* pLogPersistStopRst =
+                reinterpret_cast<LogPersistStopResult*>(&pLogPersistStopRsp->logPersistStopRst);
             while (pLogPersistStopRst && resultLen < msgLen) {
                 if (pLogPersistStopRst->result < 0) {
                     outputStr += "Persist task [jobid:";
@@ -351,12 +371,13 @@ int32_t ControlCmdResult(const char* message)
             break;
         }
         case MC_RSP_LOG_PERSIST_QUERY: {
-            LogPersistQueryResponse* pLogPersistQueryRsp = (LogPersistQueryResponse*)message;
+            LogPersistQueryResponse* pLogPersistQueryRsp =
+                reinterpret_cast<LogPersistQueryResponse*>(const_cast<char*>(message));
             if (!pLogPersistQueryRsp) {
                 return RET_FAIL;
             }
             LogPersistQueryResult* pLogPersistQueryRst =
-                (LogPersistQueryResult*)&pLogPersistQueryRsp->logPersistQueryRst;
+                reinterpret_cast<LogPersistQueryResult*>(&pLogPersistQueryRsp->logPersistQueryRst);
             while (pLogPersistQueryRst && resultLen < msgLen) {
                 if (pLogPersistQueryRst->result < 0) {
                     outputStr = "Persist task [logtype:";
@@ -389,10 +410,12 @@ int32_t ControlCmdResult(const char* message)
     return 0;
 }
 
-HilogShowFormat HilogFormat (const char* formatArg)
+HilogShowFormat HilogFormat(const char* formatArg)
 {
     static HilogShowFormat format;
-
+    if (formatArg == nullptr) {
+        exit(1);
+    }
     switch (Hash(formatArg)) {
         case "color"_hash:
             format = COLOR_SHOWFORMAT;
@@ -435,29 +458,29 @@ bool HilogMatchByRegex(string context, string regExpArg)
 {
     smatch regExpSmatch;
     regex regExp(regExpArg);
-    if (regex_search(context, regExpSmatch, regExp)) {
-        return false;
-    } else {
-        return true;
-    }
+    return regex_search(context, regExpSmatch, regExp);
 }
 
 void HilogShowLog(uint32_t showFormat, HilogDataMessage* data, const HilogArgs* context,
     vector<string>& tailBuffer)
 {
+    if (data == nullptr) {
+        return;
+    }
     if (data->sendId == SENDIDN) {
         return;
     }
-
     if (data->length == 0) {
         std::cout << ParseErrorCode(ERR_LOG_CONTENT_NULL) << endl;
         return;
     }
-
     static int printHeadCnt = 0;
     HilogShowFormatBuffer showBuffer;
     const char* content = data->data + data->tag_len;
 
+    if (context == nullptr) {
+        return;
+    }
     if (context->headLines) {
         if (printHeadCnt++ >= context->headLines) {
             exit(1);
@@ -465,7 +488,7 @@ void HilogShowLog(uint32_t showFormat, HilogDataMessage* data, const HilogArgs* 
     }
     if (context->regexArgs != "") {
         string str = content;
-        if (HilogMatchByRegex(str, context->regexArgs)) {
+        if (!HilogMatchByRegex(str, context->regexArgs)) {
             return;
         }
     }
