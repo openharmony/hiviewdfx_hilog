@@ -33,7 +33,8 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-
+constexpr int BIT_INIT_VAL = 0b01;
+constexpr uint16_t INVALD_LOG_TYPE = 0xffff;
 const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
 const uint32_t DEFAULT_JOBID = 1;
@@ -145,7 +146,7 @@ uint16_t GetLogLevel(const std::string& logLevelStr, std::string& logLevel)
         logLevel = "F";
         return LOG_FATAL;
     }
-    return 0xffff;
+    return INVALD_LOG_TYPE;
 }
 
 string SetDefaultLogType(const std::string& logTypeStr)
@@ -165,12 +166,15 @@ void NextRequestOp(SeqPacketSocketClient& controller, uint16_t sendId)
     NextRequest nextRequest = {{0}};
     SetMsgHead(&nextRequest.header, NEXT_REQUEST, sizeof(NextRequest)-sizeof(MessageHeader));
     nextRequest.sendId = sendId;
-    controller.WriteAll((char*)&nextRequest, sizeof(NextRequest));
+    controller.WriteAll(reinterpret_cast<char*>(&nextRequest), sizeof(NextRequest));
 }
 
 void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* context)
 {
     LogQueryRequest logQueryRequest = {{0}};
+    if (context == nullptr) {
+        return;
+    }
     logQueryRequest.levels = context->levels;
     logQueryRequest.types = context->types;
     logQueryRequest.nPid = context->nPid;
@@ -207,7 +211,7 @@ void LogQueryRequestOp(SeqPacketSocketClient& controller, const HilogArgs* conte
     }
     SetMsgHead(&logQueryRequest.header, LOG_QUERY_REQUEST, sizeof(LogQueryRequest)-sizeof(MessageHeader));
     logQueryRequest.header.version = 0;
-    controller.WriteAll((char*)&logQueryRequest, sizeof(LogQueryRequest));
+    controller.WriteAll(reinterpret_cast<char*>(&logQueryRequest), sizeof(LogQueryRequest));
 }
 
 void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uint32_t bufLen,
@@ -215,7 +219,13 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
 {
     static std::vector<string> tailBuffer;
     LogQueryResponse* rsp = reinterpret_cast<LogQueryResponse*>(recvBuffer);
+    if (rsp == nullptr || context == nullptr) {
+        return;
+    }
     HilogDataMessage* data = &(rsp->data);
+    if (data == nullptr) {
+        return;
+    }
     if (data->sendId != SENDIDN) {
         HilogShowLog(format, data, context, tailBuffer);
     }
@@ -229,6 +239,9 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
             return;
         }
         MessageHeader* msgHeader = &(rsp->header);
+        if (msgHeader == nullptr) {
+            return;
+        }
         if (msgHeader->msgType == NEXT_RESPONSE) {
             switch (data->sendId) {
                 case SENDIDN:
@@ -253,8 +266,9 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
         }
     }
 }
-int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr,
-    const std::string& buffSizeStr)
+
+int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
+    const std::string& logTypeStr, const std::string& buffSizeStr)
 {
     char msgToSend[MSG_MAX_LEN] = {0};
     vector<string> vecLogType;
@@ -266,7 +280,13 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const st
     switch (msgCmd) {
         case MC_REQ_BUFFER_SIZE: {
             BufferSizeRequest* pBuffSizeReq = reinterpret_cast<BufferSizeRequest*>(msgToSend);
+            if (pBuffSizeReq == nullptr) {
+                return RET_FAIL;
+            }
             BuffSizeMsg* pBuffSizeMsg = reinterpret_cast<BuffSizeMsg*>(&pBuffSizeReq->buffSizeMsg);
+            if (pBuffSizeMsg == nullptr) {
+                return RET_FAIL;
+            }
             if (logTypeNum * sizeof(BuffSizeMsg) + sizeof(MessageHeader) > MSG_MAX_LEN) {
                 return RET_FAIL;
             }
@@ -282,10 +302,15 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const st
             controller.WriteAll(msgToSend, sizeof(MessageHeader) + sizeof(BuffSizeMsg) * logTypeNum);
             break;
         }
-
         case MC_REQ_BUFFER_RESIZE: {
             BufferResizeRequest* pBuffResizeReq = reinterpret_cast<BufferResizeRequest*>(msgToSend);
+            if (pBuffResizeReq == nullptr) {
+                return RET_FAIL;
+            }
             BuffResizeMsg* pBuffResizeMsg = reinterpret_cast<BuffResizeMsg*>(&pBuffResizeReq->buffResizeMsg);
+            if (pBuffResizeMsg == nullptr) {
+                return RET_FAIL;
+            }
             if (logTypeNum * sizeof(BuffResizeMsg) + sizeof(MessageHeader) > MSG_MAX_LEN) {
                 return RET_FAIL;
             }
@@ -302,7 +327,6 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const st
             controller.WriteAll(msgToSend, sizeof(MessageHeader) + sizeof(BuffResizeMsg) * logTypeNum);
             break;
         }
-
         default:
             break;
     }
@@ -336,7 +360,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
             staInfoQueryReq.logType = logType;
             staInfoQueryReq.domain = domain;
             SetMsgHead(&staInfoQueryReq.msgHeader, msgCmd, sizeof(StatisticInfoQueryRequest) - sizeof(MessageHeader));
-            controller.WriteAll((char*)&staInfoQueryReq, sizeof(StatisticInfoQueryRequest));
+            controller.WriteAll(reinterpret_cast<char*>(&staInfoQueryReq), sizeof(StatisticInfoQueryRequest));
             break;
         }
         case MC_REQ_STATISTIC_INFO_CLEAR: {
@@ -344,7 +368,7 @@ int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
             staInfoClearReq.logType = logType;
             staInfoClearReq.domain = domain;
             SetMsgHead(&staInfoClearReq.msgHeader, msgCmd, sizeof(StatisticInfoClearRequest) - sizeof(MessageHeader));
-            controller.WriteAll((char*)&staInfoClearReq, sizeof(StatisticInfoClearRequest));
+            controller.WriteAll(reinterpret_cast<char*>(&staInfoClearReq), sizeof(StatisticInfoClearRequest));
             break;
         }
         default:
@@ -363,6 +387,9 @@ int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std:
     Split(logType, " ", vecLogType);
     logTypeNum = vecLogType.size();
     LogClearRequest* pLogClearReq = reinterpret_cast<LogClearRequest*>(msgToSend);
+    if (pLogClearReq == nullptr) {
+        return RET_FAIL;
+    }
     LogClearMsg* pLogClearMsg = reinterpret_cast<LogClearMsg*>(&pLogClearReq->logClearMsg);
     if (!pLogClearMsg) {
         cout << ParseErrorCode(ERR_MEM_ALLOC_FAIL) << endl;
@@ -396,6 +423,9 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
     int ret = 0;
     uint32_t fileSizeDefault = LOG_PERSIST_FILE_SIZE;
     uint32_t fileNumDefault = LOG_PERSIST_FILE_NUM;
+    if (logPersistParam == nullptr) {
+        return RET_FAIL;
+    }
     string logType = SetDefaultLogType(logPersistParam->logTypeStr);
     Split(logType, " ", vecLogType);
     Split(logPersistParam->jobIdStr, " ", vecJobId);
@@ -416,9 +446,9 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
                     cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
-                pLogPersistStartMsg->logType = (0b01 << tmpType) | pLogPersistStartMsg->logType;
+                pLogPersistStartMsg->logType = (BIT_INIT_VAL << tmpType) | pLogPersistStartMsg->logType;
             }
-            if (pLogPersistStartMsg->logType == (0b01 << LOG_KMSG)) {
+            if (pLogPersistStartMsg->logType == (BIT_INIT_VAL << LOG_KMSG)) {
                 pLogPersistStartMsg->jobId = (logPersistParam->jobIdStr == "") ? DEFAULT_KMSG_JOBID
                     : static_cast<uint32_t>(stoi(logPersistParam->jobIdStr));
             } else {
@@ -446,12 +476,17 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             controller.WriteAll(msgToSend, sizeof(LogPersistStartRequest));
             break;
         }
-
         case MC_REQ_LOG_PERSIST_STOP: {
             LogPersistStopRequest* pLogPersistStopReq =
                 reinterpret_cast<LogPersistStopRequest*>(msgToSend);
+            if (pLogPersistStopReq == nullptr) {
+                return RET_FAIL;
+            }
             LogPersistStopMsg* pLogPersistStopMsg =
                 reinterpret_cast<LogPersistStopMsg*>(&pLogPersistStopReq->logPersistStopMsg);
+            if (pLogPersistStopMsg == nullptr) {
+                return RET_FAIL;
+            }
             if (logPersistParam->jobIdStr == "") {
                 pLogPersistStopMsg->jobId = JOB_ID_ALL;
                 SetMsgHead(&pLogPersistStopReq->msgHeader, msgCmd, sizeof(LogPersistStopMsg));
@@ -470,34 +505,35 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             controller.WriteAll(msgToSend, sizeof(LogPersistStopMsg) * jobIdNum + sizeof(MessageHeader));
             break;
         }
-
         case MC_REQ_LOG_PERSIST_QUERY: {
             LogPersistQueryRequest* pLogPersistQueryReq =
                 reinterpret_cast<LogPersistQueryRequest*>(msgToSend);
+            if (pLogPersistQueryReq == nullptr) {
+                return RET_FAIL;
+            }
             LogPersistQueryMsg* pLogPersistQueryMsg =
                 reinterpret_cast<LogPersistQueryMsg*>(&pLogPersistQueryReq->logPersistQueryMsg);
-
+            if (pLogPersistQueryMsg == nullptr) {
+                return RET_FAIL;
+            }
             for (iter = 0; iter < logTypeNum; iter++) {
                 uint16_t tmpType = GetLogType(vecLogType[iter]);
                 if (tmpType == LOG_TYPE_MAX) {
                     cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
                     return RET_FAIL;
                 }
-                pLogPersistQueryMsg->logType = (0b01 << tmpType) | pLogPersistQueryMsg->logType;
+                pLogPersistQueryMsg->logType = (BIT_INIT_VAL << tmpType) | pLogPersistQueryMsg->logType;
             }
             SetMsgHead(&pLogPersistQueryReq->msgHeader, msgCmd, sizeof(LogPersistQueryMsg));
             controller.WriteAll(msgToSend, sizeof(LogPersistQueryRequest));
             break;
         }
-
         default:
             break;
     }
-
     if (ret) {
         return RET_FAIL;
     }
-
     return RET_SUCCESS;
 }
 
@@ -508,6 +544,9 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
     uint32_t domainNum, tagNum;
     uint32_t iter;
     string key, value;
+    if (propertyParm == nullptr) {
+        return RET_FAIL;
+    }
     Split(propertyParm->domainStr, " ", vecDomain);
     Split(propertyParm->tagStr, " ", vecTag);
     domainNum = vecDomain.size();
@@ -564,14 +603,13 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 }
             } else {
                     key = GetPropertyName(PROP_GLOBAL_LOG_LEVEL);
-                    if (GetLogLevel(propertyParm->logLevelStr, value) == 0xffff) {
+                    if (GetLogLevel(propertyParm->logLevelStr, value) == INVALD_LOG_TYPE) {
                         return RET_FAIL;
                     }
                     PropertySet(key.c_str(), value.c_str());
                     cout << "global log level is set to " << propertyParm->logLevelStr << endl;
             }
             break;
-
         case OT_FLOW_SWITCH:
             if (propertyParm->flowSwitchStr == "pidon") {
                 key = GetPropertyName(PROP_PROCESS_FLOWCTRL);
@@ -594,7 +632,6 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
                 return RET_FAIL;
             }
             break;
-
         default:
             break;
     }

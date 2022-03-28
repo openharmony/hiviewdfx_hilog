@@ -176,7 +176,9 @@ HilogBuffer::ReaderId HilogBuffer::CreateBufReader(std::function<void()> onNewDa
 {
     std::unique_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
     auto reader = std::make_shared<BufferReader>();
-    reader->m_onNewDataCallback = onNewDataCallback;
+    if (reader != nullptr) {
+        reader->m_onNewDataCallback = onNewDataCallback;
+    }
     ReaderId id = reinterpret_cast<ReaderId>(reader.get());
     m_logReaders.insert(std::make_pair(id, reader));
     return id;

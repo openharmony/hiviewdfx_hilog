@@ -44,13 +44,13 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
     header->tag_len = tagLen;
 
     iovec vec[3];
-    vec[0].iov_base = header;                // 0 : index of hos log header
-    vec[0].iov_len = sizeof(HilogMsg);       // 0 : index of hos log header
-    vec[1].iov_base = (void*)tag;            // 1 : index of log tag
-    vec[1].iov_len = tagLen;                 // 1 : index of log tag
-    vec[2].iov_base = (void*)fmt;            // 2 : index of log content
-    vec[2].iov_len = fmtLen;                 // 2 : index of log content
-    ret = WriteV(vec, 3);                    // 3 : written size of vector
+    vec[0].iov_base = header;                                              // 0 : index of hos log header
+    vec[0].iov_len = sizeof(HilogMsg);                                     // 0 : index of hos log header
+    vec[1].iov_base = reinterpret_cast<void*>(const_cast<char*>(tag));     // 1 : index of log tag
+    vec[1].iov_len = tagLen;                                               // 1 : index of log tag
+    vec[2].iov_base = reinterpret_cast<void*>(const_cast<char*>(fmt));     // 2 : index of log content
+    vec[2].iov_len = fmtLen;                                               // 2 : index of log content
+    ret = WriteV(vec, 3);                                                  // 3 : written size of vector
     if (ret < 0) {
         Connect();
         ret = WriteV(vec, 3);                // 3 : written size of vector

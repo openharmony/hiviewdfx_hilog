@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef HILOG_COMPRESS_H
 #define HILOG_COMPRESS_H
 
@@ -26,11 +27,10 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-typedef struct {
+using LogPersisterBuffer = struct {
     char content[MAX_PERSISTER_BUFFER_SIZE];
     uint32_t offset;
-} LogPersisterBuffer;
-
+};
 
 class LogCompress {
 public:
@@ -51,7 +51,7 @@ private:
     static const uint16_t CHUNK = 16384;
     char buffIn[CHUNK] = {0};
     char buffOut[CHUNK] = {0};
-    
+
     z_stream cStream;
 };
 
@@ -66,6 +66,6 @@ private:
     ZSTD_CCtx* cctx;
 #endif
 };
-}
-}
+} // namespace HiviewDFX
+} // namespace OHOS
 #endif /* HILOG_COMPRESS_H */

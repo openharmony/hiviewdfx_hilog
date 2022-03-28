@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef LOG_QUERIER_H
 #define LOG_QUERIER_H
 
@@ -38,6 +39,7 @@ public:
     ~ServiceController();
 
     void CommunicationLoop(const std::atomic<bool>& stopLoop);
+
 private:
     void SetFilters(const PacketBuf& rawData);
 

@@ -107,15 +107,15 @@ static std::string PopenToString(const std::string &command)
 
 class HiLogNDKTest : public testing::Test {
 public:
-    static void SetUpTestCase() {};
-    static void TearDownTestCase() {};
+    static void SetUpTestCase() {}
+    static void TearDownTestCase() {}
     void SetUp();
-    void TearDown() {};
+    void TearDown() {}
 };
 
 void HiLogNDKTest::SetUp()
 {
-    PopenToString("hilog -r");
+    (void)PopenToString("hilog -r");
 }
 
 static std::string RandomStringGenerator()

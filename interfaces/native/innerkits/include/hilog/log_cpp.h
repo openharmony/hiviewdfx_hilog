@@ -19,15 +19,13 @@
 #include "hilog/log_c.h"
 
 #ifdef __cplusplus
-
 namespace OHOS {
 namespace HiviewDFX {
-
-typedef struct HiLogLabel {
+using HiLogLabel = struct {
     LogType type;
     unsigned int domain;
     const char *tag;
-} HiLogLabel;
+};
 
 class HiLog final {
 public:
@@ -37,10 +35,7 @@ public:
     static int Error(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
     static int Fatal(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
 };
-
 } // namespace HiviewDFX
 } // namespace OHOS
-
 #endif // __cplusplus
-
 #endif // HIVIEWDFX_HILOG_CPP_H

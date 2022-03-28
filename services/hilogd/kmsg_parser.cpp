@@ -44,6 +44,16 @@ constexpr int  DEC = 10;
 #undef LOG_INFO
 #undef LOG_DEBUG
 
+using Priority = enum {
+    PV0 = 0,
+    PV1,
+    PV2,
+    PV3,
+    PV4,
+    PV5,
+    PV6
+};
+
 static void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
 {
     static const std::string pattern = "(\\d+),(\\d+),(\\d+),(\\S);";
@@ -88,19 +98,19 @@ static uint16_t KmsgLevelMap(uint16_t prio)
 {
     uint16_t level;
     switch (prio) {
-        case 0:
-        case 1:
-        case 2:
+        case Priority::PV0:
+        case Priority::PV1:
+        case Priority::PV2:
             level = LOG_FATAL;
             break;
-        case 3:
+        case Priority::PV3:
             level = LOG_ERROR;
             break;
-        case 4:
-        case 5:
+        case Priority::PV4:
+        case Priority::PV5:
             level = LOG_WARN;
             break;
-        case 6:
+        case Priority::PV6:
             level = LOG_INFO;
             break;
         default:
@@ -178,4 +188,3 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
 }
 } // namespace HiviewDFX
 } // namespace OHOS
-

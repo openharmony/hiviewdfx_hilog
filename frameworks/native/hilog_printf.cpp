@@ -163,7 +163,7 @@ static size_t GetExecutablePath(char *processdir, char *processname, size_t len)
     if (readlink("/proc/self/exe", processdir, len) <= 0)
         return -1;
     path_end = strrchr(processdir, '/');
-    if (path_end == NULL)
+    if (path_end == nullptr)
         return -1;
     ++path_end;
     if (strncpy_s(processname, MAX_PATH_LEN, path_end, MAX_PATH_LEN - 1)) {
@@ -203,7 +203,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     }
 
     /* print traceid */
-    if (g_registerFunc != NULL) {
+    if (g_registerFunc != nullptr) {
         uint64_t chainId = 0;
         uint32_t flag = 0;
         uint64_t spanId = 0;
@@ -211,7 +211,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         int ret = -1;  /* default value -1: invalid trace id */
         atomic_fetch_add_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
         RegisterFunc func = g_registerFunc;
-        if (g_registerFunc != NULL) {
+        if (g_registerFunc != nullptr) {
             ret = func(&chainId, &flag, &spanId, &parentSpanId);
         }
         atomic_fetch_sub_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
@@ -266,9 +266,10 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         return ret;
     } else if (ret > 0) {
         char dropLogBuf[MAX_LOG_LEN] = {0};
-        (void)snprintf_s(dropLogBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "%d line(s) dopped!", ret);
-        HilogWriteLogMessage(&header, P_LIMIT_TAG, strlen(P_LIMIT_TAG) + 1, dropLogBuf,
-                             strnlen(dropLogBuf, MAX_LOG_LEN - 1) + 1);
+        if (snprintf_s(dropLogBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "%d line(s) dropped!", ret) == EOK) {
+            HilogWriteLogMessage(&header, P_LIMIT_TAG, strlen(P_LIMIT_TAG) + 1, dropLogBuf,
+                strnlen(dropLogBuf, MAX_LOG_LEN - 1) + 1);
+        }
     }
 
     return HilogWriteLogMessage(&header, tag, tagLen + 1, buf, logLen + 1);

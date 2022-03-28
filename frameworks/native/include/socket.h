@@ -24,7 +24,7 @@ namespace OHOS {
 namespace HiviewDFX {
 class Socket {
 public:
-    Socket(int socketType);
+    explicit Socket(int socketType);
     ~Socket();
     bool closeHandler();
     bool setHandler(int socketHandler);

@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef LOG_KMSG_H
 #define LOG_KMSG_H
 
@@ -22,7 +23,7 @@ namespace OHOS {
 namespace HiviewDFX {
 class LogKmsg {
 public:
-    LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {};
+    explicit LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {}
     ~LogKmsg();
     ssize_t LinuxReadOneKmsg(KmsgParser& parser);
     int LinuxReadAllKmsg();
@@ -35,4 +36,3 @@ private:
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
-

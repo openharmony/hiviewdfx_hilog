@@ -31,7 +31,7 @@ namespace HiviewDFX {
 uint64_t GenerateHash(const PersistRecoveryInfo &info)
 {
     uint64_t ret {BASIS};
-    const char *p = (char *)&info;
+    const char *p = reinterpret_cast<char*>(const_cast<PersistRecoveryInfo*>(&info));
     unsigned long i = 0;
     while (i < sizeof(PersistRecoveryInfo)) {
         ret ^= *(p + i);
@@ -62,10 +62,7 @@ bool LogPersisterRotator::IsOldFile(const std::string& logName, const int index)
 
 LogPersisterRotator::LogPersisterRotator(const std::string& logsPath, uint32_t id, uint32_t maxFiles,
     const std::string& fileNameSuffix)
-    : m_maxLogFileNum(maxFiles)
-    , m_logsPath(logsPath)
-    , m_fileNameSuffix(fileNameSuffix)
-    , m_id(id)
+    : m_maxLogFileNum(maxFiles), m_logsPath(logsPath), m_fileNameSuffix(fileNameSuffix), m_id(id)
 {
 }
 
@@ -109,7 +106,7 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
     std::cout << __PRETTY_FUNCTION__
         << " Log location: " << m_logsPath
         << " idx: " << m_currentLogFileIdx << "/" << m_maxLogFileNum
-        << " buf: " <<  (void*) buf << " len: " << length
+        << " buf: " << reinterpret_cast<void*>(const_cast<char*>(buf)) << " len: " << length
         << " needRotate: " << (m_needRotate ? 'T' : 'F') << "\n";
     if (length <= 0 || buf == nullptr) {
         return ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP;
@@ -127,10 +124,10 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
 
 void LogPersisterRotator::RemoveOldFile()
 {
-    DIR *dir;
+    DIR *dir = nullptr;
     struct dirent *ent = nullptr;
-    if ((dir = opendir(HILOG_FILE_DIR)) != NULL) {
-        while ((ent = readdir(dir)) != NULL) {
+    if ((dir = opendir(HILOG_FILE_DIR)) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
             size_t length = strlen(ent->d_name);
             std::string pPath(ent->d_name, length);
             if (IsOldFile(pPath, m_currentLogFileIdx)) {
@@ -139,7 +136,9 @@ void LogPersisterRotator::RemoveOldFile()
             }
         }
     }
-    closedir(dir);
+    if (dir != nullptr) {
+        closedir(dir);
+    }
 }
 
 void LogPersisterRotator::Rotate()
