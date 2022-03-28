@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef LOG_TIME_STAMP_H
 #define LOG_TIME_STAMP_H
 
@@ -31,10 +32,10 @@ public:
     }
 #endif
     explicit LogTimeStamp(const timespec& time)
-        : tv_sec(static_cast<uint32_t>(time.tv_sec)), 
-        tv_nsec(static_cast<uint32_t>(time.tv_nsec)) {};
+        : tv_sec(static_cast<uint32_t>(time.tv_sec)),
+        tv_nsec(static_cast<uint32_t>(time.tv_nsec)) {}
     explicit LogTimeStamp(uint32_t sec, uint32_t nsec = 0)
-        : tv_sec(sec), tv_nsec(nsec) {};
+        : tv_sec(sec), tv_nsec(nsec) {}
     /* LogTimeStamp */
     bool operator == (const LogTimeStamp& time) const
     {

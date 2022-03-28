@@ -32,4 +32,3 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
     return HiLogIsLoggable(domain, tag, level);
 }
-

@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef LOG_FORMAT_H
 #define LOG_FORMAT_H
 #include <iostream>
@@ -19,8 +20,6 @@
 #include "hilogtool_msg.h"
 namespace OHOS {
 namespace HiviewDFX {
-const char* ParsedFromLevel(uint16_t level);
-int ColorFromLevel(uint16_t level);
 void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, uint32_t showFormat);
 } // namespace HiviewDFX
 } // namespace OHOS

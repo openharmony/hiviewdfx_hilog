@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef HILOGTOOL_H
 #define HILOGTOOL_H
 
@@ -20,7 +21,7 @@ namespace HiviewDFX {
 #define DOMAIN_NUMBER_BASE (16)
 #define DOMAIN_MAX_SCOPE 0xDFFFFFF
 
-typedef struct {
+using HilogArgs = struct {
     uint16_t noBlockMode;
     uint8_t nPid;
     uint8_t nNoPid;
@@ -62,7 +63,7 @@ typedef struct {
     std::string flowQuotaArgs;
     std::string pidArgs;
     std::string algorithmArgs;
-}  HilogArgs;
+};
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif

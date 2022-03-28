@@ -57,27 +57,27 @@ int ZlibCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
     do {
         bool flag = read - src_pos < toRead;
         if (flag) {
-            memset_s(buffIn, CHUNK, 0, CHUNK);
+            (void)memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, inBuffer.content + src_pos, read - src_pos) != 0) {
                 return -1;
             }
             cStream.avail_in = read - src_pos;
             src_pos += read - src_pos;
         } else {
-            memset_s(buffIn, CHUNK, 0, CHUNK);
+            (void)memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, inBuffer.content + src_pos, toRead) != 0) {
                 return -1;
-            };
+            }
             src_pos += toRead;
             cStream.avail_in = toRead;
         }
         flush = flag ? Z_FINISH : Z_NO_FLUSH;
-        cStream.next_in = (Bytef *)buffIn;
+        cStream.next_in = reinterpret_cast<Bytef*>(buffIn);
         /* run deflate() on input until output buffer not full, finish
            compression if all of source has been read in */
         do {
             cStream.avail_out = CHUNK;
-            cStream.next_out = (Bytef *)buffOut;
+            cStream.next_out = reinterpret_cast<Bytef*>(buffOut);
             if (deflate(&cStream, flush) == Z_STREAM_ERROR) {
                 return -1;
             }
@@ -124,14 +124,14 @@ int ZstdCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
     do {
         bool flag = read - src_pos < toRead;
         if (flag) {
-            memset_s(buffIn, CHUNK, 0, CHUNK);
+            (void)memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, inBuffer.content + src_pos, read - src_pos) != 0) {
                 return -1;
             }
             input = {buffIn, read - src_pos, 0};
             src_pos += read - src_pos;
         } else {
-            memset_s(buffIn, CHUNK, 0, CHUNK);
+            (void)memset_s(buffIn, CHUNK, 0, CHUNK);
             if (memmove_s(buffIn, CHUNK, inBuffer.content + src_pos, toRead) != 0) {
                 return -1;
             }
@@ -143,7 +143,7 @@ int ZstdCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
         do {
             ZSTD_outBuffer output = {buffOut, CHUNK, 0};
             size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
-            if (memmove_s(zdata + dst_pos, zdlen, (Bytef *)buffOut, output.pos) != 0) {
+            if (memmove_s(zdata + dst_pos, zdlen, reinterpret_cast<Bytef*>(buffOut), output.pos) != 0) {
                 return -1;
             }
             dst_pos += output.pos;

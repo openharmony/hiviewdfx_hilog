@@ -41,7 +41,6 @@ SocketServer::SocketServer(const std::string& _socketName, uint32_t socketType)
     if (strcpy_s(serverAddr.sun_path, sizeof(serverAddr.sun_path), sockPath.c_str()) != EOK) {
         return;
     }
-    serverAddr.sun_path[sizeof(serverAddr.sun_path) - 1] = '\0';
 }
 
 int SocketServer::Init()

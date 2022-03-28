@@ -30,6 +30,8 @@
 #define OHOS_SOCKET_DIR "/dev/socket/"
 #define OHOS_SOCKET_FILE_PREFIX "socket"
 
+static constexpr int DECIMAL = 10;
+
 static std::string GetFileNameByFd(const int fd)
 {
     if (fd <= 0) {
@@ -60,7 +62,7 @@ static void GetSocketFds(std::vector<int> &fds)
         if (dp->d_name[0] == '.') {
             continue;
         }
-        fd = atoi(dp->d_name);
+        fd = strtol(dp->d_name, nullptr, DECIMAL);
         auto name = GetFileNameByFd(fd);
         if (strncmp(name.c_str(), OHOS_SOCKET_FILE_PREFIX, strlen(OHOS_SOCKET_FILE_PREFIX))) {
             continue;
@@ -76,7 +78,7 @@ static bool CheckSocketType(int fd, int type)
 {
     int soType = -1;
     socklen_t optlen = static_cast<socklen_t>(sizeof(soType));
-    if (getsockopt(fd, SOL_SOCKET,SO_TYPE, &soType, &optlen)) {
+    if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &soType, &optlen)) {
         return false;
     }
 
@@ -98,7 +100,7 @@ int GetExistingSocketServer(const char *name, int type)
         struct sockaddr_un addr;
         socklen_t addrLen = static_cast<socklen_t>(sizeof(addr));
 
-        if (CheckSocketType(fd, type) == false) {
+        if (!CheckSocketType(fd, type)) {
             continue;
         }
 

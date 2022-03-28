@@ -54,6 +54,7 @@ public:
     int32_t ClearStatisticInfoByDomain(uint32_t domain);
 
     static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData);
+
 private:
     struct BufferReader {
         LogMsgContainer::iterator m_pos;

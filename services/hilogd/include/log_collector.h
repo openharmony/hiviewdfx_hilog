@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef LOG_COLLECTOR_H
 #define LOG_COLLECTOR_H
 #include <list>
@@ -23,7 +24,7 @@ namespace OHOS {
 namespace HiviewDFX {
 class LogCollector {
 public:
-    LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
+    explicit LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
     void InsertDropInfo(const HilogMsg &msg, int droppedCount);
     size_t InsertLogToBuffer(const HilogMsg& msg);
 #ifndef __RECV_MSG_WITH_UCRED_

@@ -51,7 +51,7 @@ void LogCollector::InsertDropInfo(const HilogMsg &msg, int droppedCount)
         if (memcpy_s(dropMsg->tag, remainSize, tag.data(), tag.size())) {
             std::cerr << "Can't copy tag info of Drop Info message\n";
         }
-        
+
         remainSize -= tag.size();
         auto logTextPtr = dropMsg->tag + tag.size(); // log text is behind tag data
         if (memcpy_s(logTextPtr, remainSize, dropLog.data(), dropLog.size() + 1)) {

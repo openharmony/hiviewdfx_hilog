@@ -34,7 +34,6 @@ SocketClient::SocketClient(std::string serverPath, uint32_t socketType) : Socket
     if (strcpy_s(serverAddr.sun_path, sizeof(serverAddr.sun_path), sockPath.c_str()) != EOK) {
         return;
     }
-    serverAddr.sun_path[sizeof(serverAddr.sun_path) - 1] = '\0';
 }
 
 int SocketClient::Connect()

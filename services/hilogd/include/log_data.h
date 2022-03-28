@@ -64,8 +64,8 @@ struct HilogData {
         tag = nullptr;
         content = nullptr;
     }
-    HilogData() : len(0), tag(nullptr), content(nullptr) {};
-    HilogData(const HilogMsg& msg)
+    HilogData() : len(0), tag(nullptr), content(nullptr) {}
+    explicit HilogData(const HilogMsg& msg)
         : len(0), version(msg.version), type(msg.type), level(msg.level), tag_len(msg.tag_len),
         tv_sec(msg.tv_sec), tv_nsec(msg.tv_nsec), pid(msg.pid), tid(msg.tid), domain(msg.domain),
         tag(nullptr), content(nullptr)

@@ -189,7 +189,6 @@ int HilogdEntry()
             RestorePersistJobs(hilogBuffer);
         }
     });
-
     auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.rd_kmsg");
         LogKmsg logKmsg(hilogBuffer);
@@ -199,9 +198,9 @@ int HilogdEntry()
     auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cgroup_set");
         string myPid = to_string(getpid());
-        WriteStringToFile(myPid, SYSTEM_BG_STUNE);
-        WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
-        WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
+        (void)WriteStringToFile(myPid, SYSTEM_BG_STUNE);
+        (void)WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
+        (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
 
     CmdExecutor cmdExecutor(hilogBuffer);
@@ -213,6 +212,6 @@ int HilogdEntry()
 
 int main()
 {
-    OHOS::HiviewDFX::HilogdEntry();
+    (void)OHOS::HiviewDFX::HilogdEntry();
     return 0;
 }
