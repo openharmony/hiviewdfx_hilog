@@ -24,7 +24,7 @@
 
 #define FILE_PATH_MAX_LEN 100
 #define JOB_ID_ALL 0xffffffff
-typedef enum {
+using OperationCmd = enum {
     LOG_QUERY_REQUEST = 0x01,
     LOG_QUERY_RESPONSE,
     NEXT_REQUEST,
@@ -48,20 +48,19 @@ typedef enum {
     MC_RSP_FLOW_CONTROL,         // set flow control response
     MC_REQ_LOG_CLEAR,            // clear log request
     MC_RSP_LOG_CLEAR             // clear log response
-} OperationCmd;
+};
 
 /*
  * property operation, such as private switch ,log level, flow switch
  */
-typedef enum {
+using OperateType = enum {
     OT_PRIVATE_SWITCH = 0x01,
     OT_KMSG_SWITCH,
     OT_LOG_LEVEL,
     OT_FLOW_SWITCH,
-} OperateType;
+};
 
-
-typedef enum {
+using PersisterResponse = enum {
     CREATE_SUCCESS = 1,
     CREATE_DUPLICATE = 2,
     CREATE_DENIED = 3,
@@ -69,15 +68,15 @@ typedef enum {
     QUERY_NOT_EXIST = 5,
     DELETE_SUCCESS = 6,
     DELETE_DENIED = 7,
-} PersisterResponse;
+};
 
-typedef enum {
+using CompressAlg = enum {
     COMPRESS_TYPE_NONE = 0,
     COMPRESS_TYPE_ZSTD,
     COMPRESS_TYPE_ZLIB,
-} CompressAlg;
+};
 
-typedef enum {
+using HilogShowFormat = enum {
     OFF_SHOWFORMAT = 0,
     COLOR_SHOWFORMAT,
     TIME_SHOWFORMAT,
@@ -87,15 +86,15 @@ typedef enum {
     EPOCH_SHOWFORMAT,
     MONOTONIC_SHOWFORMAT,
     TIME_NSEC_SHOWFORMAT,
-} HilogShowFormat;
+};
 
-typedef struct {
+using MessageHeader = struct {
     uint8_t version;
     uint8_t msgType;  // hilogtool-hilogd message type
     uint16_t msgLen;  // message length
-} MessageHeader;
+};
 
-typedef struct {
+using LogQueryRequest = struct {
     MessageHeader header;
     uint8_t nPid;
     uint8_t nNoPid;
@@ -114,9 +113,9 @@ typedef struct {
     uint32_t noPids[MAX_PIDS];
     uint32_t noDomains[MAX_DOMAINS];
     char noTags[MAX_TAGS][MAX_TAG_LEN];
-} LogQueryRequest;
+};
 
-typedef struct {
+using HilogDataMessage = struct {
     uint16_t sendId;
     uint16_t length; /* data len, equals tag_len plus content length, include '\0' */
     uint16_t level;
@@ -128,76 +127,76 @@ typedef struct {
     uint32_t tv_sec;
     uint32_t tv_nsec;
     char data[]; /* tag and content, include '\0' */
-} HilogDataMessage;
+};
 
-typedef struct {
+using LogQueryResponse = struct {
     MessageHeader header;
     HilogDataMessage data;
-} LogQueryResponse;
+};
 
-typedef struct {
+using NewDataNotify = struct {
     MessageHeader header;
-} NewDataNotify;
+};
 
-typedef struct {
+using NextRequest = struct {
     MessageHeader header;
     uint16_t sendId;
-} NextRequest;
+};
 
-typedef struct {
+using NextResponce = struct {
     MessageHeader header;
     uint16_t sendId;
     char data[];
-} NextResponce;
+};
 
-typedef struct {
+using BuffSizeMsg = struct {
     uint16_t logType;
-} BuffSizeMsg;
+};
 
-typedef struct {
+using BufferSizeRequest = struct {
     MessageHeader msgHeader;
     BuffSizeMsg buffSizeMsg[];
-} BufferSizeRequest;
+};
 
-typedef struct {
+using BuffSizeResult = struct {
     uint16_t logType;
     uint64_t buffSize;
     int32_t result;
-} BuffSizeResult;
+};
 
-typedef struct {
+using BufferSizeResponse = struct {
     MessageHeader msgHeader;
     BuffSizeResult buffSizeRst[];
-} BufferSizeResponse;
+};
 
-typedef struct {
+using BuffResizeMsg = struct {
     uint16_t logType;
     uint64_t buffSize;
-} BuffResizeMsg;
+};
 
-typedef struct {
+using BufferResizeRequest = struct {
     MessageHeader msgHeader;
     BuffResizeMsg buffResizeMsg[];
-} BufferResizeRequest;
+};
 
-typedef struct {
+using BuffResizeResult = struct {
     uint16_t logType;
     uint64_t buffSize;
     int32_t result;
-} BuffResizeResult;
+};
 
-typedef struct {
+using BufferResizeResponse = struct {
     MessageHeader msgHeader;
     BuffResizeResult buffResizeRst[];
-} BufferResizeResponse;
+};
 
-typedef struct {
+using StatisticInfoQueryRequest = struct {
     MessageHeader msgHeader;
     uint16_t logType;
     uint32_t domain;
-} StatisticInfoQueryRequest;
+};
 
-typedef struct {
+using StatisticInfoQueryResponse = struct {
     MessageHeader msgHeader;
     int32_t result;
     uint16_t logType;
@@ -205,97 +204,102 @@ typedef struct {
     uint64_t printLen;
     uint64_t cacheLen;
     int32_t dropped;
-} StatisticInfoQueryResponse;
+};
 
-typedef struct {
+using StatisticInfoClearRequest = struct {
     MessageHeader msgHeader;
     uint16_t logType;
     uint32_t domain;
-} StatisticInfoClearRequest;
+};
 
-typedef struct {
+using StatisticInfoClearResponse = struct {
     MessageHeader msgHeader;
     int32_t result;
     uint16_t logType;
     uint32_t domain;
-} StatisticInfoClearResponse;
+};
 
-typedef struct {
+using LogClearMsg = struct {
     uint16_t logType;
-} LogClearMsg;
+};
 
-typedef struct {
+using LogClearRequest = struct {
     MessageHeader msgHeader;
     LogClearMsg logClearMsg[];
-} LogClearRequest;
+};
 
-typedef struct {
+using LogClearResult = struct {
     uint16_t logType;
     int32_t result;
-} LogClearResult;
+};
 
-typedef struct {
+using LogClearResponse = struct {
     MessageHeader msgHeader;
     LogClearResult logClearRst[];
-} LogClearResponse;
+};
 
-typedef struct {
+using LogPersistParam = struct {
     std::string logTypeStr;
     std::string compressAlgStr;
     std::string fileSizeStr;
     std::string fileNumStr;
     std::string fileNameStr;
     std::string jobIdStr;
-} LogPersistParam;
-typedef struct {
+};
+
+using LogPersistStartMsg = struct {
     uint16_t logType; // union logType
     uint16_t compressAlg;
     char filePath[FILE_PATH_MAX_LEN];
     uint32_t fileSize;
     uint32_t fileNum;
     uint32_t jobId;
-} LogPersistStartMsg;
-typedef struct {
+};
+
+using LogPersistStartRequest = struct {
     MessageHeader msgHeader;
     LogPersistStartMsg logPersistStartMsg;
-} LogPersistStartRequest;
+};
 
-typedef struct {
+using LogPersistStartResult = struct {
     int32_t result;
     uint32_t jobId;
-} LogPersistStartResult;
+};
 
-typedef struct {
+using LogPersistStartResponse = struct {
     MessageHeader msgHeader;
     LogPersistStartResult logPersistStartRst;
-} LogPersistStartResponse;
+};
 
-typedef struct {
+using LogPersistStopMsg = struct {
     uint32_t jobId;
-} LogPersistStopMsg;
-typedef struct {
+};
+
+using LogPersistStopRequest = struct {
     MessageHeader msgHeader;
     LogPersistStopMsg logPersistStopMsg[];
-} LogPersistStopRequest;
+};
 
-typedef struct {
+using LogPersistStopResult = struct {
     int32_t result;
     uint32_t jobId;
-} LogPersistStopResult;
-typedef struct {
+};
+
+using LogPersistStopResponse = struct {
     MessageHeader msgHeader;
     LogPersistStopResult logPersistStopRst[];
-} LogPersistStopResponse;
+};
 
-typedef struct {
+using LogPersistQueryMsg = struct {
     uint16_t logType;
-} LogPersistQueryMsg;
-typedef struct {
+};
+
+using LogPersistQueryRequest = struct {
     MessageHeader msgHeader;
     LogPersistQueryMsg logPersistQueryMsg;
-} LogPersistQueryRequest;
+};
 
-typedef struct {
+using LogPersistQueryResult = struct {
     int32_t result;
     uint32_t jobId;
     uint16_t logType;
@@ -303,13 +307,14 @@ typedef struct {
     char filePath[FILE_PATH_MAX_LEN];
     uint32_t fileSize;
     uint32_t fileNum;
-} LogPersistQueryResult;
-typedef struct {
+};
+
+using LogPersistQueryResponse = struct {
     MessageHeader msgHeader;
     LogPersistQueryResult logPersistQueryRst[];
-} LogPersistQueryResponse;
+};
 
-typedef struct {
+using SetPropertyParam = struct {
     std::string privateSwitchStr;
     std::string kmsgSwitchStr;
     std::string flowSwitchStr;
@@ -317,6 +322,6 @@ typedef struct {
     std::string domainStr;
     std::string tagStr;
     std::string pidStr;
-} SetPropertyParam;
+};
 
 #endif /* HILOGTOOL_MSG_H */

@@ -76,6 +76,7 @@ public:
     {
         return m_isLocked;
     }
+
 private:
     uint32_t m_propType;
     bool m_isLocked;
@@ -89,10 +90,7 @@ public:
     using DataConverter = std::function<T(const RawPropertyData&, const T& defaultVal)>;
 
     CacheData(DataConverter converter, const T& defaultValue, uint32_t propType, const std::string& suffix = "")
-        : m_value(defaultValue)
-        , m_defaultValue(defaultValue)
-        , m_propType(propType)
-        , m_converter(converter)
+        : m_value(defaultValue), m_defaultValue(defaultValue), m_propType(propType), m_converter(converter)
     {
         m_key = GetPropertyName(m_propType) + suffix;
     }
@@ -122,6 +120,7 @@ public:
             return getDirectValue();
         }
     }
+
 private:
     bool getRawValue(char *value, unsigned int len)
     {
@@ -330,36 +329,54 @@ bool IsDebugOn()
 bool IsSingleDebugOn()
 {
     static auto *switchCache = new SwitchCache(textToBool, false, PROP_SINGLE_DEBUG);
+    if (switchCache == nullptr) {
+        return false;
+    }
     return switchCache->getValue();
 }
 
 bool IsPersistDebugOn()
 {
     static auto *switchCache = new SwitchCache(textToBool, false, PROP_PERSIST_DEBUG);
+    if (switchCache == nullptr) {
+        return false;
+    }
     return switchCache->getValue();
 }
 
 bool IsPrivateSwitchOn()
 {
     static auto *switchCache = new SwitchCache(textToBool, true, PROP_PRIVATE);
+    if (switchCache == nullptr) {
+        return false;
+    }
     return switchCache->getValue();
 }
 
 bool IsProcessSwitchOn()
 {
     static auto *switchCache = new SwitchCache(textToBool, false, PROP_PROCESS_FLOWCTRL);
+    if (switchCache == nullptr) {
+        return false;
+    }
     return switchCache->getValue();
 }
 
 bool IsDomainSwitchOn()
 {
     static auto *switchCache = new SwitchCache(textToBool, false, PROP_DOMAIN_FLOWCTRL);
+    if (switchCache == nullptr) {
+        return false;
+    }
     return switchCache->getValue();
 }
 
 bool IsKmsgSwitchOn()
 {
     static auto *switchCache = new SwitchCache(textToBool, false, PROP_KMSG);
+    if (switchCache == nullptr) {
+        return false;
+    }
     return switchCache->getValue();
 }
 

@@ -65,7 +65,7 @@ void ParseLogContent(string& formatStr, vector<string>& params, string& logConte
                 if (formatStr.substr(pos + PROPERTY_POS, PRIVATE_LEN) == "private") {
                     pos += (PRIVATE_LEN + PROPERTY_POS);
                     if (priv) {
-                        showPriv = true ;
+                        showPriv = true;
                     }
                 }
             }
@@ -234,7 +234,7 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
     if (!res) {
         for (size_t i = MIN_NUMBER; i < funcArg.GetArgc(); i++) {
             napi_value argsVal = funcArg[i];
-            parseNapiValue(env, info, argsVal, params);
+            (void)parseNapiValue(env, info, argsVal, params);
         }
     } else {
         if (funcArg.GetArgc() != MIN_NUMBER + 1) {
@@ -254,7 +254,7 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
             if (eleStatus != napi_ok) {
                 return nullptr;
             }
-            parseNapiValue(env, info, element, params);
+            (void)parseNapiValue(env, info, element, params);
         }
     }
     ParseLogContent(fmtString, params, logContent);

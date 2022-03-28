@@ -62,6 +62,9 @@ int LogKmsg::LinuxReadAllKmsg()
         return -1;
     }
     std::unique_ptr<KmsgParser> parser = std::make_unique<KmsgParser>();
+    if (parser == nullptr) {
+        return -1;
+    }
     while (true) {
         ssize_t sz = LinuxReadOneKmsg(*parser);
         if (sz < 0) {
@@ -100,4 +103,3 @@ LogKmsg::~LogKmsg()
 }
 } // namespace HiviewDFX
 } // namespace OHOS
-

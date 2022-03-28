@@ -23,7 +23,7 @@ namespace OHOS {
 namespace HiviewDFX {
 class HilogInputSocketClient : DgramSocketClient {
 public:
-    HilogInputSocketClient() : DgramSocketClient(INPUT_SOCKET_NAME, SOCK_NONBLOCK | SOCK_CLOEXEC) {};
+    HilogInputSocketClient() : DgramSocketClient(INPUT_SOCKET_NAME, SOCK_NONBLOCK | SOCK_CLOEXEC) {}
     int WriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen);
     ~HilogInputSocketClient() = default;
 };

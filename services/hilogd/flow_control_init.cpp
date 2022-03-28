@@ -30,6 +30,8 @@ namespace OHOS {
 namespace HiviewDFX {
 static const int DOMAIN_FILTER  = 0x00fffff;
 static const int DOMAIN_FILTER_SUBSYSTEM = 8;
+constexpr int FLOW_CTL_NORAML = 0;
+constexpr int FLOW_CTL_DROPPED = -1;
 
 using DomainInfo = struct {
     std::string domain;
@@ -160,15 +162,18 @@ int32_t InitDomainFlowCtrl()
 
 int FlowCtrlDomain(HilogMsg* hilogMsg)
 {
+    if (hilogMsg == nullptr) {
+        return FLOW_CTL_DROPPED;
+    }
     if (hilogMsg->type == LOG_APP || !IsDomainSwitchOn() || IsDebugOn()) {
-        return 0;
+        return FLOW_CTL_NORAML;
     }
     LogTimeStamp tsNow(0, 0);
     std::unordered_map<uint32_t, DomainInfo*>::iterator it;
     uint32_t domain = hilogMsg->domain;
     uint32_t domainId = (domain & DOMAIN_FILTER) >> DOMAIN_FILTER_SUBSYSTEM;
     auto logLen = hilogMsg->len - sizeof(HilogMsg) - 1 - 1; /* quota length exclude '\0' of tag and log content */
-    int ret = 0;
+    int ret = FLOW_CTL_NORAML;
     it = g_domainMap.find(domainId);
     if (it != g_domainMap.end()) {
         LogTimeStamp tsNow(CLOCK_MONOTONIC);
@@ -176,11 +181,11 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
         if ((tsNow -= it->second->startTime) < LogTimeStamp(1)) {
             if (it->second->sumLen <= it->second->domainQuota) { /* under quota */
                 it->second->sumLen += logLen;
-                ret = 0;
+                ret = FLOW_CTL_NORAML;
             } else { /* over quota */
                 IncreaseDropped(domainId, hilogMsg->type);
                 it->second->dropped++;
-                ret = -1;
+                ret = FLOW_CTL_DROPPED;
             }
         } else { /* new statistic period */
             it->second->startTime = tsNow;
@@ -192,5 +197,5 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
 
     return ret;
 }
-}
-}
+} // namespace HiviewDFX
+} // namespace OHOS

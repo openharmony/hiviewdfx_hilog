@@ -44,7 +44,8 @@
 namespace OHOS {
 namespace HiviewDFX {
 
-static constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
+static constexpr int DEFAULT_LOG_LEVEL = (1 << LOG_DEBUG) | (1 << LOG_INFO)
+    | (1 << LOG_WARN) | (1 << LOG_ERROR) | (1 << LOG_FATAL);
 static constexpr int SLEEP_TIME = 5;
 
 static bool isEmptyThread(const std::thread& th)
@@ -113,7 +114,7 @@ int LogPersister::InitFileRotator(const InitData& initData)
             break;
         default:
             break;
-    };
+    }
     m_fileRotator = std::make_unique<LogPersisterRotator>(m_baseData.logPath, m_baseData.id,
         m_baseData.maxLogFileNum, fileSuffix);
     if (!m_fileRotator) {
@@ -242,8 +243,8 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
         fflush(plainTextFile);
         fsync(fileno(plainTextFile));
     }
-    m_mappedPlainLogFile = (LogPersisterBuffer *)mmap(nullptr, sizeof(LogPersisterBuffer), PROT_READ | PROT_WRITE,
-        MAP_SHARED, fileno(plainTextFile), 0);
+    m_mappedPlainLogFile = reinterpret_cast<LogPersisterBuffer*>(mmap(nullptr, sizeof(LogPersisterBuffer),
+        PROT_READ | PROT_WRITE, MAP_SHARED, fileno(plainTextFile), 0));
     if (fclose(plainTextFile)) {
         std::cerr << "File: " << plainTextFile << " can't be closed. ";
         HilogPrintError(errno);
@@ -253,7 +254,7 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
         HilogPrintError(errno);
         return RET_FAIL;
     }
-    if (restore == true) {
+    if (restore) {
 #ifdef DEBUG
         std::cout << __PRETTY_FUNCTION__ << " Recovered persister, Offset=" << m_mappedPlainLogFile->offset << "\n";
 #endif
@@ -262,7 +263,7 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
         if (compressionResult != 0) {
             std::cerr << __PRETTY_FUNCTION__ << " Compression error. Result:" << compressionResult << "\n";
             return RET_FAIL;
-        };
+        }
         WriteCompressedLogs();
     } else {
         m_mappedPlainLogFile->offset = 0;
@@ -365,7 +366,7 @@ int LogPersister::WriteLogData(const HilogData& logData)
     if (compressionResult != 0) {
         std::cerr <<  __PRETTY_FUNCTION__ << " Compression error. Result:" << compressionResult << "\n";
         return RET_FAIL;
-    };
+    }
     // Write compressed buffor and clear counters
     WriteCompressedLogs();
     // Try again write data that wasn't written at the beginning

@@ -79,7 +79,9 @@ inline bool IsLogTypeForbidden(uint16_t queryTypes)
 int StartPersistStoreJob(const LogPersister::InitData& initData, HilogBuffer& hilogBuffer)
 {
     std::shared_ptr<LogPersister> persister = LogPersister::CreateLogPersister(hilogBuffer);
-
+    if (persister == nullptr) {
+        return RET_FAIL;
+    }
     int persistRes = persister->Init(initData);
     if (persistRes != RET_SUCCESS) {
         if (persistRes == ERR_LOG_PERSIST_TASK_FAIL) {
@@ -589,7 +591,7 @@ int ServiceController::WriteV(const iovec* vec, size_t len)
 
     uint32_t offset = 0;
     for (uint32_t i = 0; i < len; ++i) {
-        auto src_address = (char*)vec[i].iov_base;
+        auto src_address = reinterpret_cast<char*>(vec[i].iov_base);
         std::copy(src_address, src_address + vec[i].iov_len, dataBuf.data() + offset);
         offset += vec[i].iov_len;
     }

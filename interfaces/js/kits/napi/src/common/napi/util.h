@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef HIVIEW_NAPI_UTIL
 #define HIVIEW_NAPI_UTIL
 #include <utility>

@@ -33,14 +33,14 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-constexpr int DEFAULT_LOG_TYPE = 1<<LOG_APP | 1<<LOG_INIT | 1<<LOG_CORE;
-constexpr int DEFAULT_LOG_LEVEL = 1<<LOG_DEBUG | 1<<LOG_INFO | 1<<LOG_WARN | 1 <<LOG_ERROR | 1 <<LOG_FATAL;
-
-static void Helper()
-{
-    fprintf(stderr, "Usage:  [options]\n");
-    fprintf(stderr,
-    "options include:\n"
+using CommandHandler = function<void(int, vector<string>&)>;
+const regex DELIMITER(",");
+constexpr int DEFAULT_LOG_TYPE = (1 << LOG_APP) | (1 << LOG_INIT) | (1 << LOG_CORE);
+constexpr int DEFAULT_LOG_LEVEL = (1 << LOG_DEBUG) | (1 << LOG_INFO)
+    | (1 << LOG_WARN) | (1 << LOG_ERROR) | (1 << LOG_FATAL);
+constexpr int PARAMS_COUNT_TWO = 2;
+constexpr int DECIMAL = 10;
+constexpr char GUIDANCE_DESCRIPTION[] = "options include:\n"
     "  No option default action: performs a blocking read and keeps printing.\n"
     "  -h --help          show this message.\n"
     "  -x --exit          Performs a non-blocking read and exits immediately.\n"
@@ -60,7 +60,7 @@ static void Helper()
     "                     pidon     process flow control on\n"
     "                     pidoff    process flow control off\n"
     "                     domainon  domain flow control on\n"
-    "                     domainoff domain flow contrl off\n"
+    "                     domainoff domain flow control off\n"
     "  -L <level>, --level=<level>\n"
     "                     Outputs logs at a specific level.\n"
     "  -t <type>, --type=<type>\n"
@@ -110,9 +110,12 @@ static void Helper()
     "  \n  Types, levels, domains, tags support exclusion query.\n"
     "  Exclusion query can be done with parameters starting with \"^\" and delimiter \",\".\n"
     "  Example: \"-t ^core,app\" excludes logs with types core and app.\n"
-    "  Could be used along with other parameters.\n",
-    MAX_DOMAINS, MAX_TAGS, MAX_PIDS
-    );
+    "  Could be used along with other parameters.\n";
+
+static void Helper()
+{
+    (void)fprintf(stderr, "Usage:  [options]\n");
+    (void)fprintf(stderr, GUIDANCE_DESCRIPTION, MAX_DOMAINS, MAX_TAGS, MAX_PIDS);
 }
 
 static uint16_t GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
@@ -163,6 +166,161 @@ static uint16_t GetLevels(HilogArgs context, const string& levelsArgs, bool excl
     return levels;
 }
 
+static bool HandleCommand(char* arg, int& indexRefer, CommandHandler handler)
+{
+    string content(arg);
+    indexRefer++;
+    if (strstr(content.c_str(), "-")) {
+        return true;
+    }
+    int offset = 0;
+    offset += ((content.front() == '^') ? 1 : 0);
+    vector<string> v(sregex_token_iterator(content.begin() + offset,
+        content.end(), DELIMITER, -1),
+        sregex_token_iterator());
+    handler(offset, v);
+    return false;
+}
+
+static void HandleChoiceLowerT(HilogArgs& context, int& indexType, char* argv[], int argc)
+{
+    context.logTypeArgs = optarg;
+    if (context.logTypeArgs.find("all") != context.logTypeArgs.npos ||
+        context.logTypeArgs.find(" ") != context.logTypeArgs.npos) {
+        return;
+    }
+    indexType = optind - 1;
+    while (indexType < argc) {
+        bool typeCommandHandleRet = HandleCommand(argv[indexType], indexType,
+            [&context](int offset, vector<string>& v) {
+                for (auto s : v) {
+                    if (offset == 1) {
+                        context.noTypes = GetTypes(context, s, true);
+                    } else {
+                        context.types = GetTypes(context, s);
+                    }
+                }
+            });
+        if (typeCommandHandleRet) {
+            break;
+        }
+    }
+    if (context.types != 0 && context.noTypes != 0) {
+        cout << ParseErrorCode(ERR_QUERY_TYPE_INVALID) << endl;
+        exit(RET_FAIL);
+    }
+}
+
+static void HandleChoiceUpperL(HilogArgs& context, int& indexLevel, char* argv[], int argc)
+{
+    indexLevel = optind - 1;
+    while (indexLevel < argc) {
+        bool levelCommandHandleRet = HandleCommand(argv[indexLevel], indexLevel,
+            [&context](int offset, vector<string>& v) {
+                for (auto s : v) {
+                    if (offset == 1) {
+                        context.noLevels = GetLevels(context, s, true);
+                    } else {
+                        context.levels = GetLevels(context, s);
+                    }
+                }
+            });
+        if (levelCommandHandleRet) {
+            break;
+        }
+    }
+    if (context.levels != 0 && context.noLevels != 0) {
+        cout << ParseErrorCode(ERR_QUERY_LEVEL_INVALID) << endl;
+        exit(RET_FAIL);
+    }
+}
+
+static void HandleChoiceUpperD(HilogArgs& context, int& indexDomain, char* argv[], int argc)
+{
+    indexDomain = optind - 1;
+    while (indexDomain < argc) {
+        if ((context.nDomain >= MAX_DOMAINS) || (context.nNoDomain >= MAX_DOMAINS)) {
+            break;
+        }
+        bool domainCommandHandleRet = HandleCommand(argv[indexDomain], indexDomain,
+            [&context](int offset, vector<string>& v) {
+                char* endptr = nullptr;
+                for (auto s: v) {
+                    unsigned long ret = strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
+                    if (ret != 0) {
+                        cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
+                        exit(RET_FAIL);
+                    }
+                    if (offset == 1) {
+                        context.noDomains[context.nNoDomain++] = s;
+                    } else {
+                        context.domains[context.nDomain++] = s;
+                        context.domainArgs += (s + " ");
+                    }
+                }
+            });
+        if (domainCommandHandleRet) {
+            break;
+        }
+    }
+}
+
+static void HandleChoiceUpperT(HilogArgs& context, int& indexTag, char* argv[], int argc)
+{
+    indexTag = optind - 1;
+    while (indexTag < argc) {
+        if ((context.nTag >= MAX_TAGS) || (context.nNoTag >= MAX_TAGS)) {
+            break;
+        }
+        bool tagCommandHandleRet = HandleCommand(argv[indexTag], indexTag,
+            [&context](int offset, vector<string>& v) {
+                for (auto s : v) {
+                    if (offset == 1) {
+                        context.noTags[context.nNoTag++] = s;
+                    } else {
+                        context.tags[context.nTag++] = s;
+                        context.tagArgs += (s + " ");
+                    }
+                }
+            });
+        if (tagCommandHandleRet) {
+            break;
+        }
+    }
+    if (context.nTag != 0 && context.nNoTag != 0) {
+        cout << ParseErrorCode(ERR_QUERY_TAG_INVALID) << endl;
+        exit(RET_FAIL);
+    }
+}
+
+static void HandleChoiceUpperP(HilogArgs& context, int& indexPid, char* argv[], int argc)
+{
+    indexPid = optind - 1;
+    while (indexPid < argc) {
+        if ((context.nPid >= MAX_PIDS) || (context.nNoPid >= MAX_PIDS)) {
+            break;
+        }
+        bool pidCommandHandleRet = HandleCommand(argv[indexPid], indexPid,
+            [&context](int offset, vector<string>& v) {
+                for (auto s : v) {
+                    if (offset == 1) {
+                        context.noPids[context.nNoPid++] = s;
+                    } else {
+                        context.pids[context.nPid++] = s;
+                        context.pidArgs += s + " ";
+                    }
+                }
+            });
+        if (pidCommandHandleRet) {
+            break;
+        }
+    }
+    if (context.nPid != 0 && context.nNoPid != 0) {
+        cout << ParseErrorCode(ERR_QUERY_PID_INVALID) << endl;
+        exit(RET_FAIL);
+    }
+}
+
 int HilogEntry(int argc, char* argv[])
 {
     std::vector<std::string> args;
@@ -174,7 +332,6 @@ int HilogEntry(int argc, char* argv[])
     int indexDomain = 0;
     int indexTag = 0;
     bool noLogOption = false;
-    regex delimiter(",");
     context.noBlockMode = 0;
     int32_t ret = 0;
     uint32_t showFormat = 0;
@@ -182,7 +339,7 @@ int HilogEntry(int argc, char* argv[])
     for (int argsCount = 0; argsCount < argc; argsCount++) {
         args.push_back(argv[argsCount]);
     }
-    if (argc == 2 && !args[1].compare("--help")) {
+    if (argc == PARAMS_COUNT_TWO && !args[1].compare("--help")) {
         Helper();
         exit(0);
     }
@@ -230,72 +387,17 @@ int HilogEntry(int argc, char* argv[])
                 context.regexArgs = optarg;
                 break;
             case 'a':
-                context.headLines = static_cast<uint16_t>(atoi(optarg));
+                context.headLines = static_cast<uint16_t>(strtol(optarg, nullptr, DECIMAL));
                 break;
             case 'z':
-                context.tailLines = static_cast<uint16_t>(atoi(optarg));
+                context.tailLines = static_cast<uint16_t>(strtol(optarg, nullptr, DECIMAL));
                 context.noBlockMode = 1;
                 break;
             case 't':
-                context.logTypeArgs = optarg;
-                if (context.logTypeArgs.find("all") != context.logTypeArgs.npos ||
-                    context.logTypeArgs.find(" ") != context.logTypeArgs.npos) {
-                    break;
-                }
-                indexType = optind - 1;
-                while (indexType < argc) {
-                    string types(argv[indexType]);
-                    indexType++;
-                    if (!strstr(types.c_str(), "-")) {
-                        if (types.front() == '^') {
-                            vector<string> v(sregex_token_iterator(types.begin() + 1, types.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s : v) {
-                                context.noTypes = GetTypes(context, s, true);
-                            }
-                        } else {
-                            vector<string> v(sregex_token_iterator(types.begin(), types.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s : v) {
-                                context.types = GetTypes(context, s);
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-                if (context.types != 0 && context.noTypes != 0) {
-                    cout << ParseErrorCode(ERR_QUERY_TYPE_INVALID) << endl;
-                    exit(RET_FAIL);
-                }
+                HandleChoiceLowerT(context, indexType, argv, argc);
                 break;
             case 'L':
-                indexLevel = optind - 1;
-                while (indexLevel < argc) {
-                    string levels(argv[indexLevel]);
-                    indexLevel++;
-                    if (!strstr(levels.c_str(), "-")) {
-                        if (levels.front() == '^') {
-                            vector<string> v(sregex_token_iterator(levels.begin() + 1, levels.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s : v) {
-                                context.noLevels = GetLevels(context, s, true);
-                            }
-                        } else {
-                            vector<string> v(sregex_token_iterator(levels.begin(), levels.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s : v) {
-                                context.levels = GetLevels(context, s);
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-                if (context.levels != 0 && context.noLevels != 0) {
-                    cout << ParseErrorCode(ERR_QUERY_LEVEL_INVALID) << endl;
-                    exit(RET_FAIL);
-                }
+                HandleChoiceUpperL(context, indexLevel, argv, argc);
                 break;
             case 'v':
                 showFormat |=  1 << HilogFormat(optarg);
@@ -343,43 +445,7 @@ int HilogEntry(int argc, char* argv[])
                 controlCount++;
                 break;
             case 'D':
-                indexDomain = optind - 1;
-                while (indexDomain < argc) {
-                    if ((context.nDomain >= MAX_DOMAINS) || (context.nNoDomain >= MAX_DOMAINS)) {
-                        break;
-                    }
-                    std::string domains(argv[indexDomain]);
-                    indexDomain++;
-                    if (!strstr(domains.c_str(), "-")) {
-                        char* endptr = nullptr;
-                        if (domains.front() == '^') {
-                            vector<string> v(sregex_token_iterator(domains.begin() + 1, domains.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s: v) {
-                                strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
-                                if (*endptr != '\0') {
-                                    cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
-                                    exit(RET_FAIL);
-                                }
-                                context.noDomains[context.nNoDomain++] = s;
-                            }
-                        } else {
-                            vector<string> v(sregex_token_iterator(domains.begin(), domains.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s: v) {
-                                strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
-                                if (*endptr != '\0') {
-                                    cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
-                                    exit(RET_FAIL);
-                                }
-                                context.domains[context.nDomain++] = s;
-                                context.domainArgs += (s + " ");
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
+                HandleChoiceUpperD(context, indexDomain, argv, argc);
                 break;
             case 's':
                 context.statisticArgs = "query";
@@ -392,36 +458,7 @@ int HilogEntry(int argc, char* argv[])
                 controlCount++;
                 break;
             case 'T':
-                indexTag = optind - 1;
-                while (indexTag < argc) {
-                    if ((context.nTag >= MAX_TAGS) || (context.nNoTag >= MAX_TAGS)) {
-                        break;
-                    }
-                    std::string tags(argv[indexTag]);
-                    indexTag++;
-                    if (!strstr(tags.c_str(), "-")) {
-                        if (tags.front() == '^') {
-                            vector<std::string> v(sregex_token_iterator(tags.begin() + 1, tags.end(), delimiter, -1),
-                                                  sregex_token_iterator());
-                            for (auto s: v) {
-                                context.noTags[context.nNoTag++] = s;
-                            }
-                        } else {
-                            vector<std::string> v(sregex_token_iterator(tags.begin(), tags.end(), delimiter, -1),
-                                                  sregex_token_iterator());
-                            for (auto s: v) {
-                                context.tags[context.nTag++] = s;
-                                context.tagArgs += (s + " ");
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-                if (context.nTag != 0 && context.nNoTag != 0) {
-                    cout << ParseErrorCode(ERR_QUERY_TAG_INVALID) << endl;
-                    exit(RET_FAIL);
-                }
+                HandleChoiceUpperT(context, indexTag, argv, argc);
                 break;
             case 'b':
                 context.logLevelArgs = optarg;
@@ -434,36 +471,7 @@ int HilogEntry(int argc, char* argv[])
                 controlCount++;
                 break;
             case 'P':
-                indexPid = optind - 1;
-                while (indexPid < argc) {
-                    if ((context.nPid >= MAX_PIDS) || (context.nNoPid >= MAX_PIDS)) {
-                        break;
-                    }
-                    std::string pids(argv[indexPid]);
-                    indexPid++;
-                    if (!strstr(pids.c_str(), "-")) {
-                        if (pids.front() == '^') {
-                            vector<string> v(sregex_token_iterator(pids.begin() + 1, pids.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s: v) {
-                                context.noPids[context.nNoPid++] = s;
-                            }
-                        } else {
-                            vector<string> v(sregex_token_iterator(pids.begin(), pids.end(), delimiter, -1),
-                                             sregex_token_iterator());
-                            for (auto s: v) {
-                                context.pids[context.nPid++] = s;
-                                context.pidArgs += s + " ";
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-                if (context.nPid != 0 && context.nNoPid != 0) {
-                    cout << ParseErrorCode(ERR_QUERY_PID_INVALID) << endl;
-                    exit(RET_FAIL);
-                }
+                HandleChoiceUpperP(context, indexPid, argv, argc);
                 break;
             case 'm':
                 context.algorithmArgs = optarg;
@@ -633,6 +641,6 @@ int HilogEntry(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-    OHOS::HiviewDFX::HilogEntry(argc, argv);
+    (void)OHOS::HiviewDFX::HilogEntry(argc, argv);
     return 0;
 }

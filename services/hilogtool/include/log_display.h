@@ -27,7 +27,7 @@ int32_t ControlCmdResult(const char* message);
 std::string ParseErrorCode(ErrorCode errorCode);
 void HilogShowLog(uint32_t showFormat, HilogDataMessage* contentOut,
     const HilogArgs* context, vector<string>& tailBuffer);
-HilogShowFormat HilogFormat (const char* formatArg);
+HilogShowFormat HilogFormat(const char* formatArg);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif

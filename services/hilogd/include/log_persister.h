@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _HILOG_PERSISTER_H
 #define _HILOG_PERSISTER_H
 
@@ -48,11 +49,12 @@ public:
 
     int Init(const InitData& initData);
     int Deinit();
-    
+
     void Start();
     void Stop();
-    
+
     void FillInfo(LogPersistQueryResult &response);
+
 private:
     struct BaseData {
         uint32_t id;
@@ -63,7 +65,7 @@ private:
         std::chrono::seconds newLogTimeout;
     };
 
-    LogPersister(HilogBuffer &buffer);
+    explicit LogPersister(HilogBuffer &buffer);
 
     static bool CheckRegistered(uint32_t id, const std::string& logPath);
     static std::shared_ptr<LogPersister> GetLogPersisterById(uint32_t id);

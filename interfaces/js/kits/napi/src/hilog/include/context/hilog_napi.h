@@ -26,8 +26,8 @@ public:
     inline static const std::string className = "hilog";
     bool Export(napi_env env, napi_value exports) override;
     std::string GetClassName() override;
-    HilogNapi(napi_env env, napi_value exports) : NExporter(env, exports) {};
-    explicit HilogNapi() {};
+    HilogNapi(napi_env env, napi_value exports) : NExporter(env, exports) {}
+    explicit HilogNapi() {}
     ~HilogNapi() override {};
 };
 }  // namespace HiviewDFX

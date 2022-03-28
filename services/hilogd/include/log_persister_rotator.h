@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _HILOG_PERSISTER_ROTATOR_H
 #define _HILOG_PERSISTER_ROTATOR_H
 #include <fstream>
@@ -23,12 +24,12 @@
 #include "log_filter.h"
 namespace OHOS {
 namespace HiviewDFX {
-typedef struct {
+using PersistRecoveryInfo = struct {
     uint32_t index;
     uint16_t types;
     uint8_t levels;
     LogPersistStartMsg msg;
-} PersistRecoveryInfo;
+};
 
 static constexpr const char* AUXILLARY_PERSISTER_PREFIX = "persisterInfo_";
 
@@ -43,6 +44,7 @@ public:
     void FinishInput();
 
     void SetFileIndex(uint32_t index, bool forceRotate);
+
 private:
     void RemoveOldFile();
     bool IsOldFile(const std::string& logName, const int index);
@@ -59,7 +61,7 @@ private:
     std::string m_fileNameSuffix;
     uint32_t m_currentLogFileIdx = 0;
     std::fstream m_currentLogOutput;
-    
+
     uint32_t m_id = 0;
     std::fstream m_infoFile;
     std::string m_infoFilePath;

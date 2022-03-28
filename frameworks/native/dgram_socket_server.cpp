@@ -42,7 +42,7 @@ int DgramSocketServer::RecvPacket(std::vector<char>& buffer, struct ucred *cred)
         iov.iov_len = packetLen;
         msgh.msg_iov = &iov;
         msgh.msg_iovlen = 1;
-    
+
         msgh.msg_control = control.data();
         msgh.msg_controllen = control.size();
 
