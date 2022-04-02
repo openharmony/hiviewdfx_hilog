@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-#include "hilog_input_socket_client.h"
-
 #include <sys/time.h>
-#include <cstring>
-#include <iostream>
+
+#include "hilog_input_socket_client.h"
 
 namespace OHOS {
 namespace HiviewDFX {

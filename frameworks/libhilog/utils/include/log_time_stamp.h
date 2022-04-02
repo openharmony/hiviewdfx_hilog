@@ -18,7 +18,6 @@
 
 #define NS_PER_SEC 1000000000ULL
 class LogTimeStamp {
-
 public:
     LogTimeStamp() = default;
     ~LogTimeStamp() = default;

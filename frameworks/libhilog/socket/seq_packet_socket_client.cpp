@@ -13,27 +13,33 @@
  * limitations under the License.
  */
 
-#ifndef SEQ_PACKET_SOCKET_SERVER_H
-#define SEQ_PACKET_SOCKET_SERVER_H
+#include <iostream>
 
-#include "socket_server.h"
-
-#include <functional>
+#include "seq_packet_socket_client.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-class SeqPacketSocketServer : public SocketServer {
-public:
-    using AcceptingHandler = std::function<void(std::unique_ptr<Socket>)>;
+using namespace std;
+SeqPacketSocketResult SeqPacketSocketClient::Init()
+{
+    int res = Create();
+    if (res < 0) {
+        cout << "socket creation result : " << res << std::endl;
+        return SeqPacketSocketResult::CREATE_SOCKET_FAILED;
+    }
 
-    SeqPacketSocketServer(const std::string& serverPath, unsigned int maxListenNumber)
-        : SocketServer(serverPath, SOCK_SEQPACKET), maxListenNumber(maxListenNumber) {}
-    ~SeqPacketSocketServer() = default;
-    int StartAcceptingConnection(AcceptingHandler onAccepted);
-private:
-    unsigned int maxListenNumber;
-    int AcceptingLoop(AcceptingHandler func);
-};
+    res = Connect();
+    if (res == -1) {
+        cout << "socket connect result : " << res << std::endl;
+        return SeqPacketSocketResult::CONNECT_FAILED;
+    }
+
+    return SeqPacketSocketResult::CREATE_AND_CONNECTED;
+}
+
+int SeqPacketSocketClient::RecvMsg(char *buffer, unsigned int len)
+{
+    return Recv(buffer, len, 0);
+}
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif /* SEQ_PACKET_SOCKET_SERVER_H */

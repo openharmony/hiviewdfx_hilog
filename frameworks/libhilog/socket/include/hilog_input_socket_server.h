@@ -16,11 +16,10 @@
 #ifndef HILOG_INPUT_SOCKET_SERVER_H
 #define HILOG_INPUT_SOCKET_SERVER_H
 
-#include "dgram_socket_server.h"
-#include <thread>
 #include <vector>
-#include <atomic>
-#include <functional>
+#include <thread>
+
+#include "dgram_socket_server.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -41,9 +40,8 @@ public:
     };
 
     explicit HilogInputSocketServer(HandlingFunc _packetHandler)
-        : DgramSocketServer(INPUT_SOCKET_NAME, MAX_SOCKET_PACKET_LEN)
-        , m_packetHandler(_packetHandler)
-        , m_stopServer(false)
+        : DgramSocketServer(INPUT_SOCKET_NAME, MAX_SOCKET_PACKET_LEN),
+        m_packetHandler(_packetHandler), m_stopServer(false)
         {}
 
     ~HilogInputSocketServer();

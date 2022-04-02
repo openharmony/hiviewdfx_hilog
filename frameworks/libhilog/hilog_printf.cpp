@@ -192,7 +192,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     int traceBufLen = 0;
     HilogMsg header = {0};
     bool debug = false;
-    bool priv = HILOG_DEFAULT_PRIVACY;
+    bool priv = true;
 
     if (tag == nullptr) {
         return -1;
@@ -208,7 +208,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         uint32_t flag = 0;
         uint64_t spanId = 0;
         uint64_t parentSpanId = 0;
-        int ret = -1;  /* default value -1: invalid trace id */
+        ret = -1;  /* default value -1: invalid trace id */
         atomic_fetch_add_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
         RegisterFunc func = g_registerFunc;
         if (g_registerFunc != nullptr) {

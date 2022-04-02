@@ -13,10 +13,9 @@
  * limitations under the License.
  */
 
-#include "dgram_socket_server.h"
-
-#include <iostream>
 #include <array>
+
+#include "dgram_socket_server.h"
 
 namespace OHOS {
 namespace HiviewDFX {

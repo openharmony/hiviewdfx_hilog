@@ -13,29 +13,16 @@
 
 import("//build/ohos.gni")
 
-ohos_shared_library("libhilog_os_adapter") {
-  sources = [
-    "properties.cpp",
-    "socket_server_adapter.cpp",
-  ]
-
-  defines = [ "USING_EXISTING_SOCKET" ]
-
+ohos_shared_library("hilog_ndk") {
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//base/hiviewdfx/hilog/adapter",
+    "//base/hiviewdfx/hilog/frameworks/include/",
   ]
 
-  if (use_musl) {
-    defines += [ "HILOG_USE_MUSL" ]
-  }
+  sources = [ "hilog_ndk.c" ]
 
-  install_enable = true
+  external_deps = [ "hilog_native:libhilog" ]
+
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
-  install_images = [
-    "system",
-    "updater",
-  ]
-  external_deps = [ "startup_l2:syspara" ]
 }
