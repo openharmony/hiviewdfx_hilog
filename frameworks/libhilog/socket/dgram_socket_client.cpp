@@ -13,22 +13,36 @@
  * limitations under the License.
  */
 
-#ifndef DGRAM_SOCKET_SERVER_H
-#define DGRAM_SOCKET_SERVER_H
+#include <unistd.h>
 
-#include "socket_server.h"
-#include <vector>
+#include "dgram_socket_client.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-class DgramSocketServer : public SocketServer {
-public:
-    DgramSocketServer(const std::string& socketName, uint16_t maxLength)
-        : SocketServer(socketName, SOCK_DGRAM), maxPacketLength(maxLength) {}
-    int RecvPacket(std::vector<char>& buffer, struct ucred *cred = nullptr);
-private:
-    uint16_t maxPacketLength;
-};
+int DgramSocketClient::CheckSocket()
+{
+    if (fdHandler >= 0) {
+        return fdHandler;
+    }
+
+    int fd = GenerateFD();
+    if (fd < 0) {
+        return fd;
+    }
+
+    int ret;
+    int defaultValue = -1;
+    fdHandler.compare_exchange_strong(defaultValue, fd);
+    if (defaultValue != -1) {
+        ret = defaultValue;
+        close(fd);
+    } else {
+        ret = fd;
+        setHandler(fd);
+        Connect();
+    }
+
+    return ret;
+}
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif /* DGRAM_SOCKET_SERVER_H */

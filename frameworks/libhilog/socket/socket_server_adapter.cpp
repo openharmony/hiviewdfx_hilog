@@ -116,7 +116,7 @@ int GetExistingSocketServer(const char *name, int type)
     return -1;
 }
 #else
-int GetExistingSocketServer(const char *, int)
+int GetExistingSocketServer(const char *name, int type)
 {
     return -1;
 }

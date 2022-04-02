@@ -12,16 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "format.h"
+
+#include <securec.h>
+
 #include "hilog/log.h"
 #include "hilogtool_msg.h"
 #include "hilog_common.h"
-
-
-#include <cstring>
-#include <iostream>
-#include <ctime>
-#include <securec.h>
+#include "format.h"
 
 namespace OHOS {
 namespace HiviewDFX {
