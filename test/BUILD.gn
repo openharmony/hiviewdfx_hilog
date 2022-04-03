@@ -38,7 +38,7 @@ ohos_moduletest("HiLogNDKTest") {
 
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-    "//base/hiviewdfx/hilog/frameworks/native/include",
+    "//base/hiviewdfx/hilog/frameworks/libhilog/include",
   ]
 }
 
@@ -49,12 +49,12 @@ ohos_moduletest("HiLogAdapterTest") {
 
   configs = [ ":module_private_config" ]
 
-  deps = [
-    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//third_party/googletest:gtest_main",
-  ]
+  deps = [ "//third_party/googletest:gtest_main" ]
 
   external_deps = [ "hilog_native:libhilog" ]
 
-  include_dirs = [ "//base/hiviewdfx/hilog/adapter" ]
+  include_dirs = [
+    "//base/hiviewdfx/hilog/adapter",
+    "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
+  ]
 }

@@ -32,8 +32,7 @@
     },
     "build": {
       "sub_component": [
-        "//base/hiviewdfx/hilog/frameworks/native/hilog_ndk:hilog_ndk",
-        "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
+        "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
         "//base/hiviewdfx/hilog/interfaces/js:hilog_napi"
@@ -45,7 +44,8 @@
             "header_files": [
               "hilog/log.h",
               "hilog/log_c.h",
-              "hilog/log_cpp.h"
+              "hilog/log_cpp.h",
+              "hilog_trace.h"
             ],
             "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
           }

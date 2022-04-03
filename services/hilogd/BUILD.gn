@@ -33,20 +33,21 @@ ohos_executable("hilogd") {
     "main.cpp",
     "service_controller.cpp",
   ]
-  configs = [ ":hilogd_config" ]
+  configs = [
+    ":hilogd_config",
+    "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
+  ]
   defines = [ "__RECV_MSG_WITH_UCRED_" ]
   deps = [
-    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//base/hiviewdfx/hilog/frameworks/native:libhilog_socket_server",
-    "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/zlib:libz",
   ]
-
   deps += [ "etc:hilogd_etc" ]
 
-  external_deps = [ "init:libbegetutil" ]
+  external_deps = [
+    "hilog_native:libhilog",
+    "init:libbegetutil",
+  ]
 
   install_enable = true
   part_name = "hilog_service"
