@@ -26,15 +26,17 @@ ohos_executable("hilog") {
     "main.cpp",
   ]
 
-  configs = [ ":hilog_config" ]
+  configs = [
+    ":hilog_config",
+    "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
+  ]
 
   deps = [
-    "//base/hiviewdfx/hilog/adapter:libhilog_os_adapter",
-    "//base/hiviewdfx/hilog/frameworks/native:libhilogutil",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
     "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/zlib:libz",
   ]
+
+  external_deps = [ "hilog_native:libhilog" ]
 
   install_enable = true
   part_name = "hilog_service"

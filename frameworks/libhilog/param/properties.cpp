@@ -58,9 +58,7 @@ static void UnlockByProp(uint32_t propType);
 
 class PropertyTypeLocker {
 public:
-    explicit PropertyTypeLocker(uint32_t propType)
-        : m_propType(propType)
-        , m_isLocked(false)
+    explicit PropertyTypeLocker(uint32_t propType) : m_propType(propType), m_isLocked(false)
     {
         m_isLocked = !LockByProp(m_propType);
     }
@@ -98,12 +96,12 @@ public:
     T getValue()
     {
         if (m_handle == -1) {
-            if (m_commit == 0) { // temparary solution, after sysparam supply get_global_commitid, FIXME
+            if (m_commit == 0) { // temparary solution, after sysparam supply get_global_commitid
                 return m_defaultValue;
             }
             int handle = static_cast<int>(FindParameter(m_key.c_str()));
             if (handle == -1) {
-                m_commit = 0; // temparary solution, after sysparam supply get_global_commitid, FIXME
+                m_commit = 0; // temparary solution, after sysparam supply get_global_commitid
                 return m_defaultValue;
             }
             m_handle = handle;

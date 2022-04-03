@@ -29,7 +29,6 @@
 #include <unistd.h>
 
 namespace {
-
 constexpr int SOCKET_TYPE = SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC;
 constexpr int INVALID_SOCKET = -1;
 constexpr sockaddr_un SOCKET_ADDR = {AF_UNIX, SOCKET_FILE_DIR INPUT_SOCKET_NAME};
@@ -139,7 +138,7 @@ static int HiLogBasePrintArgs(const LogType type, const LogLevel level, const un
 
     char buf[MAX_LOG_LEN] = {0};
 
-    vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, HILOG_DEFAULT_PRIVACY, fmt, ap);
+    vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, true, fmt, ap);
 
     auto tagLen = strnlen(tag, MAX_TAG_LEN - 1);
     auto logLen = strnlen(buf, MAX_LOG_LEN - 1);
