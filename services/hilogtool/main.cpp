@@ -246,8 +246,8 @@ static void HandleChoiceUpperD(HilogArgs& context, int& indexDomain, char* argv[
             [&context](int offset, vector<string>& v) {
                 char* endptr = nullptr;
                 for (auto s: v) {
-                    unsigned long ret = strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
-                    if (ret != 0) {
+                    (void)strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
+                    if (*endptr != '\0') {
                         cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
                         exit(RET_FAIL);
                     }
