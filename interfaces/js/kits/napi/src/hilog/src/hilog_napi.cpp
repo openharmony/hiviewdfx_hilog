@@ -26,7 +26,21 @@ extern "C" {
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-bool HilogNapi::Export(napi_env env, napi_value exports)
+
+napi_value LogLevelTypeConstructor(napi_env env, napi_callback_info info)
+{
+    napi_value thisArg = nullptr;
+    void* data = nullptr;
+
+    napi_get_cb_info(env, info, nullptr, nullptr, &thisArg, &data);
+
+    napi_value global = nullptr;
+    napi_get_global(env, &global);
+
+    return thisArg;
+}
+
+static void LogLevelTypeEnumInit(napi_env env, napi_value exports)
 {
     napi_value DEBUG = nullptr;
     napi_value INFO = nullptr;
@@ -38,6 +52,25 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
     napi_create_int32(env, LogLevel::LOG_WARN, &WARN);
     napi_create_int32(env, LogLevel::LOG_ERROR, &ERROR);
     napi_create_int32(env, LogLevel::LOG_FATAL, &FATAL);
+
+    napi_property_descriptor descriptors[] = {
+        NVal::DeclareNapiStaticProperty("DEBUG", DEBUG),
+        NVal::DeclareNapiStaticProperty("INFO", INFO),
+        NVal::DeclareNapiStaticProperty("WARN", WARN),
+        NVal::DeclareNapiStaticProperty("ERROR", ERROR),
+        NVal::DeclareNapiStaticProperty("FATAL", FATAL),
+    };
+
+    napi_value result = nullptr;
+    napi_define_class(env, "LogLevel", NAPI_AUTO_LENGTH, LogLevelTypeConstructor, nullptr,
+                      sizeof(descriptors) / sizeof(*descriptors), descriptors, &result);
+
+    napi_set_named_property(env, exports, "LogLevel", result);
+}
+
+bool HilogNapi::Export(napi_env env, napi_value exports)
+{
+    LogLevelTypeEnumInit(env, exports);
     return exports_.AddProp({
         NVal::DeclareNapiFunction("debug", HilogNapiBase::debug),
         NVal::DeclareNapiFunction("info", HilogNapiBase::info),
@@ -45,11 +78,6 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
         NVal::DeclareNapiFunction("warn", HilogNapiBase::warn),
         NVal::DeclareNapiFunction("fatal", HilogNapiBase::fatal),
         NVal::DeclareNapiFunction("isLoggable", HilogNapiBase::isLoggable),
-        NVal::DeclareNapiStaticProperty("DEBUG", DEBUG),
-        NVal::DeclareNapiStaticProperty("INFO", INFO),
-        NVal::DeclareNapiStaticProperty("WARN", WARN),
-        NVal::DeclareNapiStaticProperty("ERROR", ERROR),
-        NVal::DeclareNapiStaticProperty("FATAL", FATAL),
     });
 }
 
