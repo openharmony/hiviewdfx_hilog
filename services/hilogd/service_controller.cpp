@@ -38,7 +38,7 @@
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "log_data.h"
-#include "hilogtool_msg.h"
+#include "hilog_msg.h"
 #include "log_buffer.h"
 #include "log_persister.h"
 

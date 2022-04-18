@@ -19,7 +19,7 @@
 #include <thread>
 #include "hilog_common.h"
 #include "flow_control_init.h"
-#include "log_time_stamp.h"
+#include "log_timestamp.h"
 #include "properties.h"
 namespace OHOS {
 namespace HiviewDFX {
