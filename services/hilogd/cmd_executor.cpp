@@ -12,22 +12,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cmd_executor.h"
-#include "service_controller.h"
-
-#include <seq_packet_socket_server.h>
-
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <thread>
-
 #include <poll.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <log_utils.h>
+#include <seq_packet_socket_server.h>
+
+#include "service_controller.h"
+#include "cmd_executor.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -57,7 +57,7 @@ void CmdExecutor::MainLoop()
     int listeningStatus = cmdServer.Listen(MAX_CLIENT_CONNECTIONS);
     if (listeningStatus < 0) {
         std::cerr << "Socket listen failed: ";
-        HilogPrintError(listeningStatus);
+        PrintErrorno(listeningStatus);
         return;
     }
     std::cout << "Server started to listen !\n";
@@ -72,7 +72,7 @@ void CmdExecutor::MainLoop()
             continue;
         } else if (pollResult < 0) {
             std::cerr << "Socket polling error: ";
-            HilogPrintError(errno);
+            PrintErrorno(errno);
             break;
         } else if (pollResult != 1 || outEvent != POLLIN) {
             std::cerr << "Wrong poll result data."
@@ -91,7 +91,7 @@ void CmdExecutor::MainLoop()
             }
         } else {
             std::cerr << "Socket accept failed: ";
-            HilogPrintError(errno);
+            PrintErrorno(errno);
             break;
         }
     }

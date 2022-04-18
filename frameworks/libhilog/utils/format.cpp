@@ -16,8 +16,8 @@
 #include <securec.h>
 
 #include "hilog/log.h"
-#include "hilogtool_msg.h"
 #include "hilog_common.h"
+#include "log_utils.h"
 #include "format.h"
 
 namespace OHOS {
@@ -29,24 +29,6 @@ constexpr int HILOG_COLOR_GREEN = 40;
 constexpr int HILOG_COLOR_ORANGE = 166;
 constexpr int HILOG_COLOR_RED = 196;
 constexpr int HILOG_COLOR_YELLOW = 226;
-
-const char* ParsedFromLevel(uint16_t level)
-{
-    switch (level) {
-        case LOG_DEBUG:
-            return "D";
-        case LOG_INFO:
-            return "I";
-        case LOG_WARN:
-            return "W";
-        case LOG_ERROR:
-            return "E";
-        case LOG_FATAL:
-            return "F";
-        default:
-            return " ";
-    }
-}
 
 int ColorFromLevel(uint16_t level)
 {
@@ -78,7 +60,7 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
     if ((showFormat & (1 << EPOCH_SHOWFORMAT)) || (showFormat & (1 << MONOTONIC_SHOWFORMAT))) {
         if ((bufLen - 1) > 0) {
             ret = snprintf_s(buffer, bufLen, bufLen - 1,
-                (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%19lld", (long long)now);
+                (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%9lld", (long long)now);
         }
         timeLen += ((ret > 0) ? ret : 0);
     } else {
@@ -134,29 +116,14 @@ void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& cont
         logLen += ((ret > 0) ? ret : 0);
     }
     logLen += HilogShowTimeBuffer(buffer + logLen, bufLen - logLen, showFormat, contentOut);
+    ret = 0;
     if ((bufLen - logLen - 1) > 0) {
         ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %5d", contentOut.pid);
-    }
-    logLen += ((ret > 0) ? ret : 0);
-    if ((bufLen - logLen - 1) > 0) {
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %5d", contentOut.tid);
-    }
-    logLen += ((ret > 0) ? ret : 0);
-    if ((bufLen - logLen - 1) > 0) {
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %s ", ParsedFromLevel(contentOut.level));
-    }
-    logLen += ((ret > 0) ? ret : 0);
-    if ((bufLen - logLen - 1) > 0) {
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            "%05x/%s:", contentOut.domain & 0xFFFFF, contentOut.data);
-    }
-    logLen += ((ret > 0) ? ret : 0);
-    if ((bufLen - logLen - 1) > 0) {
-        ret = snprintf_s(buffer + logLen, bufLen - logLen, bufLen - logLen - 1,
-            " %s", contentOut.data + contentOut.tag_len);
+            " %5d %5d %s %05x/%s: %s", /* PID TID Level Domain/Tag: LogString */
+            contentOut.pid, contentOut.tid,
+            LogLevel2ShortStr(contentOut.level).c_str(),
+            contentOut.domain & 0xFFFFF, contentOut.data,
+            contentOut.data + contentOut.tag_len);
     }
     logLen += ((ret > 0) ? ret : 0);
     if (showFormat & (1 << COLOR_SHOWFORMAT)) {

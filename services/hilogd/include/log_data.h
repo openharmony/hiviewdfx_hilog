@@ -21,7 +21,7 @@
 #include <securec.h>
 
 #include <hilog/log.h>
-#include "hilogtool_msg.h"
+#include "hilog_msg.h"
 
 namespace OHOS {
 namespace HiviewDFX {

@@ -19,16 +19,16 @@
 #include <iostream>
 #include <thread>
 
+#include "log_utils.h"
+
 namespace OHOS {
 namespace HiviewDFX {
 int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted)
 {
     int listeningStatus = Listen(maxListenNumber);
     if (listeningStatus < 0) {
-#ifdef DEBUG
         std::cerr << "Socket listen failed: ";
-        HilogPrintError(listeningStatus);
-#endif
+        PrintErrorno(listeningStatus);
         return listeningStatus;
     }
 
@@ -46,10 +46,8 @@ int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func)
         }
     }
     int acceptError = errno;
-#ifdef DEBUG
     std::cerr << "Socket accept failed: ";
-    HilogPrintError(acceptError);
-#endif
+    PrintErrorno(acceptError);
 
     return acceptError;
 }
