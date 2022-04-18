@@ -24,9 +24,11 @@
 #include <sstream>
 #include <regex>
 
-#include "hilog/log.h"
-#include "hilog_common.h"
-#include "hilogtool_msg.h"
+#include <hilog/log.h>
+#include <hilog_common.h>
+#include <hilog_msg.h>
+#include <log_utils.h>
+
 #include "log_controller.h"
 #include "log_display.h"
 
@@ -34,7 +36,7 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 using CommandHandler = function<void(int, vector<string>&)>;
-const regex DELIMITER(",");
+const regex DELIMITER(DEFAULT_SPLIT_DELIMIT);
 constexpr int DEFAULT_LOG_TYPE = (1 << LOG_APP) | (1 << LOG_INIT) | (1 << LOG_CORE);
 constexpr int DEFAULT_LOG_LEVEL = (1 << LOG_DEBUG) | (1 << LOG_INFO)
     | (1 << LOG_WARN) | (1 << LOG_ERROR) | (1 << LOG_FATAL);
@@ -126,18 +128,13 @@ static uint16_t GetTypes(HilogArgs context, const string& typesArgs, bool exclud
     } else {
         types = context.types;
     }
-    if (typesArgs ==  "init") {
-        types |= 1<<LOG_INIT;
-    } else if (typesArgs ==  "app") {
-        types |= 1<<LOG_APP;
-    } else if (typesArgs ==  "core") {
-        types |= 1<<LOG_CORE;
-    } else if (typesArgs ==  "kmsg") {
-        types |= 1<<LOG_KMSG;
-    } else {
-        std::cout << ParseErrorCode(ERR_LOG_TYPE_INVALID) << endl;
+
+    uint16_t logType = Str2LogType(typesArgs);
+    if (logType == LOG_TYPE_MAX) {
+        std::cout << ErrorCode2Str(ERR_LOG_TYPE_INVALID) << endl;
         exit(0);
     }
+    types |= (1 << logType);
     return types;
 }
 
@@ -149,20 +146,13 @@ static uint16_t GetLevels(HilogArgs context, const string& levelsArgs, bool excl
     } else {
         levels = context.levels;
     }
-    if (levelsArgs == "D") {
-        levels |= 1<<LOG_DEBUG;
-    } else if (levelsArgs == "I") {
-        levels |= 1<<LOG_INFO;
-    } else if (levelsArgs == "W") {
-        levels |= 1<<LOG_WARN;
-    } else if (levelsArgs == "E") {
-        levels |= 1<<LOG_ERROR;
-    } else if (levelsArgs == "F") {
-        levels |= 1<<LOG_FATAL;
-    } else {
-        std::cout << ParseErrorCode(ERR_LOG_LEVEL_INVALID) << endl;
+
+    uint16_t logLevel = PrettyStr2LogLevel(levelsArgs);
+    if (logLevel == LOG_LEVEL_MIN) {
+        std::cout << ErrorCode2Str(ERR_LOG_LEVEL_INVALID) << endl;
         exit(0);
     }
+    levels = (1 << logLevel);
     return levels;
 }
 
@@ -206,7 +196,7 @@ static void HandleChoiceLowerT(HilogArgs& context, int& indexType, char* argv[],
         }
     }
     if (context.types != 0 && context.noTypes != 0) {
-        cout << ParseErrorCode(ERR_QUERY_TYPE_INVALID) << endl;
+        cout << ErrorCode2Str(ERR_QUERY_TYPE_INVALID) << endl;
         exit(RET_FAIL);
     }
 }
@@ -230,7 +220,7 @@ static void HandleChoiceUpperL(HilogArgs& context, int& indexLevel, char* argv[]
         }
     }
     if (context.levels != 0 && context.noLevels != 0) {
-        cout << ParseErrorCode(ERR_QUERY_LEVEL_INVALID) << endl;
+        cout << ErrorCode2Str(ERR_QUERY_LEVEL_INVALID) << endl;
         exit(RET_FAIL);
     }
 }
@@ -244,18 +234,12 @@ static void HandleChoiceUpperD(HilogArgs& context, int& indexDomain, char* argv[
         }
         bool domainCommandHandleRet = HandleCommand(argv[indexDomain], indexDomain,
             [&context](int offset, vector<string>& v) {
-                char* endptr = nullptr;
                 for (auto s: v) {
-                    (void)strtoul(s.c_str(), &endptr, DOMAIN_NUMBER_BASE);
-                    if (*endptr != '\0') {
-                        cout << ParseErrorCode(ERR_QUERY_DOMAIN_INVALID) << endl;
-                        exit(RET_FAIL);
-                    }
                     if (offset == 1) {
                         context.noDomains[context.nNoDomain++] = s;
                     } else {
                         context.domains[context.nDomain++] = s;
-                        context.domainArgs += (s + " ");
+                        context.domainArgs += (s + DEFAULT_SPLIT_DELIMIT);
                     }
                 }
             });
@@ -279,7 +263,7 @@ static void HandleChoiceUpperT(HilogArgs& context, int& indexTag, char* argv[], 
                         context.noTags[context.nNoTag++] = s;
                     } else {
                         context.tags[context.nTag++] = s;
-                        context.tagArgs += (s + " ");
+                        context.tagArgs += (s + DEFAULT_SPLIT_DELIMIT);
                     }
                 }
             });
@@ -288,7 +272,7 @@ static void HandleChoiceUpperT(HilogArgs& context, int& indexTag, char* argv[], 
         }
     }
     if (context.nTag != 0 && context.nNoTag != 0) {
-        cout << ParseErrorCode(ERR_QUERY_TAG_INVALID) << endl;
+        cout << ErrorCode2Str(ERR_QUERY_TAG_INVALID) << endl;
         exit(RET_FAIL);
     }
 }
@@ -307,7 +291,7 @@ static void HandleChoiceUpperP(HilogArgs& context, int& indexPid, char* argv[], 
                         context.noPids[context.nNoPid++] = s;
                     } else {
                         context.pids[context.nPid++] = s;
-                        context.pidArgs += s + " ";
+                        context.pidArgs += s + DEFAULT_SPLIT_DELIMIT;
                     }
                 }
             });
@@ -316,7 +300,7 @@ static void HandleChoiceUpperP(HilogArgs& context, int& indexPid, char* argv[], 
         }
     }
     if (context.nPid != 0 && context.nNoPid != 0) {
-        cout << ParseErrorCode(ERR_QUERY_PID_INVALID) << endl;
+        cout << ErrorCode2Str(ERR_QUERY_PID_INVALID) << endl;
         exit(RET_FAIL);
     }
 }
@@ -400,7 +384,7 @@ int HilogEntry(int argc, char* argv[])
                 HandleChoiceUpperL(context, indexLevel, argv, argc);
                 break;
             case 'v':
-                showFormat |=  1 << HilogFormat(optarg);
+                showFormat |=  1 << Str2ShowFormat(optarg);
                 break;
             case 'g':
                 context.buffSizeArgs = "query";
@@ -477,7 +461,7 @@ int HilogEntry(int argc, char* argv[])
                 context.algorithmArgs = optarg;
                 break;
             default:
-                cout << ParseErrorCode(ERR_COMMAND_NOT_FOUND) << endl;
+                cout << ErrorCode2Str(ERR_COMMAND_NOT_FOUND) << endl;
                 exit(1);
         }
     }
@@ -498,7 +482,7 @@ int HilogEntry(int argc, char* argv[])
     }
     if (noLogOption) {
         if (controlCount != 1) {
-            std::cout << ParseErrorCode(ERR_COMMAND_INVALID) << std::endl;
+            std::cout << ErrorCode2Str(ERR_COMMAND_INVALID) << std::endl;
             exit(-1);
         }
         if (context.buffSizeArgs != "") {
@@ -565,7 +549,7 @@ int HilogEntry(int argc, char* argv[])
                 ret = StatisticInfoOp(controller, MC_REQ_STATISTIC_INFO_CLEAR, context.logTypeArgs, context.domainArgs);
             }
             if (ret == RET_FAIL) {
-                cout << "statistic info operation error! please operation by logtype or domain!" << endl;
+                cerr << "statistic info operation error!" << endl;
                 exit(-1);
             }
         } else if (context.logLevelArgs != "") {
@@ -603,8 +587,7 @@ int HilogEntry(int argc, char* argv[])
 
     char recvBuffer[RECV_BUF_LEN] = {0};
     if (controller.RecvMsg(recvBuffer, RECV_BUF_LEN) == 0) {
-        fprintf(stderr, "Unexpected EOF ");
-        HilogPrintError(errno);
+        PrintErrorno(errno);
         exit(1);
         return 0;
     }

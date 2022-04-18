@@ -25,8 +25,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include "hilog/log.h"
-#include "init_file.h"
+
+#include <init_file.h>
+#include <hilog/log.h>
+#include <log_utils.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -58,7 +60,7 @@ int LogKmsg::LinuxReadAllKmsg()
     kmsgCtl = GetControlFile("/dev/kmsg");
     if (kmsgCtl < 0) {
         std::cout << "Cannot open kmsg! ";
-        HilogPrintError(errno);
+        PrintErrorno(errno);
         return -1;
     }
     std::unique_ptr<KmsgParser> parser = std::make_unique<KmsgParser>();

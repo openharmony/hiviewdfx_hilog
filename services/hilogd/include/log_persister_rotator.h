@@ -20,7 +20,7 @@
 
 #include <zlib.h>
 #include "hilog_common.h"
-#include "hilogtool_msg.h"
+#include "hilog_msg.h"
 #include "log_filter.h"
 namespace OHOS {
 namespace HiviewDFX {

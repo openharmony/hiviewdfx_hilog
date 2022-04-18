@@ -149,12 +149,4 @@ typedef enum {
     ERR_LOG_FILE_NUM_INVALID = -34,
 } ErrorCode;
 
-inline void HilogPrintError(int errnum)
-{
-    constexpr int bufSize = 1024;
-    char buf[bufSize] = { 0 };
-    strerror_r(errnum, buf, bufSize);
-    std::cerr << "Errno: " << errnum << ", " << buf << "\n";
-}
-
 #endif /* HILOG_COMMON_H */

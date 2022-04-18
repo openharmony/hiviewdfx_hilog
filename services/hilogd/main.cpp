@@ -23,12 +23,14 @@
 #include <chrono>
 #include <fcntl.h>
 
+#include <hilog_input_socket_server.h>
+#include <properties.h>
+#include <log_utils.h>
+
 #include "cmd_executor.h"
 #include "flow_control_init.h"
-#include "hilog_input_socket_server.h"
-#include "log_collector.h"
 #include "log_kmsg.h"
-#include "properties.h"
+#include "log_collector.h"
 #include "service_controller.h"
 
 #ifdef DEBUG
@@ -55,6 +57,7 @@ static void SigHandler(int sig)
 #ifdef DEBUG
         if (g_fd > 0) {
             close(g_fd);
+            g_fd = -1;
         }
 #endif
         std::cout<<"Exited!"<<std::endl;
@@ -133,21 +136,28 @@ static bool WriteStringToFile(const std::string& content, const std::string& fil
     return result;
 }
 
-int HilogdEntry()
-{
-    HilogBuffer hilogBuffer;
-    umask(HILOG_FILE_MASK);
-
 #ifdef DEBUG
+static void RedirectStdStreamToLogFile()
+{
     if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
     int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
         } else {
             std::cout << "open file error: ";
-            HilogPrintError(errno);
+            PrintErrorno(errno);
         }
     }
+}
+#endif
+
+int HilogdEntry()
+{
+    HilogBuffer hilogBuffer;
+    umask(HILOG_FILE_MASK);
+
+#ifdef DEBUG
+    RedirectStdStreamToLogFile();
 #endif
     std::signal(SIGINT, SigHandler);
 
@@ -169,13 +179,10 @@ int HilogdEntry()
     HilogInputSocketServer incomingLogsServer(onDataReceive);
     if (incomingLogsServer.Init() < 0) {
 #ifdef DEBUG
-    cout << "Failed to init input server socket ! ";
-    HilogPrintError(errno);
+        cout << "Failed to init input server socket ! ";
+        PrintErrorno(errno);
 #endif
     } else {
-        if (chmod(INPUT_SOCKET, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) < 0) {
-            cout << "chmod input socket failed !\n";
-        }
 #ifdef DEBUG
         cout << "Begin to listen !\n";
 #endif

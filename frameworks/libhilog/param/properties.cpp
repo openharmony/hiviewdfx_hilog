@@ -12,9 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "properties.h"
-
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -27,38 +24,132 @@
 #include <iostream>
 #include <pthread.h>
 #include <shared_mutex>
-#include <sstream>
 #include <string>
-#include <strstream>
 #include <sys/uio.h>
 #include <unistd.h>
 #include <unordered_map>
 
-#include <hilog/log.h>
 #include <parameter.h>
 #include <sysparam_errno.h>
+#include <hilog/log.h>
+#include <hilog_common.h>
+#include <log_utils.h>
 
+#include "properties.h"
+
+namespace OHOS {
+namespace HiviewDFX {
 using namespace std;
 
+enum class PropType {
+    // Below properties are used in HiLog API, which will be invoked frequently, so they should be cached
+    PROP_PRIVATE = 0,
+    PROP_ONCE_DEBUG,
+    PROP_PERSIST_DEBUG,
+    PROP_GLOBAL_LOG_LEVEL,
+    PROP_DOMAIN_LOG_LEVEL,
+    PROP_TAG_LOG_LEVEL,
+    PROP_DOMAIN_FLOWCTRL,
+    PROP_PROCESS_FLOWCTRL,
+
+    // Below properties are used by HiLog self, invoked only one or two times, so they needn't be cached
+    PROP_KMSG,
+    PROP_BUFFER_SIZE,
+
+    PROP_MAX,
+};
 using ReadLock = shared_lock<shared_timed_mutex>;
 using InsertLock = unique_lock<shared_timed_mutex>;
 
-static pthread_mutex_t g_globalLevelLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_tagLevelLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_domainLevelLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_debugLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_persistDebugLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_privateLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t g_kmsgLock = PTHREAD_MUTEX_INITIALIZER;
+static const int HILOG_PROP_VALUE_MAX = 92;
+static int LockByProp(PropType propType);
+static void UnlockByProp(PropType propType);
 
-static int LockByProp(uint32_t propType);
-static void UnlockByProp(uint32_t propType);
+static pthread_mutex_t g_privateLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_onceDebugLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_persistDebugLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_globalLevelLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_domainLevelLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_tagLevelLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
+
+using PropRes = struct {
+    string name;
+    pthread_mutex_t* lock;
+};
+static PropRes g_PropResources[static_cast<int>(PropType::PROP_MAX)] = {
+    // Cached:
+    {"hilog.private.on", &g_privateLock}, // PROP_PRIVATE
+    {"hilog.debug.on", &g_onceDebugLock}, // PROP_ONCE_DEBUG
+    {"persist.sys.hilog.debug.on", &g_persistDebugLock}, // PROP_PERSIST_DEBUG
+    {"hilog.loggable.global", &g_globalLevelLock}, // PROP_GLOBAL_LOG_LEVEL
+    {"hilog.loggable.domain.", &g_domainLevelLock}, // PROP_DOMAIN_LOG_LEVEL
+    {"hilog.loggable.tag.", &g_tagLevelLock}, // PROP_TAG_LOG_LEVEL
+    {"hilog.flowctrl.domain.on", &g_domainFlowLock}, // PROP_DOMAIN_FLOWCTRL
+    {"hilog.flowctrl.proc.on", &g_processFlowLock}, // PROP_PROCESS_FLOWCTRL
+
+    // Non cached:
+    {"persist.sys.hilog.kmsg.on", nullptr}, // PROP_KMSG,
+    {"hilog.buffersize.", nullptr}, // PROP_BUFFER_SIZE,
+};
+
+static string GetPropertyName(PropType propType)
+{
+    return g_PropResources[static_cast<int>(propType)].name;
+}
+
+static int LockByProp(PropType propType)
+{
+    if (g_PropResources[static_cast<int>(propType)].lock == nullptr) {
+        return -1;
+    }
+    return pthread_mutex_trylock(g_PropResources[static_cast<int>(propType)].lock);
+}
+
+static void UnlockByProp(PropType propType)
+{
+    if (g_PropResources[static_cast<int>(propType)].lock == nullptr) {
+        return;
+    }
+    pthread_mutex_unlock(g_PropResources[static_cast<int>(propType)].lock);
+    return;
+}
+
+static int PropertyGet(const string &key, char *value, int len)
+{
+    int handle = static_cast<int>(FindParameter(key.c_str()));
+    if (handle == -1) {
+        return RET_FAIL;
+    }
+
+    auto res = GetParameterValue(handle, value, len);
+    if (res < 0) {
+        std::cerr << "PropertyGet() -> GetParameterValue -> Can't get value for key: " << key;
+        std::cerr << " handle: " << handle << " Result: " << res << "\n";
+        return RET_FAIL;
+    }
+    return RET_SUCCESS;
+}
+
+static int PropertySet(const string &key, const string &value)
+{
+    auto result = SetParameter(key.c_str(), value.c_str());
+    if (result < 0) {
+        if (result == EC_INVALID) {
+            std::cerr << "PropertySet(): Invalid arguments.\n";
+        } else {
+            std::cerr << "PropertySet(): key: " << key.c_str() << ", value: " << value <<
+            ",  error: " << result << "\n";
+        }
+        return RET_FAIL;
+    }
+    return RET_SUCCESS;
+}
 
 class PropertyTypeLocker {
 public:
-    explicit PropertyTypeLocker(uint32_t propType) : m_propType(propType), m_isLocked(false)
+    explicit PropertyTypeLocker(PropType propType) : m_propType(propType), m_isLocked(false)
     {
         m_isLocked = !LockByProp(m_propType);
     }
@@ -76,7 +167,7 @@ public:
     }
 
 private:
-    uint32_t m_propType;
+    PropType m_propType;
     bool m_isLocked;
 };
 
@@ -87,7 +178,7 @@ class CacheData {
 public:
     using DataConverter = std::function<T(const RawPropertyData&, const T& defaultVal)>;
 
-    CacheData(DataConverter converter, const T& defaultValue, uint32_t propType, const std::string& suffix = "")
+    CacheData(DataConverter converter, const T& defaultValue, PropType propType, const std::string& suffix = "")
         : m_value(defaultValue), m_defaultValue(defaultValue), m_propType(propType), m_converter(converter)
     {
         m_key = GetPropertyName(m_propType) + suffix;
@@ -154,7 +245,7 @@ private:
     int m_commit = -1;
     T m_value;
     const T m_defaultValue;
-    const uint32_t m_propType;
+    const PropType m_propType;
     std::string m_key;
     DataConverter m_converter;
 };
@@ -162,154 +253,7 @@ private:
 using SwitchCache = CacheData<bool>;
 using LogLevelCache = CacheData<uint16_t>;
 
-
-void PropertyGet(const string &key, char *value, int len)
-{
-    if (len > HILOG_PROP_VALUE_MAX) {
-        std::cerr << "PropertyGet(): len exceed maximum.\n";
-        return;
-    }
-
-    int handle = static_cast<int>(FindParameter(key.c_str()));
-    if (handle == -1) {
-        return;
-    }
-
-    auto res = GetParameterValue(handle, value, len);
-    if (res < 0) {
-        std::cerr << "PropertyGet() -> GetParameterValue -> Can't get value for key: " << key;
-        std::cerr << " handle: " << handle << " Result: " << res << "\n";
-    }
-}
-
-void PropertySet(const string &key, const char* value)
-{
-    auto len = value ? strlen(value) : 0;
-    if (len > HILOG_PROP_VALUE_MAX) {
-        std::cerr << "PropertySet(): len exceed maximum.\n";
-        return;
-    }
-
-    auto result = SetParameter(key.c_str(), value);
-    if (result < 0) {
-        if (result == EC_INVALID) {
-            std::cerr << "PropertySet(): Invalid arguments.\n";
-        } else {
-            std::cerr << "PropertySet(): key: " << key.c_str() << "value: " << value << ",  error: " << result << "\n";
-        }
-    }
-}
-
-string GetProgName()
-{
-#ifdef HILOG_USE_MUSL
-    return program_invocation_short_name;
-#else
-    return getprogname();
-#endif
-}
-
-string GetPropertyName(uint32_t propType)
-{
-    string key;
-    switch (propType) {
-        case PROP_PRIVATE:
-            key = "hilog.private.on";
-            break;
-        case PROP_PROCESS_FLOWCTRL:
-            key = "hilog.flowctrl.pid.on";
-            break;
-        case PROP_DOMAIN_FLOWCTRL:
-            key = "hilog.flowctrl.domain.on";
-            break;
-        case PROP_GLOBAL_LOG_LEVEL:
-            key = "hilog.loggable.global";
-            break;
-        case PROP_DOMAIN_LOG_LEVEL:
-            key = "hilog.loggable.domain.";
-            break;
-        case PROP_TAG_LOG_LEVEL:
-            key = "hilog.loggable.tag.";
-            break;
-        case PROP_SINGLE_DEBUG:
-            key = "hilog.debug.on";
-            break;
-        case PROP_KMSG:
-            key = "persist.sys.hilog.kmsg.on";
-            break;
-        case PROP_PERSIST_DEBUG:
-            key = "persist.sys.hilog.debug.on";
-            break;
-        case PROP_BUFFER_SIZE:
-            key = "hilog.buffersize.";
-        default:
-            break;
-    }
-    return key;
-}
-
-static int LockByProp(uint32_t propType)
-{
-    switch (propType) {
-        case PROP_PRIVATE:
-            return pthread_mutex_trylock(&g_privateLock);
-        case PROP_PROCESS_FLOWCTRL:
-            return pthread_mutex_trylock(&g_processFlowLock);
-        case PROP_DOMAIN_FLOWCTRL:
-            return pthread_mutex_trylock(&g_domainFlowLock);
-        case PROP_GLOBAL_LOG_LEVEL:
-            return pthread_mutex_trylock(&g_globalLevelLock);
-        case PROP_DOMAIN_LOG_LEVEL:
-            return pthread_mutex_trylock(&g_domainLevelLock);
-        case PROP_TAG_LOG_LEVEL:
-            return pthread_mutex_trylock(&g_tagLevelLock);
-        case PROP_SINGLE_DEBUG:
-            return pthread_mutex_trylock(&g_debugLock);
-        case PROP_KMSG:
-            return pthread_mutex_trylock(&g_kmsgLock);
-        case PROP_PERSIST_DEBUG:
-            return pthread_mutex_trylock(&g_persistDebugLock);
-        default:
-            return -1;
-    }
-}
-
-static void UnlockByProp(uint32_t propType)
-{
-    switch (propType) {
-        case PROP_PRIVATE:
-            pthread_mutex_unlock(&g_privateLock);
-            break;
-        case PROP_PROCESS_FLOWCTRL:
-            pthread_mutex_unlock(&g_processFlowLock);
-            break;
-        case PROP_DOMAIN_FLOWCTRL:
-            pthread_mutex_unlock(&g_domainFlowLock);
-            break;
-        case PROP_GLOBAL_LOG_LEVEL:
-            pthread_mutex_unlock(&g_globalLevelLock);
-            break;
-        case PROP_DOMAIN_LOG_LEVEL:
-            pthread_mutex_unlock(&g_domainLevelLock);
-            break;
-        case PROP_TAG_LOG_LEVEL:
-            pthread_mutex_unlock(&g_tagLevelLock);
-            break;
-        case PROP_SINGLE_DEBUG:
-            pthread_mutex_unlock(&g_debugLock);
-            break;
-        case PROP_KMSG:
-            pthread_mutex_unlock(&g_kmsgLock);
-            break;
-        case PROP_PERSIST_DEBUG:
-            pthread_mutex_unlock(&g_persistDebugLock);
-            break;
-        default:
-            break;
-    }
-}
-
-static bool textToBool(const RawPropertyData& data, bool defaultVal)
+static bool TextToBool(const RawPropertyData& data, bool defaultVal)
 {
     if (!strcmp(data.data(), "true")) {
         return true;
@@ -319,14 +263,27 @@ static bool textToBool(const RawPropertyData& data, bool defaultVal)
     return defaultVal;
 }
 
-bool IsDebugOn()
+static uint16_t TextToLogLevel(const RawPropertyData& data, uint16_t defaultVal)
 {
-    return IsSingleDebugOn() || IsPersistDebugOn();
+    uint16_t level = PrettyStr2LogLevel(data.data());
+    if (level == LOG_LEVEL_MIN) {
+        level = defaultVal;
+    }
+    return level;
 }
 
-bool IsSingleDebugOn()
+bool IsPrivateSwitchOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_SINGLE_DEBUG);
+    static auto *switchCache = new SwitchCache(TextToBool, true, PropType::PROP_PRIVATE);
+    if (switchCache == nullptr) {
+        return false;
+    }
+    return switchCache->getValue();
+}
+
+bool IsOnceDebugOn()
+{
+    static auto *switchCache = new SwitchCache(TextToBool, false, PropType::PROP_ONCE_DEBUG);
     if (switchCache == nullptr) {
         return false;
     }
@@ -335,68 +292,22 @@ bool IsSingleDebugOn()
 
 bool IsPersistDebugOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_PERSIST_DEBUG);
+    static auto *switchCache = new SwitchCache(TextToBool, false, PropType::PROP_PERSIST_DEBUG);
     if (switchCache == nullptr) {
         return false;
     }
     return switchCache->getValue();
 }
 
-bool IsPrivateSwitchOn()
+bool IsDebugOn()
 {
-    static auto *switchCache = new SwitchCache(textToBool, true, PROP_PRIVATE);
-    if (switchCache == nullptr) {
-        return false;
-    }
-    return switchCache->getValue();
+    return IsOnceDebugOn() || IsPersistDebugOn();
 }
 
-bool IsProcessSwitchOn()
-{
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_PROCESS_FLOWCTRL);
-    if (switchCache == nullptr) {
-        return false;
-    }
-    return switchCache->getValue();
-}
-
-bool IsDomainSwitchOn()
-{
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_DOMAIN_FLOWCTRL);
-    if (switchCache == nullptr) {
-        return false;
-    }
-    return switchCache->getValue();
-}
-
-bool IsKmsgSwitchOn()
-{
-    static auto *switchCache = new SwitchCache(textToBool, false, PROP_KMSG);
-    if (switchCache == nullptr) {
-        return false;
-    }
-    return switchCache->getValue();
-}
-
-static uint16_t textToLogLevel(const RawPropertyData& data, uint16_t defaultVal)
-{
-    static const std::unordered_map<char, uint16_t> logLevels = {
-        { 'd', LOG_DEBUG }, { 'D', LOG_DEBUG },
-        { 'i', LOG_INFO }, { 'I', LOG_INFO },
-        { 'w', LOG_WARN }, { 'W', LOG_WARN },
-        { 'e', LOG_ERROR }, { 'E', LOG_ERROR },
-        { 'f', LOG_FATAL }, { 'F', LOG_FATAL },
-    };
-    auto it = logLevels.find(data[0]);
-    if (it != logLevels.end()) {
-        return it->second;
-    }
-    return LOG_LEVEL_MIN;
-}
 
 uint16_t GetGlobalLevel()
 {
-    static auto *logLevelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_GLOBAL_LOG_LEVEL);
+    static auto *logLevelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, PropType::PROP_GLOBAL_LOG_LEVEL);
     return logLevelCache->getValue();
 }
 
@@ -413,8 +324,8 @@ uint16_t GetDomainLevel(uint32_t domain)
         InsertLock lock(*mtx);
         it = domainMap->find(domain); // secured for two thread went across above condition
         if (it == domainMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_DOMAIN_LOG_LEVEL,
-                to_string(domain));
+            LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
+            PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
             auto result = domainMap->insert({ domain, levelCache });
             if (!result.second) {
                 std::cerr << "Can't insert new LogLevelCache for domain: " << domain << "\n";
@@ -440,7 +351,8 @@ uint16_t GetTagLevel(const string& tag)
         InsertLock lock(*mtx);
         it = tagMap->find(tag); // secured for two thread went across above condition
         if (it == tagMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(textToLogLevel, LOG_LEVEL_MIN, PROP_TAG_LOG_LEVEL, tag);
+            LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
+            PropType::PROP_TAG_LOG_LEVEL, tag);
             auto result = tagMap->insert({ tag, levelCache });
             if (!result.second) {
                 std::cerr << "Can't insert new LogLevelCache for tag: " << tag << "\n";
@@ -453,15 +365,46 @@ uint16_t GetTagLevel(const string& tag)
     return levelCache->getValue();
 }
 
+bool IsProcessSwitchOn()
+{
+    static auto *switchCache = new SwitchCache(TextToBool, false, PropType::PROP_PROCESS_FLOWCTRL);
+    if (switchCache == nullptr) {
+        return false;
+    }
+    return switchCache->getValue();
+}
+
+bool IsDomainSwitchOn()
+{
+    static auto *switchCache = new SwitchCache(TextToBool, false, PropType::PROP_DOMAIN_FLOWCTRL);
+    if (switchCache == nullptr) {
+        return false;
+    }
+    return switchCache->getValue();
+}
+
+bool IsKmsgSwitchOn()
+{
+    RawPropertyData rawData;
+    int ret = PropertyGet(GetPropertyName(PropType::PROP_KMSG), rawData.data(), HILOG_PROP_VALUE_MAX);
+    if (ret == RET_FAIL) {
+        return false;
+    }
+    return TextToBool(rawData, false);
+}
+
 static string GetBufferSizePropName(uint16_t type, bool persist)
 {
     string name = persist ? "persist.sys." : "";
+    string suffix;
 
-    static const string logTypeStr[LOG_TYPE_MAX + 1] = {
-        "app", "init", "", "core", "kmsg", "global"
-    };
-    name += (GetPropertyName(PROP_BUFFER_SIZE) + logTypeStr[type]);
-    return name;
+    if (type >= LOG_TYPE_MAX) {
+        suffix = "global";
+    } else {
+        suffix = LogType2Str(type);
+    }
+
+    return name + GetPropertyName(PropType::PROP_BUFFER_SIZE) + suffix;
 }
 
 size_t GetBufferSize(uint16_t type, bool persist)
@@ -472,20 +415,77 @@ size_t GetBufferSize(uint16_t type, bool persist)
         return 0;
     }
 
-    PropertyGet(GetBufferSizePropName(type, persist), value, HILOG_PROP_VALUE_MAX);
-    if (value[0] == 0) {
+    int ret = PropertyGet(GetBufferSizePropName(type, persist), value, HILOG_PROP_VALUE_MAX);
+    if (ret == RET_FAIL || value[0] == 0) {
         return 0;
     }
 
     return std::stoi(value);
 }
 
-void SetBufferSize(uint16_t type, bool persist, size_t size)
+static int SetBoolValue(PropType type, bool val)
+{
+    string key = GetPropertyName(type);
+    return key == "" ? RET_FAIL : (PropertySet(key, val ? "true" : "false"));
+}
+
+static int SetLevel(PropType type, const string& suffix, uint16_t lvl)
+{
+    string key = GetPropertyName(type) + suffix;
+    return key == "" ? RET_FAIL : (PropertySet(key, LogLevel2ShortStr(lvl)));
+}
+
+int SetPrivateSwitchOn(bool on)
+{
+    return SetBoolValue(PropType::PROP_PRIVATE, on);
+}
+
+int SetOnceDebugOn(bool on)
+{
+    return SetBoolValue(PropType::PROP_ONCE_DEBUG, on);
+}
+
+int SetPersistDebugOn(bool on)
+{
+    return SetBoolValue(PropType::PROP_PERSIST_DEBUG, on);
+}
+
+int SetGlobalLevel(uint16_t lvl)
+{
+    return SetLevel(PropType::PROP_GLOBAL_LOG_LEVEL, "", lvl);
+}
+
+int SetTagLevel(const std::string& tag, uint16_t lvl)
+{
+    return SetLevel(PropType::PROP_TAG_LOG_LEVEL, tag, lvl);
+}
+
+int SetDomainLevel(uint32_t domain, uint16_t lvl)
+{
+    return SetLevel(PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain), lvl);
+}
+
+int SetProcessSwitchOn(bool on)
+{
+    return SetBoolValue(PropType::PROP_PROCESS_FLOWCTRL, on);
+}
+
+int SetDomainSwitchOn(bool on)
+{
+    return SetBoolValue(PropType::PROP_DOMAIN_FLOWCTRL, on);
+}
+
+int SetKmsgSwitchOn(bool on)
+{
+    return SetBoolValue(PropType::PROP_KMSG, on);
+}
+
+int SetBufferSize(uint16_t type, bool persist, size_t size)
 {
     if (type > LOG_TYPE_MAX || type < LOG_TYPE_MIN) {
-        return;
+        return RET_FAIL;
     }
-
-    PropertySet(GetBufferSizePropName(type, persist), to_string(size).c_str());
-    return;
+    return PropertySet(GetBufferSizePropName(type, persist), to_string(size));
 }
+} // namespace HiviewDFX
+} // namespace OHOS

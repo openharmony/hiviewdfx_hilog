@@ -18,9 +18,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-#define DOMAIN_NUMBER_BASE (16)
-#define DOMAIN_MAX_SCOPE 0xDFFFFFF
-
 using HilogArgs = struct {
     uint16_t noBlockMode;
     uint8_t nPid;

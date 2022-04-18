@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef HILOGTOOL_MSG_H
-#define HILOGTOOL_MSG_H
+#ifndef HILOG_MSG_H
+#define HILOG_MSG_H
 
 #include <cstdint>
 #include <string>
@@ -324,4 +324,4 @@ using SetPropertyParam = struct {
     std::string pidStr;
 };
 
-#endif /* HILOGTOOL_MSG_H */
+#endif /* HILOG_MSG_H */

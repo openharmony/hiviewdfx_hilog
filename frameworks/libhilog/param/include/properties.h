@@ -16,39 +16,32 @@
 #ifndef PROPERTIES_H
 #define PROPERTIES_H
 
-#include <cstdint>
-#include <cstdlib>
 #include <string>
 
-static const int HILOG_PROP_VALUE_MAX = 92;
-
-using PropType = enum {
-    PROP_PRIVATE = 0x01,
-    PROP_PROCESS_FLOWCTRL,
-    PROP_DOMAIN_FLOWCTRL,
-    PROP_GLOBAL_LOG_LEVEL,
-    PROP_DOMAIN_LOG_LEVEL,
-    PROP_TAG_LOG_LEVEL,
-    PROP_SINGLE_DEBUG,
-    PROP_KMSG,
-    PROP_PERSIST_DEBUG,
-    PROP_BUFFER_SIZE,
-};
-
-std::string GetPropertyName(uint32_t propType);
-std::string GetProgName();
-uint16_t GetTagLevel(const std::string& tag);
-void PropertyGet(const std::string &key, char *value, int len);
-void PropertySet(const std::string &key, const char* value);
-bool IsDebugOn();
-bool IsSingleDebugOn();
-bool IsPersistDebugOn();
+namespace OHOS {
+namespace HiviewDFX {
 bool IsPrivateSwitchOn();
+bool IsOnceDebugOn();
+bool IsPersistDebugOn();
+bool IsDebugOn();
+uint16_t GetGlobalLevel();
+uint16_t GetDomainLevel(uint32_t domain);
+uint16_t GetTagLevel(const std::string& tag);
 bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
 bool IsKmsgSwitchOn();
-uint16_t GetGlobalLevel();
-uint16_t GetDomainLevel(uint32_t domain);
 size_t GetBufferSize(uint16_t type, bool persist);
-void SetBufferSize(uint16_t type, bool persist, size_t size);
+
+int SetPrivateSwitchOn(bool on);
+int SetOnceDebugOn(bool on);
+int SetPersistDebugOn(bool on);
+int SetGlobalLevel(uint16_t lvl);
+int SetTagLevel(const std::string& tag, uint16_t lvl);
+int SetDomainLevel(uint32_t domain, uint16_t lvl);
+int SetProcessSwitchOn(bool on);
+int SetDomainSwitchOn(bool on);
+int SetKmsgSwitchOn(bool on);
+int SetBufferSize(uint16_t type, bool persist, size_t size);
+} // namespace HiviewDFX
+} // namespace OHOS
 #endif
