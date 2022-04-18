@@ -52,7 +52,10 @@ ohos_source_set("libhilog_source") {
     "$socket_root/socket_server_adapter.cpp",
   ]
 
-  utils_sources = [ "$utils_root/format.cpp" ]
+  utils_sources = [
+    "$utils_root/format.cpp",
+    "$utils_root/log_utils.cpp",
+  ]
 
   vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.cpp" ]
 

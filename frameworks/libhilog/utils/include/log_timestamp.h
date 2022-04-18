@@ -16,6 +16,8 @@
 #ifndef LOG_TIME_STAMP_H
 #define LOG_TIME_STAMP_H
 
+namespace OHOS {
+namespace HiviewDFX {
 #define NS_PER_SEC 1000000000ULL
 class LogTimeStamp {
 public:
@@ -95,5 +97,6 @@ public:
     uint32_t tv_sec = 0;
     uint32_t tv_nsec = 0;
 };
-
+} // namespace HiviewDFX
+} // namespace OHOS
 #endif

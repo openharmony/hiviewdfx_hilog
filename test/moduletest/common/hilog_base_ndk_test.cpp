@@ -176,7 +176,7 @@ HWTEST_F(HiLogBaseNDKTest, VeryLongLogs, TestSize.Level1)
 
 HWTEST_F(HiLogBaseNDKTest, MemAllocTouch1, TestSize.Level1)
 {
-    #undef TEXT_TO_CHECK 
+    #undef TEXT_TO_CHECK
     #define TEXT_TO_CHECK "Float potential mem alloc"
     HILOG_BASE_ERROR(LOG_CORE, TEXT_TO_CHECK " %{public}515.2f", 123.3);
     usleep(1000); /* 1000: sleep 1 ms */
@@ -190,13 +190,13 @@ HWTEST_F(HiLogBaseNDKTest, MemAllocTouch1, TestSize.Level1)
             ++realCount;
         }
     }
-    
+
     EXPECT_EQ(realCount, 1);
 }
 
 HWTEST_F(HiLogBaseNDKTest, MemAllocTouch2, TestSize.Level1)
 {
-    #undef TEXT_TO_CHECK 
+    #undef TEXT_TO_CHECK
     #define TEXT_TO_CHECK "Float potential mem alloc"
     HILOG_BASE_ERROR(LOG_CORE, TEXT_TO_CHECK " %{public}000000005.00000002f", 123.3);
     usleep(1000); /* 1000: sleep 1 ms */
@@ -210,7 +210,7 @@ HWTEST_F(HiLogBaseNDKTest, MemAllocTouch2, TestSize.Level1)
             ++realCount;
         }
     }
-    
+
     EXPECT_EQ(realCount, 1);
 }
 

@@ -36,10 +36,11 @@
 #include <thread>
 #include <unistd.h>
 
-#include "hilog_common.h"
-#include "log_buffer.h"
-#include "log_compress.h"
-#include "format.h"
+#include <hilog_common.h>
+#include <log_buffer.h>
+#include <log_compress.h>
+#include <format.h>
+#include <log_utils.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -217,7 +218,7 @@ int LogPersister::Deinit()
     std::cout << "Removing unmapped plain log file: " << m_plainLogFilePath << "\n";
     if (remove(m_plainLogFilePath.c_str())) {
         std::cerr << "File: " << m_plainLogFilePath << " can't be removed. ";
-        HilogPrintError(errno);
+        PrintErrorno(errno);
     }
 
     DeregisterLogPersister(shared_from_this());
@@ -234,7 +235,7 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
 
     if (!plainTextFile) {
         std::cerr << __PRETTY_FUNCTION__ << " Open uncompressed log file(" << m_plainLogFilePath << ") failed: ";
-        HilogPrintError(errno);
+        PrintErrorno(errno);
         return ERR_LOG_PERSIST_FILE_OPEN_FAIL;
     }
 
@@ -247,11 +248,11 @@ int LogPersister::PrepareUncompressedFile(const std::string& parentPath, bool re
         PROT_READ | PROT_WRITE, MAP_SHARED, fileno(plainTextFile), 0));
     if (fclose(plainTextFile)) {
         std::cerr << "File: " << plainTextFile << " can't be closed. ";
-        HilogPrintError(errno);
+        PrintErrorno(errno);
     }
     if (m_mappedPlainLogFile == MAP_FAILED) {
         std::cerr << __PRETTY_FUNCTION__ << " mmap file failed: ";
-        HilogPrintError(errno);
+        PrintErrorno(errno);
         return RET_FAIL;
     }
     if (restore) {

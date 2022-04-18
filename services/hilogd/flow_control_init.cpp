@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <hilog/log.h>
 #include "properties.h"
-#include "log_time_stamp.h"
+#include "log_timestamp.h"
 
 namespace OHOS {
 namespace HiviewDFX {

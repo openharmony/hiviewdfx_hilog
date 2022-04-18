@@ -41,6 +41,7 @@ typedef enum {
     LOG_INIT = 1,
     // Used by core service, framework.
     LOG_CORE = 3,
+    LOG_KMSG = 4,
     LOG_TYPE_MAX
 } LogType;
 

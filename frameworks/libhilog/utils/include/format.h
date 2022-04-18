@@ -17,7 +17,7 @@
 #define LOG_FORMAT_H
 #include <iostream>
 #include "hilog_common.h"
-#include "hilogtool_msg.h"
+#include "hilog_msg.h"
 namespace OHOS {
 namespace HiviewDFX {
 void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, uint32_t showFormat);

@@ -25,15 +25,17 @@
 #include <cerrno>
 #include <securec.h>
 
-#include "log_time_stamp.h"
+#include "log_timestamp.h"
 #include "hilog_trace.h"
 #include "hilog_inner.h"
 #include "hilog/log.h"
 #include "hilog_common.h"
 #include "hilog_input_socket_client.h"
 #include "vsnprintf_s_p.h"
+#include "log_utils.h"
 
 using namespace std;
+using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
 static atomic_int g_hiLogGetIdCallCount = 0;
 static const char P_LIMIT_TAG[] = "LOGLIMITP";
