@@ -36,7 +36,13 @@ int NoneCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
 
 int ZlibCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressedBuffer)
 {
-    uint32_t zdlen = compressBound(inBuffer.offset);
+    cStream.zalloc = Z_NULL;
+    cStream.zfree = Z_NULL;
+    cStream.opaque = Z_NULL;
+    if (deflateInit2(&cStream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+        return -1;
+    }
+    uint32_t zdlen = deflateBound(&cStream, inBuffer.offset);
     std::vector<char> zdataBuf(zdlen, 0);
     char* zdata = zdataBuf.data();
     if (zdata == nullptr) {
@@ -48,12 +54,6 @@ int ZlibCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
     size_t dst_pos = 0;
     size_t read = inBuffer.offset;
     int flush = 0;
-    cStream.zalloc = Z_NULL;
-    cStream.zfree = Z_NULL;
-    cStream.opaque = Z_NULL;
-    if (deflateInit2(&cStream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
-        return -1;
-    }
     do {
         bool flag = read - src_pos < toRead;
         if (flag) {
@@ -82,10 +82,13 @@ int ZlibCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
                 return -1;
             }
             unsigned have = CHUNK - cStream.avail_out;
-            if (memmove_s(zdata + dst_pos, CHUNK, buffOut, have) != 0) {
+            if (memmove_s(zdata + dst_pos, zdlen - dst_pos, buffOut, have) != 0) {
                 return -1;
             }
             dst_pos += have;
+            if (unlikely(zdlen < dst_pos)) { // zdataBuf is not long enough, shoudn't happen
+                return -1;
+            }
         } while (cStream.avail_out == 0);
     } while (flush != Z_FINISH);
     /* clean up and return */
