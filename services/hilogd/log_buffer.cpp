@@ -13,14 +13,19 @@
  * limitations under the License.
  */
 
-#include "log_buffer.h"
-
 #include <cstring>
 #include <thread>
+#include <vector>
+#include <sys/time.h>
+
 #include "hilog_common.h"
 #include "flow_control_init.h"
 #include "log_timestamp.h"
 #include "properties.h"
+#include "log_utils.h"
+
+#include "log_buffer.h"
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
@@ -41,6 +46,7 @@ HilogBuffer::HilogBuffer()
         droppedByType[i] = 0;
     }
     InitBuffLen();
+    InitBuffHead();
 }
 
 HilogBuffer::~HilogBuffer() {}
@@ -244,6 +250,46 @@ void HilogBuffer::InitBuffLen()
         SetBuffLen(i, persist_global_size);
         SetBuffLen(i, size);
         SetBuffLen(i, persist_size);
+    }
+}
+
+void HilogBuffer::InitBuffHead()
+{
+    const string tag = "HiLog";
+    const string msg = "========Zeroth log of type: ";
+    const uint8_t logTypeStrLen = 10;
+    const size_t contentLen = tag.length() + 1 + msg.length() + 1 + logTypeStrLen;
+    std::vector<char> buf(contentLen, 0);
+    HilogMsg *headMsg = reinterpret_cast<HilogMsg *>(buf.data());
+
+    struct timeval tv = {0};
+    gettimeofday(&tv, nullptr);
+    headMsg->tv_sec = static_cast<uint32_t>(tv.tv_sec);
+    headMsg->tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
+    headMsg->level = LOG_INFO;
+    headMsg->pid = 0;
+    headMsg->tid = 0;
+    headMsg->domain = 0;
+    headMsg->tag_len = tag.length() + 1;
+    if (memcpy_s(headMsg->tag, contentLen, tag.c_str(), headMsg->tag_len) != 0) {
+        return;
+    }
+    if (memcpy_s(headMsg->tag + headMsg->tag_len, contentLen - headMsg->tag_len, msg.c_str(), msg.length()) != 0) {
+        return;
+    }
+    headMsg->len = sizeof(HilogMsg) + headMsg->tag_len + msg.length();
+    for (uint16_t i = 0; i < LOG_TYPE_MAX; i++) {
+        string typeStr = LogType2Str(i);
+        if (typeStr == "invalid") {
+            continue;
+        }
+        headMsg->type = i;
+        headMsg->len += (typeStr.length() + 1);
+        if (memcpy_s(headMsg->tag + headMsg->tag_len + msg.length(), contentLen - headMsg->tag_len - msg.length(),
+            typeStr.c_str(), typeStr.length() + 1) != 0) {
+            continue;
+        }
+        Insert(*headMsg);
     }
 }
 
