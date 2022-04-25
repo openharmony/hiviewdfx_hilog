@@ -46,6 +46,7 @@ public:
     int32_t Delete(uint16_t logType);
 
     void InitBuffLen();
+    void InitBuffHead();
     int64_t GetBuffLen(uint16_t logType);
     int32_t SetBuffLen(uint16_t logType, uint64_t buffSize);
     int32_t GetStatisticInfoByLog(uint16_t logType, uint64_t& printLen, uint64_t& cacheLen, int32_t& dropped);
