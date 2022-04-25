@@ -49,7 +49,6 @@ ohos_source_set("libhilog_source") {
     "$socket_root/socket.cpp",
     "$socket_root/socket_client.cpp",
     "$socket_root/socket_server.cpp",
-    "$socket_root/socket_server_adapter.cpp",
   ]
 
   utils_sources = [
@@ -68,10 +67,7 @@ ohos_source_set("libhilog_source") {
   sources += utils_sources
   sources += vsnprintf_sources
 
-  defines = [
-    "__RECV_MSG_WITH_UCRED_",
-    "USING_EXISTING_SOCKET",
-  ]
+  defines = [ "__RECV_MSG_WITH_UCRED_" ]
   if (use_musl) {
     defines += [ "HILOG_USE_MUSL" ]
   }
