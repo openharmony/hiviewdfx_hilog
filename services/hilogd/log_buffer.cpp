@@ -258,7 +258,7 @@ void HilogBuffer::InitBuffHead()
     const string tag = "HiLog";
     const string msg = "========Zeroth log of type: ";
     const uint8_t logTypeStrLen = 10;
-    const size_t contentLen = tag.length() + 1 + msg.length() + 1 + logTypeStrLen;
+    const size_t contentLen = sizeof(HilogMsg) + tag.length() + 1 + msg.length() + 1 + logTypeStrLen;
     std::vector<char> buf(contentLen, 0);
     HilogMsg *headMsg = reinterpret_cast<HilogMsg *>(buf.data());
 
