@@ -24,8 +24,6 @@
 #include <poll.h>
 #include <unistd.h>
 
-#include "socket_server_adapter.h"
-
 extern "C" {
 #include "init_socket.h"
 }
