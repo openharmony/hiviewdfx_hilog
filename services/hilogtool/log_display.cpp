@@ -296,7 +296,7 @@ void HilogShowLog(uint32_t showFormat, HilogDataMessage* data, const HilogArgs* 
     showBuffer.tag_len = data->tag_len;
     showBuffer.tv_sec = data->tv_sec;
     showBuffer.tv_nsec = data->tv_nsec;
-    int offset = data->tag_len;
+    int offset = static_cast<int>(data->tag_len);
     const char *dataBegin = data->data + offset;
     char *dataPos = data->data + offset;
     while (*dataPos != 0) {
