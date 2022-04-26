@@ -177,8 +177,8 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
                 return RET_FAIL;
             }
             for (iter = 0; iter < logTypeNum; iter++) {
-                pBuffSizeMsg->logType = logType & (~ (logType - 1)); // Get first bit 1 - logType
-                logType &= (~(pBuffSizeMsg->logType));
+                pBuffSizeMsg->logType = logType & (~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
+                logType &= (~static_cast<uint16_t>(pBuffSizeMsg->logType));
                 pBuffSizeMsg->logType = GetBitPos(pBuffSizeMsg->logType);
                 pBuffSizeMsg++;
             }
@@ -199,8 +199,8 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
                 return RET_FAIL;
             }
             for (iter = 0; iter < logTypeNum; iter++) {
-                pBuffResizeMsg->logType = logType & (~ (logType - 1)); // Get first bit 1 - logType
-                logType &= (~pBuffResizeMsg->logType);
+                pBuffResizeMsg->logType = logType & (~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
+                logType &= (~static_cast<uint16_t>(pBuffResizeMsg->logType));
                 pBuffResizeMsg->logType = GetBitPos(pBuffResizeMsg->logType);
                 pBuffResizeMsg->buffSize = Str2Size(buffSizeStr);
                 pBuffResizeMsg++;
@@ -285,8 +285,8 @@ int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const stri
         return RET_FAIL;
     }
     for (iter = 0; iter < logTypeNum; iter++) {
-        pLogClearMsg->logType = logType & (~ (logType - 1)); // Get first bit 1 - logType
-        logType &= (~pLogClearMsg->logType);
+        pLogClearMsg->logType = logType & (~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
+        logType &= (~static_cast<uint16_t>(pLogClearMsg->logType));
         pLogClearMsg->logType = GetBitPos(pLogClearMsg->logType);
         pLogClearMsg++;
     }
@@ -329,7 +329,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             pLogPersistStartMsg->fileSize = (logPersistParam->fileSizeStr == "") ? LOG_PERSIST_FILE_SIZE
                 : Str2Size(logPersistParam->fileSizeStr);
             pLogPersistStartMsg->fileNum = (logPersistParam->fileNumStr == "") ? LOG_PERSIST_FILE_NUM
-                : stoi(logPersistParam->fileNumStr);
+                : static_cast<uint32_t>(stoi(logPersistParam->fileNumStr));
             if (logPersistParam->fileNameStr.size() > FILE_PATH_MAX_LEN) {
                 cout << ErrorCode2Str(ERR_LOG_PERSIST_FILE_NAME_INVALID) << endl;
                 return RET_FAIL;
@@ -352,7 +352,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             if (logPersistParam->jobIdStr == "") {
                 jobId = JOB_ID_ALL;
             } else {
-                jobId = stoi(logPersistParam->jobIdStr);
+                jobId = static_cast<uint32_t>(stoi(logPersistParam->jobIdStr));
             }
             if (jobId == 0) {
                 cout << ErrorCode2Str(ERR_LOG_PERSIST_JOBID_INVALID) << endl;
@@ -391,8 +391,8 @@ int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType
     int ret = RET_SUCCESS;
     Split(propertyParm->domainStr, vecDomain);
     Split(propertyParm->tagStr, vecTag);
-    domainNum = vecDomain.size();
-    tagNum = vecTag.size();
+    domainNum = static_cast<int>(vecDomain.size());
+    tagNum = static_cast<int>(vecTag.size());
     LogLevel lvl;
     switch (operationType) {
         case OT_PRIVATE_SWITCH:
