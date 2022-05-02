@@ -18,11 +18,11 @@
 #include <vector>
 #include <sys/time.h>
 
-#include "hilog_common.h"
-#include "flow_control_init.h"
-#include "log_timestamp.h"
-#include "properties.h"
-#include "log_utils.h"
+#include <hilog_common.h>
+#include <flow_control_init.h>
+#include <log_timestamp.h>
+#include <properties.h>
+#include <log_utils.h>
 
 #include "log_buffer.h"
 
@@ -36,6 +36,34 @@ const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;
 
+static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType)
+{
+    const string tag = "HiLog";
+    size_t contentLen =  tag.length() + 1 + msg.length() + 1;
+    hilogMsg.len = static_cast<uint16_t>(sizeof(HilogMsg) + contentLen);
+    hilogMsg.len = hilogMsg.len > MAX_LOG_LEN ? MAX_LOG_LEN : hilogMsg.len;
+    contentLen = hilogMsg.len - static_cast<uint16_t>(sizeof(HilogMsg));
+
+    struct timeval tv = {0};
+    gettimeofday(&tv, nullptr);
+    hilogMsg.tv_sec = static_cast<uint32_t>(tv.tv_sec);
+    hilogMsg.tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
+    hilogMsg.type = logType;
+    hilogMsg.level = LOG_INFO;
+    hilogMsg.pid = 0;
+    hilogMsg.tid = 0;
+    hilogMsg.domain = 0;
+    hilogMsg.tag_len = tag.length() + 1;
+    if (memcpy_s(hilogMsg.tag, contentLen, tag.c_str(), hilogMsg.tag_len) != 0) {
+        return RET_FAIL;
+    }
+    if (memcpy_s(hilogMsg.tag + hilogMsg.tag_len, contentLen - hilogMsg.tag_len, msg.c_str(), msg.length() + 1) != 0) {
+        return RET_FAIL;
+    }
+
+    return RET_SUCCESS;
+}
+
 HilogBuffer::HilogBuffer()
 {
     size = 0;
@@ -47,6 +75,38 @@ HilogBuffer::HilogBuffer()
     }
     InitBuffLen();
     InitBuffHead();
+}
+
+void HilogBuffer::InitBuffLen()
+{
+    size_t global_size = GetBufferSize(LOG_TYPE_MAX, false);
+    size_t persist_global_size = GetBufferSize(LOG_TYPE_MAX, true);
+    for (int i = 0; i < LOG_TYPE_MAX; i++) {
+        size_t size = GetBufferSize(i, false);
+        size_t persist_size = GetBufferSize(i, true);
+        SetBuffLen(i, global_size);
+        SetBuffLen(i, persist_global_size);
+        SetBuffLen(i, size);
+        SetBuffLen(i, persist_size);
+    }
+}
+
+void HilogBuffer::InitBuffHead()
+{
+    const string msg = "========Zeroth log of type: ";
+    std::vector<char> buf(MAX_LOG_LEN, 0);
+    HilogMsg *headMsg = reinterpret_cast<HilogMsg *>(buf.data());
+
+    for (uint16_t i = 0; i < LOG_TYPE_MAX; i++) {
+        string typeStr = LogType2Str(i);
+        if (typeStr == "invalid") {
+            continue;
+        }
+        string tmpStr = msg + typeStr;
+        if (GenerateHilogMsgInside(*headMsg, tmpStr, i) == RET_SUCCESS) {
+            Insert(*headMsg);
+        }
+    }
 }
 
 HilogBuffer::~HilogBuffer() {}
@@ -74,7 +134,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
                     ++it;
                     continue;
                 }
-                OnDeleteItem(it);
+                OnDeleteItem(it, DeleteReason::BUFF_OVERFLOW);
                 size_t cLen = it->len - it->tag_len;
                 size -= cLen;
                 sizeByType[(*it).type] -= cLen;
@@ -124,6 +184,20 @@ bool HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id, OnFound 
         reader->m_pos = msgList.begin();
     }
 
+    if (reader->skipped) {
+        const string msg = "========Slow reader missed log lines: ";
+        const string tmpStr = msg + to_string(reader->skipped);
+        std::vector<char> buf(MAX_LOG_LEN, 0);
+        HilogMsg *headMsg = reinterpret_cast<HilogMsg *>(buf.data());
+        if (GenerateHilogMsgInside(*headMsg, tmpStr, LOG_CORE) == RET_SUCCESS) {
+            const HilogData logData(*headMsg);
+            if (onFound) {
+                onFound(logData);
+                reader->skipped = 0;
+            }
+        }
+    }
+
     while (reader->m_pos != msgList.end()) {
         const HilogData& logData = *reader->m_pos;
         reader->m_pos++;
@@ -167,7 +241,7 @@ int32_t HilogBuffer::Delete(uint16_t logType)
             continue;
         }
         // Delete corresponding logs
-        OnDeleteItem(it);
+        OnDeleteItem(it, DeleteReason::CMD_CLEAR);
 
         size_t cLen = it->len - it->tag_len;
         sum += cLen;
@@ -183,6 +257,7 @@ HilogBuffer::ReaderId HilogBuffer::CreateBufReader(std::function<void()> onNewDa
     std::unique_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
     auto reader = std::make_shared<BufferReader>();
     if (reader != nullptr) {
+        reader->skipped = 0;
         reader->m_onNewDataCallback = onNewDataCallback;
     }
     ReaderId id = reinterpret_cast<ReaderId>(reader.get());
@@ -199,12 +274,15 @@ void HilogBuffer::RemoveBufReader(const ReaderId& id)
     }
 }
 
-void HilogBuffer::OnDeleteItem(LogMsgContainer::iterator itemPos)
+void HilogBuffer::OnDeleteItem(LogMsgContainer::iterator itemPos, DeleteReason reason)
 {
     std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
     for (auto& [id, readerPtr] : m_logReaders) {
         if (readerPtr->m_pos == itemPos) {
             readerPtr->m_pos = std::next(itemPos);
+            if (reason == DeleteReason::BUFF_OVERFLOW) {
+                readerPtr->skipped++;
+            }
         }
     }
 }
@@ -237,60 +315,6 @@ std::shared_ptr<HilogBuffer::BufferReader> HilogBuffer::GetReader(const ReaderId
         return it->second;
     }
     return std::shared_ptr<HilogBuffer::BufferReader>();
-}
-
-void HilogBuffer::InitBuffLen()
-{
-    size_t global_size = GetBufferSize(LOG_TYPE_MAX, false);
-    size_t persist_global_size = GetBufferSize(LOG_TYPE_MAX, true);
-    for (int i = 0; i < LOG_TYPE_MAX; i++) {
-        size_t size = GetBufferSize(i, false);
-        size_t persist_size = GetBufferSize(i, true);
-        SetBuffLen(i, global_size);
-        SetBuffLen(i, persist_global_size);
-        SetBuffLen(i, size);
-        SetBuffLen(i, persist_size);
-    }
-}
-
-void HilogBuffer::InitBuffHead()
-{
-    const string tag = "HiLog";
-    const string msg = "========Zeroth log of type: ";
-    const uint8_t logTypeStrLen = 10;
-    const size_t contentLen = sizeof(HilogMsg) + tag.length() + 1 + msg.length() + 1 + logTypeStrLen;
-    std::vector<char> buf(contentLen, 0);
-    HilogMsg *headMsg = reinterpret_cast<HilogMsg *>(buf.data());
-
-    struct timeval tv = {0};
-    gettimeofday(&tv, nullptr);
-    headMsg->tv_sec = static_cast<uint32_t>(tv.tv_sec);
-    headMsg->tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
-    headMsg->level = LOG_INFO;
-    headMsg->pid = 0;
-    headMsg->tid = 0;
-    headMsg->domain = 0;
-    headMsg->tag_len = tag.length() + 1;
-    if (memcpy_s(headMsg->tag, contentLen, tag.c_str(), headMsg->tag_len) != 0) {
-        return;
-    }
-    if (memcpy_s(headMsg->tag + headMsg->tag_len, contentLen - headMsg->tag_len, msg.c_str(), msg.length()) != 0) {
-        return;
-    }
-    headMsg->len = sizeof(HilogMsg) + headMsg->tag_len + msg.length();
-    for (uint16_t i = 0; i < LOG_TYPE_MAX; i++) {
-        string typeStr = LogType2Str(i);
-        if (typeStr == "invalid") {
-            continue;
-        }
-        headMsg->type = i;
-        headMsg->len += (typeStr.length() + 1);
-        if (memcpy_s(headMsg->tag + headMsg->tag_len + msg.length(), contentLen - headMsg->tag_len - msg.length(),
-            typeStr.c_str(), typeStr.length() + 1) != 0) {
-            continue;
-        }
-        Insert(*headMsg);
-    }
 }
 
 int64_t HilogBuffer::GetBuffLen(uint16_t logType)
