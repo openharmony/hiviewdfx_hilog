@@ -33,7 +33,6 @@
 
 #define SENDIDN 0    // hilogd: reached end of log;  hilogtool: exit log reading
 #define SENDIDA 1    // hilogd & hilogtool: normal log reading
-#define SENDIDS 2    // hilogd: notify for new data; hilogtool: block and wait for new data
 #define MAX_LOG_LEN 1024  /* maximum length of a log, include '\0' */
 #define MAX_TAG_LEN 32  /* log tag size, include '\0' */
 #define MAX_DOMAINS 5

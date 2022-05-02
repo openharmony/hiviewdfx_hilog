@@ -12,9 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "service_controller.h"
-
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -30,7 +27,6 @@
 #include <sys/mman.h>
 #include <sys/prctl.h>
 #include <thread>
-
 #include <unistd.h>
 #include <dirent.h>
 
@@ -41,6 +37,9 @@
 #include "hilog_msg.h"
 #include "log_buffer.h"
 #include "log_persister.h"
+#include "log_utils.h"
+
+#include "service_controller.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -395,7 +394,7 @@ ServiceController::~ServiceController()
     m_notifyNewDataCv.notify_all();
 }
 
-void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
+void ServiceController::CommunicationLoop(std::atomic<bool>& stopLoop)
 {
     std::cout << __PRETTY_FUNCTION__ << " Begin\n";
     if (!m_communicationSocket) {
@@ -403,7 +402,6 @@ void ServiceController::CommunicationLoop(const std::atomic<bool>& stopLoop)
         return;
     }
     PacketBuf rawDataBuffer = {0};
-;
     while (!stopLoop.load() && m_communicationSocket->Read(rawDataBuffer.data(), rawDataBuffer.size() - 1) > 0) {
         MessageHeader *header = reinterpret_cast<MessageHeader *>(rawDataBuffer.data());
         switch (header->msgType) {
@@ -493,42 +491,46 @@ void ServiceController::HandleLogQueryRequest()
     }
 }
 
-void ServiceController::HandleNextRequest(const PacketBuf& rawData, const std::atomic<bool>& stopLoop)
+void ServiceController::HandleNextRequest(const PacketBuf& rawData, std::atomic<bool>& stopLoop)
 {
     const NextRequest& nRstMsg = *reinterpret_cast<const NextRequest*>(rawData.data());
     if (nRstMsg.sendId != SENDIDA) {
+        stopLoop.store(true);
         return;
     }
-
-    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData) {
-        WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, logData);
-    });
-    if (!result) {
-        WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
-    } else {
-        return;
-    }
-
-    std::unique_lock<decltype(m_notifyNewDataMtx)> ul(m_notifyNewDataMtx);
+    
+    bool isNotified = true;
+    
     for (;;) {
         bool isStopped = stopLoop.load();
         if (isStopped) {
             return;
         }
-
-        bool isNotified = m_notifyNewDataCv.wait_for(ul, 100ms) == std::cv_status::no_timeout;
+        
         if (isNotified) {
+            int ret = 0;
+            auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this, &ret](const HilogData& logData) {
+                ret = WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, logData);
+            });
+            if (ret < 0) {
+                break;
+            }
+            if (result) {
+                continue;
+            }
+        }
+
+        int ret = WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
+        if (ret < 0) {
             break;
         }
+
+        std::unique_lock<decltype(m_notifyNewDataMtx)> ul(m_notifyNewDataMtx);
+        isNotified = (m_notifyNewDataCv.wait_for(ul, 1000ms) == std::cv_status::no_timeout);
     }
-    LogQueryResponse rsp;
-    rsp.data.sendId = SENDIDS;
-    rsp.data.type = -1;
-    /* set header */
-    SetMsgHead(rsp.header, NEXT_RESPONSE, sizeof(rsp));
-    if (WriteData(rsp, std::nullopt) <= 0) {
-        std::cerr << __PRETTY_FUNCTION__ << " Can't send notification about new logs\n";
-    }
+    std::cerr << "Client disconnect" << std::endl;
+    PrintErrorno(errno);
+    stopLoop.store(true);
 }
 
 int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptCRef<HilogData> pData)

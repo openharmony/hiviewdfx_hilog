@@ -38,13 +38,13 @@ public:
     ServiceController(std::unique_ptr<Socket> communicationSocket, HilogBuffer& buffer);
     ~ServiceController();
 
-    void CommunicationLoop(const std::atomic<bool>& stopLoop);
+    void CommunicationLoop(std::atomic<bool>& stopLoop);
 
 private:
     void SetFilters(const PacketBuf& rawData);
 
     void HandleLogQueryRequest();
-    void HandleNextRequest(const PacketBuf& rawData, const std::atomic<bool>& stopLoop);
+    void HandleNextRequest(const PacketBuf& rawData, std::atomic<bool>& stopLoop);
 
     // persist storage
     void HandlePersistStartRequest(const PacketBuf& rawData);

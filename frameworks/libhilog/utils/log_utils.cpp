@@ -415,7 +415,7 @@ void PrintErrorno(int err)
     constexpr int bufSize = 256;
     char buf[bufSize] = { 0 };
     strerror_r(err, buf, bufSize);
-    std::cerr << "Errno: " << err << ", " << buf << "\n";
+    std::cerr << "Errno: " << err << ", " << buf << std::endl;
 }
 
 string GetProgName()
