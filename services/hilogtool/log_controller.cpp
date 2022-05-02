@@ -118,16 +118,12 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
     while(1) {
         std::fill_n(recvBuffer, bufLen, 0);
         if (controller.RecvMsg(recvBuffer, bufLen) == 0) {
-            fprintf(stderr, "Unexpected EOF ");
+            cerr << "Receiving log of query from buffer error" << endl;
             PrintErrorno(errno);
-            exit(1);
-            return;
+            break;
         }
-        MessageHeader* msgHeader = &(rsp->header);
-        if (msgHeader == nullptr) {
-            return;
-        }
-        if (msgHeader->msgType == NEXT_RESPONSE) {
+
+        if (rsp->header.msgType == NEXT_RESPONSE) {
             switch (data->sendId) {
                 case SENDIDN:
                     if (context->noBlockMode) {
@@ -136,16 +132,13 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
                             cout << tailBuffer.back() << endl;
                             tailBuffer.pop_back();
                         }
-                        NextRequestOp(controller, SENDIDN);
-                        exit(1);
+                        return;
                     }
                     break;
                 case SENDIDA:
                     HilogShowLog(format, data, context, tailBuffer);
-                    NextRequestOp(controller, SENDIDA);
                     break;
                 default:
-                    NextRequestOp(controller, SENDIDA);
                     break;
             }
         }

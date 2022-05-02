@@ -60,11 +60,17 @@ private:
     struct BufferReader {
         LogMsgContainer::iterator m_pos;
         LogMsgContainer* m_msgList = nullptr;
+        uint32_t skipped;
         std::function<void()> m_onNewDataCallback;
     };
 
     void UpdateStatistics(const HilogData& logData);
-    void OnDeleteItem(LogMsgContainer::iterator itemPos);
+
+    enum class DeleteReason {
+        BUFF_OVERFLOW,
+        CMD_CLEAR
+    };
+    void OnDeleteItem(LogMsgContainer::iterator itemPos, DeleteReason reason);
     void OnPushBackedItem(LogMsgContainer& msgList);
     void OnNewItem(LogMsgContainer& msgList);
     std::shared_ptr<BufferReader> GetReader(const ReaderId& id);
