@@ -12,14 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "socket.h"
-
 #include <cerrno>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
+
+#include "socket.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -70,7 +69,7 @@ int Socket::Write(const char *data, unsigned int len)
         return -1;
     }
 
-    return write(socketHandler, data, len);
+    return TEMP_FAILURE_RETRY(write(socketHandler, data, len));
 }
 
 int Socket::WriteAll(const char *data, unsigned int len)
@@ -98,7 +97,7 @@ int Socket::WriteAll(const char *data, unsigned int len)
 
 int Socket::WriteV(const iovec *vec, unsigned int len)
 {
-    return TEMP_FAILURE_RETRY(::writev(socketHandler, vec, len));
+    return TEMP_FAILURE_RETRY(writev(socketHandler, vec, len));
 }
 
 int Socket::Read(char *buffer, unsigned int len)

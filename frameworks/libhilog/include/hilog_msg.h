@@ -127,12 +127,12 @@ using HilogDataMessage = struct {
     uint32_t tv_sec;
     uint32_t tv_nsec;
     char data[]; /* tag and content, include '\0' */
-};
+} __attribute__((__packed__));
 
 using LogQueryResponse = struct {
     MessageHeader header;
     HilogDataMessage data;
-};
+} __attribute__((__packed__));
 
 using NewDataNotify = struct {
     MessageHeader header;
