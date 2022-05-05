@@ -115,7 +115,7 @@ static KVMap<int16_t, string> g_ErrorMsgs( {
 
 string ErrorCode2Str(int16_t errorCode)
 {
-    return "[ERR_CODE: " + to_string(errorCode) + "] " + g_ErrorMsgs.GetValue((uint16_t)errorCode);
+    return g_ErrorMsgs.GetValue((uint16_t)errorCode) + " [CODE: " + to_string(errorCode) + "]";
 }
 
 using StringMap = KVMap<uint16_t, string>;
@@ -180,8 +180,8 @@ uint16_t Str2ComboLogType(const string& str)
 
 // Log Levels&Strings Map
 static StringMap g_LogLevels( {
-    {LOG_DEBUG, "DEBUG"}, {LOG_INFO, "INFO"}, {LOG_WARN, "WARN"}, {LOG_ERROR, "ERROR"},
-    {LOG_FATAL, "FATAL"}
+    {LOG_DEBUG, "DEBUG"}, {LOG_INFO, "INFO"}, {LOG_WARN, "WARN"},
+    {LOG_ERROR, "ERROR"}, {LOG_FATAL, "FATAL"}, {LOG_LEVEL_MAX, "X"}
 }, LOG_LEVEL_MIN, "INVALID", [](const string& l1, const string& l2) {
     if (l1.length() == l2.length()) {
         return std::equal(l1.begin(), l1.end(), l2.begin(), [](char a, char b) {
@@ -205,7 +205,7 @@ uint16_t Str2LogLevel(const string& str)
 // Log Levels&Short Strings Map
 static StringMap g_ShortLogLevels( {
     {LOG_DEBUG, "D"}, {LOG_INFO, "I"}, {LOG_WARN, "W"},
-    {LOG_ERROR, "E"}, {LOG_FATAL, "F"}
+    {LOG_ERROR, "E"}, {LOG_FATAL, "F"}, {LOG_LEVEL_MAX, "X"}
 }, LOG_LEVEL_MIN, "V", [](const string& l1, const string& l2) {
     return (l1.length() == 1 && std::tolower(l1[0]) == std::tolower(l2[0]));
 });
@@ -223,7 +223,7 @@ uint16_t ShortStr2LogLevel(const string& str)
 uint16_t PrettyStr2LogLevel(const string& str)
 {
     uint16_t level = ShortStr2LogLevel(str);
-    if (level == 0) {
+    if (level == static_cast<uint16_t>(LOG_LEVEL_MIN)) {
         return Str2LogLevel(str);
     }
     return level;
