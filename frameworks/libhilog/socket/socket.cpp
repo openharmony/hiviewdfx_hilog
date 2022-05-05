@@ -91,7 +91,7 @@ int Socket::WriteAll(const char *data, unsigned int len)
         ptr += midRes;
     }
 
-    return (midRes < 0) ? midRes : len;
+    return (midRes < 0) ? midRes : static_cast<int>(len);
 }
 
 
