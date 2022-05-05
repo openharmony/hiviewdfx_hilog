@@ -170,8 +170,9 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
                 return RET_FAIL;
             }
             for (iter = 0; iter < logTypeNum; iter++) {
-                pBuffSizeMsg->logType = logType & (~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
-                logType &= (~static_cast<uint16_t>(pBuffSizeMsg->logType));
+                pBuffSizeMsg->logType = logType &
+                    static_cast<uint16_t>(~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
+                logType &= static_cast<uint16_t>(~static_cast<uint16_t>(pBuffSizeMsg->logType));
                 pBuffSizeMsg->logType = GetBitPos(pBuffSizeMsg->logType);
                 pBuffSizeMsg++;
             }
@@ -192,8 +193,9 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
                 return RET_FAIL;
             }
             for (iter = 0; iter < logTypeNum; iter++) {
-                pBuffResizeMsg->logType = logType & (~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
-                logType &= (~static_cast<uint16_t>(pBuffResizeMsg->logType));
+                pBuffResizeMsg->logType = logType &
+                    static_cast<uint16_t>(~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
+                logType &= static_cast<uint16_t>(~static_cast<uint16_t>(pBuffResizeMsg->logType));
                 pBuffResizeMsg->logType = GetBitPos(pBuffResizeMsg->logType);
                 pBuffResizeMsg->buffSize = Str2Size(buffSizeStr);
                 pBuffResizeMsg++;
@@ -278,8 +280,9 @@ int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const stri
         return RET_FAIL;
     }
     for (iter = 0; iter < logTypeNum; iter++) {
-        pLogClearMsg->logType = logType & (~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
-        logType &= (~static_cast<uint16_t>(pLogClearMsg->logType));
+        pLogClearMsg->logType = logType &
+            static_cast<uint16_t>(~static_cast<uint16_t>(logType - 1)); // Get first bit 1 - logType
+        logType &= static_cast<uint16_t>(~static_cast<uint16_t>(pLogClearMsg->logType));
         pLogClearMsg->logType = GetBitPos(pLogClearMsg->logType);
         pLogClearMsg++;
     }
@@ -310,7 +313,7 @@ int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersi
             if (logPersistParam->jobIdStr == "") {
                 jobId = (logType == (0b01 << LOG_KMSG)) ? DEFAULT_KMSG_JOBID : DEFAULT_JOBID;
             } else {
-                jobId = stoi(logPersistParam->jobIdStr);
+                jobId = static_cast<uint32_t>(stoi(logPersistParam->jobIdStr));
             }
             if (jobId == 0) {
                 cout << ErrorCode2Str(ERR_LOG_PERSIST_JOBID_INVALID) << endl;

@@ -303,7 +303,7 @@ void HilogShowLog(uint32_t showFormat, HilogDataMessage* data, const HilogArgs* 
         if (*dataPos == '\n') {
             if (dataPos != dataBegin) {
                 *dataPos = 0;
-                showBuffer.tag_len = offset;
+                showBuffer.tag_len = static_cast<uint16_t>(offset);
                 showBuffer.data = data->data;
                 HilogShowBuffer(buffer, MAX_LOG_LEN + MAX_LOG_LEN, showBuffer, showFormat);
                 if (context->tailLines) {
