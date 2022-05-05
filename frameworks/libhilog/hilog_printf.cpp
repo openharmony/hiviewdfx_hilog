@@ -69,14 +69,17 @@ void HiLogUnregisterGetIdFun(RegisterFunc registerFunc)
 
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 {
-    uint16_t domainLevel = GetDomainLevel(domain);
+    // Priority: TagLevel > DomainLevel > GlobalLevel
+    // LOG_LEVEL_MIN is default Level
     uint16_t tagLevel = GetTagLevel(tag);
-    uint16_t globalLevel = GetGlobalLevel();
-    uint16_t maxLevel = LOG_LEVEL_MIN;
-    maxLevel = (maxLevel < domainLevel) ? domainLevel : maxLevel;
-    maxLevel = (maxLevel < tagLevel) ? tagLevel : maxLevel;
-    maxLevel = (maxLevel < globalLevel) ? globalLevel : maxLevel;
-    return maxLevel;
+    if (tagLevel != LOG_LEVEL_MIN) {
+        return tagLevel;
+    }
+    uint16_t domainLevel = GetDomainLevel(domain);
+    if (domainLevel != LOG_LEVEL_MIN) {
+        return domainLevel;
+    }
+    return GetGlobalLevel();
 }
 
 static uint32_t ParseProcessQuota()
