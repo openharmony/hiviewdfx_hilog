@@ -93,7 +93,7 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, HilogShowFormat showFormat,
             case TIME_NSEC_SHOWFORMAT:
                 timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", ptm);
                 ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                    ".%09ld", nsecTime);
+                    ".%09lu", nsecTime);
                 timeLen += ((ret > 0) ? ret : 0);
                 break;
             case TIME_USEC_SHOWFORMAT:
