@@ -78,7 +78,7 @@ ohos_source_set("libhilog_source") {
 
   external_deps = [
     "init:libbegetutil",
-    "startup_l2:syspara",
+    "init:libbegetutil",
   ]
 
   part_name = "hilog_native"
