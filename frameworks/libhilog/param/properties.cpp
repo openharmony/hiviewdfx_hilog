@@ -186,6 +186,12 @@ public:
 
     T getValue()
     {
+        static long long lastSysCommitId = -1;
+        long long sysCommitId = GetSystemCommitId();
+        if (sysCommitId == lastSysCommitId) {
+            return m_value;
+        }
+        lastSysCommitId = sysCommitId;
         if (m_handle == -1) {
             int handle = static_cast<int>(FindParameter(m_key.c_str()));
             if (handle == -1) {
