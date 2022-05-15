@@ -42,82 +42,157 @@ constexpr int DEFAULT_LOG_LEVEL = (1 << LOG_DEBUG) | (1 << LOG_INFO)
     | (1 << LOG_WARN) | (1 << LOG_ERROR) | (1 << LOG_FATAL);
 constexpr int PARAMS_COUNT_TWO = 2;
 constexpr int DECIMAL = 10;
-constexpr char GUIDANCE_DESCRIPTION[] = "options include:\n"
-    "  No option default action: performs a blocking read and keeps printing.\n"
-    "  -h --help          show this message.\n"
-    "  -x --exit          Performs a non-blocking read and exits immediately.\n"
-    "  -g                 query hilogd buffer size, use -t to specify log type.\n"
-    "  -p, --privacy\n"
-    "                     set privacy formatter feature on or off.\n"
-    "                     on  turn on\n"
-    "                     off turn off\n"
-    "  -k\n"
-    "                     store log type kmsg or not\n"
-    "                     on  yes\n"
-    "                     off no\n"
-    "  -s, --statistics   query hilogd statistic information.\n"
-    "  -S                 clear hilogd statistic information.\n"
-    "  -r                 remove the logs in hilog buffer, use -t to specify log type\n"
-    "  -Q <control-type>      set log flow-control feature on or off.\n"
-    "                     pidon     process flow control on\n"
-    "                     pidoff    process flow control off\n"
-    "                     domainon  domain flow control on\n"
-    "                     domainoff domain flow control off\n"
-    "  -L <level>, --level=<level>\n"
-    "                     Outputs logs at a specific level.\n"
-    "  -t <type>, --type=<type>\n"
-    "                     Reads <type> and prints logs of the specific type,\n"
-    "                     which is -t app (application logs) by default.\n"
-    "  -D <domain>, --domain=<domain>\n"
-    "                     specify the domain, no more than %d.\n"
-    "  -T <tag>, --Tag=<tag>\n"
-    "                     specify the tag, no more than %d.\n"
-    "  -a <n>, --head=<n> show n lines log on head.\n"
-    "  -z <n>, --tail=<n> show n lines log on tail.\n"
-    "  -G <size>, --buffer-size=<size>\n"
-    "                     set hilogd buffer size, use -t to specify log type.\n"
-    "  -P <pid>           specify pid, no more than %d.\n"
-    "  -e <expr>, --regex=<expr>\n"
-    "                     show the logs which match the regular expression,\n"
-    "                     <expr> is a regular expression.\n"
-    "  -f <filename>, --filename=<filename>\n"
-    "                     set log file name.\n"
-    "  -l <length>, --length=<length>\n"
-    "                     set single log file size.\n"
-    "  -n <number>, --number<number>\n"
-    "                     set max log file numbers.\n"
-    "  -j <jobid>, --jobid<jobid>\n"
-    "                     start/stop the log file writing task of <jobid>.\n"
-    "  -w <control>,--write=<control>\n"
-    "                     query      log file writing task query.\n"
-    "                     start      start a log file writing task, see -F -l -n -c for to set more configs,\n"
-    "                     stop       stop a log file writing task.\n"
-    "  -m <compress algorithm>,--stream=<compress algorithm>\n"
-    "                     none       log file without compressing\n"
-    "                     zlib       compress log file by the zlib algorithm\n"
-    "                     zstd       compress log file by the zstd algorithm\n"
-    "  -v <format>, --format=<format> options:\n"
-    "                     time       display local time.\n"
-    "                     color      display colorful logs by log level.i.e. \x1B[38;5;231mVERBOSE\n"
-    "                     \x1B[38;5;75mDEBUG \x1B[38;5;40mINFO \x1B[38;5;166mWARN"
-    "                     \x1B[38;5;196mERROR \x1B[38;5;226mFATAL\x1B[0m\n"
-    "                     epoch      display the time from 1970/1/1.\n"
-    "                     monotonic  display the cpu time from bootup.\n"
-    "                     usec       display time by usec.\n"
-    "                     nsec       display time by nano sec.\n"
-    "                     year       display the year.\n"
-    "                     zone       display the time zone.\n"
-    "  -b <loglevel>, --baselevel=<loglevel>\n"
-    "                     set loggable level.\n"
-    "  \n  Types, levels, domains, tags support exclusion query.\n"
-    "  Exclusion query can be done with parameters starting with \"^\" and delimiter \",\".\n"
-    "  Example: \"-t ^core,app\" excludes logs with types core and app.\n"
-    "  Could be used along with other parameters.\n";
-
 static void Helper()
 {
-    (void)fprintf(stderr, "Usage:  [options]\n");
-    (void)fprintf(stderr, GUIDANCE_DESCRIPTION, MAX_DOMAINS, MAX_TAGS, MAX_PIDS);
+    cout << "Usage:" << endl
+    << "-h --help" << endl
+    << "  Show this message." << endl
+    << "Querying logs options:" << endl
+    << "  No option performs a blocking read and keeps printing." << endl
+    << "  -x --exit" << endl
+    << "    Performs a non-blocking read and exits when all logs in buffer are printed." << endl
+    << "  -a <n>, --head=<n>" << endl
+    << "    Show n lines logs on head of buffer." << endl
+    << "  -z <n>, --tail=<n>" << endl
+    << "    Show n lines logs on tail of buffer." << endl
+    << "  -t <type>, --type=<type>" << endl
+    << "    Show specific type/types logs with format: type1,type2,type3" << endl
+    << "    Don't show specific type/types logs with format: ^type1,type2,type3" << endl
+    << "    Type coule be: app/core/init/kmsg, kmsg can't combine with others." << endl
+    << "    Default types are: app,core,init." << endl
+    << "  -L <level>, --level=<level>" << endl
+    << "    Show specific level/levels logs with format: level1,level2,level3" << endl
+    << "    Don't show specific level/levels logs with format: ^level1,level2,level3" << endl
+    << "    Long and short level string are both accepted" << endl
+    << "    Long level string coule be: DEBUG/INFO/WARN/ERROR/FATAL." << endl
+    << "    Short level string coule be: D/I/W/E/F." << endl
+    << "    Default levels are all levels."
+    << "  -D <domain>, --domain=<domain>" << endl
+    << "    Show specific domain/domains logs with format: domain1,domain2,doman3" << endl
+    << "    Don't show specific domain/domains logs with format: ^domain1,domain2,doman3" << endl
+    << "    Max domain count is " << MAX_DOMAINS << "." << endl
+    << "    See domain description at the end of this message." << endl
+    << "  -T <tag>, --tag=<tag>" << endl
+    << "    Show specific tag/tags logs with format: tag1,tag2,tag3" << endl
+    << "    Don't show specific tag/tags logs with format: ^tag1,tag2,tag3" << endl
+    << "    Max tag count is " << MAX_TAGS << "." << endl
+    << "  -P <pid>, --pid=<pid>" << endl
+    << "    Show specific pid/pids logs with format: pid1,pid2,pid3" << endl
+    << "    Don't show specific domain/domains logs with format: ^pid1,pid2,pid3" << endl
+    << "    Max pid count is " << MAX_PIDS << "." << endl
+    << "  -e <expr>, --regex=<expr>" << endl
+    << "    Show the logs which match the regular expression <expr>." << endl
+    << "  -v <format>, --format=<format>" << endl
+    << "    Show logs in different formats, options are:" << endl
+    << "      color or colour      display colorful logs by log level.i.e." << endl
+    << "        \x1B[38;5;75mDEBUG        \x1B[38;5;40mINFO        \x1B[38;5;166mWARN"
+    << "        \x1B[38;5;196mERROR       \x1B[38;5;226mFATAL\x1B[0m" << endl
+    << "      time format options are(single accepted):" << endl
+    << "        time       display local time, this is default." << endl
+    << "        epoch      display the time from 1970/1/1." << endl
+    << "        monotonic  display the cpu time from bootup." << endl
+    << "      time accuracy format options are(single accepted):" << endl
+    << "        msec       display time by millisecond, this is default." << endl
+    << "        usec       display time by microsecond." << endl
+    << "        nsec       display time by nanosecond." << endl
+    << "      year       display the year when -v time is specified." << endl
+    << "      zone       display the time zone when -v time is specified." << endl
+    << "    Different types of formats can be combined, such as:" << endl
+    << "    -v color -v time -v msec -v year -v zone." << endl
+    << "-r" << endl
+    << "  Remove all logs in hilogd buffer, advanced option:" << endl
+    << "  -t <type>, --type=<type>" << endl
+    << "    Remove specific type/types logs in buffer with format: type1,type2,type3" << endl
+    << "    Type coule be: app/core/init/kmsg." << endl
+    << "    Default types are: app,core" << endl
+    << "-g" << endl
+    << "  Query hilogd buffer size, advanced option:" << endl
+    << "  -t <type>, --type=<type>" << endl
+    << "    Query specific type/types buffer size with format: type1,type2,type3" << endl
+    << "    Type coule be: app/core/init/kmsg." << endl
+    << "    Default types are: app,core" << endl
+    << "-G <size>, --buffer-size=<size>" << endl
+    << "  Set hilogd buffer size, <size> could be number or number with unit." << endl
+    << "  Unit could be: B/K/M/G which represents Byte/Kilobyte/Megabyte/Gigabyte." << endl
+    << "  <size> range: [64K, 512M]." << endl
+    << "  Advanced option:" << endl
+    << "  -t <type>, --type=<type>" << endl
+    << "    Set specific type/types log buffer size with format: type1,type2,type3" << endl
+    << "    Type coule be: app/core/init/kmsg." << endl
+    << "    Default types are: app,core" << endl
+    << "-s, --statistics" << endl
+    << "  Query log statistic information, advanced options:" << endl
+    << "  -t <type>, --type=<type>" << endl
+    << "    Query specific type/types log statistic information with format: type1,type2,type3" << endl
+    << "    Type coule be: app/core/init." << endl
+    << "    Default types are: app,core,init" << endl
+    << "  -D <domain>, --domain=<domain>" << endl
+    << "    Query specific domain/domains log statistic information with format: domain1,domain2,doman3" << endl
+    << "    Max domain count is " << MAX_DOMAINS <<"." << endl
+    << "    See domain description at the end of this message." << endl
+    << "-S" << endl
+    << "  Clear hilogd statistic information." << endl
+    << "-w <control>,--write=<control>" << endl
+    << "  Log persistance task control, options are:" << endl
+    << "    query      query tasks informations" << endl
+    << "    stop       stop all tasks" << endl
+    << "    start      start one task" << endl
+    << "  Persistance task is used for saving logs in files." << endl
+    << "  The files are saved in directory: /data/log/hilog" << endl
+    << "  Advanced options:" << endl
+    << "  -f <filename>, --filename=<filename>" << endl
+    << "    Set log file name, name should be valid of Linux FS." << endl
+    << "  -l <length>, --length=<length>" << endl
+    << "    Set single log file size. <length> could be number or number with unit." << endl
+    << "    Unit could be: B/K/M/G which represents Byte/Kilobyte/Megabyte/Gigabyte." << endl
+    << "    <length> range: [64K, 1G]." << endl
+    << "  -n <number>, --number<number>" << endl
+    << "    Set max log file numbers, log file rotate when files count over this number." << endl
+    << "    <number> range: [2, 1000]." << endl
+    << "  -m <compress algorithm>,--stream=<compress algorithm>" << endl
+    << "    Set log file compressed algorithm, options are:" << endl
+    << "      none       write file with non-compressed logs." << endl
+    << "      zlib       write file with zlib compressed logs." << endl
+    << "  -j <jobid>, --jobid<jobid>" << endl
+    << "    Start/stop specific task of <jobid>." << endl
+    << "    <jobid> range: [10, 0x7FFFFFFF)." << endl
+    << "  User can use options (t/L/D/T/P/e/v) as if using them when \"Querying logs\" too." << endl
+    << "-p <on/off>, --privacy <on/off>" << endl
+    << "  Set HILOG api privacy formatter feature on or off." << endl
+    << "-k <on/off>, --kmsg <on/off>" << endl
+    << "  Set hilogd storing kmsg log feature on or off" << endl
+    << "-Q <control-type>" << endl
+    << "  Set log flow-control feature on or off, options are:" << endl
+    << "    pidon     process flow control on" << endl
+    << "    pidoff    process flow control off" << endl
+    << "    domainon  domain flow control on" << endl
+    << "    domainoff domain flow control off" << endl
+    << "-b <loglevel>, --baselevel=<loglevel>" << endl
+    << "  Set global loggable level to <loglevel>" << endl
+    << "  Long and short level string are both accepted." << endl
+    << "  Long level string coule be: DEBUG/INFO/WARN/ERROR/FATAL/X." << endl
+    << "  Short level string coule be: D/I/W/E/F/X." << endl
+    << "  X means that loggable level is higher than the max level, no log could be printed." << endl
+    << "  Advanced options:" << endl
+    << "  -D <domain>, --domain=<domain>" << endl
+    << "    Set specific domain loggable level." << endl
+    << "    See domain description at the end of this message." << endl
+    << "  -T <tag>, --tag=<tag>" << endl
+    << "    Set specific tag loggable level." << endl
+    << "    The priority is: tag level > domain level > global level." << endl
+    << "The first layer of above options can't be used in combination, ILLEGAL expamples:" << endl
+    << "  hilog -S -s; hilog -w start -r; hilog -p on -k on -b D" << endl
+    << endl << endl
+    << "Domain description:" << endl
+    << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is (0xD000000,"
+    << "  0xD0FFFFF)" << endl
+    << "  Log type \"app\" is used for applications, the range is (0x0,"
+    << "  0xFFFF)" << dec << endl
+    << "  To reduce redundant info when printing logs, only last five hex numbers of domain are printed" << endl
+    << "  So if user wants to use -D option to filter OS logs, user should add 0xD0 as prefix to the printed domain:"
+    << endl
+    << "  Exapmle: hilog -D 0xD0xxxxx" << endl
+    << "  The xxxxx is the domain string printed in logs." << endl;
 }
 
 static uint16_t GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
