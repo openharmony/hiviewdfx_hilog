@@ -186,12 +186,11 @@ public:
 
     T getValue()
     {
-        static long long lastSysCommitId = -1;
         long long sysCommitId = GetSystemCommitId();
-        if (sysCommitId == lastSysCommitId) {
+        if (sysCommitId == m_sysCommit) {
             return m_value;
         }
-        lastSysCommitId = sysCommitId;
+        m_sysCommit = sysCommitId;
         if (m_handle == -1) {
             int handle = static_cast<int>(FindParameter(m_key.c_str()));
             if (handle == -1) {
@@ -230,7 +229,8 @@ private:
         if (!getRawValue(tempData.data(), tempData.size())) {
             return m_defaultValue;
         }
-        return m_converter(tempData, m_defaultValue);
+        m_value = m_converter(tempData, m_defaultValue);
+        return m_value;
     }
 
     void updateValue()
@@ -245,6 +245,7 @@ private:
     RawPropertyData m_rawData = {0};
     int m_handle = -1;
     int m_commit = -1;
+    long long m_sysCommit = -1;
     T m_value;
     const T m_defaultValue;
     const PropType m_propType;
