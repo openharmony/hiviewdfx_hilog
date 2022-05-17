@@ -66,7 +66,7 @@ static void Helper()
     << "    Long and short level string are both accepted" << endl
     << "    Long level string coule be: DEBUG/INFO/WARN/ERROR/FATAL." << endl
     << "    Short level string coule be: D/I/W/E/F." << endl
-    << "    Default levels are all levels."
+    << "    Default levels are all levels." << endl
     << "  -D <domain>, --domain=<domain>" << endl
     << "    Show specific domain/domains logs with format: domain1,domain2,doman3" << endl
     << "    Don't show specific domain/domains logs with format: ^domain1,domain2,doman3" << endl
@@ -184,9 +184,9 @@ static void Helper()
     << "  hilog -S -s; hilog -w start -r; hilog -p on -k on -b D" << endl
     << endl << endl
     << "Domain description:" << endl
-    << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is (0xD000000,"
+    << "  Log type \"core\" & \"init\" are used for OS subsystems, the domain range is (0xD000000,"
     << "  0xD0FFFFF)" << endl
-    << "  Log type \"app\" is used for applications, the range is (0x0,"
+    << "  Log type \"app\" is used for applications, the doamin range is (0x0,"
     << "  0xFFFF)" << dec << endl
     << "  To reduce redundant info when printing logs, only last five hex numbers of domain are printed" << endl
     << "  So if user wants to use -D option to filter OS logs, user should add 0xD0 as prefix to the printed domain:"
