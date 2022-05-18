@@ -235,14 +235,14 @@ private:
 
     void updateValue()
     {
-        if (!getRawValue(m_rawData.data(), m_rawData.size())) {
+        RawPropertyData rawData = {0};
+        if (!getRawValue(rawData.data(), rawData.size())) {
             m_value = m_defaultValue;
             return;
         }
-        m_value = m_converter(m_rawData, m_defaultValue);
+        m_value = m_converter(rawData, m_defaultValue);
     }
 
-    RawPropertyData m_rawData = {0};
     int m_handle = -1;
     int m_commit = -1;
     long long m_sysCommit = -1;
