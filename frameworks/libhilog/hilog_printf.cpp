@@ -183,10 +183,18 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     const char *fmt, va_list ap)
 {
 #ifdef DEBUG
-    char dir[MAX_PATH_LEN] = {0};
-    char name[MAX_PATH_LEN] = {0};
-    (void)GetExecutablePath(dir, name, MAX_PATH_LEN);
-    if (strcmp(name, "hilog_test") != 0) {
+    static int test = -1;
+    if (test == -1) {
+        char dir[MAX_PATH_LEN] = {0};
+        char name[MAX_PATH_LEN] = {0};
+        (void)GetExecutablePath(dir, name, MAX_PATH_LEN);
+        if (strcmp(name, "hilog_test") != 0) {
+            test = 0;
+        } else {
+            test = 1;
+        }
+    }
+    if (test == 0) {
         return -1;
     }
 #endif
