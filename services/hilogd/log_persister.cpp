@@ -429,13 +429,12 @@ int LogPersister::ReceiveLogLoop()
             break;
         }
 
-        auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData) {
-            if (WriteLogData(logData)) {
+        std::optional<HilogData> data = m_hilogBuffer.Query(m_filters, m_bufReader);
+        if (data.has_value()) {
+            if (WriteLogData(data.value())) {
                 std::cerr << __PRETTY_FUNCTION__ << " Can't write new log data!\n";
             }
-        });
-
-        if (!result) {
+        } else {
             std::unique_lock<decltype(m_receiveLogCvMtx)> lk(m_receiveLogCvMtx);
             m_receiveLogCv.wait_for(lk, m_baseData.newLogTimeout);
         }

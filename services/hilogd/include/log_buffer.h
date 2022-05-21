@@ -38,7 +38,7 @@ public:
     ~HilogBuffer();
 
     size_t Insert(const HilogMsg& msg);
-    bool Query(const LogFilterExt& filter, const ReaderId& id, OnFound onFound);
+    std::optional<HilogData> Query(const LogFilterExt& filter, const ReaderId& id);
 
     ReaderId CreateBufReader(std::function<void()> onNewDataCallback);
     void RemoveBufReader(const ReaderId& id);
