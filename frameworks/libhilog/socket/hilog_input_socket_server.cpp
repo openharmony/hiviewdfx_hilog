@@ -54,7 +54,7 @@ void HilogInputSocketServer::ServingThread()
 {
     prctl(PR_SET_NAME, "hilogd.server");
     int ret;
-    std::vector<char> data;
+    std::vector<char> data(maxPacketLength);
 #ifndef __RECV_MSG_WITH_UCRED_
     while ((ret = RecvPacket(data)) >= 0) {
         if (ret > 0) {

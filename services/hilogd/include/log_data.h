@@ -72,17 +72,22 @@ struct HilogData {
     {
         init(msg.tag, msg.tag_len, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
     }
-    HilogData(const HilogData&) = delete;
-    HilogData& operator=(const HilogData&) = delete;
-
-    HilogData(HilogData&& cpy)
+    HilogData(const HilogData& copy)
     {
-        if (memcpy_s(this, sizeof(HilogData), &cpy, sizeof(HilogData)) != 0) {
-            std::cerr << "HilogData memcpy_s call failed.\n";
+        if (unlikely(memcpy_s(this, sizeof(HilogData), &copy, sizeof(HilogData)) != 0)) {
+            std::cerr << "HilogData copy error." << std::endl;
         }
-        cpy.tag = nullptr;
-        cpy.content = nullptr;
+        tag = new (std::nothrow) char[len];
+        if (unlikely(tag == nullptr)) {
+            return;
+        }
+        if (unlikely(memcpy_s(tag, len, copy.tag, len) != 0)) {
+            return;
+        }
+        content = tag + tag_len;
     }
+    HilogData& operator=(const HilogData&) = delete;
+    HilogData(HilogData&&) = delete;
 
     ~HilogData()
     {
