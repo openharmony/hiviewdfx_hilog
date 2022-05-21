@@ -483,10 +483,10 @@ void ServiceController::SetFilters(const PacketBuf& rawData)
 
 void ServiceController::HandleLogQueryRequest()
 {
-    auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this](const HilogData& logData) {
-        WriteLogQueryRespond(SENDIDA, LOG_QUERY_RESPONSE, logData);
-    });
-    if (!result) {
+    std::optional<HilogData> data = m_hilogBuffer.Query(m_filters, m_bufReader);
+    if (data.has_value()) {
+        WriteLogQueryRespond(SENDIDA, LOG_QUERY_RESPONSE, data.value());
+    } else {
         WriteLogQueryRespond(SENDIDN, LOG_QUERY_RESPONSE, std::nullopt);
     }
 }
@@ -509,20 +509,18 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData, std::atomic<
         
         if (isNotified) {
             int ret = 0;
-            auto result = m_hilogBuffer.Query(m_filters, m_bufReader, [this, &ret](const HilogData& logData) {
-                ret = WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, logData);
-            });
+            std::optional<HilogData> data = m_hilogBuffer.Query(m_filters, m_bufReader);
+            if (data.has_value()) {
+                ret = WriteLogQueryRespond(SENDIDA, NEXT_RESPONSE, data.value());
+            } else {
+                ret = WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
+            }
             if (ret < 0) {
                 break;
             }
-            if (result) {
+            if (data.has_value()) {
                 continue;
             }
-        }
-
-        int ret = WriteLogQueryRespond(SENDIDN, NEXT_RESPONSE, std::nullopt);
-        if (ret < 0) {
-            break;
         }
 
         std::unique_lock<decltype(m_notifyNewDataMtx)> ul(m_notifyNewDataMtx);
