@@ -120,7 +120,6 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     }
 
     LogMsgContainer &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
-    HilogData msgAsData(msg);
     {
         std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
@@ -148,7 +147,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         }
 
         // Append new log into HilogBuffer
-        msgList.push_back(std::move(msgAsData));
+        msgList.emplace_back(msg);
         OnPushBackedItem(msgList);
     }
 
@@ -167,12 +166,12 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     return elemSize;
 }
 
-bool HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id, OnFound onFound)
+std::optional<HilogData> HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id)
 {
     auto reader = GetReader(id);
     if (!reader) {
         std::cerr << "Reader not registered!\n";
-        return false;
+        return std::nullopt;
     }
     uint16_t qTypes = filter.inclusions.types;
     LogMsgContainer &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
@@ -191,10 +190,8 @@ bool HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id, OnFound 
         HilogMsg *headMsg = reinterpret_cast<HilogMsg *>(buf.data());
         if (GenerateHilogMsgInside(*headMsg, tmpStr, LOG_CORE) == RET_SUCCESS) {
             const HilogData logData(*headMsg);
-            if (onFound) {
-                onFound(logData);
-                reader->skipped = 0;
-            }
+            reader->skipped = 0;
+            return logData;
         }
     }
 
@@ -202,14 +199,10 @@ bool HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id, OnFound 
         const HilogData& logData = *reader->m_pos;
         reader->m_pos++;
         if (LogMatchFilter(filter, logData)) {
-            UpdateStatistics(logData);
-            if (onFound) {
-                onFound(logData);
-            }
-            return true;
+            return logData;
         }
     }
-    return false;
+    return std::nullopt;
 }
 
 void HilogBuffer::UpdateStatistics(const HilogData& logData)

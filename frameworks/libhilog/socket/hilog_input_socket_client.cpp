@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <sys/time.h>
+#include <ctime>
 
 #include "hilog_input_socket_client.h"
 
@@ -34,10 +34,10 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
         return ret;
     }
 
-    struct timeval tv = {0};
-    gettimeofday(&tv, nullptr);
-    header->tv_sec = static_cast<uint32_t>(tv.tv_sec);
-    header->tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
+    struct timespec ts = {0};
+    (void)clock_gettime(CLOCK_REALTIME, &ts);
+    header->tv_sec = static_cast<uint32_t>(ts.tv_sec);
+    header->tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
 
