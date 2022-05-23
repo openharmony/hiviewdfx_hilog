@@ -103,11 +103,6 @@ int LogPersisterRotator::OpenInfoFile()
 
 int LogPersisterRotator::Input(const char *buf, uint32_t length)
 {
-    std::cout << __PRETTY_FUNCTION__
-        << " Log location: " << m_logsPath
-        << " idx: " << m_currentLogFileIdx << "/" << m_maxLogFileNum
-        << " buf: " << reinterpret_cast<void*>(const_cast<char*>(buf)) << " len: " << length
-        << " needRotate: " << (m_needRotate ? 'T' : 'F') << "\n";
     if (length <= 0 || buf == nullptr) {
         return ERR_LOG_PERSIST_COMPRESS_BUFFER_EXP;
     }
