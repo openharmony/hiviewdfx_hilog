@@ -381,8 +381,6 @@ inline void LogPersister::WriteCompressedLogs()
         return;
     m_fileRotator->Input(m_compressBuffer->content, m_compressBuffer->offset);
     m_plainLogSize += m_mappedPlainLogFile->offset;
-    std::cout << __PRETTY_FUNCTION__ <<  " Stored plain log bytes: " << m_plainLogSize
-        << " from: " << m_baseData.logFileSizeLimit << "\n";
     if (m_plainLogSize >= m_baseData.logFileSizeLimit) {
         m_plainLogSize = 0;
         m_fileRotator->FinishInput();
