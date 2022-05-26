@@ -27,7 +27,7 @@ public:
     DgramSocketServer(const std::string& socketName, uint16_t maxLength)
         : SocketServer(socketName, SOCK_DGRAM), maxPacketLength(maxLength) {}
     int RecvPacket(std::vector<char>& buffer, struct ucred *cred = nullptr);
-private:
+protected:
     uint16_t maxPacketLength;
 };
 } // namespace HiviewDFX
