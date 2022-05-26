@@ -52,9 +52,10 @@ enum class PropType {
     PROP_DOMAIN_FLOWCTRL,
     PROP_PROCESS_FLOWCTRL,
 
-    // Below properties are used by HiLog self, invoked only one or two times, so they needn't be cached
+    // Below properties needn't be cached, used in low frequency
     PROP_KMSG,
     PROP_BUFFER_SIZE,
+    PROP_QUOTA,
 
     PROP_MAX,
 };
@@ -92,6 +93,7 @@ static PropRes g_PropResources[static_cast<int>(PropType::PROP_MAX)] = {
     // Non cached:
     {"persist.sys.hilog.kmsg.on", nullptr}, // PROP_KMSG,
     {"hilog.buffersize.", nullptr}, // PROP_BUFFER_SIZE,
+    {"hilog.quota.", nullptr}
 };
 
 static string GetPropertyName(PropType propType)
@@ -423,6 +425,20 @@ size_t GetBufferSize(uint16_t type, bool persist)
         return 0;
     }
 
+    return std::stoi(value);
+}
+
+int GetProcessQuota(bool debug)
+{
+    static constexpr int default_quota = 10240;
+    static constexpr int default_quota_debug = default_quota * 5;
+    char value[HILOG_PROP_VALUE_MAX] = {0};
+    string prop = GetPropertyName(PropType::PROP_QUOTA) + GetProgName();
+
+    int ret = PropertyGet(prop, value, HILOG_PROP_VALUE_MAX);
+    if (ret == RET_FAIL || value[0] == 0) {
+        return debug ? default_quota_debug : default_quota;
+    }
     return std::stoi(value);
 }
 

@@ -38,12 +38,7 @@ using namespace std;
 using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
 static atomic_int g_hiLogGetIdCallCount = 0;
-static const char P_LIMIT_TAG[] = "LOGLIMITP";
-#ifdef DEBUG
-static const int MAX_PATH_LEN = 1024;
-#endif
-static const int DEFAULT_QUOTA = 13050;
-static const int LOG_FLOWCTRL_QUOTA_STR_LEN = 6;
+static const char P_LIMIT_TAG[] = "LOGLIMIT";
 int HiLogRegisterGetIdFun(RegisterFunc registerFunc)
 {
     if (g_registerFunc != nullptr) {
@@ -82,123 +77,41 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     return GetGlobalLevel();
 }
 
-static uint32_t ParseProcessQuota()
-{
-    uint32_t proQuota = DEFAULT_QUOTA;
-    std::string proName = GetProgName();
-    static constexpr char flowCtrlQuotaFile[] = "/system/etc/hilog_flowcontrol_quota.conf";
-    std::ifstream ifs(flowCtrlQuotaFile, std::ifstream::in);
-    if (!ifs.is_open()) {
-        return proQuota;
-    }
-    std::string line;
-    while (!ifs.eof()) {
-        getline(ifs, line);
-        if (line.empty() || line.at(0) == '#') {
-            continue;
-        }
-        std::string processName;
-        std::string processQuotaValue;
-        std::size_t processNameEnd = line.find_first_of(" ");
-        if (processNameEnd == std::string::npos) {
-            continue;
-        }
-        processName = line.substr(0, processNameEnd);
-        if (++processNameEnd >= line.size()) {
-            continue;
-        }
-        if (proName == processName) {
-            int ret = 0;
-            processQuotaValue = line.substr(processNameEnd, LOG_FLOWCTRL_QUOTA_STR_LEN);
-            char quotaValue[LOG_FLOWCTRL_QUOTA_STR_LEN];
-            ret = strcpy_s(quotaValue, LOG_FLOWCTRL_QUOTA_STR_LEN, processQuotaValue.c_str());
-            if (ret != 0) {
-                break;
-            }
-            ret = sscanf_s(quotaValue, "%d", &proQuota);
-            if (ret <= 0) {
-                cout << "invalid quota config" << endl;
-            }
-            break;
-        }
-    }
-    ifs.close();
-    return proQuota;
-}
-
 static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
 {
-    if (logType == LOG_APP || !IsProcessSwitchOn() || debug) {
-        return 0;
-    }
-    static uint32_t processQuota = DEFAULT_QUOTA;
+    static uint32_t processQuota = 0;
     static atomic_int gSumLen = 0;
     static atomic_int gDropped = 0;
-    LogTimeStamp startTime(0, 0);
-    static atomic<LogTimeStamp> gStartTime(startTime);
+    static atomic<LogTimeStamp> gStartTime;
+    static LogTimeStamp period(1, 0);
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     if (!isFirstFlag.test_and_set()) {
-        processQuota = ParseProcessQuota();
+        processQuota = GetProcessQuota(debug);
     }
     LogTimeStamp tsStart = atomic_load(&gStartTime);
     LogTimeStamp tsNow(CLOCK_MONOTONIC);
+    tsStart += period;
     /* in statistic period(1 second) */
-    if ((tsNow -= tsStart) <= LogTimeStamp(1)) {
+    if (tsNow > tsStart) { /* new statistic period, return how many lines were dropped */
+        int dropped = atomic_exchange_explicit(&gDropped, 0, memory_order_relaxed);
+        atomic_store(&gStartTime, tsNow);
+        atomic_store(&gSumLen, len);
+        return dropped;
+    } else {
         uint32_t sumLen = (uint32_t)atomic_load(&gSumLen);
         if (sumLen > processQuota) { /* over quota, -1 means don't print */
             atomic_fetch_add_explicit(&gDropped, 1, memory_order_relaxed);
             return -1;
         } else { /* under quota, 0 means do print */
             atomic_fetch_add_explicit(&gSumLen, len, memory_order_relaxed);
-            return 0;
         }
-    } else  { /* new statistic period, return how many lines were dropped */
-        int dropped = atomic_exchange_explicit(&gDropped, 0, memory_order_relaxed);
-        atomic_store(&gStartTime, tsNow);
-        atomic_store(&gSumLen, len);
-        return dropped;
     }
     return 0;
 }
 
-#ifdef DEBUG
-static size_t GetExecutablePath(char *processdir, char *processname, size_t len)
-{
-    char* path_end = nullptr;
-    if (readlink("/proc/self/exe", processdir, len) <= 0)
-        return -1;
-    path_end = strrchr(processdir, '/');
-    if (path_end == nullptr)
-        return -1;
-    ++path_end;
-    if (strncpy_s(processname, MAX_PATH_LEN, path_end, MAX_PATH_LEN - 1)) {
-        return 0;
-    }
-    *path_end = '\0';
-    return (size_t)(path_end - processdir);
-}
-#endif
-
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
-#ifdef DEBUG
-    static int test = -1;
-    if (test == -1) {
-        char dir[MAX_PATH_LEN] = {0};
-        char name[MAX_PATH_LEN] = {0};
-        (void)GetExecutablePath(dir, name, MAX_PATH_LEN);
-        if (strcmp(name, "hilog_test") != 0) {
-            test = 0;
-        } else {
-            test = 1;
-        }
-    }
-    if (test == 0) {
-        return -1;
-    }
-#endif
-
     int ret;
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
@@ -274,14 +187,20 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     header.domain = domain;
 
     /* flow control */
-    ret = HiLogFlowCtrlProcess(tagLen + logLen, type, debug);
-    if (ret < 0) {
-        return ret;
-    } else if (ret > 0) {
-        char dropLogBuf[MAX_LOG_LEN] = {0};
-        if (snprintf_s(dropLogBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "%d line(s) dropped!", ret) == EOK) {
-            HilogWriteLogMessage(&header, P_LIMIT_TAG, strlen(P_LIMIT_TAG) + 1, dropLogBuf,
-                strnlen(dropLogBuf, MAX_LOG_LEN - 1) + 1);
+    if (IsProcessSwitchOn()) {
+        ret = HiLogFlowCtrlProcess(tagLen + logLen, type, debug);
+        if (ret < 0) {
+            return ret;
+        } else if (ret > 0) {
+            uint16_t level = header.level;
+            header.level = LOG_WARN;
+            char dropLogBuf[MAX_LOG_LEN] = {0};
+            if (snprintf_s(dropLogBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1,
+                "==LOGS OVER PROC QUOTA, %d DROPPED==", ret) > 0) {
+                ret = HilogWriteLogMessage(&header, P_LIMIT_TAG, strlen(P_LIMIT_TAG) + 1, dropLogBuf,
+                    strnlen(dropLogBuf, MAX_LOG_LEN - 1) + 1);
+            }
+            header.level = level;
         }
     }
 
