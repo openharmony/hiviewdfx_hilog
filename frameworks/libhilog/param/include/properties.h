@@ -31,6 +31,7 @@ bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
 bool IsKmsgSwitchOn();
 size_t GetBufferSize(uint16_t type, bool persist);
+int GetProcessQuota(bool debug);
 
 int SetPrivateSwitchOn(bool on);
 int SetOnceDebugOn(bool on);
