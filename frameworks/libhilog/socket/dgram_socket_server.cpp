@@ -29,7 +29,6 @@ int DgramSocketServer::RecvPacket(std::vector<char>& buffer, struct ucred *cred)
         Recv(&packetLen, sizeof(packetLen), 0); // skip too long packet
         return 0;
     }
-    buffer.resize(packetLen + 1);
 
     std::array<char, CMSG_SPACE(sizeof(struct ucred))> control = {0};
 
