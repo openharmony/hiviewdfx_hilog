@@ -28,8 +28,8 @@ namespace HiviewDFX {
 struct HilogData {
     uint16_t len; /* tag length plus fmt length include '\0' */
     uint16_t version : 3;
-    uint16_t type : 4;  /* APP,CORE,INIT,SEC etc */
-    uint16_t level : 3;
+    uint16_t type : 3;  /* APP,CORE,INIT,SEC etc */
+    uint16_t level : 4;
     uint16_t tag_len : 6; /* include '\0' */
     uint32_t tv_sec;
     uint32_t tv_nsec;
