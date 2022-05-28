@@ -116,16 +116,16 @@ using LogQueryRequest = struct {
 };
 
 using HilogDataMessage = struct {
-    uint16_t sendId;
-    uint16_t length; /* data len, equals tag_len plus content length, include '\0' */
-    uint16_t level;
-    uint16_t type;
-    uint16_t tag_len; /* include '\0' */
     uint32_t pid;
     uint32_t tid;
     uint32_t domain;
     uint32_t tv_sec;
     uint32_t tv_nsec;
+    uint32_t length : 12; /* data len, equals tag_len plus content length, include '\0', max is 1025+33=1058 */
+    uint32_t level : 4;
+    uint32_t tag_len : 6; /* include '\0' max is 33 */
+    uint32_t type : 4;
+    uint32_t sendId : 2;
     char data[]; /* tag and content, include '\0' */
 } __attribute__((__packed__));
 
