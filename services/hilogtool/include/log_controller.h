@@ -28,6 +28,7 @@ namespace OHOS {
 namespace HiviewDFX {
 constexpr int RECV_BUF_LEN = MAX_LOG_LEN * 2;
 
+void ReceiveLogStatsInfo(SeqPacketSocketClient& controller, char* recvBuffer);
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen);
 int MultiQuerySplit(const std::string& src, const char& delim, std::vector<std::string>& vec);
 void NextRequestOp(SeqPacketSocketClient& controller, uint16_t sendId);
@@ -36,8 +37,7 @@ void LogQueryResponseOp(SeqPacketSocketClient& controller, char* recvBuffer, uin
     const HilogArgs* context, uint32_t format);
 int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     const std::string& logTypeStr, const std::string& buffSizeStr);
-int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
-    const std::string& logTypeStr, const std::string& domainStr);
+int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd);
 int32_t LogClearOp(SeqPacketSocketClient& controller, uint8_t msgCmd, const std::string& logTypeStr);
 int32_t LogPersistOp(SeqPacketSocketClient& controller, uint8_t msgCmd, LogPersistParam* logPersistParam);
 int32_t SetPropertiesOp(SeqPacketSocketClient& controller, uint8_t operationType, SetPropertyParam* propertyParm);

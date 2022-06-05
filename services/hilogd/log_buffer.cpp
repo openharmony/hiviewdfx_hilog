@@ -19,7 +19,7 @@
 #include <sys/time.h>
 
 #include <hilog_common.h>
-#include <flow_control_init.h>
+#include <flow_control.h>
 #include <log_timestamp.h>
 #include <properties.h>
 #include <log_utils.h>
@@ -36,42 +36,13 @@ const int DOMAIN_STRICT_MASK = 0xd000000;
 const int DOMAIN_FUZZY_MASK = 0xdffff;
 const int DOMAIN_MODULE_BITS = 8;
 
-static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType)
-{
-    const string tag = "HiLog";
-    size_t contentLen =  tag.length() + 1 + msg.length() + 1;
-    hilogMsg.len = static_cast<uint16_t>(sizeof(HilogMsg) + contentLen);
-    hilogMsg.len = hilogMsg.len > MAX_LOG_LEN ? MAX_LOG_LEN : hilogMsg.len;
-    contentLen = hilogMsg.len - static_cast<uint16_t>(sizeof(HilogMsg));
-
-    struct timeval tv = {0};
-    gettimeofday(&tv, nullptr);
-    hilogMsg.tv_sec = static_cast<uint32_t>(tv.tv_sec);
-    hilogMsg.tv_nsec = static_cast<uint32_t>(tv.tv_usec * 1000);     // 1000 : usec convert to nsec
-    hilogMsg.type = logType;
-    hilogMsg.level = LOG_INFO;
-    hilogMsg.pid = 0;
-    hilogMsg.tid = 0;
-    hilogMsg.domain = 0;
-    hilogMsg.tag_len = tag.length() + 1;
-    if (memcpy_s(hilogMsg.tag, contentLen, tag.c_str(), hilogMsg.tag_len) != 0) {
-        return RET_FAIL;
-    }
-    if (memcpy_s(hilogMsg.tag + hilogMsg.tag_len, contentLen - hilogMsg.tag_len, msg.c_str(), msg.length() + 1) != 0) {
-        return RET_FAIL;
-    }
-
-    return RET_SUCCESS;
-}
+static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData);
+static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType);
 
 HilogBuffer::HilogBuffer()
 {
-    size = 0;
     for (int i = 0; i < LOG_TYPE_MAX; i++) {
         sizeByType[i] = 0;
-        cacheLenByType[i] = 0;
-        printLenByType[i] = 0;
-        droppedByType[i] = 0;
     }
     InitBuffLen();
     InitBuffHead();
@@ -135,7 +106,6 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
                 }
                 OnDeleteItem(it, DeleteReason::BUFF_OVERFLOW);
                 size_t cLen = it->len - it->tag_len;
-                size -= cLen;
                 sizeByType[(*it).type] -= cLen;
                 it = msgList.erase(it);
             }
@@ -152,14 +122,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     }
 
     // Update current size of HilogBuffer
-    size += elemSize;
     sizeByType[msg.type] += elemSize;
-    cacheLenByType[msg.type] += elemSize;
-    if (cacheLenByDomain.count(msg.domain) == 0) {
-        cacheLenByDomain.insert(pair<uint32_t, uint64_t>(msg.domain, elemSize));
-    } else {
-        cacheLenByDomain[msg.domain] += elemSize;
-    }
 
     // Notify readers about new element added
     OnNewItem(msgList);
@@ -205,17 +168,6 @@ std::optional<HilogData> HilogBuffer::Query(const LogFilterExt& filter, const Re
     return std::nullopt;
 }
 
-void HilogBuffer::UpdateStatistics(const HilogData& logData)
-{
-    printLenByType[logData.type] += strlen(logData.content);
-    auto it = printLenByDomain.find(logData.domain);
-    if (it == printLenByDomain.end()) {
-        printLenByDomain.insert(pair<uint32_t, uint64_t>(logData.domain, strlen(logData.content)));
-    } else {
-        printLenByDomain[logData.domain] += strlen(logData.content);
-    }
-}
-
 int32_t HilogBuffer::Delete(uint16_t logType)
 {
     std::list<HilogData> &msgList = (logType == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
@@ -239,7 +191,6 @@ int32_t HilogBuffer::Delete(uint16_t logType)
         size_t cLen = it->len - it->tag_len;
         sum += cLen;
         sizeByType[(*it).type] -= cLen;
-        size -= cLen;
         it = msgList.erase(it);
     }
     return sum;
@@ -332,48 +283,22 @@ int32_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
     return buffSize;
 }
 
-int32_t HilogBuffer::GetStatisticInfoByLog(uint16_t logType, uint64_t& printLen, uint64_t& cacheLen, int32_t& dropped)
+void HilogBuffer::CountLog(const StatsInfo &info)
 {
-    if (logType >= LOG_TYPE_MAX) {
-        return ERR_LOG_TYPE_INVALID;
-    }
-    printLen = printLenByType[logType];
-    cacheLen = cacheLenByType[logType];
-    dropped = GetDroppedByType(logType);
-    return 0;
+    stats.Count(info);
 }
 
-int32_t HilogBuffer::GetStatisticInfoByDomain(uint32_t domain, uint64_t& printLen, uint64_t& cacheLen,
-    int32_t& dropped)
+void HilogBuffer::ResetStats()
 {
-    printLen = printLenByDomain[domain];
-    cacheLen = cacheLenByDomain[domain];
-    dropped = GetDroppedByDomain(domain);
-    return 0;
+    stats.Reset();
 }
 
-int32_t HilogBuffer::ClearStatisticInfoByLog(uint16_t logType)
+LogStats& HilogBuffer::GetStatsInfo()
 {
-    if (logType >= LOG_TYPE_MAX) {
-        return ERR_LOG_TYPE_INVALID;
-    }
-    ClearDroppedByType();
-    printLenByType[logType] = 0;
-    cacheLenByType[logType] = 0;
-    droppedByType[logType] = 0;
-    return 0;
+    return stats;
 }
 
-int32_t HilogBuffer::ClearStatisticInfoByDomain(uint32_t domain)
-{
-    ClearDroppedByDomain();
-    printLenByDomain[domain] = 0;
-    cacheLenByDomain[domain] = 0;
-    droppedByDomain[domain] = 0;
-    return 0;
-}
-
-bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& logData)
+static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData)
 {
     /* domain patterns:
      * strict mode: 0xdxxxxxx   (full)
@@ -430,6 +355,37 @@ bool HilogBuffer::LogMatchFilter(const LogFilterExt& filter, const HilogData& lo
         return false;
     }
     return true;
+}
+
+static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType)
+{
+    const string tag = "HiLog";
+    size_t contentLen =  tag.length() + 1 + msg.length() + 1;
+    hilogMsg.len = static_cast<uint16_t>(sizeof(HilogMsg) + contentLen);
+    hilogMsg.len = hilogMsg.len > MAX_LOG_LEN ? MAX_LOG_LEN : hilogMsg.len;
+    contentLen = hilogMsg.len - static_cast<uint16_t>(sizeof(HilogMsg));
+
+    struct timespec ts = {0};
+    (void)clock_gettime(CLOCK_REALTIME, &ts);
+    struct timespec ts_mono = {0};
+    (void)clock_gettime(CLOCK_MONOTONIC, &ts_mono);
+    hilogMsg.tv_sec = static_cast<uint32_t>(ts.tv_sec);
+    hilogMsg.tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
+    hilogMsg.mono_sec = static_cast<uint32_t>(ts_mono.tv_nsec);
+    hilogMsg.type = logType;
+    hilogMsg.level = LOG_INFO;
+    hilogMsg.pid = 0;
+    hilogMsg.tid = 0;
+    hilogMsg.domain = 0;
+    hilogMsg.tag_len = tag.length() + 1;
+    if (memcpy_s(hilogMsg.tag, contentLen, tag.c_str(), hilogMsg.tag_len) != 0) {
+        return RET_FAIL;
+    }
+    if (memcpy_s(hilogMsg.tag + hilogMsg.tag_len, contentLen - hilogMsg.tag_len, msg.c_str(), msg.length() + 1) != 0) {
+        return RET_FAIL;
+    }
+
+    return RET_SUCCESS;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

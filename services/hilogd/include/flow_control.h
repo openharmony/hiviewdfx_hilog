@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace HiviewDFX {
 int32_t InitDomainFlowCtrl();
-int FlowCtrlDomain(HilogMsg* hilogMsg);
+int FlowCtrlDomain(const HilogMsg& hilogMsg);
 int32_t GetDroppedByType(uint16_t logType);
 int32_t GetDroppedByDomain(uint32_t domainId);
 void ClearDroppedByType();

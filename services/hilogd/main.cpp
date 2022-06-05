@@ -28,7 +28,7 @@
 #include <log_utils.h>
 
 #include "cmd_executor.h"
-#include "flow_control_init.h"
+#include "flow_control.h"
 #include "log_kmsg.h"
 #include "log_collector.h"
 #include "service_controller.h"
@@ -140,7 +140,13 @@ static bool WriteStringToFile(const std::string& content, const std::string& fil
 static void RedirectStdStreamToLogFile()
 {
     if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
-    int fd = open(HILOG_FILE_DIR"hilogd.txt", O_WRONLY | O_APPEND);
+        const char *path = HILOG_FILE_DIR"hilogd_debug.txt";
+        int mask = O_WRONLY | O_APPEND;
+        struct stat st;
+        if (stat(path, &st) == -1) {
+            mask |= O_CREAT;
+        }
+        int fd = open(path, mask);
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
         } else {
@@ -153,13 +159,13 @@ static void RedirectStdStreamToLogFile()
 
 int HilogdEntry()
 {
-    HilogBuffer hilogBuffer;
     umask(HILOG_FILE_MASK);
 
 #ifdef DEBUG
     RedirectStdStreamToLogFile();
 #endif
     std::signal(SIGINT, SigHandler);
+    HilogBuffer hilogBuffer;
 
     InitDomainFlowCtrl();
 

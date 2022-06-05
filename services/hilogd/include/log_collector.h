@@ -24,7 +24,10 @@ namespace OHOS {
 namespace HiviewDFX {
 class LogCollector {
 public:
-    explicit LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
+    explicit LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer)
+    {
+        CountEnable = m_hilogBuffer.GetStatsInfo().IsEnable();
+    }
     void InsertDropInfo(const HilogMsg &msg, int droppedCount);
     size_t InsertLogToBuffer(const HilogMsg& msg);
 #ifndef __RECV_MSG_WITH_UCRED_
@@ -35,6 +38,8 @@ public:
     ~LogCollector() = default;
 private:
     HilogBuffer& m_hilogBuffer;
+    StatsInfo info;
+    bool CountEnable;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
