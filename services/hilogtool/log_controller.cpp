@@ -36,6 +36,257 @@ const int LOG_PERSIST_FILE_SIZE = 4 * ONE_MB;
 const int LOG_PERSIST_FILE_NUM = 10;
 const uint32_t DEFAULT_JOBID = 1;
 const uint32_t DEFAULT_KMSG_JOBID = 2;
+
+static int ReceiveProcTagStats(SeqPacketSocketClient& controller, StatisticInfoQueryResponse &rsp)
+{
+    int i = 0;
+    for (i = 0; i < rsp.procNum; i++) {
+        ProcStatsRsp &pStats = rsp.pStats[i];
+        int msgSize = pStats.tagNum * sizeof(TagStatsRsp);
+        if (msgSize == 0) {
+            pStats.tStats = nullptr;
+            continue;
+        }
+        char* tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            pStats.tStats = nullptr;
+            return RET_FAIL;
+        }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            return RET_FAIL;
+        }
+        if (controller.RecvMsg(tmp, msgSize) != msgSize) {
+            pStats.tStats = nullptr;
+            return RET_FAIL;
+        }
+        pStats.tStats = reinterpret_cast<TagStatsRsp*>(tmp);
+    }
+    return RET_SUCCESS;
+}
+
+static int ReceiveProcLogTypeStats(SeqPacketSocketClient& controller, StatisticInfoQueryResponse &rsp)
+{
+    int i = 0;
+    for (i = 0; i < rsp.procNum; i++) {
+        ProcStatsRsp &pStats = rsp.pStats[i];
+        int msgSize = pStats.typeNum * sizeof(LogTypeStatsRsp);
+        if (msgSize == 0) {
+            continue;
+        }
+        char* tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            pStats.lStats = nullptr;
+            return RET_FAIL;
+        }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            return RET_FAIL;
+        }
+        if (controller.RecvMsg(tmp, msgSize) != msgSize) {
+            pStats.lStats = nullptr;
+            return RET_FAIL;
+        }
+        pStats.lStats = reinterpret_cast<LogTypeStatsRsp*>(tmp);
+    }
+    return RET_SUCCESS;
+}
+
+static int ReceiveProcStats(SeqPacketSocketClient& controller, StatisticInfoQueryResponse &rsp)
+{
+    if (rsp.procNum == 0) {
+        return RET_FAIL;
+    }
+    int msgSize = rsp.procNum * sizeof(ProcStatsRsp);
+    if (msgSize == 0) {
+        return RET_SUCCESS;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        rsp.pStats = nullptr;
+        return RET_FAIL;
+    }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        return RET_FAIL;
+    }
+    if (controller.RecvMsg(tmp, msgSize) != msgSize) {
+        rsp.pStats = nullptr;
+        return RET_FAIL;
+    }
+    rsp.pStats = reinterpret_cast<ProcStatsRsp*>(tmp);
+    return RET_SUCCESS;
+}
+
+static int ReceiveDomainTagStats(SeqPacketSocketClient& controller, StatisticInfoQueryResponse &rsp)
+{
+    int i = 0;
+    for (i = 0; i < rsp.typeNum; i++) {
+        LogTypeDomainStatsRsp &ldStats = rsp.ldStats[i];
+        int j = 0;
+        for (j = 0; j < ldStats.domainNum; j++) {
+            DomainStatsRsp &dStats = ldStats.dStats[j];
+            int msgSize = dStats.tagNum * sizeof(TagStatsRsp);
+            if (msgSize == 0) {
+                dStats.tStats = nullptr;
+                continue;
+            }
+            char* tmp = new (std::nothrow) char[msgSize];
+            if (tmp == nullptr) {
+                dStats.tStats = nullptr;
+                return RET_FAIL;
+            }
+            if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+                delete []tmp;
+                return RET_FAIL;
+            }
+            if (controller.RecvMsg(tmp, msgSize) != msgSize) {
+                dStats.tStats = nullptr;
+                return RET_FAIL;
+            }
+            dStats.tStats = reinterpret_cast<TagStatsRsp*>(tmp);
+        }
+    }
+    return RET_SUCCESS;
+}
+
+static int ReceiveDomainStats(SeqPacketSocketClient& controller, StatisticInfoQueryResponse &rsp)
+{
+    int i = 0;
+    for (i = 0; i < rsp.typeNum; i++) {
+        LogTypeDomainStatsRsp &ldStats = rsp.ldStats[i];
+        int msgSize = ldStats.domainNum * sizeof(DomainStatsRsp);
+        if (msgSize == 0) {
+            continue;
+        }
+        char* tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            ldStats.dStats = nullptr;
+            return RET_FAIL;
+        }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            return RET_FAIL;
+        }
+        if (controller.RecvMsg(tmp, msgSize) != msgSize) {
+            ldStats.dStats = nullptr;
+            return RET_FAIL;
+        }
+        ldStats.dStats = reinterpret_cast<DomainStatsRsp*>(tmp);
+    }
+    return RET_SUCCESS;
+}
+
+static int ReceiveLogTypeDomainStats(SeqPacketSocketClient& controller, StatisticInfoQueryResponse &rsp)
+{
+    if (rsp.typeNum == 0) {
+        return RET_FAIL;
+    }
+    int msgSize = rsp.typeNum * sizeof(LogTypeDomainStatsRsp);
+    if (msgSize == 0) {
+        return RET_SUCCESS;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        rsp.ldStats = nullptr;
+        return RET_FAIL;
+    }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        return RET_FAIL;
+    }
+    if (controller.RecvMsg(tmp, msgSize) != msgSize) {
+        rsp.ldStats = nullptr;
+        return RET_FAIL;
+    }
+    rsp.ldStats = reinterpret_cast<LogTypeDomainStatsRsp*>(tmp);
+    return RET_SUCCESS;
+}
+
+static void DeleteLogStatsInfo(StatisticInfoQueryResponse &rsp)
+{
+    if (rsp.ldStats == nullptr) {
+        return;
+    }
+    int i = 0;
+    for (i = 0; i < rsp.typeNum; i++) {
+        LogTypeDomainStatsRsp &ldStats = rsp.ldStats[i];
+        if (ldStats.dStats == nullptr) {
+            break;
+        }
+        int j = 0;
+        for (j = 0; j < ldStats.domainNum; j++) {
+            DomainStatsRsp &dStats = ldStats.dStats[j];
+            if (dStats.tStats == nullptr) {
+                break;
+            }
+            delete []dStats.tStats;
+            dStats.tStats = nullptr;
+        }
+        delete []ldStats.dStats;
+        ldStats.dStats = nullptr;
+    }
+    delete []rsp.ldStats;
+    rsp.ldStats = nullptr;
+
+    if (rsp.pStats == nullptr) {
+        return;
+    }
+    for (i = 0; i < rsp.procNum; i++) {
+        ProcStatsRsp &pStats = rsp.pStats[i];
+        if (pStats.lStats == nullptr) {
+            return;
+        }
+        delete []pStats.lStats;
+        pStats.lStats = nullptr;
+        if (pStats.tStats == nullptr) {
+            return;
+        }
+        delete []pStats.tStats;
+        pStats.tStats = nullptr;
+    }
+}
+
+void ReceiveLogStatsInfo(SeqPacketSocketClient& controller, char* recvBuffer)
+{
+    StatisticInfoQueryResponse &rsp = *reinterpret_cast<StatisticInfoQueryResponse*>(recvBuffer);
+    rsp.ldStats = nullptr;
+    rsp.pStats = nullptr;
+    if (rsp.result != RET_SUCCESS) {
+        HilogShowLogStatsInfo(rsp);
+        return;
+    }
+    int ret;
+    do {
+        ret = ReceiveLogTypeDomainStats(controller, rsp);
+        if (RET_SUCCESS != ret) {
+            break;
+        }
+        ret = ReceiveDomainStats(controller, rsp);
+        if (RET_SUCCESS != ret) {
+            break;
+        }
+        ret = ReceiveDomainTagStats(controller, rsp);
+        if (RET_SUCCESS != ret) {
+            break;
+        }
+        ret = ReceiveProcStats(controller, rsp);
+        if (RET_SUCCESS != ret) {
+            break;
+        }
+        ret = ReceiveProcLogTypeStats(controller, rsp);
+        if (RET_SUCCESS != ret) {
+            break;
+        }
+        ret = ReceiveProcTagStats(controller, rsp);
+        if (RET_SUCCESS != ret) {
+            break;
+        }
+    } while (0);
+    HilogShowLogStatsInfo(rsp);
+    DeleteLogStatsInfo(rsp);
+}
+
 void SetMsgHead(MessageHeader* msgHeader, const uint8_t msgCmd, const uint16_t msgLen)
 {
     if (!msgHeader) {
@@ -210,45 +461,17 @@ int32_t BufferSizeOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
     return RET_SUCCESS;
 }
 
-int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd,
-    const string& logTypeStr, const string& domainStr)
+int32_t StatisticInfoOp(SeqPacketSocketClient& controller, uint8_t msgCmd)
 {
-    if ((logTypeStr != "" && domainStr != "") || (logTypeStr == "" && domainStr == "")) {
-        return RET_FAIL;
-    }
-    uint16_t logType = LOG_TYPE_MAX;
-    uint32_t domain = 0;
-
-    if (logTypeStr != "") {
-        logType = Str2LogType(logTypeStr);
-        if (logType == LOG_TYPE_MAX) {
-            cout << ErrorCode2Str(ERR_LOG_TYPE_INVALID) << endl;
-            return RET_FAIL;
-        }
-    }
-
-    if (domainStr != "") {
-        domain = HexStr2Uint(domainStr);
-        if (!IsValidDomain(domain)) {
-            cout << ErrorCode2Str(ERR_DOMAIN_INVALID) << endl;
-            return RET_FAIL;
-        }
-    } else {
-        domain = 0xffffffff;
-    }
     switch (msgCmd) {
         case MC_REQ_STATISTIC_INFO_QUERY: {
             StatisticInfoQueryRequest staInfoQueryReq = {{0}};
-            staInfoQueryReq.logType = logType;
-            staInfoQueryReq.domain = domain;
             SetMsgHead(&staInfoQueryReq.msgHeader, msgCmd, sizeof(StatisticInfoQueryRequest) - sizeof(MessageHeader));
             controller.WriteAll(reinterpret_cast<char*>(&staInfoQueryReq), sizeof(StatisticInfoQueryRequest));
             break;
         }
         case MC_REQ_STATISTIC_INFO_CLEAR: {
             StatisticInfoClearRequest staInfoClearReq = {{0}};
-            staInfoClearReq.logType = logType;
-            staInfoClearReq.domain = domain;
             SetMsgHead(&staInfoClearReq.msgHeader, msgCmd, sizeof(StatisticInfoClearRequest) - sizeof(MessageHeader));
             controller.WriteAll(reinterpret_cast<char*>(&staInfoClearReq), sizeof(StatisticInfoClearRequest));
             break;

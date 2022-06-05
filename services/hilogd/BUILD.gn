@@ -22,7 +22,7 @@ config("hilogd_config") {
 ohos_executable("hilogd") {
   sources = [
     "cmd_executor.cpp",
-    "flow_control_init.cpp",
+    "flow_control.cpp",
     "kmsg_parser.cpp",
     "log_buffer.cpp",
     "log_collector.cpp",
@@ -30,6 +30,7 @@ ohos_executable("hilogd") {
     "log_kmsg.cpp",
     "log_persister.cpp",
     "log_persister_rotator.cpp",
+    "log_stats.cpp",
     "main.cpp",
     "service_controller.cpp",
   ]

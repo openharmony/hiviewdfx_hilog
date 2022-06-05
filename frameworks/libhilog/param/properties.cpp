@@ -56,6 +56,8 @@ enum class PropType {
     PROP_KMSG,
     PROP_BUFFER_SIZE,
     PROP_QUOTA,
+    PROP_STATS_ENABLE,
+    PROP_STATS_TAG_ENABLE,
 
     PROP_MAX,
 };
@@ -93,7 +95,9 @@ static PropRes g_PropResources[static_cast<int>(PropType::PROP_MAX)] = {
     // Non cached:
     {"persist.sys.hilog.kmsg.on", nullptr}, // PROP_KMSG,
     {"hilog.buffersize.", nullptr}, // PROP_BUFFER_SIZE,
-    {"hilog.quota.", nullptr}
+    {"hilog.quota.", nullptr}, // PROP_QUOTA
+    {"persist.sys.hilog.stats", nullptr}, // PROP_STATS_ENABLE,
+    {"persist.sys.hilog.stats.tag", nullptr}, // PROP_STATS_TAG_ENABLE,
 };
 
 static string GetPropertyName(PropType propType)
@@ -309,7 +313,6 @@ bool IsDebugOn()
     return IsOnceDebugOn() || IsPersistDebugOn();
 }
 
-
 uint16_t GetGlobalLevel()
 {
     static auto *logLevelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, PropType::PROP_GLOBAL_LOG_LEVEL);
@@ -426,6 +429,26 @@ size_t GetBufferSize(uint16_t type, bool persist)
     }
 
     return std::stoi(value);
+}
+
+bool IsStatsEnable()
+{
+    RawPropertyData rawData;
+    int ret = PropertyGet(GetPropertyName(PropType::PROP_STATS_ENABLE), rawData.data(), HILOG_PROP_VALUE_MAX);
+    if (ret == RET_FAIL) {
+        return false;
+    }
+    return TextToBool(rawData, false);
+}
+
+bool IsTagStatsEnable()
+{
+    RawPropertyData rawData;
+    int ret = PropertyGet(GetPropertyName(PropType::PROP_STATS_TAG_ENABLE), rawData.data(), HILOG_PROP_VALUE_MAX);
+    if (ret == RET_FAIL) {
+        return false;
+    }
+    return TextToBool(rawData, false);
 }
 
 int GetProcessQuota(bool debug)

@@ -60,7 +60,8 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
     if ((showFormat & (1 << EPOCH_SHOWFORMAT)) || (showFormat & (1 << MONOTONIC_SHOWFORMAT))) {
         if ((bufLen - 1) > 0) {
             ret = snprintf_s(buffer, bufLen, bufLen - 1,
-                (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%9lld", (long long)now);
+                (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? "%6lld" : "%9lld",
+                (showFormat & (1 << MONOTONIC_SHOWFORMAT)) ? contentOut.mono_sec : contentOut.tv_sec);
         }
         timeLen += ((ret > 0) ? ret : 0);
     } else {

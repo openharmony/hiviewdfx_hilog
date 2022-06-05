@@ -32,6 +32,8 @@ bool IsDomainSwitchOn();
 bool IsKmsgSwitchOn();
 size_t GetBufferSize(uint16_t type, bool persist);
 int GetProcessQuota(bool debug);
+bool IsStatsEnable();
+bool IsTagStatsEnable();
 
 int SetPrivateSwitchOn(bool on);
 int SetOnceDebugOn(bool on);

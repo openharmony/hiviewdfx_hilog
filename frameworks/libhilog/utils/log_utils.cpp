@@ -17,6 +17,7 @@
 #include <functional>
 #include <regex>
 #include <sstream>
+#include <fstream>
 
 #include <securec.h>
 #include <hilog/log.h>
@@ -425,6 +426,19 @@ string GetProgName()
 #else
     return getprogname();
 #endif
+}
+
+static const int CMDLINE_PATH_LEN = 32;
+string GetNameByPid(uint32_t pid)
+{
+    char path[CMDLINE_PATH_LEN] = { 0 };
+    if (snprintf_s(path, CMDLINE_PATH_LEN, CMDLINE_PATH_LEN - 1, "/proc/%d/cmdline", pid) <= 0) {
+        return "";
+    }
+    ifstream file(path);
+    string name = "";
+    getline(file, name);
+    return name;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
