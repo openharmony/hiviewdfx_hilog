@@ -55,7 +55,7 @@ typedef enum {
     LOG_LEVEL_MAX,
 } LogLevel;
 
-const char* GetLastFatalMessage();
+const char* GetLastFatalMessage(void);
 
 int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
