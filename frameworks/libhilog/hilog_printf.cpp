@@ -15,15 +15,17 @@
 
 #include "properties.h"
 
+#include <cerrno>
 #include <cstdarg>
 #include <cstdio>
+#include <ctime>
 #include <fstream>
 #include <iostream>
+#include <mutex>
+
+#include <securec.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <ctime>
-#include <cerrno>
-#include <securec.h>
 
 #include "log_timestamp.h"
 #include "hilog_trace.h"
@@ -39,6 +41,15 @@ using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
 static atomic_int g_hiLogGetIdCallCount = 0;
 static const char P_LIMIT_TAG[] = "LOGLIMIT";
+// protected by static lock guard
+static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
+
+HILOG_PUBLIC_API
+extern "C" const char* GetLastFatalMessage()
+{
+    return g_hiLogLastFatalMessage;
+}
+
 int HiLogRegisterGetIdFun(RegisterFunc registerFunc)
 {
     if (g_registerFunc != nullptr) {
@@ -185,6 +196,12 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #endif
     header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
     header.domain = domain;
+
+    if (level == LOG_FATAL) {
+        static std::mutex fatalMessageBufMutex;
+        std::lock_guard<std::mutex> lock(fatalMessageBufMutex);
+        (void)memcpy_s(g_hiLogLastFatalMessage, sizeof(g_hiLogLastFatalMessage), buf, sizeof(buf));
+    }
 
     /* flow control */
     if (IsProcessSwitchOn()) {
