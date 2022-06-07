@@ -49,8 +49,9 @@ public:
     int Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressBuffer) override;
 private:
     static const uint16_t CHUNK = 16384;
+    static const uint16_t GAP = 128;
     char buffIn[CHUNK] = {0};
-    char buffOut[CHUNK] = {0};
+    char buffOut[CHUNK + GAP] = {0}; // to prevent buffer overflow
 
     z_stream cStream;
 };
