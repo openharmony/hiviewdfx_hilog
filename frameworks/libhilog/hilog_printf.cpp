@@ -88,7 +88,7 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     return GetGlobalLevel();
 }
 
-static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
+static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
 {
     static uint32_t processQuota = 0;
     static atomic_int gSumLen = 0;
@@ -100,7 +100,7 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
         processQuota = GetProcessQuota(debug);
     }
     LogTimeStamp tsStart = atomic_load(&gStartTime);
-    LogTimeStamp tsNow(CLOCK_MONOTONIC);
+    LogTimeStamp tsNow(ts);
     tsStart += period;
     /* in statistic period(1 second) */
     if (tsNow > tsStart) { /* new statistic period, return how many lines were dropped */
@@ -123,22 +123,23 @@ static int HiLogFlowCtrlProcess(int len, uint16_t logType, bool debug)
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
-    int ret;
+    if ((tag == nullptr)  || !HiLogIsLoggable(domain, tag, level)) {
+        return -1;
+    }
+
+    HilogMsg header = {0};
+    struct timespec ts = {0};
+    (void)clock_gettime(CLOCK_REALTIME, &ts);
+    struct timespec ts_mono = {0};
+    (void)clock_gettime(CLOCK_MONOTONIC, &ts_mono);
+    header.tv_sec = static_cast<uint32_t>(ts.tv_sec);
+    header.tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
+    header.mono_sec = static_cast<uint32_t>(ts_mono.tv_sec);
+
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
     int traceBufLen = 0;
-    HilogMsg header = {0};
-    bool debug = false;
-    bool priv = true;
-
-    if (tag == nullptr) {
-        return -1;
-    }
-
-    if (!HiLogIsLoggable(domain, tag, level)) {
-        return -1;
-    }
-
+    int ret;
     /* print traceid */
     if (g_registerFunc != nullptr) {
         uint64_t chainId = 0;
@@ -167,8 +168,8 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     }
 
     /* format log string */
-    debug = IsDebugOn();
-    priv = (!debug) && IsPrivateSwitchOn();
+    bool debug = IsDebugOn();
+    bool priv = (!debug) && IsPrivateSwitchOn();
 
 #ifdef __clang__
 /* code specific to clang compiler */
@@ -205,7 +206,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 
     /* flow control */
     if (IsProcessSwitchOn()) {
-        ret = HiLogFlowCtrlProcess(tagLen + logLen, type, debug);
+        ret = HiLogFlowCtrlProcess(tagLen + logLen, ts_mono, debug);
         if (ret < 0) {
             return ret;
         } else if (ret > 0) {

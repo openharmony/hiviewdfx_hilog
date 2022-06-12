@@ -121,15 +121,7 @@ static void Helper()
     << "    Type coule be: app/core/init/kmsg." << endl
     << "    Default types are: app,core" << endl
     << "-s, --statistics" << endl
-    << "  Query log statistic information, advanced options:" << endl
-    << "  -t <type>, --type=<type>" << endl
-    << "    Query specific type/types log statistic information with format: type1,type2,type3" << endl
-    << "    Type coule be: app/core/init." << endl
-    << "    Default types are: app,core,init" << endl
-    << "  -D <domain>, --domain=<domain>" << endl
-    << "    Query specific domain/domains log statistic information with format: domain1,domain2,doman3" << endl
-    << "    Max domain count is " << MAX_DOMAINS <<"." << endl
-    << "    See domain description at the end of this message." << endl
+    << "  Query log statistic information." << endl
     << "-S" << endl
     << "  Clear hilogd statistic information." << endl
     << "-w <control>,--write=<control>" << endl
@@ -184,9 +176,9 @@ static void Helper()
     << "  hilog -S -s; hilog -w start -r; hilog -p on -k on -b D" << endl
     << endl << endl
     << "Domain description:" << endl
-    << "  Log type \"core\" & \"init\" are used for OS subsystems, the domain range is (0xD000000,"
+    << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is (0xD000000,"
     << "  0xD0FFFFF)" << endl
-    << "  Log type \"app\" is used for applications, the doamin range is (0x0,"
+    << "  Log type \"app\" is used for applications, the range is (0x0,"
     << "  0xFFFF)" << dec << endl
     << "  To reduce redundant info when printing logs, only last five hex numbers of domain are printed" << endl
     << "  So if user wants to use -D option to filter OS logs, user should add 0xD0 as prefix to the printed domain:"
@@ -618,10 +610,10 @@ int HilogEntry(int argc, char* argv[])
             }
         } else if (context.statisticArgs != "") {
             if (context.statisticArgs == "query") {
-                ret = StatisticInfoOp(controller, MC_REQ_STATISTIC_INFO_QUERY, context.logTypeArgs, context.domainArgs);
+                ret = StatisticInfoOp(controller, MC_REQ_STATISTIC_INFO_QUERY);
             }
             if (context.statisticArgs == "clear") {
-                ret = StatisticInfoOp(controller, MC_REQ_STATISTIC_INFO_CLEAR, context.logTypeArgs, context.domainArgs);
+                ret = StatisticInfoOp(controller, MC_REQ_STATISTIC_INFO_CLEAR);
             }
             if (ret == RET_FAIL) {
                 cerr << "statistic info operation error!" << endl;
@@ -676,18 +668,20 @@ int HilogEntry(int argc, char* argv[])
         case MC_RSP_LOG_PERSIST_QUERY:
         case MC_RSP_LOG_CLEAR:
         case MC_RSP_STATISTIC_INFO_CLEAR:
-        case MC_RSP_STATISTIC_INFO_QUERY:
         {
             ControlCmdResult(recvBuffer);
             break;
         }
-
+        case MC_RSP_STATISTIC_INFO_QUERY:
+        {
+            ReceiveLogStatsInfo(controller, recvBuffer);
+            break;
+        }
         case LOG_QUERY_RESPONSE:
         {
             LogQueryResponseOp(controller, recvBuffer, RECV_BUF_LEN, &context, showFormat);
             break;
         }
-
         default:
             cout << "Invalid response from hilogd! response: " << unsigned(msgHeader->msgType) << endl;
             break;

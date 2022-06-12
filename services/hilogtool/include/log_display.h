@@ -24,6 +24,7 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 int32_t ControlCmdResult(const char* message);
+void HilogShowLogStatsInfo(const StatisticInfoQueryResponse& rsp);
 void HilogShowLog(uint32_t showFormat, HilogDataMessage* contentOut,
     const HilogArgs* context, vector<string>& tailBuffer);
 } // namespace HiviewDFX

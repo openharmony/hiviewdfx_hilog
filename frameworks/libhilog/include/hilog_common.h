@@ -20,6 +20,7 @@
 #include <iostream>
 #include <optional>
 #include <vector>
+#include <functional>
 
 #define SOCKET_FILE_DIR "/dev/unix/socket/"
 #define INPUT_SOCKET_NAME "hilogInput"
@@ -53,7 +54,7 @@ const size_t MAX_BUFFER_SIZE = 1UL<<30;
 const uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
 constexpr int MIN_LOG_FILE_NUM = 2;
 constexpr int MAX_LOG_FILE_NUM = 1000;
-const int MSG_MAX_LEN = 2048;
+constexpr int MSG_MAX_LEN = 2048;
 constexpr uint64_t PRIME = 0x100000001B3ull;
 constexpr uint64_t BASIS = 0xCBF29CE484222325ull;
 /*
@@ -67,6 +68,7 @@ using HilogMsg = struct __attribute__((__packed__)) {
     uint16_t tag_len : 6; /* include '\0' */
     uint32_t tv_sec;
     uint32_t tv_nsec;
+    uint32_t mono_sec;
     uint32_t pid;
     uint32_t tid;
     uint32_t domain;
@@ -83,6 +85,7 @@ using HilogShowFormatBuffer = struct {
     uint32_t domain;
     uint32_t tv_sec;
     uint32_t tv_nsec;
+    uint32_t mono_sec;
     const char* data;
 };
 

@@ -26,6 +26,7 @@
 #include <hilog_common.h>
 #include <socket.h>
 
+#include "log_stats.h"
 #include "log_buffer.h"
 
 namespace OHOS {
@@ -56,8 +57,18 @@ private:
     void HandleBufferSizeRequest(const PacketBuf& rawData);
 
     // statistics
+    void SendOverallStats(const LogStats& stats);
+    void SendLogTypeDomainStats(const LogStats& stats);
+    void SendDomainStats(const LogStats& stats);
+    void SendDomainTagStats(const LogStats& stats);
+    void SendProcStats(const LogStats& stats);
+    void SendProcLogTypeStats(const LogStats& stats);
+    void SendProcTagStats(const LogStats& stats);
+    void SendTagStats(const TagTable &tagTable);
     void HandleInfoQueryRequest(const PacketBuf& rawData);
     void HandleInfoClearRequest(const PacketBuf& rawData);
+
+    // clear buffer
     void HandleBufferClearRequest(const PacketBuf& rawData);
 
     int WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData);

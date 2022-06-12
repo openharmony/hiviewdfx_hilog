@@ -15,7 +15,7 @@
 
 #include "log_collector.h"
 #include "log_kmsg.h"
-#include "flow_control_init.h"
+#include "flow_control.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -43,6 +43,7 @@ void LogCollector::InsertDropInfo(const HilogMsg &msg, int droppedCount)
         dropMsg->tag_len = tag.size();
         dropMsg->tv_sec  = msg.tv_sec;
         dropMsg->tv_nsec = msg.tv_nsec;
+        dropMsg->mono_sec = msg.mono_sec;
         dropMsg->pid     = msg.pid;
         dropMsg->tid     = msg.tid;
         dropMsg->domain  = msg.domain;
@@ -72,20 +73,42 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
         return;
     }
 
-    HilogMsg *msg = reinterpret_cast<HilogMsg *>(data.data());
+    HilogMsg& msg = *(reinterpret_cast<HilogMsg *>(data.data()));
 #ifdef __RECV_MSG_WITH_UCRED_
-    msg->pid = cred.pid;
+    msg.pid = cred.pid;
 #endif
+
     // Domain flow control
-    int ret = FlowCtrlDomain(msg);
-    if (ret < 0) {
-        // dropping message
-        return;
-    } else if (ret > 0) { /* if >0 !Need  print how many lines was dopped */
-        // store info how many was dropped
-        InsertDropInfo(*msg, ret);
+    bool dropped = false;
+    do {
+        int ret = FlowCtrlDomain(msg);
+        if (ret < 0) {
+            // dropping message
+            dropped = true;
+            break;
+        } else if (ret > 0) {
+            // >0 means a new statistic period start, "ret" is the number of dropping lines in last period
+            InsertDropInfo(msg, ret);
+        }
+        InsertLogToBuffer(msg);
+    } while (0);
+
+    // Log statistics
+    if (CountEnable) {
+        info = {
+            .level = msg.level,
+            .type = msg.type,
+            .len = (msg.len - sizeof(HilogMsg) - 1 - 1), // don't count '\0' of tag and content
+            .dropped = dropped ? 1 : 0,
+            .domain = msg.domain,
+            .pid = msg.pid,
+            .tv_sec = msg.tv_sec,
+            .tv_nsec = msg.tv_nsec,
+            .mono_sec = msg.mono_sec,
+            .tag = msg.tag
+        };
+        m_hilogBuffer.CountLog(info);
     }
-    InsertLogToBuffer(*msg);
 }
 
 size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
