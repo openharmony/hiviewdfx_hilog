@@ -15,6 +15,7 @@
 
 #ifndef LOG_TIME_STAMP_H
 #define LOG_TIME_STAMP_H
+#include <ctime>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -23,6 +24,7 @@ class LogTimeStamp {
 public:
     LogTimeStamp() = default;
     ~LogTimeStamp() = default;
+
 #ifdef __linux__
     explicit LogTimeStamp(clockid_t id)
     {
@@ -35,26 +37,31 @@ public:
     explicit LogTimeStamp(const timespec& time)
         : tv_sec(static_cast<uint32_t>(time.tv_sec)),
         tv_nsec(static_cast<uint32_t>(time.tv_nsec)) {}
+
     explicit LogTimeStamp(uint32_t sec, uint32_t nsec = 0)
         : tv_sec(sec), tv_nsec(nsec) {}
-    /* LogTimeStamp */
+
     bool operator == (const LogTimeStamp& time) const
     {
         return (tv_sec == time.tv_sec) && (tv_nsec == time.tv_nsec);
     }
+
     bool operator != (const LogTimeStamp& time) const
     {
         return !(*this == time);
     }
+
     bool operator < (const LogTimeStamp& time) const
     {
         return (tv_sec < time.tv_sec) ||
         ((tv_sec == time.tv_sec) && (tv_nsec < time.tv_nsec));
     }
+
     bool operator >= (const LogTimeStamp& time) const
     {
         return !(*this < time);
     }
+
     bool operator > (const LogTimeStamp& time) const
     {
         return (tv_sec > time.tv_sec) ||
@@ -64,10 +71,12 @@ public:
     {
         return !(*this > time);
     }
+
     LogTimeStamp operator -= (const LogTimeStamp& time)
     {
         if (*this <= time) {
-            return *this = LogTimeStamp(epoch);
+            tv_sec = tv_nsec = 0;
+            return *this;
         }
         if (this->tv_nsec < time.tv_nsec) {
             --this->tv_sec;
@@ -78,6 +87,7 @@ public:
         this->tv_sec -= time.tv_sec;
         return *this;
     }
+
     LogTimeStamp operator += (const LogTimeStamp& time)
     {
         this->tv_nsec += time.tv_nsec;
@@ -88,12 +98,18 @@ public:
         this->tv_sec += time.tv_sec;
         return *this;
     }
+
     void SetTimeStamp(uint32_t sec, uint32_t nsec)
     {
         this->tv_sec = sec;
         this->tv_nsec = nsec;
     }
-    static constexpr timespec epoch = {0, 0};
+
+    float FloatSecs()
+    {
+        return static_cast<float>(tv_sec) + static_cast<float>(tv_nsec) / NS_PER_SEC;
+    }
+
     uint32_t tv_sec = 0;
     uint32_t tv_nsec = 0;
 };

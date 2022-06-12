@@ -33,6 +33,7 @@ struct HilogData {
     uint16_t tag_len : 6; /* include '\0' */
     uint32_t tv_sec;
     uint32_t tv_nsec;
+    uint32_t mono_sec;
     uint32_t pid;
     uint32_t tid;
     uint32_t domain;
@@ -67,8 +68,8 @@ struct HilogData {
     HilogData() : len(0), tag(nullptr), content(nullptr) {}
     explicit HilogData(const HilogMsg& msg)
         : len(0), version(msg.version), type(msg.type), level(msg.level), tag_len(msg.tag_len),
-        tv_sec(msg.tv_sec), tv_nsec(msg.tv_nsec), pid(msg.pid), tid(msg.tid), domain(msg.domain),
-        tag(nullptr), content(nullptr)
+        tv_sec(msg.tv_sec), tv_nsec(msg.tv_nsec), mono_sec(msg.mono_sec), pid(msg.pid), tid(msg.tid),
+        domain(msg.domain), tag(nullptr), content(nullptr)
     {
         init(msg.tag, msg.tag_len, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
     }

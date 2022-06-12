@@ -53,6 +53,7 @@ uint32_t HexStr2Uint(const std::string& str);
 
 void PrintErrorno(int err);
 std::string GetProgName();
+std::string GetNameByPid(uint32_t pid);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif // LOG_UTILS_H

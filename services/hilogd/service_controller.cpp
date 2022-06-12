@@ -300,47 +300,274 @@ void ServiceController::HandleBufferSizeRequest(const PacketBuf& rawData)
     m_communicationSocket->Write(respondRaw.data(), respondMsgSize + sizeof(MessageHeader));
 }
 
+static void StatsEntry2StatsRsp(const StatsEntry &entry, StatsRsp &rsp)
+{
+    // can't use std::copy, because StatsRsp is a packet struct
+    int i = 0;
+    for (i = 0; i < LevelNum; i++) {
+        rsp.lines[i] = entry.lines[i];
+        rsp.len[i] = entry.len[i];
+    }
+    rsp.dropped = entry.dropped;
+    rsp.freqMax= entry.GetFreqMax();
+    rsp.freqMaxSec = entry.realTimeFreqMax.tv_sec;
+    rsp.freqMaxNsec = entry.realTimeFreqMax.tv_nsec;
+    rsp.throughputMax = entry.GetThroughputMax();
+    rsp.tpMaxSec = entry.realTimeThroughputMax.tv_sec;
+    rsp.tpMaxNsec = entry.realTimeThroughputMax.tv_nsec;
+}
+
+void ServiceController::SendOverallStats(const LogStats& stats)
+{
+    StatisticInfoQueryResponse rsp;
+    SetMsgHead(rsp.msgHeader, MC_RSP_STATISTIC_INFO_QUERY, sizeof(StatisticInfoQueryResponse) - sizeof(MessageHeader));
+    rsp.result =  RET_SUCCESS;
+    const LogTypeDomainTable& ldTable = stats.GetDomainTable();
+    const PidTable& pTable = stats.GetPidTable();
+    const LogTimeStamp tsBegin = stats.GetBeginTs();
+    rsp.tsBeginSec = tsBegin.tv_sec;
+    rsp.tsBeginNsec = tsBegin.tv_nsec;
+    const LogTimeStamp monoBegin = stats.GetBeginMono();
+    LogTimeStamp monoNow(CLOCK_MONOTONIC);
+    monoNow -= monoBegin;
+    rsp.durationSec = monoNow.tv_sec;
+    rsp.durationNsec = monoNow.tv_nsec;
+    rsp.typeNum = 0;
+    for (const DomainTable &dt : ldTable) {
+        if (dt.size() == 0) {
+            continue;
+        }
+        rsp.typeNum++;
+    }
+    rsp.ldStats = nullptr;
+    rsp.procNum = pTable.size();
+    rsp.pStats = nullptr;
+    m_communicationSocket->Write(reinterpret_cast<char *>(&rsp), sizeof(StatisticInfoQueryResponse));
+}
+
+void ServiceController::SendLogTypeDomainStats(const LogStats& stats)
+{
+    const LogTypeDomainTable& ldTable = stats.GetDomainTable();
+    int typeNum = 0;
+    for (const DomainTable &dt : ldTable) {
+        if (dt.size() == 0) {
+            continue;
+        }
+        typeNum++;
+    }
+    int msgSize = typeNum * sizeof(LogTypeDomainStatsRsp);
+    if (msgSize == 0) {
+        return;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        return;
+    }
+    LogTypeDomainStatsRsp *ldStats = reinterpret_cast<LogTypeDomainStatsRsp *>(tmp);
+    int i = 0;
+    int j = 0;
+    for (const DomainTable &dt : ldTable) {
+        j++;
+        if (dt.size() == 0) {
+            continue;
+        }
+        ldStats[i].type = (j - 1);
+        ldStats[i].domainNum = dt.size();
+        i++;
+    }
+    m_communicationSocket->Write(tmp, msgSize);
+    delete []tmp;
+    tmp = nullptr;
+}
+
+void ServiceController::SendDomainStats(const LogStats& stats)
+{
+    const LogTypeDomainTable& ldTable = stats.GetDomainTable();
+    for (const DomainTable &dt : ldTable) {
+        if (dt.size() == 0) {
+            continue;
+        }
+        int msgSize = dt.size() * sizeof(DomainStatsRsp);
+        char *tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            return;
+        }
+        DomainStatsRsp *dStats = reinterpret_cast<DomainStatsRsp *>(tmp);
+        int i = 0;
+        for (auto &it : dt) {
+            dStats[i].domain = it.first;
+            if (!stats.IsTagEnable()) {
+                dStats[i].tagNum = 0;
+            } else {
+                dStats[i].tagNum = it.second.tagStats.size();
+            }
+            if (dStats[i].tagNum == 0) {
+                dStats[i].tStats = nullptr;
+            }
+            StatsEntry2StatsRsp(it.second.stats, dStats[i].stats);
+            i++;
+        }
+        m_communicationSocket->Write(tmp, msgSize);
+        delete []tmp;
+        tmp = nullptr;
+    }
+}
+
+void ServiceController::SendDomainTagStats(const LogStats& stats)
+{
+    const LogTypeDomainTable& ldTable = stats.GetDomainTable();
+    for (const DomainTable &dt : ldTable) {
+        if (dt.size() == 0) {
+            continue;
+        }
+        for (auto &it : dt) {
+            SendTagStats(it.second.tagStats);
+        }
+    }
+}
+
+void ServiceController::SendProcStats(const LogStats& stats)
+{
+    const PidTable& pTable = stats.GetPidTable();
+    int msgSize =  pTable.size() * sizeof(ProcStatsRsp);
+    if (msgSize == 0) {
+        return;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        return;
+    }
+    ProcStatsRsp *pStats = reinterpret_cast<ProcStatsRsp *>(tmp);
+    int i = 0;
+    for (auto &it : pTable) {
+        ProcStatsRsp &procStats = pStats[i];
+        i++;
+        procStats.pid = it.first;
+        if (strncpy_s(procStats.name, MAX_PROC_NAME_LEN, it.second.name.c_str(), MAX_PROC_NAME_LEN) != 0) {
+            continue;
+        }
+        StatsEntry2StatsRsp(it.second.statsAll, procStats.stats);
+        procStats.typeNum = 0;
+        for (auto &itt : it.second.stats) {
+            if (itt.GetTotalLines() == 0) {
+                continue;
+            }
+            procStats.typeNum++;
+        }
+        if (!stats.IsTagEnable()) {
+            procStats.tagNum = 0;
+        } else {
+            procStats.tagNum = it.second.tagStats.size();
+        }
+        if (procStats.tagNum == 0) {
+            procStats.tStats = nullptr;
+        }
+    }
+    m_communicationSocket->Write(tmp, msgSize);
+    delete []tmp;
+    tmp = nullptr;
+}
+
+void ServiceController::SendProcLogTypeStats(const LogStats& stats)
+{
+    const PidTable& pTable = stats.GetPidTable();
+    for (auto &it : pTable) {
+        int typeNum = 0;
+        for (auto &itt : it.second.stats) {
+            if (itt.GetTotalLines() == 0) {
+                continue;
+            }
+            typeNum++;
+        }
+        int msgSize =  typeNum * sizeof(LogTypeStatsRsp);
+        if (msgSize == 0) {
+            return;
+        }
+        char* tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            return;
+        }
+        LogTypeStatsRsp *lStats = reinterpret_cast<LogTypeStatsRsp *>(tmp);
+        int i = 0;
+        int j = 0;
+        for (auto &itt : it.second.stats) {
+            j++;
+            if (itt.GetTotalLines() == 0) {
+                continue;
+            }
+            LogTypeStatsRsp &logTypeStats = lStats[i];
+            logTypeStats.type = (j - 1);
+            StatsEntry2StatsRsp(itt, logTypeStats.stats);
+            i++;
+        }
+        m_communicationSocket->Write(tmp, msgSize);
+        delete []tmp;
+        tmp = nullptr;
+    }
+}
+
+void ServiceController::SendProcTagStats(const LogStats& stats)
+{
+    const PidTable& pTable = stats.GetPidTable();
+    for (auto &it : pTable) {
+        SendTagStats(it.second.tagStats);
+    }
+}
+
+void ServiceController::SendTagStats(const TagTable &tagTable)
+{
+    int msgSize =  tagTable.size() * sizeof(TagStatsRsp);
+    if (msgSize == 0) {
+        return;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        return;
+    }
+    TagStatsRsp *tStats = reinterpret_cast<TagStatsRsp *>(tmp);
+    int i = 0;
+    for (auto &itt : tagTable) {
+        TagStatsRsp &tagStats = tStats[i];
+        if (strncpy_s(tagStats.tag, MAX_TAG_LEN, itt.first.c_str(), MAX_TAG_LEN) != 0) {
+            continue;
+        }
+        i++;
+        StatsEntry2StatsRsp(itt.second, tagStats.stats);
+    }
+    m_communicationSocket->Write(tmp, msgSize);
+    delete []tmp;
+    tmp = nullptr;
+}
+
 void ServiceController::HandleInfoQueryRequest(const PacketBuf& rawData)
 {
-    PacketBuf respondRaw = {0};
-    const StatisticInfoQueryRequest* request = reinterpret_cast<const StatisticInfoQueryRequest*>(rawData.data());
-    StatisticInfoQueryResponse* respond = reinterpret_cast<StatisticInfoQueryResponse*>(respondRaw.data());
+    LogStats& stats = m_hilogBuffer.GetStatsInfo();
+    std::unique_lock<std::mutex> lk(stats.GetLock());
 
-    if (request->domain == 0xffffffff) {
-        respond->logType = request->logType;
-        respond->domain = request->domain;
-        int32_t rst = m_hilogBuffer.GetStatisticInfoByLog(request->logType, respond->printLen,
-            respond->cacheLen, respond->dropped);
-        respond->result = (rst < 0) ? rst : RET_SUCCESS;
-    } else {
-        respond->logType = request->logType;
-        respond->domain = request->domain;
-        int32_t rst = m_hilogBuffer.GetStatisticInfoByDomain(request->domain, respond->printLen,
-            respond->cacheLen, respond->dropped);
-        respond->result = (rst < 0) ? rst : RET_SUCCESS;
+    SendOverallStats(stats);
+    if (!stats.IsEnable()) {
+        return;
     }
-    SetMsgHead(respond->msgHeader, MC_RSP_STATISTIC_INFO_QUERY, sizeof(*respond) - sizeof(MessageHeader));
-    m_communicationSocket->Write(respondRaw.data(), sizeof(*respond));
+    SendLogTypeDomainStats(stats);
+    SendDomainStats(stats);
+    if (stats.IsTagEnable()) {
+        SendDomainTagStats(stats);
+    }
+    SendProcStats(stats);
+    SendProcLogTypeStats(stats);
+    if (stats.IsTagEnable()) {
+        SendProcTagStats(stats);
+    }
 }
 
 void ServiceController::HandleInfoClearRequest(const PacketBuf& rawData)
 {
     PacketBuf respondRaw = {0};
-    const StatisticInfoClearRequest* request = reinterpret_cast<const StatisticInfoClearRequest*>(rawData.data());
-    StatisticInfoClearResponse* respond = reinterpret_cast<StatisticInfoClearResponse*>(respondRaw.data());
-    if (request->domain == 0xffffffff) {
-        respond->logType = request->logType;
-        respond->domain = request->domain;
-        int32_t rst = m_hilogBuffer.ClearStatisticInfoByLog(request->logType);
-        respond->result = (rst < 0) ? rst : RET_SUCCESS;
-    } else {
-        respond->logType = request->logType;
-        respond->domain = request->domain;
-        int32_t rst = m_hilogBuffer.ClearStatisticInfoByDomain(request->domain);
-        respond->result = (rst < 0) ? rst : RET_SUCCESS;
-    }
-    SetMsgHead(respond->msgHeader, MC_RSP_STATISTIC_INFO_CLEAR, sizeof(*respond) - sizeof(MessageHeader));
-    m_communicationSocket->Write(respondRaw.data(), sizeof(*respond));
+    StatisticInfoClearResponse& respond = *reinterpret_cast<StatisticInfoClearResponse*>(respondRaw.data());
+    m_hilogBuffer.ResetStats();
+    respond.result = RET_SUCCESS;
+    SetMsgHead(respond.msgHeader, MC_RSP_STATISTIC_INFO_CLEAR, sizeof(respond) - sizeof(MessageHeader));
+    m_communicationSocket->Write(respondRaw.data(), sizeof(respond));
 }
 
 void ServiceController::HandleBufferClearRequest(const PacketBuf& rawData)
@@ -498,15 +725,15 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData, std::atomic<
         stopLoop.store(true);
         return;
     }
-    
+
     bool isNotified = true;
-    
+
     for (;;) {
         bool isStopped = stopLoop.load();
         if (isStopped) {
             return;
         }
-        
+
         if (isNotified) {
             int ret = 0;
             std::optional<HilogData> data = m_hilogBuffer.Query(m_filters, m_bufReader);
@@ -553,6 +780,7 @@ int ServiceController::WriteLogQueryRespond(unsigned int sendId, uint32_t respon
         msg.domain = data.domain;
         msg.tv_sec = data.tv_sec;
         msg.tv_nsec = data.tv_nsec;
+        msg.mono_sec = data.mono_sec;
     }
 
     /* write into socket */

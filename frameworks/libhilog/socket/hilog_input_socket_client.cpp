@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-#include <ctime>
-
 #include "hilog_input_socket_client.h"
 
 namespace OHOS {
@@ -34,10 +32,6 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
         return ret;
     }
 
-    struct timespec ts = {0};
-    (void)clock_gettime(CLOCK_REALTIME, &ts);
-    header->tv_sec = static_cast<uint32_t>(ts.tv_sec);
-    header->tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
 

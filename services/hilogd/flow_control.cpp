@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "flow_control_init.h"
+#include "flow_control.h"
 
 #include <fstream>
 #include <iostream>
@@ -160,19 +160,16 @@ int32_t InitDomainFlowCtrl()
     return 0;
 }
 
-int FlowCtrlDomain(HilogMsg* hilogMsg)
+int FlowCtrlDomain(const HilogMsg& hilogMsg)
 {
-    if (hilogMsg == nullptr) {
-        return FLOW_CTL_DROPPED;
-    }
-    if (hilogMsg->type == LOG_APP || !IsDomainSwitchOn() || IsDebugOn()) {
+    if (hilogMsg.type == LOG_APP || !IsDomainSwitchOn() || IsDebugOn()) {
         return FLOW_CTL_NORAML;
     }
     LogTimeStamp tsNow(0, 0);
     std::unordered_map<uint32_t, DomainInfo*>::iterator it;
-    uint32_t domain = hilogMsg->domain;
+    uint32_t domain = hilogMsg.domain;
     uint32_t domainId = (domain & DOMAIN_FILTER) >> DOMAIN_FILTER_SUBSYSTEM;
-    auto logLen = hilogMsg->len - sizeof(HilogMsg) - 1 - 1; /* quota length exclude '\0' of tag and log content */
+    auto logLen = hilogMsg.len - sizeof(HilogMsg) - 1 - 1; /* quota length exclude '\0' of tag and log content */
     int ret = FLOW_CTL_NORAML;
     it = g_domainMap.find(domainId);
     if (it != g_domainMap.end()) {
@@ -183,7 +180,7 @@ int FlowCtrlDomain(HilogMsg* hilogMsg)
                 it->second->sumLen += logLen;
                 ret = FLOW_CTL_NORAML;
             } else { /* over quota */
-                IncreaseDropped(domainId, hilogMsg->type);
+                IncreaseDropped(domainId, hilogMsg.type);
                 it->second->dropped++;
                 ret = FLOW_CTL_DROPPED;
             }

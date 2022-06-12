@@ -25,6 +25,7 @@
 
 #include "log_data.h"
 #include "log_filter.h"
+#include "log_stats.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -49,12 +50,10 @@ public:
     void InitBuffHead();
     int64_t GetBuffLen(uint16_t logType);
     int32_t SetBuffLen(uint16_t logType, uint64_t buffSize);
-    int32_t GetStatisticInfoByLog(uint16_t logType, uint64_t& printLen, uint64_t& cacheLen, int32_t& dropped);
-    int32_t GetStatisticInfoByDomain(uint32_t domain, uint64_t& printLen, uint64_t& cacheLen, int32_t& dropped);
-    int32_t ClearStatisticInfoByLog(uint16_t logType);
-    int32_t ClearStatisticInfoByDomain(uint32_t domain);
 
-    static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData);
+    void CountLog(const StatsInfo &info);
+    void ResetStats();
+    LogStats& GetStatsInfo();
 
 private:
     struct BufferReader {
@@ -63,9 +62,6 @@ private:
         uint32_t skipped;
         std::function<void()> m_onNewDataCallback;
     };
-
-    void UpdateStatistics(const HilogData& logData);
-
     enum class DeleteReason {
         BUFF_OVERFLOW,
         CMD_CLEAR
@@ -75,20 +71,13 @@ private:
     void OnNewItem(LogMsgContainer& msgList);
     std::shared_ptr<BufferReader> GetReader(const ReaderId& id);
 
-    size_t size;
     size_t sizeByType[LOG_TYPE_MAX];
     LogMsgContainer hilogDataList;
     LogMsgContainer hilogKlogList;
     std::shared_mutex hilogBufferMutex;
-    std::map<uint32_t, uint64_t> cacheLenByDomain;
-    std::map<uint32_t, uint64_t> printLenByDomain;
-    std::map<uint32_t, uint64_t> droppedByDomain;
-    uint64_t cacheLenByType[LOG_TYPE_MAX];
-    uint64_t droppedByType[LOG_TYPE_MAX];
-    uint64_t printLenByType[LOG_TYPE_MAX];
-
     std::map<ReaderId, std::shared_ptr<BufferReader>> m_logReaders;
     std::shared_mutex m_logReaderMtx;
+    LogStats stats;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

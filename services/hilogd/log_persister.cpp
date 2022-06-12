@@ -288,6 +288,7 @@ std::list<std::string> LogDataToFormatedStrings(const HilogData& logData)
     showBuffer.domain = logData.domain;
     showBuffer.tv_sec = logData.tv_sec;
     showBuffer.tv_nsec = logData.tv_nsec;
+    showBuffer.mono_sec = logData.mono_sec;
 
     std::vector<char> dataCopy(logData.len, 0);
     if (dataCopy.data() == nullptr) {
