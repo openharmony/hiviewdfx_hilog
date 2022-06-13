@@ -294,7 +294,7 @@ static void PrintStats(const StatsRsp &rsp)
     cout << setw(FREQ_W) << setprecision(FLOAT_PRECSION) << rsp.freqMax << colCmd;
     cout << setw(TIME_W) << TimeStr(rsp.freqMaxSec, rsp.freqMaxNsec) << colCmd;
     cout << setw(TP_W) << setprecision(FLOAT_PRECSION) << rsp.throughputMax << colCmd;
-    cout << setw(TIME_W) << TimeStr(rsp.tpMaxSec, rsp.tpMaxSec) << colCmd;
+    cout << setw(TIME_W) << TimeStr(rsp.tpMaxSec, rsp.tpMaxNsec) << colCmd;
     cout << setw(LINES_W) << GetTotalLines(rsp) << colCmd;
     cout << setw(LENGTH_W) << Size2Str(GetTotalLen(rsp)) << colCmd;
     cout << setw(DROPPED_W) << rsp.dropped << colCmd;
