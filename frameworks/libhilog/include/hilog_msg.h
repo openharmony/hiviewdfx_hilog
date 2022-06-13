@@ -27,7 +27,7 @@
 constexpr int LevelBase = static_cast<int>(LOG_DEBUG);
 constexpr int LevelNum = static_cast<int>(LOG_LEVEL_MAX) - LevelBase;
 
-#define MAX_PROC_NAME_LEN (127)
+#define MAX_PROC_NAME_LEN (32)
 #define FILE_PATH_MAX_LEN 100
 #define JOB_ID_ALL 0xffffffff
 
