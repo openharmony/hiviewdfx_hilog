@@ -81,7 +81,6 @@ private:
     int WriteLogData(const HilogData& logData);
     bool WriteUncompressedLogs(std::list<std::string>& formatedTextLogs);
     void WriteCompressedLogs();
-    void ForceFlushBuffer();
 
     int PrepareUncompressedFile(const std::string& parentPath, bool restore);
 
