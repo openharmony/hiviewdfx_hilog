@@ -391,18 +391,6 @@ inline void LogPersister::WriteCompressedLogs()
     m_mappedPlainLogFile->offset = 0;
 }
 
-void LogPersister::ForceFlushBuffer()
-{
-    // Try to compress auxiliary file
-    auto compressionResult = m_compressor->Compress(*m_mappedPlainLogFile, *m_compressBuffer);
-    if (compressionResult != 0) {
-        std::cerr <<  __PRETTY_FUNCTION__ << " Compression error. Result:" << compressionResult << "\n";
-        return;
-    }
-    // Write compressed buffor and clear counters
-    WriteCompressedLogs();
-}
-
 void LogPersister::Start()
 {
     {
@@ -439,6 +427,8 @@ int LogPersister::ReceiveLogLoop()
             m_receiveLogCv.wait_for(lk, m_baseData.newLogTimeout);
         }
     }
+    // try to compress the remaining log in cache
+    (void)m_compressor->Compress(*m_mappedPlainLogFile, *m_compressBuffer);
     WriteCompressedLogs();
     m_fileRotator->FinishInput();
     return 0;
@@ -489,8 +479,6 @@ void LogPersister::Stop()
         std::cout << __PRETTY_FUNCTION__ << " Thread was exited or not started!\n";
         return;
     }
-
-    ForceFlushBuffer();
 
     m_stopThread = true;
     m_receiveLogCv.notify_all();
