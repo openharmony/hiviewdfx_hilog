@@ -76,10 +76,7 @@ ohos_source_set("libhilog_source") {
 
   deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
 
-  external_deps = [
-    "init:libbegetutil",
-    "startup_l2:syspara",
-  ]
+  external_deps = [ "init:libbegetutil" ]
 
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
