@@ -106,7 +106,7 @@ int32_t ControlCmdResult(const char* message)
         case MC_RSP_LOG_CLEAR: {
             LogClearResponse* pLogClearRsp = (LogClearResponse*)message;
             if (!pLogClearRsp) {
-                RET_FAIL;
+                return RET_FAIL;
             }
             LogClearResult* pLogClearRst = (LogClearResult*)&pLogClearRsp->logClearRst;
             while (pLogClearRst && resultLen < msgLen) {
