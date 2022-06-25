@@ -54,10 +54,13 @@ static int ReceiveProcTagStats(SeqPacketSocketClient& controller, StatisticInfoQ
         }
         if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
             delete []tmp;
+            tmp = nullptr;
             return RET_FAIL;
         }
         if (controller.RecvMsg(tmp, msgSize) != msgSize) {
             pStats.tStats = nullptr;
+            delete []tmp;
+            tmp = nullptr;
             return RET_FAIL;
         }
         pStats.tStats = reinterpret_cast<TagStatsRsp*>(tmp);
@@ -81,10 +84,13 @@ static int ReceiveProcLogTypeStats(SeqPacketSocketClient& controller, StatisticI
         }
         if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
             delete []tmp;
+            tmp = nullptr;
             return RET_FAIL;
         }
         if (controller.RecvMsg(tmp, msgSize) != msgSize) {
             pStats.lStats = nullptr;
+            delete []tmp;
+            tmp = nullptr;
             return RET_FAIL;
         }
         pStats.lStats = reinterpret_cast<LogTypeStatsRsp*>(tmp);
@@ -108,10 +114,13 @@ static int ReceiveProcStats(SeqPacketSocketClient& controller, StatisticInfoQuer
     }
     if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
         delete []tmp;
+        tmp = nullptr;
         return RET_FAIL;
     }
     if (controller.RecvMsg(tmp, msgSize) != msgSize) {
         rsp.pStats = nullptr;
+        delete []tmp;
+        tmp = nullptr;
         return RET_FAIL;
     }
     rsp.pStats = reinterpret_cast<ProcStatsRsp*>(tmp);
@@ -138,10 +147,13 @@ static int ReceiveDomainTagStats(SeqPacketSocketClient& controller, StatisticInf
             }
             if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
                 delete []tmp;
+                tmp = nullptr;
                 return RET_FAIL;
             }
             if (controller.RecvMsg(tmp, msgSize) != msgSize) {
                 dStats.tStats = nullptr;
+                delete []tmp;
+                tmp = nullptr;
                 return RET_FAIL;
             }
             dStats.tStats = reinterpret_cast<TagStatsRsp*>(tmp);
@@ -166,10 +178,13 @@ static int ReceiveDomainStats(SeqPacketSocketClient& controller, StatisticInfoQu
         }
         if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
             delete []tmp;
+            tmp = nullptr;
             return RET_FAIL;
         }
         if (controller.RecvMsg(tmp, msgSize) != msgSize) {
             ldStats.dStats = nullptr;
+            delete []tmp;
+            tmp = nullptr;
             return RET_FAIL;
         }
         ldStats.dStats = reinterpret_cast<DomainStatsRsp*>(tmp);
@@ -193,10 +208,13 @@ static int ReceiveLogTypeDomainStats(SeqPacketSocketClient& controller, Statisti
     }
     if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
         delete []tmp;
+        tmp = nullptr;
         return RET_FAIL;
     }
     if (controller.RecvMsg(tmp, msgSize) != msgSize) {
         rsp.ldStats = nullptr;
+        delete []tmp;
+        tmp = nullptr;
         return RET_FAIL;
     }
     rsp.ldStats = reinterpret_cast<LogTypeDomainStatsRsp*>(tmp);
