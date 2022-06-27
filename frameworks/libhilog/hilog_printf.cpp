@@ -206,7 +206,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 
     /* flow control */
     if (IsProcessSwitchOn()) {
-        ret = HiLogFlowCtrlProcess(tagLen + logLen, ts_mono, debug);
+        ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono, debug);
         if (ret < 0) {
             return ret;
         } else if (ret > 0) {
