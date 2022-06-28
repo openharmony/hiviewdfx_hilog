@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 framework_root = "//base/hiviewdfx/hilog/frameworks"
@@ -36,50 +37,73 @@ config("libhilog_config") {
   ]
 }
 
-ohos_source_set("libhilog_source") {
-  param_sources = [ "$param_root/properties.cpp" ]
+template("libhilog_source") {
+  forward_variables_from(invoker, "*")
+  ohos_source_set(target_name) {
+    if (platform != "windows" && platform != "mac") {
+      param_sources = [ "$param_root/properties.cpp" ]
 
-  socket_sources = [
-    "$socket_root/dgram_socket_client.cpp",
-    "$socket_root/dgram_socket_server.cpp",
-    "$socket_root/hilog_input_socket_client.cpp",
-    "$socket_root/hilog_input_socket_server.cpp",
-    "$socket_root/seq_packet_socket_client.cpp",
-    "$socket_root/seq_packet_socket_server.cpp",
-    "$socket_root/socket.cpp",
-    "$socket_root/socket_client.cpp",
-    "$socket_root/socket_server.cpp",
-  ]
+      socket_sources = [
+        "$socket_root/dgram_socket_client.cpp",
+        "$socket_root/dgram_socket_server.cpp",
+        "$socket_root/hilog_input_socket_client.cpp",
+        "$socket_root/hilog_input_socket_server.cpp",
+        "$socket_root/seq_packet_socket_client.cpp",
+        "$socket_root/seq_packet_socket_server.cpp",
+        "$socket_root/socket.cpp",
+        "$socket_root/socket_client.cpp",
+        "$socket_root/socket_server.cpp",
+      ]
+    }
 
-  utils_sources = [
-    "$utils_root/format.cpp",
-    "$utils_root/log_utils.cpp",
-  ]
+    utils_sources = [
+      "$utils_root/format.cpp",
+      "$utils_root/log_utils.cpp",
+    ]
 
-  vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.cpp" ]
+    vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.cpp" ]
 
-  sources = [
-    "hilog.cpp",
-    "hilog_printf.cpp",
-  ]
-  sources += param_sources
-  sources += socket_sources
-  sources += utils_sources
-  sources += vsnprintf_sources
+    sources = [
+      "hilog.cpp",
+      "hilog_printf.cpp",
+    ]
+    if (platform != "windows" && platform != "mac") {
+      sources += param_sources
+      sources += socket_sources
+    }
+    sources += utils_sources
+    sources += vsnprintf_sources
 
-  defines = [ "__RECV_MSG_WITH_UCRED_" ]
-  if (use_musl) {
-    defines += [ "HILOG_USE_MUSL" ]
+    defines = []
+    if (platform == "windows") {
+      cflags_cc = [ "-std=c++17" ]
+      defines += [ "__WINDOWS__" ]
+    } else if (platform == "mac") {
+      defines += [ "__MAC__" ]
+    } else {
+      defines = [ "__RECV_MSG_WITH_UCRED_" ]
+      if (use_musl) {
+        defines += [ "HILOG_USE_MUSL" ]
+      }
+    }
+    public_configs = [ ":libhilog_config" ]
+    configs = [ ":libhilog_config" ]
+
+    deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
+
+    if (platform != "windows" && platform != "mac") {
+      external_deps = [ "init:libbegetutil" ]
+    }
+
+    part_name = "hilog_native"
+    subsystem_name = "hiviewdfx"
   }
-  public_configs = [ ":libhilog_config" ]
-  configs = [ ":libhilog_config" ]
+}
 
-  deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
-
-  external_deps = [ "init:libbegetutil" ]
-
-  part_name = "hilog_native"
-  subsystem_name = "hiviewdfx"
+foreach(item, platforms) {
+  libhilog_source("libhilog_source_" + item) {
+    platform = item
+  }
 }
 
 config("libhilog_base_config") {
