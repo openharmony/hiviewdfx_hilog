@@ -66,9 +66,15 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
         timeLen += ((ret > 0) ? ret : 0);
     } else {
         struct tm tmLocal;
+#if (defined( __WINDOWS__ ))
+        if (localtime_s(&tmLocal, &now) != 0) {
+            return 0;
+        }
+#else
         if (localtime_r(&now, &tmLocal) == nullptr) {
             return 0;
         }
+#endif
         timeLen = strftime(buffer, bufLen, "%m-%d %H:%M:%S", &tmLocal);
         timeLen = strlen(buffer);
         if (showFormat & (1 << YEAR_SHOWFORMAT)) {

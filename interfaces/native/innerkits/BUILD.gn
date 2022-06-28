@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 config("libhilog_pub_config") {
@@ -18,19 +19,40 @@ config("libhilog_pub_config") {
   include_dirs = [ "include" ]
 }
 
-ohos_shared_library("libhilog") {
-  public_configs = [ ":libhilog_pub_config" ]
+template("libhilog") {
+  forward_variables_from(invoker, "*")
+  ohos_shared_library(target_name) {
+    public_configs = [ ":libhilog_pub_config" ]
 
-  deps = [ "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_source" ]
+    deps = [
+      "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_source_$platform",
+    ]
 
-  output_extension = "so"
-  install_enable = true
-  install_images = [
-    "system",
-    "updater",
-  ]
-  part_name = "hilog_native"
-  subsystem_name = "hiviewdfx"
+    if (platform == "ohos") {
+      output_extension = "so"
+    }
+
+    install_enable = true
+    install_images = [
+      "system",
+      "updater",
+    ]
+    part_name = "hilog_native"
+    subsystem_name = "hiviewdfx"
+  }
+}
+
+foreach(item, platforms) {
+  if (item == "ohos") {
+    libhilog("libhilog") {
+      platform = item
+    }
+  }
+  if (item == "windows" || item == "mac") {
+    libhilog("libhilog_" + item) {
+      platform = item
+    }
+  }
 }
 
 config("libhilog_base_pub_cfg") {

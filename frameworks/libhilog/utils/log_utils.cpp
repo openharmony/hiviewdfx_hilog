@@ -415,10 +415,15 @@ void PrintErrorno(int err)
 {
     constexpr int bufSize = 256;
     char buf[bufSize] = { 0 };
+#ifndef __WINDOWS__
     strerror_r(err, buf, bufSize);
+#else
+    strerror_s(buf, bufSize, err);
+#endif
     std::cerr << "Errno: " << err << ", " << buf << std::endl;
 }
 
+#ifndef __WINDOWS__
 string GetProgName()
 {
 #ifdef HILOG_USE_MUSL
@@ -427,6 +432,7 @@ string GetProgName()
     return getprogname();
 #endif
 }
+#endif
 
 static const int CMDLINE_PATH_LEN = 32;
 string GetNameByPid(uint32_t pid)
