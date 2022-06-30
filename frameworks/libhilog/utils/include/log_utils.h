@@ -52,7 +52,9 @@ std::string Uint2HexStr(uint32_t i);
 uint32_t HexStr2Uint(const std::string& str);
 
 void PrintErrorno(int err);
+#ifndef __WINDOWS__
 std::string GetProgName();
+#endif
 std::string GetNameByPid(uint32_t pid);
 } // namespace HiviewDFX
 } // namespace OHOS
