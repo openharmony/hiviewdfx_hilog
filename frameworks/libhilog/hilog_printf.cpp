@@ -12,9 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "properties.h"
-
 #include <cerrno>
 #include <cstdarg>
 #include <cstdio>
@@ -24,7 +21,11 @@
 #include <mutex>
 
 #include <securec.h>
+#ifndef __WINDOWS__
 #include <sys/syscall.h>
+#else
+#include <windows.h>
+#endif
 #include <unistd.h>
 
 #include "log_timestamp.h"
@@ -32,15 +33,20 @@
 #include "hilog_inner.h"
 #include "hilog/log.h"
 #include "hilog_common.h"
-#include "hilog_input_socket_client.h"
 #include "vsnprintf_s_p.h"
 #include "log_utils.h"
+
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
+#include "properties.h"
+#include "hilog_input_socket_client.h"
+#else
+#include "format.h"
+#endif
 
 using namespace std;
 using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
 static atomic_int g_hiLogGetIdCallCount = 0;
-static const char P_LIMIT_TAG[] = "LOGLIMIT";
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
 
@@ -77,6 +83,7 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 {
     // Priority: TagLevel > DomainLevel > GlobalLevel
     // LOG_LEVEL_MIN is default Level
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
     uint16_t tagLevel = GetTagLevel(tag);
     if (tagLevel != LOG_LEVEL_MIN) {
         return tagLevel;
@@ -86,8 +93,12 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
         return domainLevel;
     }
     return GetGlobalLevel();
+#else
+    return LOG_LEVEL_MIN;
+#endif
 }
 
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
 static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
 {
     static uint32_t processQuota = 0;
@@ -119,6 +130,45 @@ static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
     }
     return 0;
 }
+#else
+static int PrintLog(HilogMsg& header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
+{
+    constexpr int len = MAX_LOG_LEN + MAX_LOG_LEN;
+    char buffer[len] = { 0 };
+    HilogShowFormatBuffer showBuffer;
+    showBuffer.type = header.type;
+    showBuffer.level = header.level;
+    showBuffer.pid = header.pid;
+    showBuffer.tid = header.tid;
+    showBuffer.domain = header.domain;
+    showBuffer.tag_len = tagLen;
+    showBuffer.tv_sec = header.tv_sec;
+    showBuffer.tv_nsec = header.tv_nsec;
+    showBuffer.mono_sec = header.mono_sec;
+    showBuffer.length = tagLen + fmtLen;
+    char* tmp = new (std::nothrow) char[showBuffer.length];
+    if (unlikely(tmp == nullptr)) {
+        return RET_FAIL;
+    }
+    char *content = tmp + tagLen;
+    if (strncpy_s(tmp, tagLen, tag, tagLen - 1) != 0) {
+        delete []tmp;
+        tmp = nullptr;
+        return RET_FAIL;
+    }
+    if (strncpy_s(content, fmtLen, fmt, fmtLen - 1) != 0) {
+        delete []tmp;
+        tmp = nullptr;
+        return RET_FAIL;
+    }
+    showBuffer.data = tmp;
+    HilogShowBuffer(buffer, len, showBuffer, 0);
+    std::cout << buffer << std::endl;
+    delete []tmp;
+    tmp = nullptr;
+    return RET_SUCCESS;
+}
+#endif
 
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
@@ -168,8 +218,12 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     }
 
     /* format log string */
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
     bool debug = IsDebugOn();
     bool priv = (!debug) && IsPrivateSwitchOn();
+#else
+    bool priv = true;
+#endif
 
 #ifdef __clang__
 /* code specific to clang compiler */
@@ -193,9 +247,17 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     header.type = type;
     header.level = level;
 #ifndef __RECV_MSG_WITH_UCRED_
+#ifndef __WINDOWS__
     header.pid = getpid();
+#else
+    header.pid = static_cast<uint32_t>(GetCurrentProcessId());
 #endif
+#endif
+#ifndef __WINDOWS__
     header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
+#else
+    header.tid = static_cast<uint32_t>(GetCurrentThreadId());
+#endif
     header.domain = domain;
 
     if (level == LOG_FATAL) {
@@ -204,12 +266,14 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         (void)memcpy_s(g_hiLogLastFatalMessage, sizeof(g_hiLogLastFatalMessage), buf, sizeof(buf));
     }
 
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
     /* flow control */
     if (IsProcessSwitchOn()) {
         ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono, debug);
         if (ret < 0) {
             return ret;
         } else if (ret > 0) {
+            static const char P_LIMIT_TAG[] = "LOGLIMIT";
             uint16_t level = header.level;
             header.level = LOG_WARN;
             char dropLogBuf[MAX_LOG_LEN] = {0};
@@ -221,8 +285,10 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
             header.level = level;
         }
     }
-
     return HilogWriteLogMessage(&header, tag, tagLen + 1, buf, logLen + 1);
+#else
+    return PrintLog(header, tag, tagLen + 1, buf, logLen + 1);
+#endif
 }
 
 int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
