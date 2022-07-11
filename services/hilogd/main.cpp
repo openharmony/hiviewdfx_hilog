@@ -44,7 +44,7 @@ namespace HiviewDFX {
 using namespace std;
 using namespace std::chrono;
 
-constexpr int HILOG_FILE_MASK = 0026;
+constexpr int HILOG_FILE_MASK = 0022;
 constexpr int WAITING_DATA_MS = 5000;
 
 #ifdef DEBUG
