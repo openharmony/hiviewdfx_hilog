@@ -23,6 +23,7 @@
 #include <vector>
 #include <sstream>
 #include <regex>
+#include <list>
 
 #include <hilog/log.h>
 #include <hilog_common.h>
@@ -42,11 +43,10 @@ constexpr int DEFAULT_LOG_LEVEL = (1 << LOG_DEBUG) | (1 << LOG_INFO)
     | (1 << LOG_WARN) | (1 << LOG_ERROR) | (1 << LOG_FATAL);
 constexpr int PARAMS_COUNT_TWO = 2;
 constexpr int DECIMAL = 10;
-static void Helper()
+
+static void QueryHelper()
 {
-    cout << "Usage:" << endl
-    << "-h --help" << endl
-    << "  Show this message." << endl
+    cout
     << "Querying logs options:" << endl
     << "  No option performs a blocking read and keeps printing." << endl
     << "  -x --exit" << endl
@@ -98,13 +98,23 @@ static void Helper()
     << "      year       display the year when -v time is specified." << endl
     << "      zone       display the time zone when -v time is specified." << endl
     << "    Different types of formats can be combined, such as:" << endl
-    << "    -v color -v time -v msec -v year -v zone." << endl
+    << "    -v color -v time -v msec -v year -v zone." << endl;
+}
+
+static void ClearHelper()
+{
+    cout
     << "-r" << endl
     << "  Remove all logs in hilogd buffer, advanced option:" << endl
     << "  -t <type>, --type=<type>" << endl
     << "    Remove specific type/types logs in buffer with format: type1,type2,type3" << endl
     << "    Type coule be: app/core/init/kmsg." << endl
-    << "    Default types are: app,core" << endl
+    << "    Default types are: app,core" << endl;
+}
+
+static void BufferHelper()
+{
+    cout
     << "-g" << endl
     << "  Query hilogd buffer size, advanced option:" << endl
     << "  -t <type>, --type=<type>" << endl
@@ -120,10 +130,23 @@ static void Helper()
     << "    Set specific type/types log buffer size with format: type1,type2,type3" << endl
     << "    Type coule be: app/core/init/kmsg." << endl
     << "    Default types are: app,core" << endl
+    << "  **It's a persistant configuration**" << endl;
+}
+
+static void StatisticHelper()
+{
+    cout
     << "-s, --statistics" << endl
     << "  Query log statistic information." << endl
+    << "  Set param persist.sys.hilog.stats true to enable statistic." << endl
+    << "  Set param persist.sys.hilog.stats.tag true to enable statistic of log tag." << endl
     << "-S" << endl
-    << "  Clear hilogd statistic information." << endl
+    << "  Clear hilogd statistic information." << endl;
+}
+
+static void PersistTaskHelper()
+{
+    cout
     << "-w <control>,--write=<control>" << endl
     << "  Log persistance task control, options are:" << endl
     << "    query      query tasks informations" << endl
@@ -149,16 +172,40 @@ static void Helper()
     << "    Start/stop specific task of <jobid>." << endl
     << "    <jobid> range: [10, 0x7FFFFFFF)." << endl
     << "  User can use options (t/L/D/T/P/e/v) as if using them when \"Querying logs\" too." << endl
+    << "  **It's a persistant configuration**" << endl;
+}
+
+static void PrivateHelper()
+{
+    cout
     << "-p <on/off>, --privacy <on/off>" << endl
     << "  Set HILOG api privacy formatter feature on or off." << endl
+    << "  **It's a temporary configuration, will be lost after reboot**" << endl;
+}
+
+static void KmsgHelper()
+{
+    cout
     << "-k <on/off>, --kmsg <on/off>" << endl
     << "  Set hilogd storing kmsg log feature on or off" << endl
+    << "  **It's a persistant configuration**" << endl;
+}
+
+static void FlowControlHelper()
+{
+    cout
     << "-Q <control-type>" << endl
     << "  Set log flow-control feature on or off, options are:" << endl
     << "    pidon     process flow control on" << endl
     << "    pidoff    process flow control off" << endl
     << "    domainon  domain flow control on" << endl
     << "    domainoff domain flow control off" << endl
+    << "  **It's a temporary configuration, will be lost after reboot**" << endl;
+}
+
+static void BaseLevelHelper()
+{
+    cout
     << "-b <loglevel>, --baselevel=<loglevel>" << endl
     << "  Set global loggable level to <loglevel>" << endl
     << "  Long and short level string are both accepted." << endl
@@ -172,8 +219,14 @@ static void Helper()
     << "  -T <tag>, --tag=<tag>" << endl
     << "    Set specific tag loggable level." << endl
     << "    The priority is: tag level > domain level > global level." << endl
-    << "The first layer of above options can't be used in combination, ILLEGAL expamples:" << endl
-    << "  hilog -S -s; hilog -w start -r; hilog -p on -k on -b D" << endl
+    << "  The first layer of above options can't be used in combination, ILLEGAL expamples:" << endl
+    << "    hilog -S -s; hilog -w start -r; hilog -p on -k on -b D" << endl
+    << "  **It's a temporary configuration, will be lost after reboot**" << endl;
+}
+
+static void DomainHelper()
+{
+    cout
     << endl << endl
     << "Domain description:" << endl
     << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is (0xD000000,"
@@ -185,6 +238,35 @@ static void Helper()
     << endl
     << "  Exapmle: hilog -D 0xD0xxxxx" << endl
     << "  The xxxxx is the domain string printed in logs." << endl;
+}
+
+using HelperFunc = std::function<void()>;
+static const std::list<pair<string, HelperFunc>> g_HelperList = {
+    {"query", QueryHelper},
+    {"clear", ClearHelper},
+    {"buffer", BufferHelper},
+    {"stats", StatisticHelper},
+    {"persist", PersistTaskHelper},
+    {"private", PrivateHelper},
+    {"kmsg", KmsgHelper},
+    {"flowcontrol", FlowControlHelper},
+    {"baselevel", BaseLevelHelper},
+    {"domain", DomainHelper},
+};
+
+static void Helper(const string& arg)
+{
+    cout << "arg is :" << arg << endl;
+    cout << "Usage:" << endl
+    << "-h --help" << endl
+    << "  Show all help information." << endl
+    << "  Show single help information with option: "
+    << "query/clear/buffer/stats/persist/private/kmsg/flowcontrol/baselevel/domain" << endl;
+    for (auto &it : g_HelperList) {
+        if (arg == "" || arg == it.first) {
+            it.second();
+        }
+    }
 }
 
 static uint16_t GetTypes(HilogArgs context, const string& typesArgs, bool exclude = false)
@@ -390,9 +472,13 @@ int HilogEntry(int argc, char* argv[])
     for (int argsCount = 0; argsCount < argc; argsCount++) {
         args.push_back(argv[argsCount]);
     }
-    if (argc == PARAMS_COUNT_TWO && !args[1].compare("--help")) {
-        Helper();
-        exit(0);
+    if (!args[1].compare("--help") || !args[1].compare("-h")) {
+        string arg = "";
+        if (argc > PARAMS_COUNT_TWO) {
+            arg = args[PARAMS_COUNT_TWO];
+        }
+        Helper(arg);
+        return 0;
     }
 
     while (1) {
@@ -432,7 +518,7 @@ int HilogEntry(int argc, char* argv[])
                 context.noBlockMode = 1;
                 break;
             case 'h':
-                Helper();
+                Helper("");
                 exit(0);
             case 'e':
                 context.regexArgs = optarg;
