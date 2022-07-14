@@ -41,7 +41,6 @@ const regex DELIMITER(DEFAULT_SPLIT_DELIMIT);
 constexpr int DEFAULT_LOG_TYPE = (1 << LOG_APP) | (1 << LOG_INIT) | (1 << LOG_CORE);
 constexpr int DEFAULT_LOG_LEVEL = (1 << LOG_DEBUG) | (1 << LOG_INFO)
     | (1 << LOG_WARN) | (1 << LOG_ERROR) | (1 << LOG_FATAL);
-constexpr int PARAMS_COUNT_TWO = 2;
 constexpr int DECIMAL = 10;
 
 static void QueryHelper()
@@ -474,8 +473,9 @@ int HilogEntry(int argc, char* argv[])
     }
     if (!args[1].compare("--help") || !args[1].compare("-h")) {
         string arg = "";
-        if (argc > PARAMS_COUNT_TWO) {
-            arg = args[PARAMS_COUNT_TWO];
+        int paramCountTwo = 2;
+        if (argc > paramCountTwo) {
+            arg = args[paramCountTwo];
         }
         Helper(arg);
         return 0;
