@@ -87,22 +87,16 @@ int HilogShowTimeBuffer(char* buffer, int bufLen, uint32_t showFormat,
         }
     }
     if (showFormat & (1 << TIME_NSEC_SHOWFORMAT)) {
-        if ((bufLen - timeLen - 1) > 0) {
-            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                ".%09lu", nsecTime);
-        }
+        ret = ((bufLen - timeLen - 1) > 0) ? snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+            ".%09lu", nsecTime) : 0;
         timeLen += ((ret > 0) ? ret : 0);
     } else if (showFormat & (1 << TIME_USEC_SHOWFORMAT)) {
-        if ((bufLen - timeLen - 1) > 0) {
-            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                ".%06llu", nsecTime / NS2US);
-        }
+        ret = ((bufLen - timeLen - 1) > 0) ? snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+            ".%06llu", nsecTime / NS2US) : 0;
         timeLen += ((ret > 0) ? ret : 0);
     } else {
-        if ((bufLen - timeLen - 1) > 0) {
-            ret = snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
-                ".%03llu", nsecTime / NS2MS);
-        }
+        ret = ((bufLen - timeLen - 1) > 0) ? snprintf_s(buffer + timeLen, bufLen - timeLen, bufLen - timeLen - 1,
+            ".%03llu", nsecTime / NS2MS) : 0;
         timeLen += ((ret > 0) ? ret : 0);
     }
     return timeLen;

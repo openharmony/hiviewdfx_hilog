@@ -416,9 +416,9 @@ void PrintErrorno(int err)
     constexpr int bufSize = 256;
     char buf[bufSize] = { 0 };
 #ifndef __WINDOWS__
-    strerror_r(err, buf, bufSize);
+    (void)strerror_r(err, buf, bufSize);
 #else
-    strerror_s(buf, bufSize, err);
+    (void)strerror_s(buf, bufSize, err);
 #endif
     std::cerr << "Errno: " << err << ", " << buf << std::endl;
 }
