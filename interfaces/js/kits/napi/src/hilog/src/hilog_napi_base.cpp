@@ -30,8 +30,8 @@ extern "C" {
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-#define DEFAULT_LOG_TYPE LOG_CORE
-const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "Hilog_JS" };
+#define DEFAULT_LOG_TYPE LOG_APP
+const HiLogLabel LABEL = { LOG_APP, 0xD002D00, "Hilog_JS" };
 static constexpr int MIN_NUMBER = 3;
 static constexpr int MAX_NUMBER = 100;
 static constexpr int PUBLIC_LEN = 6;
