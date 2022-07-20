@@ -253,10 +253,14 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     header.pid = static_cast<uint32_t>(GetCurrentProcessId());
 #endif
 #endif
-#ifndef __WINDOWS__
-    header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
-#else
+#ifdef __WINDOWS__
     header.tid = static_cast<uint32_t>(GetCurrentThreadId());
+#elif defined(__MAC__)
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+    header.tid = static_cast<uint32_t>(tid);
+#else
+    header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
 #endif
     header.domain = domain;
 
