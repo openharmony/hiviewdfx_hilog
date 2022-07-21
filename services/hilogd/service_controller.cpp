@@ -754,7 +754,6 @@ void ServiceController::HandleNextRequest(const PacketBuf& rawData, std::atomic<
         isNotified = (m_notifyNewDataCv.wait_for(ul, 1000ms) == std::cv_status::no_timeout);
     }
     std::cerr << "Client disconnect" << std::endl;
-    PrintErrorno(errno);
     stopLoop.store(true);
 }
 
