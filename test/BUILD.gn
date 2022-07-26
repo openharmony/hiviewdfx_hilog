@@ -34,6 +34,7 @@ ohos_moduletest("HiLogNDKTest") {
   external_deps = [
     "hilog_native:libhilog",
     "hilog_native:libhilog_base",
+    "init:libbegetutil",
   ]
 
   include_dirs = [
