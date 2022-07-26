@@ -37,8 +37,9 @@ static constexpr int MAX_NUMBER = 100;
 static constexpr int PUBLIC_LEN = 6;
 static constexpr int PRIVATE_LEN = 7;
 static constexpr int PROPERTY_POS = 2;
+static const string PRIV_STR = "<private>";
 
-void ParseLogContent(string& formatStr, vector<string>& params, string& logContent)
+void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logContent)
 {
     string& ret = logContent;
     if (params.empty()) {
@@ -53,49 +54,58 @@ void ParseLogContent(string& formatStr, vector<string>& params, string& logConte
     bool priv = (!debug) && IsPrivateSwitchOn();
 
     for (; pos < len; ++pos) {
-        bool showPriv = false;
-        if (count > size) {
+        bool showPriv = true;
+        if (count >= size) {
             break;
         }
-        if (formatStr[pos] == '%') {
-            if (formatStr[pos + 1] == '{') {
-                if (formatStr.substr(pos + PROPERTY_POS, PUBLIC_LEN) == "public") {
-                    pos += (PUBLIC_LEN + PROPERTY_POS);
-                }
-                if (formatStr.substr(pos + PROPERTY_POS, PRIVATE_LEN) == "private") {
-                    pos += (PRIVATE_LEN + PROPERTY_POS);
-                    if (priv) {
-                        showPriv = true;
-                    }
-                }
-            }
-            if (pos + 1 >= len) {
-                break;
-            }
-            string privStr = "<private>";
-            switch (formatStr[pos + 1]) {
-                case 's':
-                case 'j':
-                case 'd':
-                case 'O':
-                case 'o':
-                case 'i':
-                case 'f':
-                case 'c':
-                    ret += showPriv ? privStr : params[count];
-                    count++;
-                    ++pos;
-                    break;
-                case '%':
-                    ret += formatStr[pos];
-                    ++pos;
-                    break;
-                default:
-                    ret += formatStr[pos];
-                    break;
-            }
-        } else {
+        if (formatStr[pos] != '%') {
             ret += formatStr[pos];
+            continue;
+        }
+
+        if (((pos + PUBLIC_LEN + PROPERTY_POS) < len) &&
+            formatStr.substr(pos + PROPERTY_POS, PUBLIC_LEN) == "public") {
+            pos += (PUBLIC_LEN + PROPERTY_POS);
+            showPriv = false;
+        } else if (((pos + PRIVATE_LEN + PROPERTY_POS) < len) &&
+            formatStr.substr(pos + PROPERTY_POS, PRIVATE_LEN) == "private") {
+            pos += (PRIVATE_LEN + PROPERTY_POS);
+        }
+
+        if (pos + 1 >= len) {
+            break;
+        }
+        switch (formatStr[pos + 1]) {
+            case 'd':
+            case 'i':
+                if (params[count].type == napi_number || params[count].type == napi_bigint) {
+                    ret += (priv && showPriv) ? PRIV_STR : params[count].val;
+                }
+                count++;
+                ++pos;
+                break;
+            case 's':
+                if (params[count].type == napi_string || params[count].type == napi_undefined) {
+                    ret += (priv && showPriv) ? PRIV_STR : params[count].val;
+                }
+                count++;
+                ++pos;
+                break;
+            case 'O':
+            case 'o':
+                if (params[count].type == napi_object) {
+                    ret += (priv && showPriv) ? PRIV_STR : params[count].val;
+                }
+                count++;
+                ++pos;
+                break;
+            case '%':
+                ret += formatStr[pos];
+                ++pos;
+                break;
+            default:
+                ret += formatStr[pos];
+                break;
         }
     }
     if (pos < len) {
@@ -157,48 +167,37 @@ napi_value HilogNapiBase::fatal(napi_env env, napi_callback_info info)
 }
 
 napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
-    napi_value element, vector<string>& params)
+    napi_value element, vector<napiParam>& params)
 {
     bool succ = false;
     napi_valuetype type;
+    napiParam res = {napi_null, ""};
     napi_status typeStatus = napi_typeof(env, element, &type);
+    unique_ptr<char[]> name;
     if (typeStatus != napi_ok) {
         return nullptr;
     }
-    if (type == napi_number) {
+    if (type == napi_number || type == napi_bigint || type == napi_object || type == napi_undefined) {
         napi_value elmString;
         napi_status objectStatus = napi_coerce_to_string(env, element, &elmString);
         if (objectStatus != napi_ok) {
             return nullptr;
         }
-        unique_ptr<char[]> name;
         tie(succ, name, ignore) = NVal(env, elmString).ToUTF8String();
         if (!succ) {
             return nullptr;
         }
-        params.emplace_back(name.get());
     } else if (type == napi_string) {
-        unique_ptr<char[]> name;
         tie(succ, name, ignore) = NVal(env, element).ToUTF8String();
         if (!succ) {
             return nullptr;
         }
-        params.emplace_back(name.get());
-    } else if (type == napi_object) {
-        napi_value elmString;
-        napi_status objectStatus = napi_coerce_to_string(env, element, &elmString);
-        if (objectStatus != napi_ok) {
-            return nullptr;
-        }
-        unique_ptr<char[]> name;
-        tie(succ, name, ignore) = NVal(env, elmString).ToUTF8String();
-        if (!succ) {
-            return nullptr;
-        }
-        params.emplace_back(name.get());
     } else {
         NAPI_ASSERT(env, false, "type mismatch");
     }
+    res.type = type;
+    res.val = name.get();
+    params.emplace_back(res);
     return nullptr;
 }
 
@@ -230,7 +229,7 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
     napi_value array = funcArg[NARG_POS::FOURTH];
     napi_is_array(env, array, &res);
     string logContent;
-    vector<string> params;
+    vector<napiParam> params;
     if (!res) {
         for (size_t i = MIN_NUMBER; i < funcArg.GetArgc(); i++) {
             napi_value argsVal = funcArg[i];
