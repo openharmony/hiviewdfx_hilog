@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 
 #include "hilog/log.h"
+#include "parameters.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D00
@@ -332,9 +333,13 @@ HWTEST_F(HiLogNDKTest, IsLoggable_001, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. Call HiLogIsLoggable to check whether is loggable for each log level.
-     * @tc.expected: step1. LOG_DEBUG and lower level should return false, and others return true.
+     * @tc.expected: step1. LOG_DEBUG and lower level should return false in release version, and others return true.
      */
-    EXPECT_TRUE(HiLogIsLoggable(0xD002D00, LOG_TAG, LOG_DEBUG));
+    if (OHOS::system::GetParameter("hilog.loggable.global", "D") == "D") {
+        EXPECT_TRUE(HiLogIsLoggable(0xD002D00, LOG_TAG, LOG_DEBUG));
+    } else {
+        EXPECT_FALSE(HiLogIsLoggable(0xD002D00, LOG_TAG, LOG_DEBUG));
+    }
     EXPECT_TRUE(HiLogIsLoggable(0xD002D00, LOG_TAG, LOG_INFO));
     EXPECT_TRUE(HiLogIsLoggable(0xD002D00, LOG_TAG, LOG_WARN));
     EXPECT_TRUE(HiLogIsLoggable(0xD002D00, LOG_TAG, LOG_ERROR));
