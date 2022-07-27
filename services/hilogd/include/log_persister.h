@@ -36,18 +36,26 @@
 
 namespace OHOS {
 namespace HiviewDFX {
+using LogPersistQueryResult = struct {
+    int32_t result;
+    uint32_t jobId;
+    uint16_t logType;
+    uint16_t compressAlg;
+    char filePath[FILE_PATH_MAX_LEN];
+    uint32_t fileSize;
+    uint32_t fileNum;
+} __attribute__((__packed__));
+
 class LogPersister : public std::enable_shared_from_this<LogPersister> {
 public:
-    using InitData = std::variant<LogPersistStartMsg, PersistRecoveryInfo>;
-
     [[nodiscard]] static std::shared_ptr<LogPersister> CreateLogPersister(HilogBuffer &buffer);
 
     ~LogPersister();
 
     static int Kill(uint32_t id);
-    static int Query(uint16_t logType, std::list<LogPersistQueryResult> &results);
+    static int Query(std::list<LogPersistQueryResult> &results);
 
-    int Init(const InitData& initData);
+    int Init(const PersistRecoveryInfo& msg, bool restore);
     int Deinit();
 
     void Start();
@@ -56,15 +64,6 @@ public:
     void FillInfo(LogPersistQueryResult &response);
 
 private:
-    struct BaseData {
-        uint32_t id;
-        std::string logPath;
-        uint32_t logFileSizeLimit;
-        uint16_t compressAlg;
-        uint32_t maxLogFileNum;
-        std::chrono::seconds newLogTimeout;
-    };
-
     explicit LogPersister(HilogBuffer &buffer);
 
     static bool CheckRegistered(uint32_t id, const std::string& logPath);
@@ -77,14 +76,12 @@ private:
     int ReceiveLogLoop();
 
     int InitCompression();
-    int InitFileRotator(const InitData& initData);
+    int InitFileRotator(const PersistRecoveryInfo& msg, bool restore);
     int WriteLogData(const HilogData& logData);
-    bool WriteUncompressedLogs(std::list<std::string>& formatedTextLogs);
+    bool WriteUncompressedLogs(std::string& logLine);
     void WriteCompressedLogs();
 
     int PrepareUncompressedFile(const std::string& parentPath, bool restore);
-
-    BaseData m_baseData = {0};
 
     std::string m_plainLogFilePath;
     LogPersisterBuffer *m_mappedPlainLogFile;
@@ -101,7 +98,7 @@ private:
 
     HilogBuffer &m_hilogBuffer;
     HilogBuffer::ReaderId m_bufReader;
-    LogFilterExt m_filters;
+    LogPersistStartMsg m_startMsg;
 
     std::mutex m_initMtx;
     volatile bool m_inited = false;

@@ -12,5 +12,5 @@
 # limitations under the License.
 
 
-hilog.="shell:log:755"
-persist.sys.hilog.="shell:log:755"
+hilog.="shell:log:775"
+persist.sys.hilog.="shell:log:775"

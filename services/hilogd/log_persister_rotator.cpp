@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "log_persister_rotator.h"
 #include <cstdio>
 #include <dirent.h>
 #include <fstream>
@@ -23,24 +22,13 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "log_persister_rotator.h"
+
 constexpr uint8_t MAX_TIME_BUF_SIZE = 32;
 constexpr uint8_t MAX_LOG_INDEX_LEN = 4;
 
 namespace OHOS {
 namespace HiviewDFX {
-uint64_t GenerateHash(const PersistRecoveryInfo &info)
-{
-    uint64_t ret {BASIS};
-    const char *p = reinterpret_cast<char*>(const_cast<PersistRecoveryInfo*>(&info));
-    unsigned long i = 0;
-    while (i < sizeof(PersistRecoveryInfo)) {
-        ret ^= *(p + i);
-        ret *= PRIME;
-        i++;
-    }
-    return ret;
-}
-
 std::string GetFileNameIndex(const int index)
 {
     char res[MAX_LOG_INDEX_LEN];
@@ -158,7 +146,7 @@ void LogPersisterRotator::CreateLogFile()
     }
     std::stringstream newFile;
     newFile << m_logsPath << "." << GetFileNameIndex(m_currentLogFileIdx) << "." << timeBuf << m_fileNameSuffix;
-    std::cout << "THE FILE NAME !!!!!!! " << newFile.str() << std::endl;
+    std::cout << "Filename: " << newFile.str() << std::endl;
     m_currentLogOutput.open(newFile.str(), std::ios::out | std::ios::trunc);
 }
 
@@ -185,19 +173,6 @@ void LogPersisterRotator::SetFileIndex(uint32_t index, bool forceRotate)
     }
 }
 
-int LogPersisterRotator::SetInfo(const LogPersistStartMsg& pMsg, uint16_t logType, uint8_t logLevel)
-{
-    m_info.msg = pMsg;
-    m_info.types = logType;
-    m_info.levels = logLevel;
-    if (strcpy_s(m_info.msg.filePath, FILE_PATH_MAX_LEN, pMsg.filePath) != 0) {
-        std::cout << "Failed to copy persister file path\n";
-        return RET_FAIL;
-    }
-    std::cout << "Saving info path=" << m_info.msg.filePath << "\n";
-    return RET_SUCCESS;
-}
-
 void LogPersisterRotator::WriteRecoveryInfo()
 {
     if (!m_infoFile.is_open()) {
@@ -206,7 +181,7 @@ void LogPersisterRotator::WriteRecoveryInfo()
     }
 
     std::cout << "Save Info file!\n";
-    uint64_t hash = GenerateHash(m_info);
+    uint64_t hash = GenerateHash(reinterpret_cast<char *>(&m_info), sizeof(PersistRecoveryInfo));
 
     m_infoFile.seekp(0);
     m_infoFile.write(reinterpret_cast<const char*>(&m_info), sizeof(m_info));
