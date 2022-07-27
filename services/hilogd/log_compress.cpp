@@ -23,6 +23,20 @@
 
 namespace OHOS {
 namespace HiviewDFX {
+StringMap LogCompress::g_CompressTypes = StringMap({
+        {COMPRESS_TYPE_NONE, "none"}, {COMPRESS_TYPE_ZLIB, "zlib"}, {COMPRESS_TYPE_ZSTD, "zstd"}
+    }, COMPRESS_TYPE_ZLIB, "unknown");
+
+std::string LogCompress::CompressType2Str(uint16_t compressType)
+{
+    return g_CompressTypes.GetValue(compressType);
+}
+
+uint16_t LogCompress::Str2CompressType(const std::string& str)
+{
+    return g_CompressTypes.GetKey(str);
+}
+
 int NoneCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressedBuffer)
 {
     void *dest = compressedBuffer.content + compressedBuffer.offset;

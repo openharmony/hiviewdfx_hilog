@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,15 +12,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef LOG_FORMAT_H
-#define LOG_FORMAT_H
+#ifndef LOG_PRINT_H
+#define LOG_PRINT_H
 #include <iostream>
-#include "hilog_common.h"
-#include "hilog_msg.h"
+
+#include "hilog_cmd.h"
+
 namespace OHOS {
 namespace HiviewDFX {
-void HilogShowBuffer(char* buffer, int bufLen, const HilogShowFormatBuffer& contentOut, uint32_t showFormat);
+struct LogContent {
+    uint8_t level;
+    uint8_t type;
+    uint32_t pid;
+    uint32_t tid;
+    uint32_t domain;
+    uint32_t tv_sec;
+    uint32_t tv_nsec;
+    uint32_t mono_sec;
+    const char *tag;
+    const char *log;
+};
+
+struct LogFormat {
+    bool colorful;
+    FormatTime timeFormat;
+    FormatTimeAccu timeAccuFormat;
+    bool year;
+    bool zone;
+};
+
+void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std::ostream& out = std::cout);
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif /* LOG_FORMAT_H */
+#endif /* LOG_PRINT_H */

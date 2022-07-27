@@ -44,7 +44,10 @@ namespace HiviewDFX {
 using namespace std;
 using namespace std::chrono;
 
-constexpr int WAITING_DATA_MS = 5000;
+static const string SYSTEM_BG_STUNE = "/dev/stune/system-background/cgroup.procs";
+static const string SYSTEM_BG_CPUSET = "/dev/cpuset/system-background/cgroup.procs";
+static const string SYSTEM_BG_BLKIO  = "/dev/blkio/system-background/cgroup.procs";
+static constexpr int WAITING_DATA_MS = 5000;
 
 #ifdef DEBUG
 static int g_fd = -1;
@@ -140,12 +143,12 @@ static void RedirectStdStreamToLogFile()
 {
     if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
         const char *path = HILOG_FILE_DIR"hilogd_debug.txt";
-        int mask = O_WRONLY | O_APPEND;
+        int mask = O_WRONLY | O_APPEND | O_CREAT;
         struct stat st;
         if (stat(path, &st) == -1) {
             mask |= O_CREAT;
         }
-        int fd = open(path, mask);
+        int fd = open(path, mask, S_IWUSR | S_IWGRP);
         if (fd > 0) {
             g_fd = dup2(fd, fileno(stdout));
         } else {

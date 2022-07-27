@@ -23,6 +23,8 @@
 #include <memory>
 #include <shared_mutex>
 
+#include <hilog_common.h>
+
 #include "log_data.h"
 #include "log_filter.h"
 #include "log_stats.h"
@@ -33,13 +35,12 @@ class HilogBuffer {
 public:
     using LogMsgContainer = std::list<HilogData>;
     using ReaderId = uintptr_t;
-    using OnFound = std::function<void(const HilogData&)>;
 
     HilogBuffer();
     ~HilogBuffer();
 
     size_t Insert(const HilogMsg& msg);
-    std::optional<HilogData> Query(const LogFilterExt& filter, const ReaderId& id);
+    std::optional<HilogData> Query(const LogFilter& filter, const ReaderId& id, int tailCount = 0);
 
     ReaderId CreateBufReader(std::function<void()> onNewDataCallback);
     void RemoveBufReader(const ReaderId& id);

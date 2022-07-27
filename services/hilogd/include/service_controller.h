@@ -17,14 +17,16 @@
 #define LOG_QUERIER_H
 
 #include <array>
+#include <vector>
 #include <atomic>
 #include <condition_variable>
 #include <future>
 #include <memory>
 #include <mutex>
+#include <socket.h>
 
 #include <hilog_common.h>
-#include <socket.h>
+#include <hilog_cmd.h>
 
 #include "log_stats.h"
 #include "log_buffer.h"
@@ -42,20 +44,15 @@ public:
     void CommunicationLoop(std::atomic<bool>& stopLoop);
 
 private:
-    void SetFilters(const PacketBuf& rawData);
+    int GetMsgHeader(MsgHeader& hdr);
+    int GetRqst(const MsgHeader& hdr, char* rqst, int expectedLen);
+    void WriteErrorRsp(int code);
+    void WriteRspHeader(IoctlCmd cmd, size_t len);
+    template<typename T>
+    void RequestHandler(const MsgHeader& hdr, std::function<void(const T& rqst)> handle);
 
-    void HandleLogQueryRequest();
-    void HandleNextRequest(const PacketBuf& rawData, std::atomic<bool>& stopLoop);
-
-    // persist storage
-    void HandlePersistStartRequest(const PacketBuf& rawData);
-    void HandlePersistStopRequest(const PacketBuf& rawData);
-    void HandlePersistQueryRequest(const PacketBuf& rawData);
-
-    // buffer size
-    void HandleBufferResizeRequest(const PacketBuf& rawData);
-    void HandleBufferSizeRequest(const PacketBuf& rawData);
-
+    // log query
+    int WriteQueryResponse(OptCRef<HilogData> pData);
     // statistics
     void SendOverallStats(const LogStats& stats);
     void SendLogTypeDomainStats(const LogStats& stats);
@@ -65,15 +62,19 @@ private:
     void SendProcLogTypeStats(const LogStats& stats);
     void SendProcTagStats(const LogStats& stats);
     void SendTagStats(const TagTable &tagTable);
-    void HandleInfoQueryRequest(const PacketBuf& rawData);
-    void HandleInfoClearRequest(const PacketBuf& rawData);
+    // cmd handlers
+    void HandleOutputRqst(const OutputRqst &rqst);
+    void HandlePersistStartRqst(const PersistStartRqst &rqst);
+    void HandlePersistStopRqst(const PersistStopRqst &rqst);
+    void HandlePersistQueryRqst(const PersistQueryRqst& rqst);
+    void HandleBufferSizeGetRqst(const BufferSizeGetRqst& rqst);
+    void HandleBufferSizeSetRqst(const BufferSizeSetRqst& rqst);
+    void HandleStatsQueryRqst(const StatsQueryRqst& rqst);
+    void HandleStatsClearRqst(const StatsClearRqst& rqst);
+    void HandleDomainFlowCtrlRqst(const DomainFlowCtrlRqst& rqst);
+    void HandleLogRemoveRqst(const LogRemoveRqst& rqst);
+    void HandleLogKmsgEnableRqst(const KmsgEnableRqst& rqst);
 
-    // clear buffer
-    void HandleBufferClearRequest(const PacketBuf& rawData);
-
-    int WriteData(LogQueryResponse& rsp, OptCRef<HilogData> pData);
-    int WriteV(const iovec* vec, size_t len);
-    int WriteLogQueryRespond(unsigned int sendId, uint32_t respondCmd, OptCRef<HilogData> pData);
     void NotifyForNewData();
 
     std::unique_ptr<Socket> m_communicationSocket;
@@ -82,9 +83,21 @@ private:
 
     std::condition_variable m_notifyNewDataCv;
     std::mutex m_notifyNewDataMtx;
-
-    LogFilterExt m_filters;
 };
+
+template<typename T>
+void ServiceController::RequestHandler(const MsgHeader& hdr, std::function<void(const T& rqst)> handle)
+{
+    std::vector<char> buffer(hdr.len, 0);
+    char *data = buffer.data();
+    int ret = GetRqst(hdr, data, sizeof(T));
+    if (ret != RET_SUCCESS) {
+        std::cout << "Error GetRqst" << std::endl;
+        return;
+    }
+    T *rqst = reinterpret_cast<T *>(data);
+    handle(*rqst);
+}
 
 int RestorePersistJobs(HilogBuffer& _buffer);
 } // namespace HiviewDFX
