@@ -634,10 +634,10 @@ void ServiceController::HandleBufferSizeSetRqst(const BufferSizeSetRqst& rqst)
             int ret = m_hilogBuffer.SetBuffLen(t, rqst.size);
             if (ret != RET_SUCCESS) {
                 rsp.size[t] = ret;
-                return;
+            } else {
+                SetBufferSize(t, true, rqst.size);
+                rsp.size[t] = rqst.size;
             }
-            SetBufferSize(t, true, rqst.size);
-            rsp.size[t] = rqst.size;
             i++;
         }
     }
