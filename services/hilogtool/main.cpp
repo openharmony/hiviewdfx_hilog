@@ -361,7 +361,7 @@ struct HilogArgs {
         (void)strncpy_s(rqst.stream, MAX_STREAM_NAME_LEN, stream.c_str(), stream.length());
     }
 
-    void ToPersistStopRqst(PersistStopRqst rqst)
+    void ToPersistStopRqst(PersistStopRqst& rqst)
     {
         rqst.jobId = jobId;
     }
@@ -548,7 +548,7 @@ static int BufferSizeSetHandler(HilogArgs& context, const char *arg)
             if (rsp.size[i] > 0) {
                 cout << "Set log type " << LogType2Str(i) << " buffer size to "
                 << Size2Str(rsp.size[i]) << " successfully" << endl;
-            } else if (rsp.size[i] == RET_FAIL) {
+            } else if (rsp.size[i] < 0) {
                 cout << "Set log type " << LogType2Str(i) << " buffer size to "
                 << Size2Str(rqst.size) << " failed" << endl;
                 PrintErr(rsp.size[i]);
@@ -776,7 +776,7 @@ static int TagHandler(HilogArgs& context, const char *arg)
         if (index >= MAX_TAGS) {
             return ERR_TOO_MANY_TAGS;
         }
-        if (context.tags[index].length() >= MAX_TAG_LEN) {
+        if (t.length() >= MAX_TAG_LEN) {
             return ERR_TAG_STR_TOO_LONG;
         }
         context.tags[index++] = t;
