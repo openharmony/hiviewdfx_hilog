@@ -23,6 +23,11 @@ extern "C" {
 
 namespace OHOS {
 namespace HiviewDFX {
+using napiParam = struct {
+    napi_valuetype type;
+    std::string val;
+};
+
 class HilogNapiBase {
 public:
     static napi_value debug(napi_env env, napi_callback_info info);
@@ -34,7 +39,7 @@ public:
     static napi_value isLoggable(napi_env env, napi_callback_info info);
 private:
     static napi_value parseNapiValue(napi_env env, napi_callback_info info,
-        napi_value element, std::vector<std::string>& params);
+        napi_value element, std::vector<napiParam>& params);
 };
 }  // namespace HiviewDFX
 }  // namespace OHOS
