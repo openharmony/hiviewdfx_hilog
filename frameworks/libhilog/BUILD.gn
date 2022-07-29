@@ -17,6 +17,7 @@ import("//build/ohos.gni")
 framework_root = "//base/hiviewdfx/hilog/frameworks"
 libhilog_root = "$framework_root/libhilog"
 libhilog_base_root = "$libhilog_root/base"
+ioctl_root = "$libhilog_root/ioctl"
 param_root = "$libhilog_root/param"
 socket_root = "$libhilog_root/socket"
 utils_root = "$libhilog_root/utils"
@@ -29,6 +30,7 @@ config("libhilog_config") {
     "include",
     "$framework_root/include",
     "$libhilog_root/include",
+    "$ioctl_root/include",
     "$param_root/include",
     "$socket_root/include",
     "$utils_root/include",
@@ -42,6 +44,7 @@ template("libhilog_source") {
   ohos_source_set(target_name) {
     if (platform != "windows" && platform != "mac") {
       param_sources = [ "$param_root/properties.cpp" ]
+      ioctl_sources = [ "$ioctl_root/log_ioctl.cpp" ]
 
       socket_sources = [
         "$socket_root/dgram_socket_client.cpp",
@@ -57,7 +60,7 @@ template("libhilog_source") {
     }
 
     utils_sources = [
-      "$utils_root/format.cpp",
+      "$utils_root/log_print.cpp",
       "$utils_root/log_utils.cpp",
     ]
 
@@ -69,6 +72,7 @@ template("libhilog_source") {
     ]
     if (platform != "windows" && platform != "mac") {
       sources += param_sources
+      sources += ioctl_sources
       sources += socket_sources
     }
     sources += utils_sources

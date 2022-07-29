@@ -20,19 +20,47 @@
 #include <string>
 #include <vector>
 
+#include <hilog_cmd.h>
+
 namespace OHOS {
 namespace HiviewDFX {
 struct LogFilter {
-    uint16_t levels = 0;
-    uint16_t types = 0;
-    std::vector<uint32_t> pids;
-    std::vector<uint32_t> domains;
-    std::vector<std::string> tags;
-};
-struct LogFilterExt {
-    LogFilter inclusions;
-    LogFilter exclusions;
-};
+    uint16_t types;
+    uint16_t levels;
+    bool blackDomain;
+    uint8_t domainCount;
+    uint32_t domains[MAX_DOMAINS];
+    bool blackTag;
+    uint8_t tagCount;
+    char tags[MAX_TAGS][MAX_TAG_LEN];
+    bool blackPid;
+    int pidCount;
+    uint32_t pids[MAX_PIDS];
+    char regex[MAX_REGEX_STR_LEN];
+
+    void Print()
+    {
+        std::cout << "LogFilter: " << std::endl;
+        std::cout << "  types: " << types << std::endl;
+        std::cout << "  levels: " << levels << std::endl;
+        std::cout << "  blackDomain: " << blackDomain << std::endl;
+        std::cout << "  domainCount: " << static_cast<int>(domainCount) << std::endl;
+        for (int i = 0; i < domainCount; i++) {
+            std::cout << "  domain[" << i << "]: " << domains[i] << std::endl;
+        }
+        std::cout << "  blackTag: " << blackTag << std::endl;
+        std::cout << "  tagCount: " << static_cast<int>(tagCount) << std::endl;
+        for (int i = 0; i < tagCount; i++) {
+            std::cout << "  tag[" << i << "]: " << tags[i] << std::endl;
+        }
+        std::cout << "  blackPid: " << blackPid << std::endl;
+        std::cout << "  pidCount: " << std::endl;
+        for (int i = 0; i < static_cast<int>(pidCount); i++) {
+            std::cout << "  pid[" << i << "]" << pids[i] << std::endl;
+        }
+        std::cout << "  regex: " << regex << std::endl;
+    }
+} __attribute__((__packed__));
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif // LOG_FILTER_H

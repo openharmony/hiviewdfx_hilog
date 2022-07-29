@@ -16,7 +16,6 @@
 #ifndef HILOG_COMPRESS_H
 #define HILOG_COMPRESS_H
 
-#include "hilog_common.h"
 #include <iostream>
 #ifdef USING_ZSTD_COMPRESS
 #define ZSTD_STATIC_LINKING_ONLY
@@ -25,6 +24,9 @@
 #endif
 #include <zlib.h>
 
+#include <hilog_common.h>
+#include <log_utils.h>
+
 namespace OHOS {
 namespace HiviewDFX {
 using LogPersisterBuffer = struct {
@@ -32,11 +34,22 @@ using LogPersisterBuffer = struct {
     uint32_t offset;
 };
 
+using CompressAlg = enum {
+    COMPRESS_TYPE_NONE = 0,
+    COMPRESS_TYPE_ZSTD,
+    COMPRESS_TYPE_ZLIB,
+};
+
 class LogCompress {
 public:
     LogCompress() = default;
     virtual ~LogCompress() = default;
     virtual int Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffer &compressBuffer) = 0;
+    // Compress Types&Strings Map
+    static std::string CompressType2Str(uint16_t compressType);
+    static uint16_t Str2CompressType(const std::string& str);
+private:
+    static StringMap g_CompressTypes;
 };
 
 class NoneCompress : public LogCompress {
