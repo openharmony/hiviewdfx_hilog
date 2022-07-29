@@ -21,7 +21,7 @@
 #include <securec.h>
 
 #include <hilog/log.h>
-#include "hilog_msg.h"
+#include <hilog_common.h>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -58,7 +58,7 @@ struct HilogData {
         if (strncpy_s(content, mfmtLen + 1, mfmt, mfmtLen - 1)) {
             return;
         }
-    };
+    }
     void deinit()
     {
         delete []tag;

@@ -17,16 +17,11 @@
 #define LOG_DISPLAY_H
 
 #include "hilog_common.h"
-#include "hilog_msg.h"
-#include "hilogtool.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-int32_t ControlCmdResult(const char* message);
-void HilogShowLogStatsInfo(const StatisticInfoQueryResponse& rsp);
-void HilogShowLog(uint32_t showFormat, HilogDataMessage* contentOut,
-    const HilogArgs* context, vector<string>& tailBuffer);
+void HilogShowLogStatsInfo(const StatsQueryRsp& rsp);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif

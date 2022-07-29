@@ -17,23 +17,30 @@
 #define _HILOG_PERSISTER_ROTATOR_H
 #include <fstream>
 #include <string>
-
 #include <zlib.h>
-#include "hilog_common.h"
-#include "hilog_msg.h"
+#include <hilog_common.h>
+#include <log_utils.h>
+
 #include "log_filter.h"
+
 namespace OHOS {
 namespace HiviewDFX {
-using PersistRecoveryInfo = struct {
-    uint32_t index;
-    uint16_t types;
-    uint8_t levels;
-    LogPersistStartMsg msg;
-};
-
+#define FILE_PATH_MAX_LEN 100
 static constexpr const char* AUXILLARY_PERSISTER_PREFIX = "persisterInfo_";
 
-uint64_t GenerateHash(const PersistRecoveryInfo &info);
+using LogPersistStartMsg = struct {
+    uint16_t compressAlg;
+    char filePath[FILE_PATH_MAX_LEN];
+    uint32_t fileSize;
+    uint32_t fileNum;
+    uint32_t jobId;
+    LogFilter filter;
+} __attribute__((__packed__));
+
+using PersistRecoveryInfo = struct {
+    uint32_t index;
+    LogPersistStartMsg msg;
+} __attribute__((__packed__));
 
 class LogPersisterRotator {
 public:

@@ -19,12 +19,13 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
-
 #include <securec.h>
+
 #ifndef __WINDOWS__
 #include <sys/syscall.h>
 #else
 #include <windows.h>
+#include <memory.h>
 #endif
 #include <unistd.h>
 
@@ -40,7 +41,7 @@
 #include "properties.h"
 #include "hilog_input_socket_client.h"
 #else
-#include "format.h"
+#include "log_print.h"
 #endif
 
 using namespace std;
@@ -133,39 +134,26 @@ static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
 #else
 static int PrintLog(HilogMsg& header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
-    constexpr int len = MAX_LOG_LEN + MAX_LOG_LEN;
-    char buffer[len] = { 0 };
-    HilogShowFormatBuffer showBuffer;
-    showBuffer.type = header.type;
-    showBuffer.level = header.level;
-    showBuffer.pid = header.pid;
-    showBuffer.tid = header.tid;
-    showBuffer.domain = header.domain;
-    showBuffer.tag_len = tagLen;
-    showBuffer.tv_sec = header.tv_sec;
-    showBuffer.tv_nsec = header.tv_nsec;
-    showBuffer.mono_sec = header.mono_sec;
-    showBuffer.length = tagLen + fmtLen;
-    char* tmp = new (std::nothrow) char[showBuffer.length];
-    if (unlikely(tmp == nullptr)) {
-        return RET_FAIL;
-    }
-    char *content = tmp + tagLen;
-    if (strncpy_s(tmp, tagLen, tag, tagLen - 1) != 0) {
-        delete []tmp;
-        tmp = nullptr;
-        return RET_FAIL;
-    }
-    if (strncpy_s(content, fmtLen, fmt, fmtLen - 1) != 0) {
-        delete []tmp;
-        tmp = nullptr;
-        return RET_FAIL;
-    }
-    showBuffer.data = tmp;
-    HilogShowBuffer(buffer, len, showBuffer, 0);
-    std::cout << buffer << std::endl;
-    delete []tmp;
-    tmp = nullptr;
+    LogContent content = {
+        .level = header.level,
+        .type = header.type,
+        .pid = header.pid,
+        .tid = header.tid,
+        .domain = header.domain,
+        .tv_sec = header.tv_sec,
+        .tv_nsec = header.tv_nsec,
+        .mono_sec = header.mono_sec,
+        .tag = tag,
+        .log = fmt,
+    };
+    LogFormat format = {
+        .colorful = false,
+        .timeFormat = FormatTime::TIME,
+        .timeAccuFormat = FormatTimeAccu::MSEC,
+        .year = false,
+        .zone = false,
+    };
+    LogPrintWithFormat(content, format);
     return RET_SUCCESS;
 }
 #endif

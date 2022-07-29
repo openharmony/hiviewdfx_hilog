@@ -21,7 +21,6 @@ config("hilog_config") {
 
 ohos_executable("hilog") {
   sources = [
-    "log_controller.cpp",
     "log_display.cpp",
     "main.cpp",
   ]
@@ -36,7 +35,10 @@ ohos_executable("hilog") {
     "//third_party/zlib:libz",
   ]
 
-  external_deps = [ "hilog_native:libhilog" ]
+  external_deps = [
+    "hilog_native:libhilog",
+    "utils_base:utils",
+  ]
 
   install_enable = true
   part_name = "hilog_service"

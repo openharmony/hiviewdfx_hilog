@@ -17,6 +17,7 @@
 #include <thread>
 #include <vector>
 #include <sys/time.h>
+#include <regex>
 
 #include <hilog_common.h>
 #include <flow_control.h>
@@ -30,13 +31,7 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-static const float DROP_RATIO = 0.05;
 static size_t g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
-const int DOMAIN_STRICT_MASK = 0xd000000;
-const int DOMAIN_FUZZY_MASK = 0xdffff;
-const int DOMAIN_MODULE_BITS = 8;
-
-static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData);
 static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType);
 
 HilogBuffer::HilogBuffer()
@@ -98,6 +93,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         if (elemSize + sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
             // Drop 5% of maximum log when full
             std::list<HilogData>::iterator it = msgList.begin();
+            static const float DROP_RATIO = 0.05;
             while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
                 it != msgList.end()) {
                 if ((*it).type != msg.type) {    // Only remove old logs of the same type
@@ -129,21 +125,93 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     return elemSize;
 }
 
-std::optional<HilogData> HilogBuffer::Query(const LogFilterExt& filter, const ReaderId& id)
+static bool LogMatchFilter(const LogFilter& filter, const HilogData& logData)
+{
+    // types & levels match
+    if (((static_cast<uint16_t>(0b01 << logData.type)) & filter.types) == 0) {
+        return false;
+    }
+    if (((static_cast<uint16_t>(0b01 << logData.level)) & filter.levels) == 0) {
+        return false;
+    }
+
+    int i = 0;
+    // domain match
+    static constexpr uint32_t LowByte = 0xFF;
+    static constexpr uint32_t LowByteReverse = ~LowByte;
+    /* 1) domain id equals exactly: (0xd012345 == 0xd012345)
+       2) last 8 bits is sub domain id, if it's 0xFF, compare high 24 bits:
+       (0xd0123ff & 0xffffff00 == 0xd012345 & 0xffffff00) */
+    bool match = false;
+    for (i = 0; i < filter.domainCount; i++) {
+        if ((logData.domain == filter.domains[i])
+        || ((static_cast<uint8_t>(filter.domains[i]) == LowByte)
+             && ((logData.domain & LowByteReverse) == (filter.domains[i] & LowByteReverse)))) {
+            match = true;
+            break;
+        }
+    }
+    if (filter.domainCount && match == filter.blackDomain) {
+        return false;
+    }
+    match = false;
+    // tag match
+    for (i = 0; i < filter.tagCount; i++) {
+        if (strcmp(logData.tag, filter.tags[i]) == 0) {
+            match = true;
+            break;
+        }
+    }
+    if (filter.tagCount && match == filter.blackTag) {
+        return false;
+    }
+    match = false;
+    // pid match
+    for (i = 0; i < filter.pidCount; i++) {
+        if (logData.pid == filter.pids[i]) {
+            match = true;
+            break;
+        }
+    }
+    if (filter.pidCount && match == filter.blackPid) {
+        return false;
+    }
+    // regular expression match
+    if (filter.regex[0] != 0) {
+        std::regex regExpress(filter.regex);
+        if (std::regex_search(logData.content, regExpress) == false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::optional<HilogData> HilogBuffer::Query(const LogFilter& filter, const ReaderId& id, int tailCount)
 {
     auto reader = GetReader(id);
     if (!reader) {
         std::cerr << "Reader not registered!\n";
         return std::nullopt;
     }
-    uint16_t qTypes = filter.inclusions.types;
+    uint16_t qTypes = filter.types;
     LogMsgContainer &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
 
     std::shared_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
     if (reader->m_msgList != &msgList) {
         reader->m_msgList = &msgList;
-        reader->m_pos = msgList.begin();
+        if (tailCount == 0) {
+            reader->m_pos = msgList.begin();
+        } else {
+            reader->m_pos = msgList.end();
+            reader->m_pos--;
+        }
+        for (int i = 0; (i < tailCount) && (reader->m_pos != msgList.begin());) {
+            if (LogMatchFilter(filter, (*reader->m_pos))) {
+                i++;
+            }
+            reader->m_pos--;
+        }
     }
 
     if (reader->skipped) {
@@ -280,7 +348,7 @@ int32_t HilogBuffer::SetBuffLen(uint16_t logType, uint64_t buffSize)
     }
     std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
     g_maxBufferSizeByType[logType] = buffSize;
-    return buffSize;
+    return RET_SUCCESS;
 }
 
 void HilogBuffer::CountLog(const StatsInfo &info)
@@ -296,65 +364,6 @@ void HilogBuffer::ResetStats()
 LogStats& HilogBuffer::GetStatsInfo()
 {
     return stats;
-}
-
-static bool LogMatchFilter(const LogFilterExt& filter, const HilogData& logData)
-{
-    /* domain patterns:
-     * strict mode: 0xdxxxxxx   (full)
-     * fuzzy mode: 0xdxxxx      (using last 2 digits of full domain as mask)
-     */
-    // inclusions
-    if (((static_cast<uint8_t>((0b01 << (logData.type)) & (filter.inclusions.types)) == 0) ||
-        (static_cast<uint8_t>((0b01 << (logData.level)) & (filter.inclusions.levels)) == 0)))
-        return false;
-
-    if (!filter.inclusions.pids.empty()) {
-        auto it = std::find(filter.inclusions.pids.begin(), filter.inclusions.pids.end(), logData.pid);
-        if (it == filter.inclusions.pids.end())
-            return false;
-    }
-    if (!filter.inclusions.domains.empty()) {
-        auto it = std::find_if(filter.inclusions.domains.begin(), filter.inclusions.domains.end(),
-            [&] (uint32_t domain) {
-                return ((domain >= DOMAIN_STRICT_MASK && domain == logData.domain) ||
-                    (domain <= DOMAIN_FUZZY_MASK && domain == (logData.domain >> DOMAIN_MODULE_BITS)));
-            });
-        if (it == filter.inclusions.domains.end())
-            return false;
-    }
-    if (!filter.inclusions.tags.empty()) {
-        auto it = std::find(filter.inclusions.tags.begin(), filter.inclusions.tags.end(), logData.tag);
-        if (it == filter.inclusions.tags.end())
-            return false;
-    }
-
-    // exclusion
-    if (!filter.exclusions.pids.empty()) {
-        auto it = std::find(filter.exclusions.pids.begin(), filter.exclusions.pids.end(), logData.pid);
-        if (it != filter.exclusions.pids.end())
-            return false;
-    }
-
-    if (!filter.exclusions.domains.empty()) {
-        auto it = std::find_if(filter.exclusions.domains.begin(), filter.exclusions.domains.end(),
-            [&] (uint32_t domain) {
-                return ((domain >= DOMAIN_STRICT_MASK && domain == logData.domain) ||
-                    (domain <= DOMAIN_FUZZY_MASK && domain == (logData.domain >> DOMAIN_MODULE_BITS)));
-            });
-        if (it != filter.exclusions.domains.end())
-            return false;
-    }
-    if (!filter.exclusions.tags.empty()) {
-        auto it = std::find(filter.exclusions.tags.begin(), filter.exclusions.tags.end(), logData.tag);
-        if (it != filter.exclusions.tags.end())
-            return false;
-    }
-    if ((static_cast<uint8_t>((0b01 << (logData.type)) & (filter.exclusions.types)) != 0) ||
-        (static_cast<uint8_t>((0b01 << (logData.level)) & (filter.exclusions.levels)) != 0)) {
-        return false;
-    }
-    return true;
 }
 
 static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType)
