@@ -16,7 +16,7 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <sys/socket.h>
 #include <sys/uio.h>
 

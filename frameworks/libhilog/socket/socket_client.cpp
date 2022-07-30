@@ -15,14 +15,16 @@
 
 #include "socket_client.h"
 
-#include <cerrno>
-#include <iostream>
+#include <cstdint>
+#include <iosfwd>
 #include <securec.h>
+#include <string>
 #include <sys/socket.h>
-#include <sys/types.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include "hilog_common.h"
+#include "socket.h"
 
 namespace OHOS {
 namespace HiviewDFX {

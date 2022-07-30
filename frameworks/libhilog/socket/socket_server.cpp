@@ -15,18 +15,22 @@
 
 #include "socket_server.h"
 
-#include <cerrno>
-#include <iostream>
-#include <securec.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/un.h>
+#include <cstdint>
+#include <chrono>
+#include <iosfwd>
 #include <poll.h>
+#include <securec.h>
+#include <string>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
+
+#include "hilog_common.h"
 
 extern "C" {
 #include "init_socket.h"
 }
+
 namespace OHOS {
 namespace HiviewDFX {
 SocketServer::SocketServer(const std::string& _socketName, uint32_t socketType)

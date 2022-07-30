@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cerrno>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <iostream>
 
 #include "socket.h"
+
+#include <cerrno>
+#include <cstdint>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#include <unistd.h>
 
 namespace OHOS {
 namespace HiviewDFX {
