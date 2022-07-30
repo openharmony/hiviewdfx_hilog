@@ -16,6 +16,12 @@
 #ifndef DGRAM_SOCKET_CLIENT_H
 #define DGRAM_SOCKET_CLIENT_H
 
+#include <cstdint>
+#include <atomic>
+#include <iosfwd>
+#include <string>
+#include <sys/socket.h>
+
 #include "socket_client.h"
 
 namespace OHOS {
