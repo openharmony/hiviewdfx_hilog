@@ -16,8 +16,8 @@
 #ifndef HILOG_INPUT_SOCKET_CLIENT_H
 #define HILOG_INPUT_SOCKET_CLIENT_H
 
-#include "hilog_common.h"
 #include "dgram_socket_client.h"
+#include "hilog_common.h"
 
 namespace OHOS {
 namespace HiviewDFX {

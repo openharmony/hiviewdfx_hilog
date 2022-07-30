@@ -15,11 +15,17 @@
 
 #include "seq_packet_socket_server.h"
 
-#include <cstring>
+#include <cerrno>
+#include <functional>
+#include <iosfwd>
 #include <iostream>
-#include <thread>
+#include <memory>
+#include <ostream>
+#include <sys/socket.h>
+#include <type_traits>
 
 #include "log_utils.h"
+#include "socket.h"
 
 namespace OHOS {
 namespace HiviewDFX {

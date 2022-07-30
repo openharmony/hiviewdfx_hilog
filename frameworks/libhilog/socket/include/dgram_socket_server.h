@@ -16,7 +16,10 @@
 #ifndef DGRAM_SOCKET_SERVER_H
 #define DGRAM_SOCKET_SERVER_H
 
+#include <cstdint>
 #include <vector>
+#include <iosfwd>
+#include <sys/socket.h>
 
 #include "socket_server.h"
 
