@@ -24,9 +24,8 @@
 
 #define SOCKET_FILE_DIR "/dev/unix/socket/"
 #define INPUT_SOCKET_NAME "hilogInput"
-#define INPUT_SOCKET SOCKET_FILE_DIR INPUT_SOCKET_NAME
+#define OUTPUT_SOCKET_NAME "hilogOutput"
 #define CONTROL_SOCKET_NAME "hilogControl"
-#define CONTROL_SOCKET SOCKET_FILE_DIR CONTROL_SOCKET_NAME
 #define HILOG_FILE_DIR "/data/log/hilog/"
 #define MAX_LOG_LEN 1024  /* maximum length of a log, include '\0' */
 #define MAX_TAG_LEN 32  /* log tag size, include '\0' */
@@ -97,6 +96,7 @@ typedef enum {
     SUCCESS_CONTINUE = 1,
     ERR_LOG_LEVEL_INVALID  = -2,
     ERR_LOG_TYPE_INVALID = -3,
+    ERR_INVALID_RQST_CMD = -4,
     ERR_INVALID_DOMAIN_STR = -5,
     ERR_QUERY_TYPE_INVALID = -8,
     ERR_LOG_PERSIST_FILE_SIZE_INVALID = -11,
