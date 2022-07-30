@@ -19,7 +19,16 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-LogIoctl::LogIoctl(IoctlCmd rqst, IoctlCmd rsp) : socket(CONTROL_SOCKET_NAME, 0)
+static string GetSocketName(IoctlCmd cmd)
+{
+    if (cmd == IoctlCmd::OUTPUT_RQST) {
+        return OUTPUT_SOCKET_NAME;
+    } else {
+        return CONTROL_SOCKET_NAME;
+    }
+}
+
+LogIoctl::LogIoctl(IoctlCmd rqst, IoctlCmd rsp) : socket(GetSocketName(rqst), 0)
 {
     socketInit = socket.Init();
     if (socketInit != SeqPacketSocketResult::CREATE_AND_CONNECTED) {
