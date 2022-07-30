@@ -15,6 +15,11 @@
 
 #include "hilog_input_socket_client.h"
 
+#include <bits/alltypes.h>
+#include <cstdint>
+
+#include "hilog_common.h"
+
 namespace OHOS {
 namespace HiviewDFX {
 static HilogInputSocketClient g_hilogInputSocketClient;

@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
-#include <iostream>
-
 #include "seq_packet_socket_client.h"
+
+#include <__config>
+#include <iostream>
+#include <ostream>
 
 namespace OHOS {
 namespace HiviewDFX {

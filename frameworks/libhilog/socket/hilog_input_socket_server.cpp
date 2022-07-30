@@ -14,8 +14,14 @@
  */
 
 #include "hilog_input_socket_server.h"
+
+#include <__threading_support>
+#include <atomic>
+#include <functional>
 #include <sys/prctl.h>
+#include <sys/socket.h>
 #include <thread>
+#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {

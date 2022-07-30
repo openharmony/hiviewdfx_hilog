@@ -16,6 +16,11 @@
 #ifndef SEQ_PACKET_SOCKET_CLIENT_H
 #define SEQ_PACKET_SOCKET_CLIENT_H
 
+#include <cstdint>
+#include <iosfwd>
+#include <string>
+#include <sys/socket.h>
+
 #include "socket_client.h"
 
 namespace OHOS {
