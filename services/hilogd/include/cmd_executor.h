@@ -23,6 +23,7 @@
 
 #include <socket.h>
 #include "log_buffer.h"
+#include "service_controller.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -33,15 +34,19 @@ struct ClientThread {
 
 class CmdExecutor {
 public:
-    explicit CmdExecutor(HilogBuffer& buffer) : m_hilogBuffer(buffer) {}
+    explicit CmdExecutor(HilogBuffer& buffer, const CmdList& list, const std::string& name)
+    : m_hilogBuffer(buffer)
+    , m_cmdList(list), m_name(name) {}
     ~CmdExecutor();
-    void MainLoop();
+    void MainLoop(const std::string& sockName);
 private:
     void OnAcceptedConnection(std::unique_ptr<Socket> handler);
     void ClientEventLoop(std::unique_ptr<Socket> handler);
     void CleanFinishedClients();
 
     HilogBuffer& m_hilogBuffer;
+    CmdList m_cmdList;
+    std::string m_name;
     std::list<std::unique_ptr<ClientThread>> m_clients;
     std::mutex m_clientAccess;
     std::vector<std::thread::id> m_finishedClients;
