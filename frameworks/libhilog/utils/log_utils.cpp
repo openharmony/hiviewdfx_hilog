@@ -85,6 +85,7 @@ static const KVMap<int16_t, string> g_ErrorMsgs({
     {ERR_LOG_LEVEL_INVALID, "Invalid log level, the valid log levels include D/I/W/E/F"
     " or DEBUG/INFO/WARN/ERROR/FATAL"},
     {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init/kmsg"},
+    {ERR_INVALID_RQST_CMD, "Invalid request cmd, please check sourcecode"},
     {ERR_QUERY_TYPE_INVALID, "Can't query kmsg type logs combined with other types logs."},
     {ERR_INVALID_DOMAIN_STR, "Invalid domain string"},
     {ERR_LOG_PERSIST_FILE_SIZE_INVALID, "Invalid log persist file size, file size should be in range ["

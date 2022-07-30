@@ -33,6 +33,8 @@
 
 namespace OHOS {
 namespace HiviewDFX {
+using CmdList = std::vector<IoctlCmd>;
+
 class ServiceController  {
 public:
     static constexpr int MAX_DATA_LEN = 2048;
@@ -41,7 +43,7 @@ public:
     ServiceController(std::unique_ptr<Socket> communicationSocket, HilogBuffer& buffer);
     ~ServiceController();
 
-    void CommunicationLoop(std::atomic<bool>& stopLoop);
+    void CommunicationLoop(std::atomic<bool>& stopLoop, const CmdList& list);
 
 private:
     int GetMsgHeader(MsgHeader& hdr);
@@ -76,6 +78,7 @@ private:
     void HandleLogKmsgEnableRqst(const KmsgEnableRqst& rqst);
 
     void NotifyForNewData();
+    bool IsValidCmd(const CmdList& list, IoctlCmd cmd);
 
     std::unique_ptr<Socket> m_communicationSocket;
     HilogBuffer& m_hilogBuffer;

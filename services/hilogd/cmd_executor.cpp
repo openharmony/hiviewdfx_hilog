@@ -46,9 +46,9 @@ CmdExecutor::~CmdExecutor()
     }
 }
 
-void CmdExecutor::MainLoop()
+void CmdExecutor::MainLoop(const std::string& socketName)
 {
-    SeqPacketSocketServer cmdServer(CONTROL_SOCKET_NAME, MAX_CLIENT_CONNECTIONS);
+    SeqPacketSocketServer cmdServer(socketName, MAX_CLIENT_CONNECTIONS);
     if (cmdServer.Init() < 0) {
         std::cerr << "Failed to init control socket ! \n";
         return;
@@ -123,9 +123,9 @@ void CmdExecutor::ClientEventLoop(std::unique_ptr<Socket> handler)
         return;
     }
 
-    prctl(PR_SET_NAME, "hilogd.query");
+    prctl(PR_SET_NAME, m_name.c_str());
     ServiceController serviceCtrl(std::move(handler), m_hilogBuffer);
-    serviceCtrl.CommunicationLoop((*clientInfoIt)->m_stopThread);
+    serviceCtrl.CommunicationLoop((*clientInfoIt)->m_stopThread, m_cmdList);
 
     std::lock_guard<std::mutex> ul(m_finishedClientAccess);
     m_finishedClients.push_back(std::this_thread::get_id());

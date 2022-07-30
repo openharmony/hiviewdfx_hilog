@@ -219,8 +219,28 @@ int HilogdEntry()
         (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
 
-    CmdExecutor cmdExecutor(hilogBuffer);
-    cmdExecutor.MainLoop();
+    auto cmdExecuteTask = std::async(std::launch::async, [&hilogBuffer]() {
+        prctl(PR_SET_NAME, "hilogd.cmd");
+        CmdList controlCmdList {
+            IoctlCmd::PERSIST_START_RQST,
+            IoctlCmd::PERSIST_STOP_RQST,
+            IoctlCmd::PERSIST_QUERY_RQST,
+            IoctlCmd::BUFFERSIZE_GET_RQST,
+            IoctlCmd::BUFFERSIZE_SET_RQST,
+            IoctlCmd::STATS_QUERY_RQST,
+            IoctlCmd::STATS_CLEAR_RQST,
+            IoctlCmd::DOMAIN_FLOWCTRL_RQST,
+            IoctlCmd::LOG_REMOVE_RQST,
+            IoctlCmd::KMSG_ENABLE_RQST,
+        };
+        CmdExecutor controlExecutor(hilogBuffer, controlCmdList, ("hilogd.control"));
+        controlExecutor.MainLoop(CONTROL_SOCKET_NAME);
+    });
+
+    CmdList outputList {IoctlCmd::OUTPUT_RQST};
+    CmdExecutor outputExecutor(hilogBuffer, outputList, ("hilogd.output"));
+    outputExecutor.MainLoop(OUTPUT_SOCKET_NAME);
+
     return 0;
 }
 } // namespace HiviewDFX

@@ -721,7 +721,13 @@ void ServiceController::HandleLogKmsgEnableRqst(const KmsgEnableRqst& rqst)
     (void)m_communicationSocket->Write(reinterpret_cast<char*>(&rsp), sizeof(rsp));
 }
 
-void ServiceController::CommunicationLoop(std::atomic<bool>& stopLoop)
+bool ServiceController::IsValidCmd(const CmdList& list, IoctlCmd cmd)
+{
+    auto it = find(list.begin(), list.end(), cmd);
+    return (it != list.end());
+}
+
+void ServiceController::CommunicationLoop(std::atomic<bool>& stopLoop, const CmdList& list)
 {
     std::cout << "ServiceController Loop Begin" << std::endl;
     MsgHeader hdr;
@@ -731,6 +737,11 @@ void ServiceController::CommunicationLoop(std::atomic<bool>& stopLoop)
     }
     IoctlCmd cmd = static_cast<IoctlCmd>(hdr.cmd);
     std::cout << "Receive cmd: " << static_cast<int>(cmd) << endl;
+    if (!IsValidCmd(list, cmd)) {
+        cout << "Not valid cmd for this executor" << endl;
+        WriteErrorRsp(ERR_INVALID_RQST_CMD);
+        return;
+    }
     switch (cmd) {
         case IoctlCmd::OUTPUT_RQST: {
             RequestHandler<OutputRqst>(hdr, [this](const OutputRqst& rqst) {
