@@ -27,6 +27,7 @@ ohos_executable("hilogd") {
     "log_buffer.cpp",
     "log_collector.cpp",
     "log_compress.cpp",
+    "log_domains.cpp",
     "log_kmsg.cpp",
     "log_persister.cpp",
     "log_persister_rotator.cpp",

@@ -33,8 +33,8 @@ static constexpr uint32_t ONE_KB = (1UL<<10);
 static constexpr uint32_t ONE_MB = (1UL<<20);
 static constexpr uint32_t ONE_GB = (1UL<<30);
 static constexpr uint64_t ONE_TB = (1ULL<<40);
-static constexpr uint32_t DOMAIN_MIN = 0;
-static constexpr uint32_t DOMAIN_MAX = 0xDFFFFFF;
+static constexpr uint32_t DOMAIN_MIN = DOMAIN_APP_MIN;
+static constexpr uint32_t DOMAIN_MAX = DOMAIN_OS_MAX;
 
 // Buffer Size&Char Map
 static const KVMap<char, uint64_t> g_SizeMap({
@@ -97,7 +97,8 @@ static const KVMap<int16_t, string> g_ErrorMsgs({
     {ERR_LOG_PERSIST_FILE_OPEN_FAIL, "Log persist open file failed"},
     {ERR_LOG_PERSIST_JOBID_FAIL, "Log persist jobid not exist"},
     {ERR_LOG_PERSIST_TASK_EXISTED, "Log persist task is existed"},
-    {ERR_DOMAIN_INVALID, ("Invalid domain, domain should be in range (0, " + Uint2HexStr(DOMAIN_MAX) +"]")},
+    {ERR_DOMAIN_INVALID, ("Invalid domain, domain should be in range (" + Uint2HexStr(DOMAIN_MIN)
+    + ", " +Uint2HexStr(DOMAIN_MAX) +"]")},
     {ERR_MSG_LEN_INVALID, "Invalid message length"},
     {ERR_LOG_PERSIST_JOBID_INVALID, "Invalid jobid, jobid should be in range [" + to_string(JOB_ID_MIN)
     + ", " + to_string(JOB_ID_MAX) + ")"},
@@ -290,11 +291,6 @@ uint16_t Str2ComboLogLevel(const string& str)
         logLevels |= (1 << t);
     }
     return logLevels;
-}
-
-bool IsValidDomain(uint32_t domain)
-{
-    return (domain > DOMAIN_MIN) && (domain < DOMAIN_MAX);
 }
 
 void Split(const std::string& src, std::vector<std::string>& dest, const std::string& separator)
