@@ -17,6 +17,7 @@
 #define LOG_COLLECTOR_H
 #include <list>
 
+#include <properties.h>
 #include "log_buffer.h"
 #include "hilog_input_socket_server.h"
 
@@ -26,7 +27,9 @@ class LogCollector {
 public:
     explicit LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer)
     {
-        CountEnable = m_hilogBuffer.GetStatsInfo().IsEnable();
+        countEnable = m_hilogBuffer.GetStatsInfo().IsEnable();
+        flowControl = IsDomainSwitchOn();
+        debug = IsPersistDebugOn();
     }
     void InsertDropInfo(const HilogMsg &msg, int droppedCount);
     size_t InsertLogToBuffer(const HilogMsg& msg);
@@ -39,7 +42,9 @@ public:
 private:
     HilogBuffer& m_hilogBuffer;
     StatsInfo info;
-    bool CountEnable;
+    bool countEnable;
+    bool flowControl;
+    bool debug;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
