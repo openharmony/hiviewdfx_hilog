@@ -170,8 +170,6 @@ int HilogdEntry()
     std::signal(SIGINT, SigHandler);
     HilogBuffer hilogBuffer;
 
-    InitDomainFlowCtrl();
-
     // Start log_collector
 #ifndef __RECV_MSG_WITH_UCRED_
     auto onDataReceive = [&hilogBuffer](std::vector<char>& data) {

@@ -13,10 +13,6 @@
  * limitations under the License.
  */
 
-#include "log_collector.h"
-#include "log_kmsg.h"
-#include "flow_control.h"
-
 #include <cstdlib>
 #include <cstring>
 #include <cinttypes>
@@ -24,6 +20,11 @@
 #include <string>
 #include <thread>
 #include <string_view>
+
+#include "log_kmsg.h"
+#include "flow_control.h"
+#include "log_domains.h"
+#include "log_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -74,14 +75,21 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
     }
 
     HilogMsg& msg = *(reinterpret_cast<HilogMsg *>(data.data()));
+    // check domain id
+    if (!debug && IsValidDomain(static_cast<LogType>(msg.type), msg.domain) == false) {
+        std::cout << "Invalid domain id: 0x" << std::hex << msg.domain << std::dec << ", type:" << msg.type << endl;
+        return;
+    }
 #ifdef __RECV_MSG_WITH_UCRED_
     msg.pid = cred.pid;
 #endif
-
-    // Domain flow control
     bool dropped = false;
+    // Domain flow control
     do {
-        int ret = FlowCtrlDomain(msg);
+        int ret = 0;
+        if (flowControl && !debug) {
+            ret = FlowCtrlDomain(msg);
+        }
         if (ret < 0) {
             // dropping message
             dropped = true;
@@ -94,7 +102,7 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
     } while (0);
 
     // Log statistics
-    if (CountEnable) {
+    if (countEnable) {
         info = {
             .level = msg.level,
             .type = msg.type,

@@ -139,30 +139,9 @@ void ParseDomainQuota(std::string &domainStr)
     }
 }
 
-int32_t InitDomainFlowCtrl()
-{
-    static constexpr char domainFile[] = "/system/etc/hilog_domains.conf";
-    std::ifstream ifs(domainFile, std::ifstream::in);
-    if (!ifs.is_open()) {
-#ifdef DEBUG
-        std::cout << "open file failed" << std::endl;
-#endif
-        return RET_FAIL;
-    }
-    std::string line;
-    while (!ifs.eof()) {
-        getline(ifs, line);
-        ParseDomainQuota(line);
-    }
-    ifs.close();
-    ClearDroppedByType();
-    ClearDroppedByDomain();
-    return 0;
-}
-
 int FlowCtrlDomain(const HilogMsg& hilogMsg)
 {
-    if (hilogMsg.type == LOG_APP || !IsDomainSwitchOn() || IsDebugOn()) {
+    if (hilogMsg.type == LOG_APP) {
         return FLOW_CTL_NORAML;
     }
     LogTimeStamp tsNow(0, 0);
