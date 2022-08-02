@@ -56,6 +56,11 @@ public:
         return keys;
     }
 
+    bool IsValidKey(K key) const
+    {
+        return (str_map.find(key) != str_map.end());
+    }
+
 private:
     const std::unordered_map<K, V> str_map;
     const K def_key;
@@ -80,7 +85,6 @@ std::string ShowFormat2Str(uint16_t showFormat);
 uint16_t Str2ShowFormat(const std::string& str);
 std::string Size2Str(uint64_t size);
 uint64_t Str2Size(const std::string& str);
-bool IsValidDomain(uint32_t domain);
 
 constexpr char DEFAULT_SPLIT_DELIMIT[] = ",";
 void Split(const std::string& src, std::vector<std::string>& dest,
