@@ -34,6 +34,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD001800, "SAMgr"},
     {0xD001B00, "Account"},
     {0xD001C00, "MiscService"},
+    {0xD001D00, "Barrierfree"},
     {0xD001E00, "Global"},
     {0xD001F00, "Telephony"},
     {0xD002100, "AI"},
