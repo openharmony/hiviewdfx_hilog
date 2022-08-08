@@ -40,6 +40,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD002100, "AI"},
     {0xD002200, "MSDP"},
     {0xD002300, "Location"},
+    {0xD002400, "UserIAM"},
     {0xD002500, "Drivers"},
     {0xD002600, "Kernel"},
     {0xD002700, "Sensors"},
