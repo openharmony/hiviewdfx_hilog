@@ -65,7 +65,7 @@ static int CheckSocket(SocketHandler& socketHandler)
 
     int fd = GenerateFD();
     if (fd < 0) {
-        std::cerr << __FILE__ << __LINE__ << " Can't create socket! Errno: " << errno << "\n";
+        std::cerr << "Can't get hilog socket! Errno: " << errno << "\n";
         return fd;
     }
 
@@ -92,7 +92,7 @@ static int CheckConnection(SocketHandler& socketHandler)
     auto result = TEMP_FAILURE_RETRY(connect(socketHandler.socketFd.load(),
         reinterpret_cast<const sockaddr*>(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
     if (result < 0) {
-        std::cerr << __FILE__ << __LINE__ << " Can't connect to server. Errno: " << errno << "\n";
+        std::cerr << "Can't connect to hilog server. Errno: " << errno << "\n";
         return result;
     }
     socketHandler.isConnected.store(true);
