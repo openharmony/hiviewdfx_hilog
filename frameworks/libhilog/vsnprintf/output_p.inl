@@ -215,10 +215,8 @@ static int SecDecodeSize(SecChar ch, SecFormatAttr *attr, const SecChar **format
     case SECUREC_CHAR('l'):
         if (**format == SECUREC_CHAR('l')) {
             ++(*format);
-            attr->flags |= SECUREC_FLAG_LONGLONG;   /* long long */
-        } else {
-            attr->flags |= SECUREC_FLAG_LONG;   /* long int or wchar_t */
         }
+        attr->flags |= SECUREC_FLAG_LONGLONG;   /* long long */
         break;
     case SECUREC_CHAR('t'):
         attr->flags |= SECUREC_FLAG_PTRDIFF;
