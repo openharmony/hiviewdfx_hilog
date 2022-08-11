@@ -23,6 +23,7 @@ using namespace std;
 
 static const KVMap<uint32_t, string> g_DomainList({
     {0xD000100, "Bluetooth"},
+    {0xD000300, "NFC"},
     {0xD000F00, "For test using"},
     {0xD001100, "AppExecFwk"},
     {0xD001200, "Notification"},
