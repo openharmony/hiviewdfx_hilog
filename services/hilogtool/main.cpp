@@ -299,7 +299,7 @@ struct HilogArgs {
     uint32_t domains[MAX_DOMAINS];
     string regex;
     string fileName;
-    uint64_t buffSize;
+    uint32_t buffSize;
     uint32_t jobId;
     uint32_t fileSize;
     uint16_t levels;
@@ -320,10 +320,11 @@ struct HilogArgs {
     bool noBlock;
     uint16_t tailLines;
 
-    HilogArgs() : headLines (0), baseLevel(0), blackDomain(false), domainCount(0), regex(""), fileName(""),
-        buffSize(0), jobId(0), fileSize(0), levels(0), stream(""), fileNum(0), blackPid(false), pidCount(0),
-        types(0), blackTag(false), tagCount(0), colorful(false), timeFormat(FormatTime::INVALID),
-        timeAccuFormat(FormatTimeAccu::INVALID), year(false), zone(false), noBlock(false), tailLines(0) {}
+    HilogArgs() : headLines (0), baseLevel(0), blackDomain(false), domainCount(0), domains { 0 }, regex(""),
+        fileName(""), buffSize(0), jobId(0), fileSize(0), levels(0), stream(""), fileNum(0), blackPid(false),
+        pidCount(0), pids { 0 }, types(0), blackTag(false), tagCount(0), tags { "" }, colorful(false),
+        timeFormat(FormatTime::INVALID), timeAccuFormat(FormatTimeAccu::INVALID), year(false), zone(false),
+        noBlock(false), tailLines(0) {}
 
     void ToOutputRqst(OutputRqst& rqst)
     {
@@ -472,10 +473,10 @@ static int BaseLogLevelHandler(HilogArgs& context, const char *arg)
     return RET_SUCCESS;
 }
 
-static constexpr char g_blackPrefix = '^';
+static constexpr char BLACK_PREFIX = '^';
 static int DomainHandler(HilogArgs& context, const char *arg)
 {
-    context.blackDomain = (arg[0] == g_blackPrefix);
+    context.blackDomain = (arg[0] == BLACK_PREFIX);
     std::vector<std::string> domains;
     Split(context.blackDomain ? arg + 1 : arg, domains);
     if (domains.size() == 0) {
@@ -656,7 +657,7 @@ static int PrivateFeatureSetHandler(HilogArgs& context, const char *arg)
 
 static int PidHandler(HilogArgs& context, const char *arg)
 {
-    context.blackPid = (arg[0] == g_blackPrefix);
+    context.blackPid = (arg[0] == BLACK_PREFIX);
     std::vector<std::string> pids;
     Split(context.blackPid ? arg + 1 : arg, pids);
     if (pids.size() == 0) {
@@ -678,7 +679,7 @@ static int PidHandler(HilogArgs& context, const char *arg)
     return RET_SUCCESS;
 }
 
-static int SetDomainFlowCtrl(HilogArgs& context, bool on)
+static int SetDomainFlowCtrl(bool on)
 {
     DomainFlowCtrlRqst rqst = { 0 };
     rqst.on = on;
@@ -701,10 +702,10 @@ static int FlowControlFeatureSetHandler(HilogArgs& context, const char *arg)
         ret = SetProcessSwitchOn(false);
         cout << "Set flow control by process to disabled, result: " << ErrorCode2Str(ret) << endl;
     } else if (argStr == (domain + featureOn)) {
-        ret = SetDomainFlowCtrl(context, true);
+        ret = SetDomainFlowCtrl(true);
         cout << "Set flow control by domain to enabled, result: " << ErrorCode2Str(ret) << endl;
     } else if (argStr == (domain + featureOff)) {
-        ret = SetDomainFlowCtrl(context, false);
+        ret = SetDomainFlowCtrl(false);
         cout << "Set flow control by domain to disabled, result: " << ErrorCode2Str(ret) << endl;
     } else {
         return ERR_INVALID_ARGUMENT;
@@ -768,7 +769,7 @@ static int TypeHandler(HilogArgs& context, const char *arg)
 
 static int TagHandler(HilogArgs& context, const char *arg)
 {
-    context.blackTag = (arg[0] == g_blackPrefix);
+    context.blackTag = (arg[0] == BLACK_PREFIX);
     std::vector<std::string> tags;
     Split(context.blackTag ? arg + 1 : arg, tags);
     int index = 0;
@@ -861,7 +862,7 @@ static void PrintTaskInfo(const PersistTaskInfo& task)
     cout << task.fileName << " " << Size2Str(task.fileSize) << " " << to_string(task.fileNum) << endl;
 }
 
-static int PersistTaskQuery(HilogArgs& context)
+static int PersistTaskQuery()
 {
     PersistQueryRqst rqst = { 0 };
     LogIoctl ioctl(IoctlCmd::PERSIST_QUERY_RQST, IoctlCmd::PERSIST_QUERY_RSP);
@@ -885,7 +886,7 @@ static int PersistTaskHandler(HilogArgs& context, const char *arg)
     } else if (strArg == "stop") {
         return PersistTaskStop(context);
     } else if (strArg == "query") {
-        return PersistTaskQuery(context);
+        return PersistTaskQuery();
     } else {
         return ERR_INVALID_ARGUMENT;
     }
@@ -949,14 +950,14 @@ static OptEntry optEntries[] = {
     {'z', "tail", ControlCmd::CMD_QUERY, TailHandler, true, 1},
     {0, nullptr, ControlCmd::NOT_CMD, nullptr, false, 1}, // End default entry
 }; // "hxz:grsSa:v:e:t:L:G:f:l:n:j:w:p:k:D:T:b:Q:m:P:"
-static constexpr int optEntryCount = sizeof(optEntries) / sizeof(OptEntry);
+static constexpr int OPT_ENTRY_CNT = sizeof(optEntries) / sizeof(OptEntry);
 
-static void GetOpts(string& opts, struct option(&longOptions)[optEntryCount])
+static void GetOpts(string& opts, struct option(&longOptions)[OPT_ENTRY_CNT])
 {
     int longOptcount = 0;
     opts = "";
     int i;
-    for (i=0; i < optEntryCount; i++) {
+    for (i = 0; i < OPT_ENTRY_CNT; i++) {
         if (optEntries[i].opt == 0) {
             break;
         }
@@ -984,9 +985,9 @@ static void GetOpts(string& opts, struct option(&longOptions)[optEntryCount])
 
 static OptEntry* GetOptEntry(int choice)
 {
-    OptEntry *entry = &(optEntries[optEntryCount - 1]);
+    OptEntry *entry = &(optEntries[OPT_ENTRY_CNT - 1]);
     int i = 0;
-    for (i = 0; i < optEntryCount; i++) {
+    for (i = 0; i < OPT_ENTRY_CNT; i++) {
         if (optEntries[i].opt == static_cast<char>(choice)) {
             entry = &(optEntries[i]);
             break;
@@ -997,7 +998,7 @@ static OptEntry* GetOptEntry(int choice)
 
 int HilogEntry(int argc, char* argv[])
 {
-    struct option longOptions[optEntryCount];
+    struct option longOptions[OPT_ENTRY_CNT];
     string opts;
     GetOpts(opts, longOptions);
     HilogArgs context;
