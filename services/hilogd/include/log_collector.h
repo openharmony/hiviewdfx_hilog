@@ -28,6 +28,7 @@ public:
     explicit LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer)
     {
         countEnable = m_hilogBuffer.GetStatsInfo().IsEnable();
+        info = { 0 };
         flowControl = IsDomainSwitchOn();
         debug = IsPersistDebugOn();
     }
