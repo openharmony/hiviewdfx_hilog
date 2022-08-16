@@ -69,6 +69,7 @@ LogPersister::LogPersister(HilogBuffer &buffer) : m_hilogBuffer(buffer)
 {
     m_mappedPlainLogFile = nullptr;
     m_bufReader = m_hilogBuffer.CreateBufReader([this]() { NotifyNewLogAvailable(); });
+    m_startMsg = { 0 };
 }
 
 LogPersister::~LogPersister()

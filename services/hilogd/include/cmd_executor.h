@@ -35,8 +35,7 @@ struct ClientThread {
 class CmdExecutor {
 public:
     explicit CmdExecutor(HilogBuffer& buffer, const CmdList& list, const std::string& name)
-    : m_hilogBuffer(buffer)
-    , m_cmdList(list), m_name(name) {}
+        : m_hilogBuffer(buffer), m_cmdList(list), m_name(name) {}
     ~CmdExecutor();
     void MainLoop(const std::string& sockName);
 private:

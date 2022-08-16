@@ -137,16 +137,16 @@ static bool LogMatchFilter(const LogFilter& filter, const HilogData& logData)
 
     int i = 0;
     // domain match
-    static constexpr uint32_t LowByte = 0xFF;
-    static constexpr uint32_t LowByteReverse = ~LowByte;
+    static constexpr uint32_t LOW_BYTE = 0xFF;
+    static constexpr uint32_t LOW_BYTE_REVERSE = ~LOW_BYTE;
     /* 1) domain id equals exactly: (0xd012345 == 0xd012345)
        2) last 8 bits is sub domain id, if it's 0xFF, compare high 24 bits:
        (0xd0123ff & 0xffffff00 == 0xd012345 & 0xffffff00) */
     bool match = false;
     for (i = 0; i < filter.domainCount; i++) {
         if ((logData.domain == filter.domains[i])
-        || ((static_cast<uint8_t>(filter.domains[i]) == LowByte)
-             && ((logData.domain & LowByteReverse) == (filter.domains[i] & LowByteReverse)))) {
+        || ((static_cast<uint8_t>(filter.domains[i]) == LOW_BYTE)
+             && ((logData.domain & LOW_BYTE_REVERSE) == (filter.domains[i] & LOW_BYTE_REVERSE)))) {
             match = true;
             break;
         }

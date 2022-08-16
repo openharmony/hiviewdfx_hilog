@@ -14,7 +14,7 @@
  */
 #include <sys/time.h>
 #include <iomanip>
-
+#include <map>
 #include <securec.h>
 #include <hilog/log.h>
 
@@ -47,7 +47,7 @@ static constexpr int DOMAIN_SHORT_MASK = 0xFFFFF;
 
 static inline int GetColor(uint16_t level)
 {
-    switch (level) {
+    switch (LogLevel(level)) {
         case LOG_DEBUG: return COLOR_BLUE;
         case LOG_INFO: return COLOR_GREEN;
         case LOG_WARN: return COLOR_ORANGE;
@@ -61,6 +61,7 @@ static inline uint32_t ShortDomain(uint32_t d)
 {
     return (d) & DOMAIN_SHORT_MASK;
 }
+
 static void PrintLogPrefix(const LogContent& content, const LogFormat& format, std::ostream& out)
 {
     // 1. print day & time
@@ -128,23 +129,26 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
         out << "\x1B[38;5;" << GetColor(content.level) << "m";
     }
 
-    const char *p_head = content.log;
-    const char *p_scan = content.log;
-    while (*p_scan != '\0') {
-        if (*p_scan == '\n') {
+    const char *pHead = content.log;
+    const char *pScan = content.log;
+    while (*pScan != '\0') {
+        if (*pScan == '\n') {
             char tmp[MAX_LOG_LEN];
-            int len = static_cast<int>(p_scan - p_head);
-            (void)memcpy_s(tmp, MAX_LOG_LEN - 1, p_head, len);
+            int len = static_cast<int>(pScan - pHead);
+            errno_t ret = memcpy_s(tmp, MAX_LOG_LEN - 1, pHead, len);
+            if (ret != EOK) {
+                break;
+            }
             tmp[(MAX_LOG_LEN - 1) > len ? len : (MAX_LOG_LEN -1)] = '\0';
             PrintLogPrefix(content, format, out);
             out << tmp << endl;
-            p_head = p_scan + 1;
+            pHead = pScan + 1;
         }
-        p_scan++;
+        pScan++;
     }
-    if (p_head[0]) {
+    if (pHead[0] != '\0') {
         PrintLogPrefix(content, format, out);
-        out << p_head;
+        out << pHead;
     }
 
     // n. restore color
