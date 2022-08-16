@@ -22,7 +22,10 @@ ohos_shared_library("hilog_ndk") {
   sources = [ "hilog_ndk.c" ]
 
   external_deps = [ "hilog_native:libhilog" ]
-
+  install_images = [
+    "system",
+    "updater",
+  ]
   part_name = "hilog_native"
   subsystem_name = "hiviewdfx"
 }

@@ -50,7 +50,10 @@ ohos_executable("hilogd") {
     "hilog_native:libhilog",
     "init:libbegetutil",
   ]
-
+  install_images = [
+    "system",
+    "updater",
+  ]
   install_enable = true
   part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
