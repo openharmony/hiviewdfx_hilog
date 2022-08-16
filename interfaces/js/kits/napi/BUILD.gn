@@ -47,10 +47,7 @@ ohos_shared_library("libhilognapi") {
 
   public_configs = [ ":libhilog_js_cfg" ]
   configs = [ ":libhilog_js_cfg" ]
-  install_images = [
-    "system",
-    "updater",
-  ]
+
   output_name = "libhilog"
   relative_install_dir = "module"
   subsystem_name = "hiviewdfx"
