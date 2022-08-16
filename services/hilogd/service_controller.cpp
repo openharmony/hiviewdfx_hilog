@@ -45,14 +45,14 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-static const string g_logPersisterDir = HILOG_FILE_DIR;
-static constexpr uint16_t g_defaultLogTypes = ((0b01 << LOG_APP) | (0b01 << LOG_CORE) | (0b01 << LOG_INIT));
-static constexpr uint16_t g_defaultRemoveLogTypes = ((0b01 << LOG_APP) | (0b01 << LOG_CORE));
-static const uint32_t g_defaultPersistFileNum = 10;
-static constexpr uint32_t g_defaultPersistFileSize = (4 * 1024 * 1024);
-static const uint32_t g_defaultPersistNormalJobId = 1;
-static const uint32_t g_defaultPersistKmsgJobId = 2;
-static const int INFO_SUFFIX = 5;
+static const string LOG_PERSISTER_DIR = HILOG_FILE_DIR;
+static constexpr uint16_t DEFAULT_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE) | (0b01 << LOG_INIT));
+static constexpr uint16_t DEFAULT_REMOVE_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE));
+static constexpr uint32_t DEFAULT_PERSIST_FILE_NUM = 10;
+static constexpr uint32_t DEFAULT_PERSIST_FILE_SIZE = (4 * 1024 * 1024);
+static constexpr uint32_t DEFAULT_PERSIST_NORMAL_JOB_ID = 1;
+static constexpr uint32_t DEFAULT_PERSIST_KMSG_JOB_ID = 2;
+static constexpr int INFO_SUFFIX = 5;
 
 ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket, HilogBuffer& buffer)
     : m_communicationSocket(std::move(communicationSocket))
@@ -402,7 +402,7 @@ static int CheckOutputRqst(const OutputRqst& rqst)
 static void LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilter& filter)
 {
     if (rqst.types == 0) {
-        filter.types = g_defaultLogTypes;
+        filter.types = DEFAULT_LOG_TYPES;
     } else {
         filter.types = rqst.types;
     }
@@ -498,17 +498,17 @@ static void PersistStartRqst2Msg(const PersistStartRqst &rqst, LogPersistStartMs
     LogFilterFromOutputRqst(rqst.outputFilter, msg.filter);
     bool isKmsgType = rqst.outputFilter.types == (0b01 << LOG_KMSG);
     msg.compressAlg = LogCompress::Str2CompressType(rqst.stream);
-    msg.fileSize = rqst.fileSize == 0 ? g_defaultPersistFileSize : rqst.fileSize;
-    msg.fileNum = rqst.fileNum == 0 ? g_defaultPersistFileNum : rqst.fileNum;
+    msg.fileSize = rqst.fileSize == 0 ? DEFAULT_PERSIST_FILE_SIZE : rqst.fileSize;
+    msg.fileNum = rqst.fileNum == 0 ? DEFAULT_PERSIST_FILE_NUM : rqst.fileNum;
     msg.jobId = rqst.jobId;
     if (msg.jobId == 0) {
-        msg.jobId = isKmsgType ? g_defaultPersistKmsgJobId : g_defaultPersistNormalJobId;
+        msg.jobId = isKmsgType ? DEFAULT_PERSIST_KMSG_JOB_ID : DEFAULT_PERSIST_NORMAL_JOB_ID;
     }
     string fileName = rqst.fileName;
     if (fileName == "") {
         fileName = (isKmsgType ? "hilog_kmsg" : "hilog");
     }
-    string filePath = g_logPersisterDir + fileName;
+    string filePath = LOG_PERSISTER_DIR + fileName;
     (void)strncpy_s(msg.filePath, FILE_PATH_MAX_LEN, filePath.c_str(), filePath.length());
 }
 
@@ -602,13 +602,13 @@ void ServiceController::HandleBufferSizeGetRqst(const BufferSizeGetRqst& rqst)
     vector<uint16_t> allTypes = GetAllLogTypes();
     uint16_t types = rqst.types;
     if (types == 0) {
-        types = g_defaultLogTypes;
+        types = DEFAULT_LOG_TYPES;
     }
     int i = 0;
     BufferSizeGetRsp rsp = { 0 };
     for (uint16_t t : allTypes) {
         if ((1 << t) & types) {
-            rsp.size[t] = m_hilogBuffer.GetBuffLen(t);
+            rsp.size[t] = static_cast<uint32_t>(m_hilogBuffer.GetBuffLen(t));
             i++;
         }
     }
@@ -625,7 +625,7 @@ void ServiceController::HandleBufferSizeSetRqst(const BufferSizeSetRqst& rqst)
     vector<uint16_t> allTypes = GetAllLogTypes();
     uint16_t types = rqst.types;
     if (types == 0) {
-        types = g_defaultLogTypes;
+        types = DEFAULT_LOG_TYPES;
     }
     int i = 0;
     BufferSizeSetRsp rsp = { 0 };
@@ -694,7 +694,7 @@ void ServiceController::HandleLogRemoveRqst(const LogRemoveRqst& rqst)
     vector<uint16_t> allTypes = GetAllLogTypes();
     uint16_t types = rqst.types;
     if (types == 0) {
-        types = g_defaultRemoveLogTypes;
+        types = DEFAULT_REMOVE_LOG_TYPES;
     }
     int i = 0;
     LogRemoveRsp rsp = { types };
@@ -826,7 +826,7 @@ void ServiceController::NotifyForNewData()
 int RestorePersistJobs(HilogBuffer& hilogBuffer)
 {
     std::cout << " Start restoring persist jobs!\n";
-    DIR *dir = opendir(g_logPersisterDir.c_str());
+    DIR *dir = opendir(LOG_PERSISTER_DIR.c_str());
     struct dirent *ent = nullptr;
     if (dir != nullptr) {
         while ((ent = readdir(dir)) != nullptr) {
@@ -834,8 +834,8 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
             std::string pPath(ent->d_name, length);
             if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
                 if (pPath == "hilog.info") continue;
-                std::cout << " Found a persist job! Path: " << g_logPersisterDir + pPath << "\n";
-                FILE* infile = fopen((g_logPersisterDir + pPath).c_str(), "r");
+                std::cout << " Found a persist job! Path: " << LOG_PERSISTER_DIR + pPath << "\n";
+                FILE* infile = fopen((LOG_PERSISTER_DIR + pPath).c_str(), "r");
                 if (infile == nullptr) {
                     std::cerr << " Error opening recovery info file!\n";
                     continue;
