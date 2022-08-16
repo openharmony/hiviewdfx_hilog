@@ -81,7 +81,7 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
     if (ret < 0) {
         // dropping message
         return;
-    } else if (ret > 0) { /* if >0 !Need  print how many lines was dopped */
+    } else if (ret > 0) { /* if >0 !Need  print how many lines was dropped */
         // store info how many was dropped
         InsertDropInfo(*msg, ret);
     }
