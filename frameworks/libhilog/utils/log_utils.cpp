@@ -127,6 +127,7 @@ static const KVMap<int16_t, string> g_ErrorMsgs({
     {ERR_STATS_NOT_ENABLE, "Statistic feature is not enable, "
      "please set param persist.sys.hilog.stats true to enable it, "
      "further more, you can set persist.sys.hilog.stats.tag true to enable counting log by tags"},
+    {ERR_NO_RUNNING_TASK, "No running persistent task"},
 }, RET_FAIL, "Unknown error code");
 
 string ErrorCode2Str(int16_t errorCode)
