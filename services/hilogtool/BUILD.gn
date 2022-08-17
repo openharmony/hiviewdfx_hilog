@@ -39,7 +39,10 @@ ohos_executable("hilog") {
     "c_utils:utils",
     "hilog_native:libhilog",
   ]
-
+  install_images = [
+    "system",
+    "updater",
+  ]
   install_enable = true
   part_name = "hilog_service"
   subsystem_name = "hiviewdfx"
