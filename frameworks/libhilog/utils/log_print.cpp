@@ -57,6 +57,17 @@ static inline int GetColor(uint16_t level)
     }
 }
 
+static inline const char* GetLogTypePrefix(uint16_t type)
+{
+    switch (LogType(type)) {
+        case LOG_APP: return "A";
+        case LOG_INIT: return "I";
+        case LOG_CORE: return "C";
+        case LOG_KMSG: return "K";
+        default: return " ";
+    }
+}
+
 static inline uint32_t ShortDomain(uint32_t d)
 {
     return (d) & DOMAIN_SHORT_MASK;
@@ -115,9 +126,11 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
     out << " " << setw(PID_WIDTH) << content.pid << " " << setw(PID_WIDTH) << content.tid;
     // 3. print level
     out << " " << LogLevel2ShortStr(content.level);
-    // 4. print domain
+    // 4. print log type
+    out << " " << GetLogTypePrefix(content.type);
+    // 5. print domain
     out << setfill('0');
-    out << " " << hex << setw(DOMAIN_WIDTH) << ShortDomain(content.domain) << dec;
+    out << hex << setw(DOMAIN_WIDTH) << ShortDomain(content.domain) << dec;
     // 5. print tag & log
     out << "/" << content.tag << ": ";
 }

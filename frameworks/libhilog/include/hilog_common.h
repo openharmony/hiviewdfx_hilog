@@ -133,6 +133,7 @@ typedef enum {
     ERR_JOBID_NOT_EXSIST = -60,
     ERR_TOO_MANY_JOBS = -61,
     ERR_STATS_NOT_ENABLE = -62,
+    ERR_NO_RUNNING_TASK = -63,
 } ErrorCode;
 
 #endif /* HILOG_COMMON_H */

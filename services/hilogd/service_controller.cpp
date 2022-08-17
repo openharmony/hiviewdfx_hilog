@@ -581,6 +581,10 @@ void ServiceController::HandlePersistQueryRqst(const PersistQueryRqst& rqst)
 {
     list<LogPersistQueryResult> resultList;
     LogPersister::Query(resultList);
+    if (resultList.size() == 0) {
+        WriteErrorRsp(ERR_NO_RUNNING_TASK);
+        return;
+    }
     PersistQueryRsp rsp = { 0 };
     for (auto it = resultList.begin(); it != resultList.end() && rsp.jobNum < MAX_JOBS; ++it) {
         PersistTaskInfo &task = rsp.taskInfo[rsp.jobNum];
