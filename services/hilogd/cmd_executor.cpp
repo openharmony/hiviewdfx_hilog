@@ -18,7 +18,6 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include <poll.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -53,48 +52,19 @@ void CmdExecutor::MainLoop(const std::string& socketName)
         std::cerr << "Failed to init control socket ! \n";
         return;
     }
-    std::cout << "Begin to cmd accept !\n";
-    int listeningStatus = cmdServer.Listen(MAX_CLIENT_CONNECTIONS);
-    if (listeningStatus < 0) {
-        std::cerr << "Socket listen failed: ";
-        PrintErrorno(listeningStatus);
-        return;
-    }
     std::cout << "Server started to listen !\n";
-
     using namespace std::chrono_literals;
-    for (;;) {
-        const auto maxtime = 3000ms;
-        short outEvent = 0;
-        auto pollResult = cmdServer.Poll(POLLIN, outEvent, maxtime);
-        if (pollResult == 0) { // poll == 0 means timeout
+    cmdServer.StartAcceptingConnection(
+        [this](std::unique_ptr<Socket> handler)
+        {
+            OnAcceptedConnection(std::move(handler));
+        },
+        3000ms,
+        [this]()
+        {
             CleanFinishedClients();
-            continue;
-        } else if (pollResult < 0) {
-            std::cerr << "Socket polling error: ";
-            PrintErrorno(errno);
-            break;
-        } else if (pollResult != 1 || outEvent != POLLIN) {
-            std::cerr << "Wrong poll result data."
-                         " Result: " << pollResult <<
-                         " OutEvent: " << outEvent << "\n";
-            break;
         }
-
-        int acceptResult = cmdServer.Accept();
-        if (acceptResult > 0) {
-            int acceptedSockedFd = acceptResult;
-            std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
-            if (handler != nullptr) {
-                handler->setHandler(acceptedSockedFd);
-                OnAcceptedConnection(std::move(handler));
-            }
-        } else {
-            std::cerr << "Socket accept failed: ";
-            PrintErrorno(errno);
-            break;
-        }
-    }
+    );
 }
 
 void CmdExecutor::OnAcceptedConnection(std::unique_ptr<Socket> handler)

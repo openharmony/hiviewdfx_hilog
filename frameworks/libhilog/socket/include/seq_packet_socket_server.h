@@ -20,17 +20,20 @@
 
 namespace OHOS {
 namespace HiviewDFX {
+using namespace std::chrono;
+
 class SeqPacketSocketServer : public SocketServer {
 public:
     using AcceptingHandler = std::function<void(std::unique_ptr<Socket>)>;
+    using TimtoutHandler = std::function<void(void)>;
 
     SeqPacketSocketServer(const std::string& serverPath, unsigned int maxListenNumber)
         : SocketServer(serverPath, SOCK_SEQPACKET), maxListenNumber(maxListenNumber) {}
     ~SeqPacketSocketServer() = default;
-    int StartAcceptingConnection(AcceptingHandler onAccepted);
+    int StartAcceptingConnection(AcceptingHandler onAccepted, milliseconds ms, TimtoutHandler timeOutFunc);
 private:
     unsigned int maxListenNumber;
-    int AcceptingLoop(AcceptingHandler func);
+    int AcceptingLoop(AcceptingHandler func, milliseconds ms, TimtoutHandler timeOutFunc);
 };
 } // namespace HiviewDFX
 } // namespace OHOS

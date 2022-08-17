@@ -37,7 +37,6 @@
 
 #include "log_data.h"
 #include "log_buffer.h"
-#include "log_persister.h"
 #include "log_utils.h"
 
 #include "service_controller.h"
@@ -53,6 +52,8 @@ static constexpr uint32_t DEFAULT_PERSIST_FILE_SIZE = (4 * 1024 * 1024);
 static constexpr uint32_t DEFAULT_PERSIST_NORMAL_JOB_ID = 1;
 static constexpr uint32_t DEFAULT_PERSIST_KMSG_JOB_ID = 2;
 static constexpr int INFO_SUFFIX = 5;
+static const uid_t SHELL_UID = 2000;
+static const uid_t ROOT_UID = 0;
 
 ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket, HilogBuffer& buffer)
     : m_communicationSocket(std::move(communicationSocket))
@@ -154,7 +155,7 @@ static void StatsEntry2StatsRsp(const StatsEntry &entry, StatsRsp &rsp)
         rsp.len[i] = entry.len[i];
     }
     rsp.dropped = entry.dropped;
-    rsp.freqMax= entry.GetFreqMax();
+    rsp.freqMax = entry.GetFreqMax();
     rsp.freqMaxSec = entry.realTimeFreqMax.tv_sec;
     rsp.freqMaxNsec = entry.realTimeFreqMax.tv_nsec;
     rsp.throughputMax = entry.GetThroughputMax();
@@ -382,7 +383,7 @@ void ServiceController::SendTagStats(const TagTable &tagTable)
     tmp = nullptr;
 }
 
-static int CheckOutputRqst(const OutputRqst& rqst)
+int ServiceController::CheckOutputRqst(const OutputRqst& rqst)
 {
     if (((rqst.types & (0b01 << LOG_KMSG)) != 0) && (GetBitsCount(rqst.types) > 1)) {
         return ERR_QUERY_TYPE_INVALID;
@@ -396,10 +397,15 @@ static int CheckOutputRqst(const OutputRqst& rqst)
     if (rqst.pidCount > MAX_PIDS) {
         return ERR_TOO_MANY_PIDS;
     }
+    // Check Uid permission
+    uid_t uid = m_communicationSocket->GetUid();
+    if (uid != ROOT_UID && uid != SHELL_UID && rqst.pidCount > 0) {
+        return ERR_NO_PID_PERMISSION;
+    }
     return RET_SUCCESS;
 }
 
-static void LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilter& filter)
+void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilter& filter)
 {
     if (rqst.types == 0) {
         filter.types = DEFAULT_LOG_TYPES;
@@ -429,6 +435,13 @@ static void LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilter& filter)
     }
     (void)strncpy_s(filter.regex, MAX_REGEX_STR_LEN, rqst.regex, MAX_REGEX_STR_LEN - 1);
     filter.Print();
+    // Permission check
+    uid_t uid = m_communicationSocket->GetUid();
+    if (uid != ROOT_UID && uid != SHELL_UID) {
+        filter.blackPid = false;
+        filter.pidCount = 1;
+        filter.pids[0] = m_communicationSocket->GetPid();
+    }
 }
 
 void ServiceController::HandleOutputRqst(const OutputRqst &rqst)
@@ -471,7 +484,7 @@ void ServiceController::HandleOutputRqst(const OutputRqst &rqst)
     }
 }
 
-static int CheckPersistStartRqst(const PersistStartRqst &rqst)
+int ServiceController::CheckPersistStartRqst(const PersistStartRqst &rqst)
 {
     // check OutputFilter
     int ret = CheckOutputRqst(rqst.outputFilter);
@@ -493,7 +506,7 @@ static int CheckPersistStartRqst(const PersistStartRqst &rqst)
     return RET_SUCCESS;
 }
 
-static void PersistStartRqst2Msg(const PersistStartRqst &rqst, LogPersistStartMsg &msg)
+void ServiceController::PersistStartRqst2Msg(const PersistStartRqst &rqst, LogPersistStartMsg &msg)
 {
     LogFilterFromOutputRqst(rqst.outputFilter, msg.filter);
     bool isKmsgType = rqst.outputFilter.types == (0b01 << LOG_KMSG);
