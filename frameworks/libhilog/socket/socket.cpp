@@ -30,6 +30,21 @@ void Socket::SetType(uint32_t socketOption)
     socketType = socketOption;
 }
 
+void Socket::SetCredential(struct ucred& cred)
+{
+    socketCred = cred;
+}
+
+uid_t Socket::GetUid()
+{
+    return socketCred.uid;
+}
+
+pid_t Socket::GetPid()
+{
+    return socketCred.pid;
+}
+
 int Socket::GenerateFD()
 {
     int tmpFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, socketType, 0));
@@ -111,7 +126,7 @@ int Socket::Recv(void *buffer, unsigned int bufferLen, int flags)
     return TEMP_FAILURE_RETRY(recv(socketHandler, buffer, bufferLen, flags));
 }
 
-bool Socket::setHandler(int handler)
+bool Socket::SetHandler(int handler)
 {
     if (socketHandler > 0) {
         return false;
@@ -120,7 +135,7 @@ bool Socket::setHandler(int handler)
     return true;
 }
 
-bool Socket::closeHandler()
+bool Socket::CloseHandler()
 {
     if (socketHandler > 0) {
         close(socketHandler);

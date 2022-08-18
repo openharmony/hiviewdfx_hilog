@@ -29,10 +29,10 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-static constexpr uint32_t ONE_KB = (1UL<<10);
-static constexpr uint32_t ONE_MB = (1UL<<20);
-static constexpr uint32_t ONE_GB = (1UL<<30);
-static constexpr uint64_t ONE_TB = (1ULL<<40);
+static constexpr uint32_t ONE_KB = (1UL << 10);
+static constexpr uint32_t ONE_MB = (1UL << 20);
+static constexpr uint32_t ONE_GB = (1UL << 30);
+static constexpr uint64_t ONE_TB = (1ULL << 40);
 static constexpr uint32_t DOMAIN_MIN = DOMAIN_APP_MIN;
 static constexpr uint32_t DOMAIN_MAX = DOMAIN_OS_MAX;
 
@@ -128,6 +128,7 @@ static const KVMap<int16_t, string> g_ErrorMsgs({
      "please set param persist.sys.hilog.stats true to enable it, "
      "further more, you can set persist.sys.hilog.stats.tag true to enable counting log by tags"},
     {ERR_NO_RUNNING_TASK, "No running persistent task"},
+    {ERR_NO_PID_PERMISSION, "Permission denied, only shell and root can filter logs by pid"},
 }, RET_FAIL, "Unknown error code");
 
 string ErrorCode2Str(int16_t errorCode)
