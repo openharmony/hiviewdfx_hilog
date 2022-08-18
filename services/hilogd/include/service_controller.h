@@ -28,6 +28,7 @@
 #include <hilog_common.h>
 #include <hilog_cmd.h>
 
+#include "log_persister.h"
 #include "log_stats.h"
 #include "log_buffer.h"
 
@@ -53,6 +54,11 @@ private:
     template<typename T>
     void RequestHandler(const MsgHeader& hdr, std::function<void(const T& rqst)> handle);
 
+    // util
+    int CheckOutputRqst(const OutputRqst& rqst);
+    void LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilter& filter);
+    int CheckPersistStartRqst(const PersistStartRqst &rqst);
+    void PersistStartRqst2Msg(const PersistStartRqst &rqst, LogPersistStartMsg &msg);
     // log query
     int WriteQueryResponse(OptCRef<HilogData> pData);
     // statistics

@@ -26,9 +26,12 @@ class Socket {
 public:
     explicit Socket(int socketType);
     ~Socket();
-    bool closeHandler();
-    bool setHandler(int socketHandler);
+    bool CloseHandler();
+    bool SetHandler(int socketHandler);
     void SetType(uint32_t socketOption);
+    void SetCredential(struct ucred& cred);
+    uid_t GetUid();
+    pid_t GetPid();
     int GenerateFD();
     int Create();
     int Poll();
@@ -40,6 +43,7 @@ public:
 protected:
     int socketHandler = 0;
     uint32_t socketType;
+    struct ucred socketCred = { 0 };
 };
 } // namespace HiviewDFX
 } // namespace OHOS

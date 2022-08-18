@@ -38,7 +38,7 @@ int DgramSocketClient::CheckSocket()
         close(fd);
     } else {
         ret = fd;
-        setHandler(fd);
+        SetHandler(fd);
         Connect();
     }
 

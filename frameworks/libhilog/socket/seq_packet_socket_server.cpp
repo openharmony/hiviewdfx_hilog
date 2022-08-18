@@ -12,24 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "seq_packet_socket_server.h"
-
 #include <cerrno>
 #include <functional>
 #include <iosfwd>
 #include <iostream>
 #include <memory>
 #include <ostream>
-#include <sys/socket.h>
 #include <type_traits>
+#include <sys/socket.h>
+#include <poll.h>
 
 #include "log_utils.h"
 #include "socket.h"
+#include "seq_packet_socket_server.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted)
+int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted,
+                                                    milliseconds ms, TimtoutHandler timeOutFunc)
 {
     int listeningStatus = Listen(maxListenNumber);
     if (listeningStatus < 0) {
@@ -37,24 +37,45 @@ int SeqPacketSocketServer::StartAcceptingConnection(AcceptingHandler onAccepted)
         PrintErrorno(listeningStatus);
         return listeningStatus;
     }
-
-    return AcceptingLoop(onAccepted);
+    return AcceptingLoop(onAccepted, ms, timeOutFunc);
 }
 
-int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func)
+int SeqPacketSocketServer::AcceptingLoop(AcceptingHandler func, milliseconds ms, TimtoutHandler timeOutFunc)
 {
-    int acceptedSockedFd = 0;
-    while ((acceptedSockedFd = Accept()) > 0) {
-        std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
-        if (handler != nullptr) {
-            handler->setHandler(acceptedSockedFd);
-            func(std::move(handler));
+    for (;;) {
+        short outEvent = 0;
+        auto pollResult = Poll(POLLIN, outEvent, ms);
+        if (pollResult == 0) { // poll == 0 means timeout
+            timeOutFunc();
+            continue;
+        } else if (pollResult < 0) {
+            std::cerr << "Socket polling error: ";
+            PrintErrorno(errno);
+            break;
+        } else if (pollResult != 1 || outEvent != POLLIN) {
+            std::cerr << "Wrong poll result data. Result: " << pollResult << " OutEvent: " << outEvent << "\n";
+            break;
+        }
+
+        int acceptResult = Accept();
+        if (acceptResult > 0) {
+            struct ucred cred = { 0 };
+            socklen_t len = sizeof(struct ucred);
+            (void)getsockopt(acceptResult, SOL_SOCKET, SO_PEERCRED, &cred, &len);
+            std::cout << "Ucred: pid:" << cred.pid << ", uid: " << cred.uid << ", gid: " << cred.gid << std::endl;
+            std::unique_ptr<Socket> handler = std::make_unique<Socket>(SOCK_SEQPACKET);
+            if (handler != nullptr) {
+                handler->SetHandler(acceptResult);
+                handler->SetCredential(cred);
+                func(std::move(handler));
+            }
+        } else {
+            std::cerr << "Socket accept failed: ";
+            PrintErrorno(errno);
+            break;
         }
     }
     int acceptError = errno;
-    std::cerr << "Socket accept failed: ";
-    PrintErrorno(acceptError);
-
     return acceptError;
 }
 } // namespace HiviewDFX
