@@ -207,6 +207,11 @@ void ServiceController::SendLogTypeDomainStats(const LogStats& stats)
     if (tmp == nullptr) {
         return;
     }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        tmp = nullptr;
+        return;
+    }
     LogTypeDomainStatsRsp *ldStats = reinterpret_cast<LogTypeDomainStatsRsp *>(tmp);
     int i = 0;
     int j = 0;
@@ -234,6 +239,11 @@ void ServiceController::SendDomainStats(const LogStats& stats)
         int msgSize = dt.size() * sizeof(DomainStatsRsp);
         char *tmp = new (std::nothrow) char[msgSize];
         if (tmp == nullptr) {
+            return;
+        }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            tmp = nullptr;
             return;
         }
         DomainStatsRsp *dStats = reinterpret_cast<DomainStatsRsp *>(tmp);
@@ -281,13 +291,18 @@ void ServiceController::SendProcStats(const LogStats& stats)
     if (tmp == nullptr) {
         return;
     }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        tmp = nullptr;
+        return;
+    }
     ProcStatsRsp *pStats = reinterpret_cast<ProcStatsRsp *>(tmp);
     int i = 0;
     for (auto &it : pTable) {
         ProcStatsRsp &procStats = pStats[i];
         i++;
         procStats.pid = it.first;
-        if (strncpy_s(procStats.name, MAX_PROC_NAME_LEN, it.second.name.c_str(), MAX_PROC_NAME_LEN) != 0) {
+        if (strncpy_s(procStats.name, MAX_PROC_NAME_LEN, it.second.name.c_str(), MAX_PROC_NAME_LEN - 1) != 0) {
             continue;
         }
         StatsEntry2StatsRsp(it.second.statsAll, procStats.stats);
@@ -331,6 +346,11 @@ void ServiceController::SendProcLogTypeStats(const LogStats& stats)
         if (tmp == nullptr) {
             return;
         }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            tmp = nullptr;
+            return;
+        }
         LogTypeStatsRsp *lStats = reinterpret_cast<LogTypeStatsRsp *>(tmp);
         int i = 0;
         int j = 0;
@@ -368,11 +388,16 @@ void ServiceController::SendTagStats(const TagTable &tagTable)
     if (tmp == nullptr) {
         return;
     }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        tmp = nullptr;
+        return;
+    }
     TagStatsRsp *tStats = reinterpret_cast<TagStatsRsp *>(tmp);
     int i = 0;
     for (auto &itt : tagTable) {
         TagStatsRsp &tagStats = tStats[i];
-        if (strncpy_s(tagStats.tag, MAX_TAG_LEN, itt.first.c_str(), MAX_TAG_LEN) != 0) {
+        if (strncpy_s(tagStats.tag, MAX_TAG_LEN, itt.first.c_str(), MAX_TAG_LEN - 1) != 0) {
             continue;
         }
         i++;
