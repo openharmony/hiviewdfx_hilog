@@ -93,10 +93,10 @@ extern "C" {
  *
  * @since 8
  */
-enum LogType {
+typedef enum {
     /** Third-party application logs */
     LOG_APP = 0,
-};
+} LogType;
 
 /**
  * @brief Enumerates log levels.
@@ -114,7 +114,7 @@ enum LogType {
  *
  * @since 8
  */
-enum LogLevel {
+typedef enum {
     /** Debug level to be used by {@link OH_LOG_DEBUG} */
     LOG_DEBUG = 3,
     /** Informational level to be used by {@link OH_LOG_INFO} */
@@ -125,7 +125,7 @@ enum LogLevel {
     LOG_ERROR = 6,
     /** Fatal level to be used by {@link OH_LOG_FATAL} */
     LOG_FATAL = 7,
-};
+} LogLevel;
 
 /**
  * @brief Outputs logs.
