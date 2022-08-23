@@ -95,7 +95,7 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
             out << (tl.tm_year + TM_YEAR_BASE) << "-";
         }
         out << setfill('0');
-        out << setw(DT_WIDTH) << tl.tm_mon << "-" << setw(DT_WIDTH) << tl.tm_mday << " ";
+        out << setw(DT_WIDTH) << tl.tm_mon + 1 << "-" << setw(DT_WIDTH) << tl.tm_mday << " ";
         out << setw(DT_WIDTH) << tl.tm_hour << ":" << setw(DT_WIDTH) << tl.tm_min << ":";
         out << setw(DT_WIDTH) << tl.tm_sec;
     } else if (format.timeFormat == FormatTime::MONOTONIC) {
