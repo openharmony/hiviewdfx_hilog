@@ -55,16 +55,13 @@ void CmdExecutor::MainLoop(const std::string& socketName)
     std::cout << "Server started to listen !\n";
     using namespace std::chrono_literals;
     cmdServer.StartAcceptingConnection(
-        [this](std::unique_ptr<Socket> handler)
-        {
+        [this] (std::unique_ptr<Socket> handler) {
             OnAcceptedConnection(std::move(handler));
         },
         3000ms,
-        [this]()
-        {
+        [this] () {
             CleanFinishedClients();
-        }
-    );
+        });
 }
 
 void CmdExecutor::OnAcceptedConnection(std::unique_ptr<Socket> handler)
