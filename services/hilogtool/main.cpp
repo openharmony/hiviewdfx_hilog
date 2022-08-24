@@ -540,7 +540,7 @@ static int BufferSizeSetHandler(HilogArgs& context, const char *arg)
     if (size == 0) {
         return ERR_INVALID_SIZE_STR;
     }
-    context.buffSize = size;
+    context.buffSize = static_cast<int32_t>(size);
     BufferSizeSetRqst rqst;
     context.ToBufferSizeSetRqst(rqst);
     LogIoctl ioctl(IoctlCmd::BUFFERSIZE_SET_RQST, IoctlCmd::BUFFERSIZE_SET_RSP);

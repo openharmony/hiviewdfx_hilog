@@ -43,6 +43,24 @@
 
 namespace OHOS {
 namespace HiviewDFX {
+namespace {
+bool TryToAllocateBySize(char* tmp, int size)
+{
+    if (size == 0) {
+        return false;
+    }
+    tmp = new (std::nothrow) char[size];
+    if (tmp == nullptr) {
+        return false;
+    }
+    if (memset_s(tmp, size, 0, size) != 0) {
+        delete []tmp;
+        tmp = nullptr;
+        return false;
+    }
+    return true;
+}
+}
 using namespace std;
 static const string LOG_PERSISTER_DIR = HILOG_FILE_DIR;
 static constexpr uint16_t DEFAULT_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE) | (0b01 << LOG_INIT));
@@ -200,16 +218,8 @@ void ServiceController::SendLogTypeDomainStats(const LogStats& stats)
         typeNum++;
     }
     int msgSize = typeNum * sizeof(LogTypeDomainStatsRsp);
-    if (msgSize == 0) {
-        return;
-    }
-    char* tmp = new (std::nothrow) char[msgSize];
-    if (tmp == nullptr) {
-        return;
-    }
-    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-        delete []tmp;
-        tmp = nullptr;
+    char* tmp = nullptr;
+    if (!TryToAllocateBySize(tmp, msgSize)) {
         return;
     }
     LogTypeDomainStatsRsp *ldStats = reinterpret_cast<LogTypeDomainStatsRsp *>(tmp);
@@ -237,13 +247,8 @@ void ServiceController::SendDomainStats(const LogStats& stats)
             continue;
         }
         int msgSize = dt.size() * sizeof(DomainStatsRsp);
-        char *tmp = new (std::nothrow) char[msgSize];
-        if (tmp == nullptr) {
-            return;
-        }
-        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-            delete []tmp;
-            tmp = nullptr;
+        char* tmp = nullptr;
+        if (!TryToAllocateBySize(tmp, msgSize)) {
             return;
         }
         DomainStatsRsp *dStats = reinterpret_cast<DomainStatsRsp *>(tmp);
@@ -339,16 +344,8 @@ void ServiceController::SendProcLogTypeStats(const LogStats& stats)
             typeNum++;
         }
         int msgSize =  typeNum * sizeof(LogTypeStatsRsp);
-        if (msgSize == 0) {
-            return;
-        }
-        char* tmp = new (std::nothrow) char[msgSize];
-        if (tmp == nullptr) {
-            return;
-        }
-        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-            delete []tmp;
-            tmp = nullptr;
+        char* tmp = nullptr;
+        if (!TryToAllocateBySize(tmp, msgSize)) {
             return;
         }
         LogTypeStatsRsp *lStats = reinterpret_cast<LogTypeStatsRsp *>(tmp);
@@ -381,16 +378,8 @@ void ServiceController::SendProcTagStats(const LogStats& stats)
 void ServiceController::SendTagStats(const TagTable &tagTable)
 {
     int msgSize =  tagTable.size() * sizeof(TagStatsRsp);
-    if (msgSize == 0) {
-        return;
-    }
-    char* tmp = new (std::nothrow) char[msgSize];
-    if (tmp == nullptr) {
-        return;
-    }
-    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-        delete []tmp;
-        tmp = nullptr;
+    char* tmp = nullptr;
+    if (!TryToAllocateBySize(tmp, msgSize)) {
         return;
     }
     TagStatsRsp *tStats = reinterpret_cast<TagStatsRsp *>(tmp);
@@ -465,7 +454,7 @@ void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilte
     if (uid != ROOT_UID && uid != SHELL_UID) {
         filter.blackPid = false;
         filter.pidCount = 1;
-        filter.pids[0] = m_communicationSocket->GetPid();
+        filter.pids[0] = static_cast<uint32_t>(m_communicationSocket->GetPid());
     }
 }
 
