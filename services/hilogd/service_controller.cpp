@@ -154,7 +154,7 @@ static void StatsEntry2StatsRsp(const StatsEntry &entry, StatsRsp &rsp)
         rsp.len[i] = entry.len[i];
     }
     rsp.dropped = entry.dropped;
-    rsp.freqMax= entry.GetFreqMax();
+    rsp.freqMax = entry.GetFreqMax();
     rsp.freqMaxSec = entry.realTimeFreqMax.tv_sec;
     rsp.freqMaxNsec = entry.realTimeFreqMax.tv_nsec;
     rsp.throughputMax = entry.GetThroughputMax();

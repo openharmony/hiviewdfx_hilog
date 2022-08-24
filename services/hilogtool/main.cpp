@@ -299,7 +299,7 @@ struct HilogArgs {
     uint32_t domains[MAX_DOMAINS];
     string regex;
     string fileName;
-    uint32_t buffSize;
+    int32_t buffSize;
     uint32_t jobId;
     uint32_t fileSize;
     uint16_t levels;
