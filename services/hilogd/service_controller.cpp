@@ -38,6 +38,7 @@
 #include "log_data.h"
 #include "log_buffer.h"
 #include "log_utils.h"
+#include "log_kmsg.h"
 
 #include "service_controller.h"
 
@@ -746,6 +747,13 @@ void ServiceController::HandleLogRemoveRqst(const LogRemoveRqst& rqst)
 void ServiceController::HandleLogKmsgEnableRqst(const KmsgEnableRqst& rqst)
 {
     SetKmsgSwitchOn(rqst.on);
+
+    LogKmsg& logKmsg = LogKmsg::GetInstance(m_hilogBuffer);
+    if (rqst.on) {
+        logKmsg.Start();
+    } else {
+        logKmsg.Stop();
+    }
     // set domain flow control later
     KmsgEnableRsp rsp = { 0 };
     WriteRspHeader(IoctlCmd::KMSG_ENABLE_RSP, sizeof(rsp));
