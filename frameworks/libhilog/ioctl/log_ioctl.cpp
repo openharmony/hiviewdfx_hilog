@@ -76,18 +76,14 @@ int LogIoctl::ReceiveProcTagStats(StatsQueryRsp &rsp)
     for (i = 0; i < rsp.procNum; i++) {
         ProcStatsRsp &pStats = rsp.pStats[i];
         int msgSize = pStats.tagNum * sizeof(TagStatsRsp);
-        if (msgSize == 0) {
+        char* tmp = nullptr;
+        auto allocRet = TryToAllocateBySize(tmp, msgSize);
+        if (allocRet == AllocateRet::INVALID_CAPACITY_SIZE) {
             pStats.tStats = nullptr;
             continue;
         }
-        char* tmp = new (std::nothrow) char[msgSize];
-        if (tmp == nullptr) {
+        if (allocRet != AllocateRet::SUCCEED) {
             pStats.tStats = nullptr;
-            return RET_FAIL;
-        }
-        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-            delete []tmp;
-            tmp = nullptr;
             return RET_FAIL;
         }
         if (GetRsp(tmp, msgSize) != RET_SUCCESS) {
@@ -107,17 +103,14 @@ int LogIoctl::ReceiveProcLogTypeStats(StatsQueryRsp &rsp)
     for (i = 0; i < rsp.procNum; i++) {
         ProcStatsRsp &pStats = rsp.pStats[i];
         int msgSize = pStats.typeNum * sizeof(LogTypeStatsRsp);
-        if (msgSize == 0) {
+        char* tmp = nullptr;
+        auto allocRet = TryToAllocateBySize(tmp, msgSize);
+        if (allocRet == AllocateRet::INVALID_CAPACITY_SIZE) {
+            pStats.lStats = nullptr;
             continue;
         }
-        char* tmp = new (std::nothrow) char[msgSize];
-        if (tmp == nullptr) {
+        if (allocRet != AllocateRet::SUCCEED) {
             pStats.lStats = nullptr;
-            return RET_FAIL;
-        }
-        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-            delete []tmp;
-            tmp = nullptr;
             return RET_FAIL;
         }
         if (GetRsp(tmp, msgSize) != RET_SUCCESS) {
@@ -137,17 +130,14 @@ int LogIoctl::ReceiveProcStats(StatsQueryRsp &rsp)
         return RET_FAIL;
     }
     int msgSize = rsp.procNum * sizeof(ProcStatsRsp);
-    if (msgSize == 0) {
+    char* tmp = nullptr;
+    auto allocRet = TryToAllocateBySize(tmp, msgSize);
+    if (allocRet == AllocateRet::INVALID_CAPACITY_SIZE) {
+        rsp.pStats = nullptr;
         return RET_SUCCESS;
     }
-    char* tmp = new (std::nothrow) char[msgSize];
-    if (tmp == nullptr) {
+    if (allocRet != AllocateRet::SUCCEED) {
         rsp.pStats = nullptr;
-        return RET_FAIL;
-    }
-    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-        delete []tmp;
-        tmp = nullptr;
         return RET_FAIL;
     }
     if (GetRsp(tmp, msgSize) != RET_SUCCESS) {
@@ -169,18 +159,14 @@ int LogIoctl::ReceiveDomainTagStats(StatsQueryRsp &rsp)
         for (j = 0; j < ldStats.domainNum; j++) {
             DomainStatsRsp &dStats = ldStats.dStats[j];
             int msgSize = dStats.tagNum * sizeof(TagStatsRsp);
-            if (msgSize == 0) {
+            char* tmp = nullptr;
+            auto allocRet = TryToAllocateBySize(tmp, msgSize);
+            if (allocRet == AllocateRet::INVALID_CAPACITY_SIZE) {
                 dStats.tStats = nullptr;
                 continue;
             }
-            char* tmp = new (std::nothrow) char[msgSize];
-            if (tmp == nullptr) {
+            if (allocRet != AllocateRet::SUCCEED) {
                 dStats.tStats = nullptr;
-                return RET_FAIL;
-            }
-            if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-                delete []tmp;
-                tmp = nullptr;
                 return RET_FAIL;
             }
             if (GetRsp(tmp, msgSize) != RET_SUCCESS) {
@@ -201,17 +187,14 @@ int LogIoctl::ReceiveDomainStats(StatsQueryRsp &rsp)
     for (i = 0; i < rsp.typeNum; i++) {
         LogTypeDomainStatsRsp &ldStats = rsp.ldStats[i];
         int msgSize = ldStats.domainNum * sizeof(DomainStatsRsp);
-        if (msgSize == 0) {
+        char* tmp = nullptr;
+        auto allocRet = TryToAllocateBySize(tmp, msgSize);
+        if (allocRet == AllocateRet::INVALID_CAPACITY_SIZE) {
+            ldStats.dStats = nullptr;
             continue;
         }
-        char* tmp = new (std::nothrow) char[msgSize];
-        if (tmp == nullptr) {
+        if (allocRet != AllocateRet::SUCCEED) {
             ldStats.dStats = nullptr;
-            return RET_FAIL;
-        }
-        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-            delete []tmp;
-            tmp = nullptr;
             return RET_FAIL;
         }
         if (GetRsp(tmp, msgSize) != RET_SUCCESS) {
@@ -231,17 +214,14 @@ int LogIoctl::ReceiveLogTypeDomainStats(StatsQueryRsp &rsp)
         return RET_FAIL;
     }
     int msgSize = rsp.typeNum * sizeof(LogTypeDomainStatsRsp);
-    if (msgSize == 0) {
+    char* tmp = nullptr;
+    auto allocRet = TryToAllocateBySize(tmp, msgSize);
+    if (allocRet == AllocateRet::INVALID_CAPACITY_SIZE) {
+        rsp.ldStats = nullptr;
         return RET_SUCCESS;
     }
-    char* tmp = new (std::nothrow) char[msgSize];
-    if (tmp == nullptr) {
+    if (allocRet != AllocateRet::SUCCEED) {
         rsp.ldStats = nullptr;
-        return RET_FAIL;
-    }
-    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-        delete []tmp;
-        tmp = nullptr;
         return RET_FAIL;
     }
     if (GetRsp(tmp, msgSize) != RET_SUCCESS) {
