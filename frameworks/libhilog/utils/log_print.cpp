@@ -101,9 +101,9 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
     out << ".";
     out << setfill('0');
     if (format.timeAccuFormat == FormatTimeAccu::MSEC) {
-        out << setw(MSEC_WIDTH) << content.tv_nsec/NS2MS;
+        out << setw(MSEC_WIDTH) << (content.tv_nsec / NS2MS);
     } else if (format.timeAccuFormat == FormatTimeAccu::USEC) {
-        out << setw(USEC_WIDTH) << content.tv_nsec/NS2US;
+        out << setw(USEC_WIDTH) << (content.tv_nsec / NS2US);
     } else if (format.timeAccuFormat == FormatTimeAccu::NSEC) {
         out << setw(NSEC_WIDTH) << content.tv_nsec;
     } else {
