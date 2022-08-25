@@ -446,14 +446,14 @@ void PrintErrorno(int err)
 
 AllocateRet TryToAllocateBySize(char* tmp, int size)
 {
-    if (size == 0) {
+    if (size <= 0) {
         return AllocateRet::INVALID_CAPACITY_SIZE;
     }
     tmp = new (std::nothrow) char[size];
     if (tmp == nullptr) {
         return AllocateRet::ARRAY_INIT_FAILED;
     }
-    if (memset_s(tmp, size, 0, size) <= 0) {
+    if (memset_s(tmp, size, 0, size) != 0) {
         delete[] tmp;
         tmp = nullptr;
         return AllocateRet::MEMSET_S_FAILD;
