@@ -43,24 +43,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-namespace {
-bool TryToAllocateBySize(char* tmp, int size)
-{
-    if (size == 0) {
-        return false;
-    }
-    tmp = new (std::nothrow) char[size];
-    if (tmp == nullptr) {
-        return false;
-    }
-    if (memset_s(tmp, size, 0, size) != 0) {
-        delete []tmp;
-        tmp = nullptr;
-        return false;
-    }
-    return true;
-}
-}
 using namespace std;
 static const string LOG_PERSISTER_DIR = HILOG_FILE_DIR;
 static constexpr uint16_t DEFAULT_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE) | (0b01 << LOG_INIT));
@@ -219,7 +201,7 @@ void ServiceController::SendLogTypeDomainStats(const LogStats& stats)
     }
     int msgSize = typeNum * sizeof(LogTypeDomainStatsRsp);
     char* tmp = nullptr;
-    if (!TryToAllocateBySize(tmp, msgSize)) {
+    if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
         return;
     }
     LogTypeDomainStatsRsp *ldStats = reinterpret_cast<LogTypeDomainStatsRsp *>(tmp);
@@ -248,7 +230,7 @@ void ServiceController::SendDomainStats(const LogStats& stats)
         }
         int msgSize = dt.size() * sizeof(DomainStatsRsp);
         char* tmp = nullptr;
-        if (!TryToAllocateBySize(tmp, msgSize)) {
+        if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
             return;
         }
         DomainStatsRsp *dStats = reinterpret_cast<DomainStatsRsp *>(tmp);
@@ -289,16 +271,8 @@ void ServiceController::SendProcStats(const LogStats& stats)
 {
     const PidTable& pTable = stats.GetPidTable();
     int msgSize =  pTable.size() * sizeof(ProcStatsRsp);
-    if (msgSize == 0) {
-        return;
-    }
-    char* tmp = new (std::nothrow) char[msgSize];
-    if (tmp == nullptr) {
-        return;
-    }
-    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
-        delete []tmp;
-        tmp = nullptr;
+    char* tmp = nullptr;
+    if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
         return;
     }
     ProcStatsRsp *pStats = reinterpret_cast<ProcStatsRsp *>(tmp);
@@ -345,7 +319,7 @@ void ServiceController::SendProcLogTypeStats(const LogStats& stats)
         }
         int msgSize =  typeNum * sizeof(LogTypeStatsRsp);
         char* tmp = nullptr;
-        if (!TryToAllocateBySize(tmp, msgSize)) {
+        if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
             return;
         }
         LogTypeStatsRsp *lStats = reinterpret_cast<LogTypeStatsRsp *>(tmp);
@@ -379,7 +353,7 @@ void ServiceController::SendTagStats(const TagTable &tagTable)
 {
     int msgSize =  tagTable.size() * sizeof(TagStatsRsp);
     char* tmp = nullptr;
-    if (!TryToAllocateBySize(tmp, msgSize)) {
+    if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
         return;
     }
     TagStatsRsp *tStats = reinterpret_cast<TagStatsRsp *>(tmp);
