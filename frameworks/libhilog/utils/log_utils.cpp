@@ -29,10 +29,10 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-static constexpr uint32_t ONE_KB = (1UL<<10);
-static constexpr uint32_t ONE_MB = (1UL<<20);
-static constexpr uint32_t ONE_GB = (1UL<<30);
-static constexpr uint64_t ONE_TB = (1ULL<<40);
+static constexpr uint32_t ONE_KB = (1UL << 10);
+static constexpr uint32_t ONE_MB = (1UL << 20);
+static constexpr uint32_t ONE_GB = (1UL << 30);
+static constexpr uint64_t ONE_TB = (1ULL << 40);
 static constexpr uint32_t DOMAIN_MIN = DOMAIN_APP_MIN;
 static constexpr uint32_t DOMAIN_MAX = DOMAIN_OS_MAX;
 
@@ -442,6 +442,23 @@ void PrintErrorno(int err)
     (void)strerror_s(buf, bufSize, err);
 #endif
     std::cerr << "Errno: " << err << ", " << buf << std::endl;
+}
+
+AllocateRet TryToAllocateBySize(char* tmp, int size)
+{
+    if (size == 0) {
+        return AllocateRet::INVALID_CAPACITY_SIZE;
+    }
+    tmp = new (std::nothrow) char[size];
+    if (tmp == nullptr) {
+        return AllocateRet::ARRAY_INIT_FAILED;
+    }
+    if (memset_s(tmp, size, 0, size) <= 0) {
+        delete[] tmp;
+        tmp = nullptr;
+        return AllocateRet::MEMSET_S_FAILD;
+    }
+    return AllocateRet::SUCCEED;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
