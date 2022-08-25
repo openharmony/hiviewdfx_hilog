@@ -170,7 +170,7 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     msg.len = msgLen;
     msg.tag_len = tagLen + 1;
     msg.type = LOG_KMSG;
-    msg.domain = 0xdfffffff;
+    msg.domain = 0xD002600;
     msg.level = KmsgLevelMap(mLevel);
     time_point<system_clock, nanoseconds> logtime = BootTime() + microseconds{timestamp};
     struct timespec logts = TimepointToTimespec(logtime);

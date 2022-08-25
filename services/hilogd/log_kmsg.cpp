@@ -25,7 +25,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
+#include <sys/stat.h>
+#include <sys/prctl.h>
 #include <init_file.h>
 #include <hilog/log.h>
 #include <log_utils.h>
@@ -33,6 +34,24 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+
+bool LogKmsg::m_isExisted = false;
+std::mutex LogKmsg::m_instanceMtx;
+
+LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer) {
+    if(false == m_isExisted){
+        std::lock_guard<std::mutex> guard(m_instanceMtx);
+        if(false == m_isExisted){
+            return CreateInstance(hilogBuffer);
+        }
+    }
+    return CreateInstance(hilogBuffer);
+}
+
+LogKmsg& LogKmsg::CreateInstance(HilogBuffer& hilogBuffer){
+    static LogKmsg logKmsg(hilogBuffer);
+    return logKmsg;
+}
 
 ssize_t LogKmsg::LinuxReadOneKmsg(KmsgParser& parser)
 {
@@ -68,7 +87,11 @@ int LogKmsg::LinuxReadAllKmsg()
         return -1;
     }
     while (true) {
+        if (m_threadStatus == stop) {
+            break;
+        }
         ssize_t sz = LinuxReadOneKmsg(*parser);
+
         if (sz < 0) {
             rdFailTimes++;
             if (maxFailTime < rdFailTimes) {
@@ -85,6 +108,7 @@ int LogKmsg::LinuxReadAllKmsg()
 
 void LogKmsg::ReadAllKmsg()
 {
+    prctl(PR_SET_NAME, "hilogd.rd_kmsg");   
 #ifdef __linux__
     std::cout << "Platform: Linux" << std::endl;
     LinuxReadAllKmsg();
@@ -93,10 +117,27 @@ void LogKmsg::ReadAllKmsg()
 
 void LogKmsg::Start()
 {
-    std::thread KmsgThread([this]() {
-        ReadAllKmsg();
-    });
-    KmsgThread.join();
+    std::lock_guard<decltype(m_startMtx)> lock(m_startMtx);
+    if (m_threadStatus == nonexist || m_threadStatus == stop) {
+        m_logKmsgThread = std::thread ([this]() {
+            ReadAllKmsg();
+        });
+    } else {
+        std::cout << " Thread already started!\n";
+    }
+    m_threadStatus = start;
+}
+
+void LogKmsg::Stop()
+{
+    if (m_threadStatus == nonexist || m_threadStatus == stop) {
+        std::cout << "Thread was exited or not started!\n";
+        return;
+    }
+    m_threadStatus = stop;
+    if (m_logKmsgThread.joinable()) {
+        m_logKmsgThread.join();
+    }
 }
 
 LogKmsg::~LogKmsg()
