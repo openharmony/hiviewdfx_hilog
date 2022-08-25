@@ -39,6 +39,7 @@ namespace OHOS {
 namespace HiviewDFX {
 namespace HiLogTest {
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOGTEST_CPP" };
+const HiLogLabel ILLEGAL_DOMAIN_LABEL = { LOG_CORE, 0xD00EEEE, "HILOGTEST_CPP" };
 static constexpr unsigned int SOME_LOGS = 10;
 static constexpr unsigned int MORE_LOGS = 100;
 
@@ -103,6 +104,7 @@ static std::string PopenToString(const std::string &command)
         }
         pclose(fp);
     }
+    std::cout << "PopenToString res: " << str << std::endl;
     return str;
 }
 
@@ -347,6 +349,63 @@ HWTEST_F(HiLogNDKTest, IsLoggable_001, TestSize.Level1)
     EXPECT_TRUE(HiLogIsLoggable(0xD002D00, "abc", LOG_WARN));
 }
 
+/**
+ * @tc.name: Dfx_HiLogNDKTest_DomainCheck_001
+ * @tc.desc: test illegal domainID
+ * @tc.type: FUNC
+ * @tc.require:issueI5NU4L
+ */
+HWTEST_F(HiLogNDKTest, DomainCheck_001, TestSize.Level1)
+{
+    std::string logMsg(RandomStringGenerator());
+    for (unsigned int i = 0; i < SOME_LOGS; ++i) {
+        HiLog::Info(ILLEGAL_DOMAIN_LABEL, "%{public}s", logMsg.c_str());
+    }
+    usleep(1000); /* 1000: sleep 1 ms */
+    std::string logMsgs = PopenToString("/system/bin/hilog -x");
+    unsigned int realCount = 0;
+    std::stringstream ss(logMsgs);
+    std::string str;
+    while (!ss.eof()) {
+        getline(ss, str);
+        if (str.find(logMsg) != std::string::npos) {
+            ++realCount;
+        }
+    }
+    EXPECT_EQ(realCount, 0);
+}
+
+/**
+ * @tc.name: Dfx_HiLogNDKTest_hilogStatisticsTest
+ * @tc.desc: test hilog statistics function
+ * @tc.type: FUNC
+ * @tc.require:issueI5NU71
+ */
+HWTEST_F(HiLogNDKTest, hilogStatisticsTest, TestSize.Level1)
+{
+    std::string logStatsLog = "Statistic info query failed";
+    std::string logMsgs = PopenToString("/system/bin/hilog -s");
+    std::stringstream ss(logMsgs);
+    std::string str;
+    getline(ss, str);
+    EXPECT_TRUE(str.find(logStatsLog) != std::string::npos);
+}
+
+/**
+ * @tc.name: Dfx_HiLogNDKTest_hilogSocketTest
+ * @tc.desc: Query hilog socket rights
+ * @tc.type: FUNC
+ * @tc.require:issueI5NU7F
+ */
+HWTEST_F(HiLogNDKTest, hilogSocketTest, TestSize.Level1)
+{
+    std::string str;
+    std::string HilogControlRights = "srw-rw----";
+    std::string logMsgs = PopenToString("ls -al //dev/unix/socket/hilogControl");
+    std::stringstream ss(logMsgs);
+    getline(ss, str);
+    EXPECT_TRUE(str.find(HilogControlRights) != std::string::npos);
+}
 } // namespace HiLogTest
 } // namespace HiviewDFX
 } // namespace OHOS
