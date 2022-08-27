@@ -36,8 +36,9 @@ tuple<bool, napi_value> NClass::DefineClass(napi_env env, string className, napi
 napi_value NClass::InstantiateClass(napi_env env, string className, vector<napi_value> args)
 {
     NClass &nClass = NClass::GetInstance();
+if not (defined(__WINDOWS__) || defined(__MAC__))
     lock_guard(nClass.exClassMapLock);
-
+#endif
     auto it = nClass.exClassMap.find(className);
     if (it == nClass.exClassMap.end()) {
         return nullptr;
