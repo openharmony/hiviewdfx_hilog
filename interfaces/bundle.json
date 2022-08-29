@@ -22,8 +22,9 @@
     "ram": "2000KB",
     "deps": {
       "components": [
+        "c_utils",
         "init",
-        "utils_base"
+        "napi"
       ],
       "third_party": [
         "bounds_checking_function",
