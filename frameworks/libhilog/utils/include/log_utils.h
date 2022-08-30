@@ -103,14 +103,6 @@ std::string GetProgName();
 std::string GetNameByPid(uint32_t pid);
 uint64_t GenerateHash(const char *p, size_t size);
 void PrintErrorno(int err);
-
-enum AllocateRet {
-    SUCCEED,
-    INVALID_CAPACITY_SIZE,
-    ARRAY_INIT_FAILED,
-    MEMSET_S_FAILD
-};
-AllocateRet TryToAllocateBySize(char* tmp, int size);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif // LOG_UTILS_H
