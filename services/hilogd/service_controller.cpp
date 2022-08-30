@@ -200,8 +200,16 @@ void ServiceController::SendLogTypeDomainStats(const LogStats& stats)
         typeNum++;
     }
     int msgSize = typeNum * sizeof(LogTypeDomainStatsRsp);
-    char* tmp = nullptr;
-    if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
+    if (msgSize == 0) {
+        return;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        return;
+    }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        tmp = nullptr;
         return;
     }
     LogTypeDomainStatsRsp *ldStats = reinterpret_cast<LogTypeDomainStatsRsp *>(tmp);
@@ -229,8 +237,13 @@ void ServiceController::SendDomainStats(const LogStats& stats)
             continue;
         }
         int msgSize = dt.size() * sizeof(DomainStatsRsp);
-        char* tmp = nullptr;
-        if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
+        char *tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            return;
+        }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            tmp = nullptr;
             return;
         }
         DomainStatsRsp *dStats = reinterpret_cast<DomainStatsRsp *>(tmp);
@@ -271,8 +284,16 @@ void ServiceController::SendProcStats(const LogStats& stats)
 {
     const PidTable& pTable = stats.GetPidTable();
     int msgSize =  pTable.size() * sizeof(ProcStatsRsp);
-    char* tmp = nullptr;
-    if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
+    if (msgSize == 0) {
+        return;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        return;
+    }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        tmp = nullptr;
         return;
     }
     ProcStatsRsp *pStats = reinterpret_cast<ProcStatsRsp *>(tmp);
@@ -318,8 +339,16 @@ void ServiceController::SendProcLogTypeStats(const LogStats& stats)
             typeNum++;
         }
         int msgSize =  typeNum * sizeof(LogTypeStatsRsp);
-        char* tmp = nullptr;
-        if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
+        if (msgSize == 0) {
+            return;
+        }
+        char* tmp = new (std::nothrow) char[msgSize];
+        if (tmp == nullptr) {
+            return;
+        }
+        if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+            delete []tmp;
+            tmp = nullptr;
             return;
         }
         LogTypeStatsRsp *lStats = reinterpret_cast<LogTypeStatsRsp *>(tmp);
@@ -352,8 +381,16 @@ void ServiceController::SendProcTagStats(const LogStats& stats)
 void ServiceController::SendTagStats(const TagTable &tagTable)
 {
     int msgSize =  tagTable.size() * sizeof(TagStatsRsp);
-    char* tmp = nullptr;
-    if (TryToAllocateBySize(tmp, msgSize) != AllocateRet::SUCCEED) {
+    if (msgSize == 0) {
+        return;
+    }
+    char* tmp = new (std::nothrow) char[msgSize];
+    if (tmp == nullptr) {
+        return;
+    }
+    if (memset_s(tmp, msgSize, 0, msgSize) != 0) {
+        delete []tmp;
+        tmp = nullptr;
         return;
     }
     TagStatsRsp *tStats = reinterpret_cast<TagStatsRsp *>(tmp);
