@@ -19,15 +19,12 @@
 #include <mutex>
 
 #include <log_timestamp.h>
+#include <hilog_cmd.h>
 #include <hilog_common.h>
 #include <hilog/log.h>
 
 namespace OHOS {
 namespace HiviewDFX {
-constexpr int LevelBase = static_cast<int>(LOG_DEBUG);
-constexpr int LevelNum = static_cast<int>(LOG_LEVEL_MAX) - LevelBase;
-constexpr int TypeNum = static_cast<int>(LOG_TYPE_MAX);
-
 enum class StatsType {
     STATS_MASTER,
     STATS_DOMAIN,
@@ -160,6 +157,8 @@ public:
     const PidTable& GetPidTable() const;
     const LogTimeStamp& GetBeginTs() const;
     const LogTimeStamp& GetBeginMono() const;
+    void GetTotalLines(uint32_t (&in_lines)[LevelNum]) const;
+    void GetTotalLens(uint64_t (&in_lens)[LevelNum]) const;
     bool IsEnable() const;
     bool IsTagEnable() const;
 
@@ -170,6 +169,8 @@ private:
     PidTable pidStats;
     LogTimeStamp tsBegin;
     LogTimeStamp monoBegin;
+    uint32_t totalLines[LevelNum];
+    uint64_t totalLens[LevelNum];
     bool enable;
     bool tagEnable;
     std::mutex lock;

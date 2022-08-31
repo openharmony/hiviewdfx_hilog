@@ -176,6 +176,8 @@ void ServiceController::SendOverallStats(const LogStats& stats)
     monoNow -= monoBegin;
     rsp.durationSec = monoNow.tv_sec;
     rsp.durationNsec = monoNow.tv_nsec;
+    stats.GetTotalLines(rsp.totalLines);
+    stats.GetTotalLens(rsp.totalLens);
     rsp.typeNum = 0;
     for (const DomainTable &dt : ldTable) {
         if (dt.size() == 0) {

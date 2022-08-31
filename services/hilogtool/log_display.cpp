@@ -141,6 +141,30 @@ static string DurationStr(uint32_t tv_sec, uint32_t tv_nsec)
     return buffer;
 }
 
+template<typename T>
+static void SortByLens(vector<T>& v, const T* list, int num)
+{
+    v.insert(v.begin(), list, list + num);
+    std::sort(v.begin(), v.end(), [](T& a, T& b) {
+        return GetTotalLen(a.stats) > GetTotalLen(b.stats);
+    });
+}
+
+static void SortDomainList(vector<DomainStatsRsp>& vd, const DomainStatsRsp* domainList, int num)
+{
+    SortByLens(vd, domainList, num);
+}
+
+static void SortProcList(vector<ProcStatsRsp>& vp, const ProcStatsRsp* procList, int num)
+{
+    SortByLens(vp, procList, num);
+}
+
+static void SortTagList(vector<TagStatsRsp>& vt, const TagStatsRsp* tagList, int num)
+{
+    SortByLens(vt, tagList, num);
+}
+
 static void HilogShowDomainStatsInfo(const StatsQueryRsp& rsp)
 {
     cout << "Domain Table:" << endl;
@@ -154,8 +178,10 @@ static void HilogShowDomainStatsInfo(const StatsQueryRsp& rsp)
         if (ldStats.dStats == nullptr) {
             continue;
         }
+        vector<DomainStatsRsp> vd; // sort domain list
+        SortDomainList(vd, ldStats.dStats, ldStats.domainNum);
         for (j = 0; j < ldStats.domainNum; j++) {
-            DomainStatsRsp &dStats = ldStats.dStats[j];
+            DomainStatsRsp &dStats = vd[j];
             cout << setw(LOGTYPE_W) << LogType2Str(ldStats.type) << colCmd;
             cout << std::hex << "0x" << setw(DOMAIN_W) << dStats.domain << std::dec << colCmd;
             cout << setw(TAG_W) << "-" << colCmd;
@@ -165,8 +191,10 @@ static void HilogShowDomainStatsInfo(const StatsQueryRsp& rsp)
             if (dStats.tStats == nullptr) {
                 continue;
             }
+            vector<TagStatsRsp> vt; // sort tag list
+            SortTagList(vt, dStats.tStats, dStats.tagNum);
             for (k = 0; k < dStats.tagNum; k++) {
-                TagStatsRsp &tStats = dStats.tStats[k];
+                TagStatsRsp &tStats = vt[k];
                 cout << setw(LOGTYPE_W) << LogType2Str(ldStats.type) << colCmd;
                 cout << std::hex << "0x" << setw(DOMAIN_W) << dStats.domain << std::dec << colCmd;
                 cout << setw(TAG_W) << tStats.tag << colCmd;
@@ -175,6 +203,18 @@ static void HilogShowDomainStatsInfo(const StatsQueryRsp& rsp)
             }
         }
     }
+}
+
+static string GetProcessName(const ProcStatsRsp &pStats)
+{
+    /* hap process is forked from /system/bin/appspawn, sa process is started by /system/bin/sa_main
+       the name will be changed after process forking, hilogd holds the original name always,
+       here we need reconfirm it */
+    string name = GetNameByPid(pStats.pid);
+    if (name == "") {
+        name = pStats.name;
+    }
+    return name;
 }
 
 static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
@@ -187,11 +227,14 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
     if (rsp.pStats == nullptr) {
         return;
     }
+    vector<ProcStatsRsp> vp; // sort process list
+    SortProcList(vp, rsp.pStats, rsp.procNum);
     for (i = 0; i < rsp.procNum; i++) {
-        ProcStatsRsp &pStats = rsp.pStats[i];
+        ProcStatsRsp &pStats = vp[i];
+        string name = GetProcessName(pStats);
         cout << setw(LOGTYPE_W) << "-" << colCmd;
         cout << setw(PID_W) << pStats.pid << colCmd;
-        cout << setw(PNAME_W) << pStats.name << colCmd;
+        cout << setw(PNAME_W) << name.substr(0, PNAME_W - 1) << colCmd;
         cout << setw(TAG_W) << "-" << colCmd;
         PrintStats(pStats.stats);
         cout << endl;
@@ -206,7 +249,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
             }
             cout << setw(LOGTYPE_W) << LogType2Str(lStats.type) << colCmd;
             cout << setw(PID_W) << pStats.pid << colCmd;
-            cout << setw(PNAME_W) << pStats.name << colCmd;
+            cout << setw(PNAME_W) << name.substr(0, PNAME_W - 1) << colCmd;
             cout << setw(TAG_W) << "-" << colCmd;
             PrintStats(lStats.stats);
             cout << endl;
@@ -214,11 +257,13 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
         if (pStats.tStats == nullptr) {
             continue;
         }
+        vector<TagStatsRsp> vt; // sort tag list
+        SortTagList(vt, pStats.tStats, pStats.tagNum);
         for (j = 0; j < pStats.tagNum; j++) {
-            TagStatsRsp &tStats = pStats.tStats[j];
+            TagStatsRsp &tStats = vt[j];
             cout << setw(LOGTYPE_W) << "-" << colCmd;
             cout << setw(PID_W) << pStats.pid << colCmd;
-            cout << setw(PNAME_W) << pStats.name << colCmd;
+            cout << setw(PNAME_W) << name.substr(0, PNAME_W - 1) << colCmd;
             cout << setw(TAG_W) << tStats.tag << colCmd;
             PrintStats(tStats.stats);
             cout << endl;
@@ -231,6 +276,25 @@ void HilogShowLogStatsInfo(const StatsQueryRsp& rsp)
     cout << std::left;
     cout << "Log statistic report (Duration: " << DurationStr(rsp.durationSec, rsp.durationNsec);
     cout << ", From: " << TimeStr(rsp.tsBeginSec, rsp.tsBeginNsec) << "):" << endl;
+    uint32_t lines = 0;
+    uint64_t lens = 0;
+    for (int i = 0; i < LevelNum; i++) {
+        lines += rsp.totalLines[i];
+        lens += rsp.totalLens[i];
+    }
+    if (lines == 0) {
+        return;
+    }
+    cout << "Total lines: " << lines << ", length: " << Size2Str(lens) << endl;
+    static const int PERCENT = 100;
+    for (int i = 0; i < LevelNum; i++) {
+        string level = LogLevel2Str(static_cast<uint16_t>(i + LevelBase));
+        cout << level << " lines: " << rsp.totalLines[i];
+        cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLines[i]*PERCENT)/lines) << "%)";
+        cout << ", length: " << Size2Str(rsp.totalLens[i]);
+        cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLens[i]*PERCENT)/lens) << "%)";
+        cout<< endl;
+    }
     cout << "---------------------------------------------------------------------" << endl;
     HilogShowDomainStatsInfo(rsp);
     cout << "---------------------------------------------------------------------" << endl;

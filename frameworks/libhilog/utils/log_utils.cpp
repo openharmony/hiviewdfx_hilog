@@ -408,16 +408,29 @@ string GetProgName()
 #endif
 
 static const int CMDLINE_PATH_LEN = 32;
+static const int CMDLINE_LEN = 128;
 string GetNameByPid(uint32_t pid)
 {
     char path[CMDLINE_PATH_LEN] = { 0 };
     if (snprintf_s(path, CMDLINE_PATH_LEN, CMDLINE_PATH_LEN - 1, "/proc/%d/cmdline", pid) <= 0) {
         return "";
     }
-    ifstream file(path);
-    string name = "";
-    getline(file, name);
-    return name;
+    char cmdline[CMDLINE_LEN] = { 0 };
+    int i = 0;
+    FILE *fp = fopen(path, "r");
+    if (fp == nullptr) {
+        return "";
+    }
+    while (i < (CMDLINE_LEN - 1)) {
+        char c = fgetc(fp);
+        if (c == 0 || c == ' ') { // don't need args of cmdline
+            break;
+        }
+        cmdline[i] = c;
+        i++;
+    }
+    (void)fclose(fp);
+    return cmdline;
 }
 
 uint64_t GenerateHash(const char *p, size_t size)
