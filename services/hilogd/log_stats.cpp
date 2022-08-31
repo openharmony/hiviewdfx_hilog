@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <thread>
+#include <algorithm>
 
 #include <log_utils.h>
 #include <properties.h>
@@ -25,8 +26,7 @@ using namespace std;
 
 LogStats::LogStats()
 {
-    tsBegin = LogTimeStamp(CLOCK_REALTIME);
-    monoBegin = LogTimeStamp(CLOCK_MONOTONIC);
+    Reset();
     enable = IsStatsEnable();
     tagEnable = IsTagStatsEnable();
 }
@@ -34,7 +34,7 @@ LogStats::~LogStats() {}
 
 static inline int idxLvl(uint16_t lvl)
 {
-    return lvl - LevelBase;
+    return static_cast<int>(lvl) - LevelBase;
 }
 
 static void UpdateStats(StatsEntry &entry, const StatsInfo &info)
@@ -178,6 +178,9 @@ void LogStats::Count(const StatsInfo &info)
 {
     if (enable) {
         std::scoped_lock lk(lock);
+        int index = idxLvl(info.level);
+        totalLines[index]++;
+        totalLens[index] += info.len;
         UpdateDomainTable(info);
         UpdatePidTable(info);
     }
@@ -192,6 +195,10 @@ void LogStats::Reset()
     pidStats.clear();
     tsBegin = LogTimeStamp(CLOCK_REALTIME);
     monoBegin = LogTimeStamp(CLOCK_MONOTONIC);
+    for (int i = 0; i < LevelNum; i++) {
+        totalLines[i] = 0;
+        totalLens[i] = 0;
+    }
 }
 
 const LogTypeDomainTable& LogStats::GetDomainTable() const
@@ -212,6 +219,16 @@ const LogTimeStamp& LogStats::GetBeginTs() const
 const LogTimeStamp& LogStats::GetBeginMono() const
 {
     return monoBegin;
+}
+
+void LogStats::GetTotalLines(uint32_t (&in_lines)[LevelNum]) const
+{
+    std::copy(totalLines, totalLines + LevelNum, in_lines);
+}
+
+void LogStats::GetTotalLens(uint64_t (&in_lens)[LevelNum]) const
+{
+    std::copy(totalLens, totalLens + LevelNum, in_lens);
 }
 
 bool LogStats::IsEnable() const
