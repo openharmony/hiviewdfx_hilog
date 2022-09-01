@@ -18,13 +18,9 @@
 #include <cstdint>
 
 #include "hilog_common.h"
-#include "hilog/log.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-
-const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "Hilog_JS" };
-
 static HilogInputSocketClient g_hilogInputSocketClient;
 extern "C" int HilogWriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt,
     uint16_t fmtLen)
@@ -37,7 +33,6 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
 {
     int ret = CheckSocket();
     if (ret < 0) {
-        HiLog::Info(LABEL, "CheckSocket fail ");
         return ret;
     }
 
@@ -56,7 +51,7 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
         Connect();
         ret = WriteV(vec, 3);                // 3 : written size of vector
     }
-    HiLog::Info(LABEL, "WriteV fail ");
+
     return ret;
 }
 } // namespace HiviewDFX
