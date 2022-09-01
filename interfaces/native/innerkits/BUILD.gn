@@ -49,7 +49,7 @@ foreach(item, platforms) {
       platform = item
     }
   }
-  if (item == "windows" || item == "mac") {
+  if (item == "windows" || item == "mac" || item == "linux") {
     libhilog("libhilog_" + item) {
       platform = item
     }

@@ -15,4 +15,5 @@ platforms = [
   "ohos",
   "windows",
   "mac",
+  "linux",
 ]

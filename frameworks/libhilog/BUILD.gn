@@ -42,7 +42,7 @@ config("libhilog_config") {
 template("libhilog_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
-    if (platform != "windows" && platform != "mac") {
+    if (platform != "windows" && platform != "mac" && platform != "linux") {
       param_sources = [ "$param_root/properties.cpp" ]
       ioctl_sources = [ "$ioctl_root/log_ioctl.cpp" ]
 
@@ -70,7 +70,7 @@ template("libhilog_source") {
       "hilog.cpp",
       "hilog_printf.cpp",
     ]
-    if (platform != "windows" && platform != "mac") {
+    if (platform != "windows" && platform != "mac" && platform != "linux") {
       sources += param_sources
       sources += ioctl_sources
       sources += socket_sources
@@ -84,6 +84,9 @@ template("libhilog_source") {
       defines += [ "__WINDOWS__" ]
     } else if (platform == "mac") {
       defines += [ "__MAC__" ]
+    } else if (platform == "linux") {
+      cflags_cc = [ "-std=c++17" ]
+      defines += [ "__LINUX__" ]
     } else {
       defines = [ "__RECV_MSG_WITH_UCRED_" ]
       if (use_musl) {
@@ -95,7 +98,7 @@ template("libhilog_source") {
 
     deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
 
-    if (platform != "windows" && platform != "mac") {
+    if (platform != "windows" && platform != "mac" && platform != "linux") {
       external_deps = [ "init:libbegetutil" ]
     }
 

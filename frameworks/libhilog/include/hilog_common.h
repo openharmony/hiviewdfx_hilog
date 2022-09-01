@@ -16,6 +16,7 @@
 #ifndef HILOG_COMMON_H
 #define HILOG_COMMON_H
 
+#include <climits>
 #include <cstdint>
 #include <iostream>
 #include <optional>
