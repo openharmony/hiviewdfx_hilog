@@ -29,6 +29,7 @@
 
 constexpr int LevelBase = static_cast<int>(LOG_DEBUG);
 constexpr int LevelNum = static_cast<int>(LOG_LEVEL_MAX) - LevelBase;
+constexpr int TypeNum = static_cast<int>(LOG_TYPE_MAX);
 
 enum class IoctlCmd {
     INVALID = -1,
@@ -218,6 +219,8 @@ struct StatsQueryRsp {
     uint32_t tsBeginNsec;
     uint32_t durationSec;
     uint32_t durationNsec;
+    uint32_t totalLines[LevelNum];
+    uint64_t totalLens[LevelNum];
     uint16_t typeNum;
     uint16_t procNum;
     LogTypeDomainStatsRsp *ldStats;
