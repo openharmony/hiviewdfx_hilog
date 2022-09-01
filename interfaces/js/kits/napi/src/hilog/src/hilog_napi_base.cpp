@@ -51,7 +51,7 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
     uint32_t pos = 0;
     uint32_t count = 0;
     bool debug = true;
-if not (defined(__WINDOWS__) || defined(__MAC__))
+#if not (defined(__WINDOWS__) || defined(__MAC__))
     debug = IsDebugOn();
 #endif
     bool priv = (!debug) && IsPrivateSwitchOn();
