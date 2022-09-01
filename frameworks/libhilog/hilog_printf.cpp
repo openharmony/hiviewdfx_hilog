@@ -51,6 +51,8 @@ static atomic_int g_hiLogGetIdCallCount = 0;
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
 
+const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "Hilog_JS" };
+
 HILOG_PUBLIC_API
 extern "C" const char* GetLastFatalMessage()
 {
@@ -162,6 +164,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     const char *fmt, va_list ap)
 {
     if ((tag == nullptr)  || !HiLogIsLoggable(domain, tag, level)) {
+         HiLog::Info(LABEL, "HiLogPrintArgs fail 1");
         return -1;
     }
 
@@ -263,6 +266,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     if (IsProcessSwitchOn()) {
         ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono, debug);
         if (ret < 0) {
+            HiLog::Info(LABEL, "HiLogFlowCtrlProcess fail ");
             return ret;
         } else if (ret > 0) {
             static const char P_LIMIT_TAG[] = "LOGLIMIT";
