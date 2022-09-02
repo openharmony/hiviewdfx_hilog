@@ -30,7 +30,6 @@ template("libhilog") {
 
     if (platform == "ohos") {
       output_extension = "so"
-      relative_install_dir = "chipset-pub-sdk"
     }
 
     install_enable = true
