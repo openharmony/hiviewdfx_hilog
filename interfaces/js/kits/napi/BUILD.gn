@@ -36,7 +36,7 @@ ohos_source_set("libhilognapi_src") {
   } else {
     deps += [
       "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_windows",
-      "//foundation/arkui/napi:ace_napi"
+      "//foundation/arkui/napi:ace_napi",
     ]
   }
   defines = []
