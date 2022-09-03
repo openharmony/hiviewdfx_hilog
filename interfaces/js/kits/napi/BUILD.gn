@@ -40,8 +40,10 @@ ohos_source_set("libhilognapi_src") {
     ]
   }
   defines = []
+  cflags_cc = []
   if (is_mingw) {
     defines += [ "__WINDOWS__" ]
+    cflags_cc += [ "-std=c++17" ]
   } else if (is_mac) {
     defines += [ "__MAC__" ]
   }
