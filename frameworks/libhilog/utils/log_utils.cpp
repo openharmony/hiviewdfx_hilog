@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 #include <cstdint>
+#include <cstdlib>
 #include <functional>
 #include <regex>
 #include <sstream>
 #include <fstream>
-
 #include <securec.h>
 #include <hilog/log.h>
 
@@ -396,7 +396,7 @@ uint32_t HexStr2Uint(const string& str)
     return i;
 }
 
-#ifndef __WINDOWS__
+#if !defined(__WINDOWS__) and !defined(__LINUX__)
 string GetProgName()
 {
 #ifdef HILOG_USE_MUSL
