@@ -21,6 +21,10 @@
 #include <mutex>
 #include <securec.h>
 
+#ifdef __LINUX__
+#include <atomic>
+#endif
+
 #ifndef __WINDOWS__
 #include <sys/syscall.h>
 #else
@@ -37,7 +41,7 @@
 #include "vsnprintf_s_p.h"
 #include "log_utils.h"
 
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
 #include "properties.h"
 #include "hilog_input_socket_client.h"
 #else
@@ -84,7 +88,7 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 {
     // Priority: TagLevel > DomainLevel > GlobalLevel
     // LOG_LEVEL_MIN is default Level
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     uint16_t tagLevel = GetTagLevel(tag);
     if (tagLevel != LOG_LEVEL_MIN) {
         return tagLevel;
@@ -99,7 +103,7 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 #endif
 }
 
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
 static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
 {
     static uint32_t processQuota = 0;
@@ -206,7 +210,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     }
 
     /* format log string */
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     bool debug = IsDebugOn();
     bool priv = (!debug) && IsPrivateSwitchOn();
 #else
@@ -258,7 +262,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         (void)memcpy_s(g_hiLogLastFatalMessage, sizeof(g_hiLogLastFatalMessage), buf, sizeof(buf));
     }
 
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ))
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     /* flow control */
     if (IsProcessSwitchOn()) {
         ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono, debug);

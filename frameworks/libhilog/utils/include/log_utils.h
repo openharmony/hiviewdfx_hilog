@@ -97,7 +97,7 @@ uint32_t DecStr2Uint(const std::string& str);
 std::string Uint2HexStr(uint32_t i);
 uint32_t HexStr2Uint(const std::string& str);
 
-#ifndef __WINDOWS__
+#if !defined(__WINDOWS__) and !defined(__LINUX__)
 std::string GetProgName();
 #endif
 std::string GetNameByPid(uint32_t pid);
