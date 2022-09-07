@@ -214,7 +214,7 @@ static string GetProcessName(const ProcStatsRsp &pStats)
     if (name == "") {
         name = pStats.name;
     }
-    return name;
+    return name.substr(0, PNAME_W - 1);
 }
 
 static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
@@ -234,7 +234,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
         string name = GetProcessName(pStats);
         cout << setw(LOGTYPE_W) << "-" << colCmd;
         cout << setw(PID_W) << pStats.pid << colCmd;
-        cout << setw(PNAME_W) << name.substr(0, PNAME_W - 1) << colCmd;
+        cout << setw(PNAME_W) << name << colCmd;
         cout << setw(TAG_W) << "-" << colCmd;
         PrintStats(pStats.stats);
         cout << endl;
@@ -249,7 +249,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
             }
             cout << setw(LOGTYPE_W) << LogType2Str(lStats.type) << colCmd;
             cout << setw(PID_W) << pStats.pid << colCmd;
-            cout << setw(PNAME_W) << name.substr(0, PNAME_W - 1) << colCmd;
+            cout << setw(PNAME_W) << name << colCmd;
             cout << setw(TAG_W) << "-" << colCmd;
             PrintStats(lStats.stats);
             cout << endl;
@@ -263,7 +263,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
             TagStatsRsp &tStats = vt[j];
             cout << setw(LOGTYPE_W) << "-" << colCmd;
             cout << setw(PID_W) << pStats.pid << colCmd;
-            cout << setw(PNAME_W) << name.substr(0, PNAME_W - 1) << colCmd;
+            cout << setw(PNAME_W) << name << colCmd;
             cout << setw(TAG_W) << tStats.tag << colCmd;
             PrintStats(tStats.stats);
             cout << endl;
