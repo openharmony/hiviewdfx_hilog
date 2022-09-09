@@ -44,7 +44,7 @@ static constexpr int LINES_W = 10;
 static constexpr int LENGTH_W = 10;
 static constexpr int DROPPED_W = 10;
 static constexpr int FLOAT_PRECSION = 2;
-
+static constexpr int STATS_W = 60;
 static constexpr int MIN2SEC = 60;
 static constexpr int HOUR2MIN = 60;
 static constexpr int HOUR2SEC = MIN2SEC * HOUR2MIN;
@@ -295,9 +295,9 @@ void HilogShowLogStatsInfo(const StatsQueryRsp& rsp)
         cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLens[i]*PERCENT)/lens) << "%)";
         cout<< endl;
     }
-    cout << "---------------------------------------------------------------------" << endl;
+    cout << setw(STATS_W) << setfill('-') << "-" << endl;
     HilogShowDomainStatsInfo(rsp);
-    cout << "---------------------------------------------------------------------" << endl;
+    cout << setw(STATS_W) << setfill('-') << "-" << endl;
     HilogShowProcStatsInfo(rsp);
 }
 } // namespace HiviewDFX
