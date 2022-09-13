@@ -24,7 +24,6 @@ namespace HiviewDFX {
 class LogKmsg {
 public:
     static LogKmsg& GetInstance(HilogBuffer& hilogBuffer);
-    static LogKmsg& CreateInstance(HilogBuffer& hilogBuffer);
     ssize_t LinuxReadOneKmsg(KmsgParser& parser);
     int LinuxReadAllKmsg();
     void Start();
@@ -40,8 +39,6 @@ private:
     std::thread m_logKmsgThread;
     enum m_ThreadStatus{start, nonexist, stop};
     m_ThreadStatus m_threadStatus;
-    static bool m_isExisted;
-    static std::mutex m_instanceMtx;
     std::mutex m_startMtx;
 };
 } // namespace HiviewDFX
