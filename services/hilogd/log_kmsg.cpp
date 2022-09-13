@@ -35,20 +35,7 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-bool LogKmsg::m_isExisted = false;
-std::mutex LogKmsg::m_instanceMtx;
-
-LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer) {
-    if(false == m_isExisted){
-        std::lock_guard<std::mutex> guard(m_instanceMtx);
-        if(false == m_isExisted){
-            return CreateInstance(hilogBuffer);
-        }
-    }
-    return CreateInstance(hilogBuffer);
-}
-
-LogKmsg& LogKmsg::CreateInstance(HilogBuffer& hilogBuffer){
+LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer){
     static LogKmsg logKmsg(hilogBuffer);
     return logKmsg;
 }
