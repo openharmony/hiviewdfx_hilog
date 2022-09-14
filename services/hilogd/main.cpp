@@ -203,11 +203,12 @@ int HilogdEntry()
             RestorePersistJobs(hilogBuffer);
         }
     });
-    auto kmsgTask = std::async(std::launch::async, [&hilogBuffer]() {
-        prctl(PR_SET_NAME, "hilogd.rd_kmsg");
-        LogKmsg logKmsg(hilogBuffer);
-        logKmsg.ReadAllKmsg();
-    });
+
+    bool kmsgEnable = IsKmsgSwitchOn();
+    if (kmsgEnable) {
+        LogKmsg& logKmsg = LogKmsg::GetInstance(hilogBuffer);
+        logKmsg.Start();
+    }
 
     auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cgroup_set");
