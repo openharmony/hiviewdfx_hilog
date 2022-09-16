@@ -64,6 +64,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD004200, "Windows"},
     {0xD004300, "Storage"},
     {0xD004500, "WebView"},
+    {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
 static const uint32_t APP_DOMAIN_MASK = 0xFFFF0000;
