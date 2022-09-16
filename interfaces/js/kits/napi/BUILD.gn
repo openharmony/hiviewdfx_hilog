@@ -28,24 +28,31 @@ ohos_source_set("libhilognapi_src") {
     "src/hilog/src/hilog_napi_base.cpp",
   ]
   deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
-  if (!is_mingw && !is_mac) {
+  if (is_mingw || is_mac || is_linux) {
+    deps += [ "//foundation/arkui/napi:ace_napi" ]
+  } else {
     external_deps = [
       "hilog_native:libhilog",
       "napi:ace_napi",
     ]
-  } else {
-    deps += [
-      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_windows",
-      "//foundation/arkui/napi:ace_napi",
-    ]
   }
+
   defines = []
   cflags_cc = []
   if (is_mingw) {
+    deps += [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_windows",
+    ]
     defines += [ "__WINDOWS__" ]
     cflags_cc += [ "-std=c++17" ]
   } else if (is_mac) {
+    deps +=
+        [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_mac" ]
     defines += [ "__MAC__" ]
+  } else if (is_linux) {
+    deps +=
+        [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_linux" ]
+    defines += [ "__LINUX__" ]
   }
   subsystem_name = "hiviewdfx"
   part_name = "hilog_native"
