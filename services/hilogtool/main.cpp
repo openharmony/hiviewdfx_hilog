@@ -580,15 +580,15 @@ static int JobIdHandler(HilogArgs& context, const char *arg)
     return RET_SUCCESS;
 }
 
-static const string featureOn = "on";
-static const string featureOff = "off";
+static const string FEATURE_ON = "on";
+static const string FEATURE_OFF = "off";
 static int KmsgFeatureSetHandler(HilogArgs& context, const char *arg)
 {
     string argStr = arg;
     bool kmsgOn = true;
-    if (argStr == featureOn) {
+    if (argStr == FEATURE_ON) {
         kmsgOn = true;
-    } else if (argStr == featureOff) {
+    } else if (argStr == FEATURE_OFF) {
         kmsgOn = false;
     } else {
         return ERR_INVALID_ARGUMENT;
@@ -643,9 +643,9 @@ static int PrivateFeatureSetHandler(HilogArgs& context, const char *arg)
 {
     string argStr = arg;
     bool privateOn = true;
-    if (argStr == featureOn) {
+    if (argStr == FEATURE_ON) {
         privateOn = true;
-    } else if (argStr == featureOff) {
+    } else if (argStr == FEATURE_OFF) {
         privateOn = false;
     } else {
         return ERR_INVALID_ARGUMENT;
@@ -695,16 +695,16 @@ static int FlowControlFeatureSetHandler(HilogArgs& context, const char *arg)
     string domain = "domain";
     string argStr = arg;
     int ret;
-    if (argStr == (pid + featureOn)) {
+    if (argStr == (pid + FEATURE_ON)) {
         ret = SetProcessSwitchOn(true);
         cout << "Set flow control by process to enabled, result: " << ErrorCode2Str(ret) << endl;
-    } else if (argStr == (pid + featureOff)) {
+    } else if (argStr == (pid + FEATURE_OFF)) {
         ret = SetProcessSwitchOn(false);
         cout << "Set flow control by process to disabled, result: " << ErrorCode2Str(ret) << endl;
-    } else if (argStr == (domain + featureOn)) {
+    } else if (argStr == (domain + FEATURE_ON)) {
         ret = SetDomainFlowCtrl(true);
         cout << "Set flow control by domain to enabled, result: " << ErrorCode2Str(ret) << endl;
-    } else if (argStr == (domain + featureOff)) {
+    } else if (argStr == (domain + FEATURE_OFF)) {
         ret = SetDomainFlowCtrl(false);
         cout << "Set flow control by domain to disabled, result: " << ErrorCode2Str(ret) << endl;
     } else {
