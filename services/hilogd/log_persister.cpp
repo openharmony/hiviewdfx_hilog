@@ -48,7 +48,7 @@ using namespace std;
 
 static const int MAX_LOG_WRITE_INTERVAL = 5;
 
-static bool isEmptyThread(const std::thread& th)
+static bool IsEmptyThread(const std::thread& th)
 {
     static const std::thread EMPTY_THREAD;
     return th.get_id() == EMPTY_THREAD.get_id();
@@ -323,7 +323,7 @@ void LogPersister::Start()
         }
     }
 
-    if (isEmptyThread(m_persisterThread)) {
+    if (IsEmptyThread(m_persisterThread)) {
         m_persisterThread = std::thread(&LogPersister::ReceiveLogLoop, shared_from_this());
     } else {
         std::cout << " Persister thread already started!\n";
@@ -397,7 +397,7 @@ int LogPersister::Kill(uint32_t id)
 void LogPersister::Stop()
 {
     std::cout << "Exiting LogPersister!\n";
-    if (isEmptyThread(m_persisterThread)) {
+    if (IsEmptyThread(m_persisterThread)) {
         std::cout << "Thread was exited or not started!\n";
         return;
     }
