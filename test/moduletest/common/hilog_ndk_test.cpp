@@ -400,11 +400,11 @@ HWTEST_F(HiLogNDKTest, hilogStatisticsTest, TestSize.Level1)
 HWTEST_F(HiLogNDKTest, hilogSocketTest, TestSize.Level1)
 {
     std::string str;
-    std::string HilogControlRights = "srw-rw----";
+    std::string hilogControlRights = "srw-rw----";
     std::string logMsgs = PopenToString("ls -al //dev/unix/socket/hilogControl");
     std::stringstream ss(logMsgs);
     getline(ss, str);
-    EXPECT_TRUE(str.find(HilogControlRights) != std::string::npos);
+    EXPECT_TRUE(str.find(hilogControlRights) != std::string::npos);
 }
 } // namespace HiLogTest
 } // namespace HiviewDFX
