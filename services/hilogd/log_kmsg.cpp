@@ -35,7 +35,8 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer){
+LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer)
+{
     static LogKmsg logKmsg(hilogBuffer);
     return logKmsg;
 }
@@ -74,11 +75,10 @@ int LogKmsg::LinuxReadAllKmsg()
         return -1;
     }
     while (true) {
-        if (m_threadStatus == stop) {
+        if (threadStatus == STOP) {
             break;
         }
         ssize_t sz = LinuxReadOneKmsg(*parser);
-
         if (sz < 0) {
             rdFailTimes++;
             if (maxFailTime < rdFailTimes) {
@@ -95,7 +95,7 @@ int LogKmsg::LinuxReadAllKmsg()
 
 void LogKmsg::ReadAllKmsg()
 {
-    prctl(PR_SET_NAME, "hilogd.rd_kmsg");   
+    prctl(PR_SET_NAME, "hilogd.rd_kmsg");
 #ifdef __linux__
     std::cout << "Platform: Linux" << std::endl;
     LinuxReadAllKmsg();
@@ -104,26 +104,26 @@ void LogKmsg::ReadAllKmsg()
 
 void LogKmsg::Start()
 {
-    std::lock_guard<decltype(m_startMtx)> lock(m_startMtx);
-    if (m_threadStatus == nonexist || m_threadStatus == stop) {
-        m_logKmsgThread = std::thread ([this]() {
+    std::lock_guard<decltype(startMtx)> lock(startMtx);
+    if (threadStatus == NONEXIST || threadStatus == STOP) {
+        logKmsgThread = std::thread ([this]() {
             ReadAllKmsg();
         });
     } else {
         std::cout << " Thread already started!\n";
     }
-    m_threadStatus = start;
+    threadStatus = START;
 }
 
 void LogKmsg::Stop()
 {
-    if (m_threadStatus == nonexist || m_threadStatus == stop) {
+    if (threadStatus == NONEXIST || threadStatus == STOP) {
         std::cout << "Thread was exited or not started!\n";
         return;
     }
-    m_threadStatus = stop;
-    if (m_logKmsgThread.joinable()) {
-        m_logKmsgThread.join();
+    threadStatus = STOP;
+    if (logKmsgThread.joinable()) {
+        logKmsgThread.join();
     }
 }
 

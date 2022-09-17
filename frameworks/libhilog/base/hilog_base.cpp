@@ -113,11 +113,11 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
 
     struct timespec ts = {0};
     (void)clock_gettime(CLOCK_REALTIME, &ts);
-    struct timespec ts_mono = {0};
-    (void)clock_gettime(CLOCK_MONOTONIC, &ts_mono);
+    struct timespec tsMono = {0};
+    (void)clock_gettime(CLOCK_MONOTONIC, &tsMono);
     header->tv_sec = static_cast<uint32_t>(ts.tv_sec);
     header->tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
-    header->mono_sec = static_cast<uint32_t>(ts_mono.tv_sec);
+    header->mono_sec = static_cast<uint32_t>(tsMono.tv_sec);
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
     header->tag_len = tagLen;
 

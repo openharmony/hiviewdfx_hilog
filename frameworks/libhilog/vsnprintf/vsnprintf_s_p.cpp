@@ -108,9 +108,11 @@ typedef struct {
 #endif
 
 /* put a char to output */
-#define SECUREC_PUTC(_c,_stream)    ((--(_stream)->count >= 0) ? ((*(_stream)->cur++ = (char)(_c)) & 0xff) : EOF)
+#define SECUREC_PUTC(_c,_stream)    ((--(_stream)->count >= 0) ? \
+    ((*(_stream)->cur++ = static_cast<char>(_c)) & 0xff) : EOF)
 /* to clear e835 */
-#define SECUREC_PUTC_ZERO(_stream)    ((--(_stream)->count >= 0) ? ((*(_stream)->cur++ = (char)('\0'))) : EOF)
+#define SECUREC_PUTC_ZERO(_stream)    ((--(_stream)->count >= 0) ? \
+    ((*(_stream)->cur++ = static_cast<char>('\0'))) : EOF)
 
 /* state definitions */
 typedef enum {
@@ -127,11 +129,11 @@ typedef enum {
 
 #ifndef HILOG_PROHIBIT_ALLOCATION
 #ifndef SECUREC_MALLOC
-#define SECUREC_MALLOC(x) malloc((size_t)(x))
+#define SECUREC_MALLOC(x) malloc(static_cast<size_t>(x))
 #endif
 
 #ifndef SECUREC_FREE
-#define SECUREC_FREE(x)   free((void *)(x))
+#define SECUREC_FREE(x)   free(reinterpret_cast<void*>(x))
 #endif
 
 #else
@@ -220,7 +222,7 @@ int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const c
     int retVal;
 
     if (format == NULL || strDest == NULL || destMax == 0 || destMax > SECUREC_STRING_MAX_LEN ||
-        (count > (SECUREC_STRING_MAX_LEN - 1) && count != (size_t)-1)) {
+        (count > (SECUREC_STRING_MAX_LEN - 1) && count != static_cast<size_t>(-1))) {
         if (strDest != NULL && destMax > 0) {
             strDest[0] = '\0';
         }
@@ -274,7 +276,7 @@ static inline int SecVsnprintfPImpl(char *string, size_t count, int priv, const 
     SecPrintfStream str;
     int retVal;
 
-    str.count = (int)count;     /* this count include \0 character */
+    str.count = static_cast<int>(count);     /* this count include \0 character */
     str.cur = string;
 
     retVal = SecOutputPS(&str, priv, format, arglist);

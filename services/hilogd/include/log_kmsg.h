@@ -30,16 +30,23 @@ public:
     void Stop();
     void ReadAllKmsg();
     ~LogKmsg();
+
+private:
+    enum ThreadStatus {
+        START,
+        NONEXIST,
+        STOP
+    };
+
 private:
     explicit LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {
-        m_threadStatus = nonexist;
+        threadStatus = NONEXIST;
     }
     int kmsgCtl = -1;
     HilogBuffer& hilogBuffer;
-    std::thread m_logKmsgThread;
-    enum m_ThreadStatus{start, nonexist, stop};
-    m_ThreadStatus m_threadStatus;
-    std::mutex m_startMtx;
+    std::thread logKmsgThread;
+    ThreadStatus threadStatus;
+    std::mutex startMtx;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

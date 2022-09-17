@@ -885,7 +885,9 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
             size_t length = strlen(ent->d_name);
             std::string pPath(ent->d_name, length);
             if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
-                if (pPath == "hilog.info") continue;
+                if (pPath == "hilog.info") {
+                    continue;
+                }
                 std::cout << " Found a persist job! Path: " << LOG_PERSISTER_DIR + pPath << "\n";
                 FILE* infile = fopen((LOG_PERSISTER_DIR + pPath).c_str(), "r");
                 if (infile == nullptr) {

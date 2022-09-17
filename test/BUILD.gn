@@ -57,5 +57,6 @@ ohos_moduletest("HiLogAdapterTest") {
   include_dirs = [
     "//base/hiviewdfx/hilog/adapter",
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
+    "//base/hiviewdfx/hilog/frameworks/libhilog/utils/include/",
   ]
 }
