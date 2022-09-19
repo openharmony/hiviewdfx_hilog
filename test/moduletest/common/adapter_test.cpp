@@ -21,8 +21,11 @@
 #include <properties.h>
 #include <hilog/log.h>
 
+#include "log_utils.h"
+
 using namespace testing::ext;
 using namespace std::chrono_literals;
+using namespace OHOS::HiviewDFX;
 
 namespace {
 class PropertiesTest : public testing::Test {
