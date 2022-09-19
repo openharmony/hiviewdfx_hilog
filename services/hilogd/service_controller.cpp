@@ -880,45 +880,44 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
     std::cout << " Start restoring persist jobs!\n";
     DIR *dir = opendir(LOG_PERSISTER_DIR.c_str());
     struct dirent *ent = nullptr;
-    if (dir != nullptr) {
-        while ((ent = readdir(dir)) != nullptr) {
-            size_t length = strlen(ent->d_name);
-            std::string pPath(ent->d_name, length);
-            if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
-                if (pPath == "hilog.info") {
-                    continue;
-                }
-                std::cout << " Found a persist job! Path: " << LOG_PERSISTER_DIR + pPath << "\n";
-                FILE* infile = fopen((LOG_PERSISTER_DIR + pPath).c_str(), "r");
-                if (infile == nullptr) {
-                    std::cerr << " Error opening recovery info file!\n";
-                    continue;
-                }
-                PersistRecoveryInfo info = { 0 };
-                fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
-                uint64_t hashSum = 0L;
-                fread(&hashSum, sizeof(hashSum), 1, infile);
-                fclose(infile);
-                uint64_t hash = GenerateHash(reinterpret_cast<char *>(&info), sizeof(PersistRecoveryInfo));
-                if (hash != hashSum) {
-                    std::cout << " Info file checksum Failed!\n";
-                    continue;
-                }
-                int result = StartPersistStoreJob(info, hilogBuffer, true);
-                std::cout << " Recovery Info:\n"
-                    << "  restoring result: " << (result == RET_SUCCESS
-                        ? std::string("Success\n")
-                        : std::string("Failed(") + std::to_string(result) + ")\n")
-                    << "  jobId=" << (unsigned)(info.msg.jobId) << "\n"
-                    << "  filePath=" << (info.msg.filePath) << "\n"
-                    << "  index=" << (info.index) << "\n";
-            }
-        }
-        closedir(dir);
-    } else {
+    if (dir == nullptr) {
         perror("Failed to open persister directory!");
         return ERR_LOG_PERSIST_DIR_OPEN_FAIL;
     }
+    while ((ent = readdir(dir)) != nullptr) {
+        size_t length = strlen(ent->d_name);
+        std::string pPath(ent->d_name, length);
+        if (length >= INFO_SUFFIX && pPath.substr(length - INFO_SUFFIX, length) == ".info") {
+            if (pPath == "hilog.info") {
+                continue;
+            }
+            std::cout << " Found a persist job! Path: " << LOG_PERSISTER_DIR + pPath << "\n";
+            FILE* infile = fopen((LOG_PERSISTER_DIR + pPath).c_str(), "r");
+            if (infile == nullptr) {
+                std::cerr << " Error opening recovery info file!\n";
+                continue;
+            }
+            PersistRecoveryInfo info = { 0 };
+            fread(&info, sizeof(PersistRecoveryInfo), 1, infile);
+            uint64_t hashSum = 0L;
+            fread(&hashSum, sizeof(hashSum), 1, infile);
+            fclose(infile);
+            uint64_t hash = GenerateHash(reinterpret_cast<char *>(&info), sizeof(PersistRecoveryInfo));
+            if (hash != hashSum) {
+                std::cout << " Info file checksum Failed!\n";
+                continue;
+            }
+            int result = StartPersistStoreJob(info, hilogBuffer, true);
+            std::cout << " Recovery Info:\n"
+                << "  restoring result: " << (result == RET_SUCCESS
+                    ? std::string("Success\n")
+                    : std::string("Failed(") + std::to_string(result) + ")\n")
+                << "  jobId=" << (unsigned)(info.msg.jobId) << "\n"
+                << "  filePath=" << (info.msg.filePath) << "\n"
+                << "  index=" << (info.index) << "\n";
+        }
+    }
+    closedir(dir);
     std::cout << " Finished restoring persist jobs!\n";
     return EXIT_SUCCESS;
 }
