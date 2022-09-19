@@ -108,7 +108,7 @@ typedef struct {
 #endif
 
 /* put a char to output */
-#define SECUREC_PUTC(_c,_stream)    ((--(_stream)->count >= 0) ? \
+#define SECUREC_PUTC(_c, _stream)    ((--(_stream)->count >= 0) ? \
     ((*(_stream)->cur++ = static_cast<char>(_c)) & 0xff) : EOF)
 /* to clear e835 */
 #define SECUREC_PUTC_ZERO(_stream)    ((--(_stream)->count >= 0) ? \
