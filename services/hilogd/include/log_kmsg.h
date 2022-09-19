@@ -39,7 +39,8 @@ private:
     };
 
 private:
-    explicit LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {
+    explicit LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer)
+    {
         threadStatus = NONEXIST;
     }
     int kmsgCtl = -1;
