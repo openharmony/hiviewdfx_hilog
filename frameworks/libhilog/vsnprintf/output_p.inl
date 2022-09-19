@@ -114,7 +114,7 @@ static int SecIsSameSize(size_t sizeA, size_t sizeB)
         } SECUREC_WHILE_ZERO
 
 #define SECUREC_SAFE_WRITE_CHAR(_ch, _stream, outChars) do { \
-            *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = (SecChar)_ch; \
+            *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = (static_cast<SecChar>(_ch)); \
             _stream->cur += sizeof(SecChar); \
             _stream->count -= static_cast<int>(sizeof(SecChar)); \
             *(outChars) = *(outChars) + 1; \
@@ -122,7 +122,8 @@ static int SecIsSameSize(size_t sizeA, size_t sizeB)
 
 #define SECUREC_SAFE_PADDING(padChar, padLen, _stream, outChars) do { \
             for (ii = 0; ii < padLen; ++ii) { \
-                *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = (SecChar)padChar; \
+                *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = \
+                    (static_cast<SecChar>(padChar)); \
                 _stream->cur += sizeof(SecChar); \
             } \
             _stream->count -= padLen * (static_cast<int>(sizeof(SecChar))); \
@@ -135,17 +136,19 @@ static int SecIsSameSize(size_t sizeA, size_t sizeB)
 
 #define SECUREC_FMT_STATE_OFFSET  256
 #ifdef SECUREC_FOR_WCHAR
-#define SECUREC_FMT_TYPE(c,fmtTable)  (((static_cast<unsigned int>(static_cast<int>(c))) <= \
+#define SECUREC_FMT_TYPE(c, fmtTable) (((static_cast<unsigned int>(static_cast<int>(c))) <= \
     static_cast<unsigned int>(static_cast<int>(SECUREC_CHAR('~')))) ? (fmtTable[(unsigned char)(c)]) : 0)
-#define SECUREC_DECODE_STATE(c,fmtTable,laststate) (SecFmtState)(((fmtTable[(SECUREC_FMT_TYPE(c, fmtTable)) * \
+#define SECUREC_DECODE_STATE(c, fmtTable, laststate) (static_cast<SecFmtState>(((fmtTable[( \
+                                                                    SECUREC_FMT_TYPE(c, fmtTable)) * \
+                                                                    (static_cast<unsigned char>(STAT_INVALID) + 1) + \
+                                                                    static_cast<unsigned char>(laststate) + \
+                                                                    SECUREC_FMT_STATE_OFFSET]))))
+#else
+#define SECUREC_DECODE_STATE(c, fmtTable, laststate) (static_cast<SecFmtState>((fmtTable[( \
+                                                                    fmtTable[static_cast<unsigned char>(c)]) * \
                                                                     (static_cast<unsigned char>(STAT_INVALID) + 1) + \
                                                                     static_cast<unsigned char>(laststate) + \
                                                                     SECUREC_FMT_STATE_OFFSET])))
-#else
-#define SECUREC_DECODE_STATE(c,fmtTable,laststate) (SecFmtState)((fmtTable[(fmtTable[static_cast<unsigned char>(c)]) * \
-                                                                    (static_cast<unsigned char>(STAT_INVALID) + 1) + \
-                                                                    static_cast<unsigned char>(laststate) + \
-                                                                    SECUREC_FMT_STATE_OFFSET]))
 #endif
 
 #define PUBLIC_FLAG_LEN  8
@@ -568,7 +571,8 @@ NORMAL_CHAR:
                 if (SECUREC_MUL10_ADD_BEYOND_MAX(formatAttr.fldWidth)) {
                     return -1;
                 }
-                formatAttr.fldWidth = static_cast<int>(SECUREC_MUL10((unsigned int)formatAttr.fldWidth)) +
+                formatAttr.fldWidth = static_cast<int>(
+                    SECUREC_MUL10(static_cast<unsigned int>(formatAttr.fldWidth))) +
                     (ch - SECUREC_CHAR('0'));
                 formatAttr.dynWidth = 0;
             }
@@ -877,7 +881,7 @@ OUTPUT_HEX:
                 if (formatAttr.flags & SECUREC_FLAG_ALTERNATE) {
                     /* alternate form means '0x' prefix */
                     prefix[0] = SECUREC_CHAR('0');
-                    prefix[1] = (SecChar) (digits[16]); /* 'x' or 'X' */
+                    prefix[1] = static_cast<SecChar>(digits[16]); /* 'x' or 'X' */
 
 #if (defined(SECUREC_COMPATIBLE_LINUX_FORMAT) || defined(SECUREC_VXWORKS_PLATFORM))
                     if (ch == 'p') {
@@ -938,9 +942,9 @@ OUTPUT_INT:
                         if (formatAttr.flags & SECUREC_FLAG_SIGNED) {
                             l = static_cast<char>(va_arg(arglist, int)); /* sign extend */
                             if (l >= 128) { /* on some platform, char is always unsigned */
-                                SecUnsignedInt64 tmpL = (SecUnsignedInt64)l;
+                                SecUnsignedInt64 tmpL = static_cast<SecUnsignedInt64>(l);
                                 formatAttr.flags |= SECUREC_FLAG_NEGATIVE;
-                                tch = (unsigned char)(~(tmpL));
+                                tch = static_cast<unsigned char>(~(tmpL));
                                 l = tch + 1;
                             }
                         } else {
@@ -994,10 +998,10 @@ OUTPUT_INT:
 
                     /* check for negative; copy into number */
                     if ((formatAttr.flags & SECUREC_FLAG_SIGNED) && l < 0) {
-                        number = (SecUnsignedInt64)(-l);
+                        number = static_cast<SecUnsignedInt64>(-l);
                         formatAttr.flags |= SECUREC_FLAG_NEGATIVE;
                     } else {
-                        number = (SecUnsignedInt64)l;
+                        number = static_cast<SecUnsignedInt64>(l);
                     }
 
                     if (((formatAttr.flags & SECUREC_FLAG_I64) == 0) &&
@@ -1063,7 +1067,7 @@ OUTPUT_INT:
 #else /* for 32 bits system */
                         if (number <= 0xFFFFFFFFUL) {
                             /* in most case, the value to be converted is small value */
-                            SecUnsignedInt32 n32Tmp = (SecUnsignedInt32)number;
+                            SecUnsignedInt32 n32Tmp = static_cast<SecUnsignedInt32>(number);
                             switch (radix) {
                                 SECUREC_SPECIAL(n32Tmp, 16);
                                 break;
