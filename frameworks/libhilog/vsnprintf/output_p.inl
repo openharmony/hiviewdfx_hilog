@@ -89,61 +89,63 @@ static int SecIsSameSize(size_t sizeA, size_t sizeB)
 
 #define SECUREC_SAFE_WRITE_PREFIX(src, txtLen, _stream, outChars) do { \
             for (ii = 0; ii < txtLen; ++ii) { \
-                *((SecChar *)(void *)(_stream->cur)) = *(src); \
+                *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = *(src); \
                 _stream->cur += sizeof(SecChar);              \
                 ++(src);                                      \
             } \
-            _stream->count -= txtLen * (int)(sizeof(SecChar)); \
+            _stream->count -= txtLen * static_cast<int>(sizeof(SecChar)); \
             *(outChars) = *(outChars) + (txtLen); \
         } SECUREC_WHILE_ZERO
 
 #define SECUREC_SAFE_WRITE_STR(src, txtLen, _stream, outChars) do { \
             if (txtLen < 12 /* for mobile number length */) { \
                 for (ii = 0; ii < txtLen; ++ii) { \
-                    *((SecChar *)(void *)(_stream->cur)) = *(src); \
+                    *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = *(src); \
                     _stream->cur += sizeof(SecChar); \
                     ++(src); \
                 } \
             } else { \
-                (void)memcpy(_stream->cur, src, ((size_t)(unsigned int)txtLen * (sizeof(SecChar)))); \
-                _stream->cur += (size_t)(unsigned int)txtLen * (sizeof(SecChar)); \
+                (void)memcpy(_stream->cur, src, (static_cast<size_t>(static_cast<unsigned int>(txtLen)) * \
+                                                                        (sizeof(SecChar)))); \
+                _stream->cur += static_cast<size_t>(static_cast<unsigned int>(txtLen)) * (sizeof(SecChar)); \
             } \
-            _stream->count -= txtLen * (int)(sizeof(SecChar)); \
+            _stream->count -= txtLen * (static_cast<int>(sizeof(SecChar))); \
             *(outChars) = *(outChars) + (txtLen); \
         } SECUREC_WHILE_ZERO
 
 #define SECUREC_SAFE_WRITE_CHAR(_ch, _stream, outChars) do { \
-            *((SecChar *)(void *)(_stream->cur)) = (SecChar)_ch; \
+            *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = (SecChar)_ch; \
             _stream->cur += sizeof(SecChar); \
-            _stream->count -= (int)(sizeof(SecChar)); \
+            _stream->count -= static_cast<int>(sizeof(SecChar)); \
             *(outChars) = *(outChars) + 1; \
         } SECUREC_WHILE_ZERO
 
 #define SECUREC_SAFE_PADDING(padChar, padLen, _stream, outChars) do { \
             for (ii = 0; ii < padLen; ++ii) { \
-                *((SecChar *)(void *)(_stream->cur)) = (SecChar)padChar; \
+                *(reinterpret_cast<SecChar*>(reinterpret_cast<void*>(_stream->cur))) = (SecChar)padChar; \
                 _stream->cur += sizeof(SecChar); \
             } \
-            _stream->count -= padLen * (int)(sizeof(SecChar)); \
+            _stream->count -= padLen * (static_cast<int>(sizeof(SecChar))); \
             *(outChars) = *(outChars) + (padLen); \
         } SECUREC_WHILE_ZERO
 
 /* The count variable can be reduced to 0, and the external function complements the \0 terminator. */
-#define SECUREC_IS_REST_BUF_ENOUGH(needLen) ((int)(stream->count - (int)needLen * (int)(sizeof(SecChar)))  >= 0)
+#define SECUREC_IS_REST_BUF_ENOUGH(needLen) (static_cast<int>(stream->count - static_cast<int>(needLen) * \
+    static_cast<int>(sizeof(SecChar))) >= 0)
 
 #define SECUREC_FMT_STATE_OFFSET  256
 #ifdef SECUREC_FOR_WCHAR
-#define SECUREC_FMT_TYPE(c,fmtTable)  ((((unsigned int)(int)(c)) <= (unsigned int)(int)SECUREC_CHAR('~')) ? \
-                                      (fmtTable[(unsigned char)(c)]) : 0)
-#define SECUREC_DECODE_STATE(c,fmtTable,laststate) (SecFmtState)(((fmtTable[(SECUREC_FMT_TYPE(c,fmtTable)) * \
-                                                                            ((unsigned char)STAT_INVALID + 1) + \
-                                                                            (unsigned char)(laststate) + \
-                                                                            SECUREC_FMT_STATE_OFFSET])))
+#define SECUREC_FMT_TYPE(c,fmtTable)  (((static_cast<unsigned int>(static_cast<int>(c))) <= \
+    static_cast<unsigned int>(static_cast<int>(SECUREC_CHAR('~')))) ? (fmtTable[(unsigned char)(c)]) : 0)
+#define SECUREC_DECODE_STATE(c,fmtTable,laststate) (SecFmtState)(((fmtTable[(SECUREC_FMT_TYPE(c, fmtTable)) * \
+                                                                    (static_cast<unsigned char>(STAT_INVALID) + 1) + \
+                                                                    static_cast<unsigned char>(laststate) + \
+                                                                    SECUREC_FMT_STATE_OFFSET])))
 #else
-#define SECUREC_DECODE_STATE(c,fmtTable,laststate) (SecFmtState)((fmtTable[(fmtTable[(unsigned char)(c)]) * \
-                                                                           ((unsigned char)STAT_INVALID + 1) + \
-                                                                           (unsigned char)(laststate) + \
-                                                                           SECUREC_FMT_STATE_OFFSET]))
+#define SECUREC_DECODE_STATE(c,fmtTable,laststate) (SecFmtState)((fmtTable[(fmtTable[static_cast<unsigned char>(c)]) * \
+                                                                    (static_cast<unsigned char>(STAT_INVALID) + 1) + \
+                                                                    static_cast<unsigned char>(laststate) + \
+                                                                    SECUREC_FMT_STATE_OFFSET]))
 #endif
 
 #define PUBLIC_FLAG_LEN  8
@@ -299,7 +301,7 @@ static int SecDecodeTypeC(SecFormatAttr *attr, unsigned int cValue, SecFormatBuf
 #else
     attr->bufferIsWide = 0;
     if (attr->flags & (SECUREC_FLAG_LONG | SECUREC_FLAG_WIDECHAR)) {
-        wchar = (wchar_t)cValue;
+        wchar = static_cast<wchar_t>(cValue);
         /* wide  character  to multibyte character */
         SECUREC_MASK_MSVC_CRT_WARNING
         textLen = wctomb(buffer->str, wchar);
@@ -310,8 +312,8 @@ static int SecDecodeTypeC(SecFormatAttr *attr, unsigned int cValue, SecFormatBuf
     } else {
         /* get  multibyte character from argument */
         unsigned short temp;
-        temp = (unsigned short)cValue;
-        buffer->str[0] = (char)temp;
+        temp = static_cast<unsigned short>(cValue);
+        buffer->str[0] = static_cast<char>(temp);
         textLen = 1;
     }
     formatBuf->str = buffer->str;
@@ -362,7 +364,7 @@ static int SecDecodeTypeS(SecFormatAttr *attr, char *argPtr, SecFormatBuf *forma
         while (finalPrecision-- && *wStrEnd) {
             ++wStrEnd;
         }
-        textLen = (int)(wStrEnd - formatBuf->wStr); /* in wchar_ts */
+        textLen = static_cast<int>(wStrEnd - formatBuf->wStr); /* in wchar_ts */
         /* textLen now contains length in wide chars */
     }
 #else /* SECUREC_FOR_WCHAR */
@@ -375,7 +377,7 @@ static int SecDecodeTypeS(SecFormatAttr *attr, char *argPtr, SecFormatBuf *forma
         while (finalPrecision-- && *wStrEnd) {
             ++wStrEnd;
         }
-        textLen = (int)(wStrEnd - formatBuf->wStr);
+        textLen = static_cast<int>(wStrEnd - formatBuf->wStr);
     } else {
         if (formatBuf->str == NULL) {   /* meet NULL, use special string */
             formatBuf->str = strNullString;
@@ -384,14 +386,14 @@ static int SecDecodeTypeS(SecFormatAttr *attr, char *argPtr, SecFormatBuf *forma
         if (finalPrecision == SECUREC_INT_MAX) {
             /* precision NOT assigned */
             /* The strlen performance is high when the string length is greater than 32 */
-            textLen = (int)strlen(formatBuf->str);
+            textLen = static_cast<int>(strlen(formatBuf->str));
         } else {
             /* precision assigned */
             strEnd = formatBuf->str;
             while (finalPrecision-- && *strEnd) {
                 ++strEnd;
             }
-            textLen = (int)(strEnd - formatBuf->str);   /* length of the string */
+            textLen = static_cast<int>(strEnd - formatBuf->str);   /* length of the string */
         }
 
     }
@@ -553,7 +555,7 @@ NORMAL_CHAR:
             /* update width value */
             if (ch == SECUREC_CHAR('*')) {
                 /* get width */
-                formatAttr.fldWidth = (int)va_arg(arglist, int);
+                formatAttr.fldWidth = static_cast<int>(va_arg(arglist, int));
                 if (formatAttr.fldWidth < 0) {
                     formatAttr.flags |= SECUREC_FLAG_LEFT;
                     formatAttr.fldWidth = -formatAttr.fldWidth;
@@ -566,7 +568,8 @@ NORMAL_CHAR:
                 if (SECUREC_MUL10_ADD_BEYOND_MAX(formatAttr.fldWidth)) {
                     return -1;
                 }
-                formatAttr.fldWidth = (int)SECUREC_MUL10((unsigned int)formatAttr.fldWidth) + (ch - SECUREC_CHAR('0'));
+                formatAttr.fldWidth = static_cast<int>(SECUREC_MUL10((unsigned int)formatAttr.fldWidth)) +
+                    (ch - SECUREC_CHAR('0'));
                 formatAttr.dynWidth = 0;
             }
             break;
@@ -590,7 +593,8 @@ NORMAL_CHAR:
                     return -1;
                 }
                 formatAttr.precision =
-                    (int)SECUREC_MUL10((unsigned int)formatAttr.precision) + (ch - SECUREC_CHAR('0'));
+                    static_cast<int>(SECUREC_MUL10(static_cast<unsigned int>(formatAttr.precision))) +
+                        (ch - SECUREC_CHAR('0'));
                 formatAttr.dynPrecision = 0;
             }
             break;
@@ -663,7 +667,7 @@ NORMAL_CHAR:
             case SECUREC_CHAR('G'):    /* fall-through */ /* FALLTHRU */
             case SECUREC_CHAR('A'):    /* fall-through */ /* FALLTHRU */
                 /* convert format char to lower , use Explicit conversion to clean up compilation warning */
-                ch = (SecChar) (ch + ((SecChar) (SECUREC_CHAR('a')) - (SECUREC_CHAR('A'))));
+                ch = static_cast<SecChar>(ch + (static_cast<SecChar>(SECUREC_CHAR('a')) - (SECUREC_CHAR('A'))));
                 [[fallthrough]];
             case SECUREC_CHAR('e'):    /* fall-through */ /* FALLTHRU */
             case SECUREC_CHAR('f'):    /* fall-through */ /* FALLTHRU */
@@ -714,7 +718,9 @@ NORMAL_CHAR:
                     if (bufferSize >= SECUREC_BUFFER_SIZE) {
                         /* the current value of SECUREC_BUFFER_SIZE could NOT store the formatted float string */
                         /* size include '+' and '\0' */
-                        floatBuf = (char *)SECUREC_MALLOC(((size_t)(unsigned int)bufferSize + (size_t)2));
+                        floatBuf = static_cast<char*>(
+                            SECUREC_MALLOC((static_cast<size_t>(static_cast<unsigned int>(bufferSize)) +
+                            static_cast<size_t>(2))));
                         if (floatBuf != NULL) {
                             formatBuf.str = floatBuf;
                         } else {
@@ -736,10 +742,11 @@ NORMAL_CHAR:
                         while (SECUREC_CHAR('%') != *pFltFmt && SECUREC_CHAR('}') != *pFltFmt) {
                             --pFltFmt;
                         }
-                        fltFmtStrLen = (int)((format - pFltFmt) + 1);   /* with ending terminator */
+                        fltFmtStrLen = static_cast<int>((format - pFltFmt) + 1);   /* with ending terminator */
                         if (fltFmtStrLen > SECUREC_FMT_STR_LEN) {
                             /* if SECUREC_FMT_STR_LEN is NOT enough, alloc a new buffer */
-                            fltFmtHeap = (char *)SECUREC_MALLOC((size_t)((unsigned int)fltFmtStrLen));
+                            fltFmtHeap = static_cast<char*>(
+                                SECUREC_MALLOC(static_cast<size_t>(static_cast<unsigned int>(fltFmtStrLen))));
                             if (fltFmtHeap == NULL) {
                                 noOutput = 1;
                                 break;
@@ -747,7 +754,7 @@ NORMAL_CHAR:
                                 fltFmtHeap[0] = '%';
                                 for (k = 1; k < fltFmtStrLen - 1; ++k) {
                                     /* convert wchar to char */
-                                    fltFmtHeap[k] = (char)(pFltFmt[k]); /* copy the format string */
+                                    fltFmtHeap[k] = static_cast<char>(pFltFmt[k]); /* copy the format string */
                                 }
                                 fltFmtHeap[k] = '\0';
 
@@ -758,42 +765,42 @@ NORMAL_CHAR:
                             fltFmtBuf[0] = '%';
                             for (k = 1; k < fltFmtStrLen - 1; ++k) {
                                 /* convert wchar to char */
-                                fltFmtBuf[k] = (char)(pFltFmt[k]);  /* copy the format string */
+                                fltFmtBuf[k] = static_cast<char>(pFltFmt[k]);  /* copy the format string */
                             }
                             fltFmtBuf[k] = '\0';
                         }
 
 #ifdef SECUREC_COMPATIBLE_LINUX_FORMAT
                         if (formatAttr.flags & SECUREC_FLAG_LONG_DOUBLE) {
-                            long double tmp = (long double)va_arg(arglist, long double);
+                            long double tmp = static_cast<long double>(va_arg(arglist, long double));
                             /* call system sprintf to format float value */
                             if (formatAttr.dynWidth && formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr,
-                                                             formatAttr.fldWidth,formatAttr.precision, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr),
+                                    formatAttr.fldWidth,formatAttr.precision, tmp);
                             } else if (formatAttr.dynWidth) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr,
-                                                             formatAttr.fldWidth, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr),
+                                    formatAttr.fldWidth, tmp);
                             } else if (formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr,
-                                                             formatAttr.precision, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr),
+                                    formatAttr.precision, tmp);
                             } else {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr), tmp);
                             }
                         } else
 #endif
                         {
                             double tmp = (double)va_arg(arglist, double);
                             if (formatAttr.dynWidth && formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, formatAttr.fldWidth,
-                                                             formatAttr.precision, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr),
+                                    formatAttr.fldWidth, formatAttr.precision, tmp);
                             } else if (formatAttr.dynWidth) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, formatAttr.fldWidth,
-                                                             tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr),
+                                    formatAttr.fldWidth, tmp);
                             } else if (formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, formatAttr.precision,
-                                                             tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr),
+                                    formatAttr.precision, tmp);
                             } else {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, reinterpret_cast<char*>(fltFmtStr), tmp);
                             }
                         }
 
@@ -924,12 +931,12 @@ OUTPUT_INT:
                     } else
 #ifdef SECUREC_ON_64BITS
                     if (formatAttr.flags & SECUREC_FLAG_LONG) {
-                        l = (long)va_arg(arglist, long);
+                        l = static_cast<long>(va_arg(arglist, long));
                     } else
 #endif /* SECUREC_ON_64BITS */
                     if (formatAttr.flags & SECUREC_FLAG_CHAR) {
                         if (formatAttr.flags & SECUREC_FLAG_SIGNED) {
-                            l = (char)va_arg(arglist, int); /* sign extend */
+                            l = static_cast<char>(va_arg(arglist, int)); /* sign extend */
                             if (l >= 128) { /* on some platform, char is always unsigned */
                                 SecUnsignedInt64 tmpL = (SecUnsignedInt64)l;
                                 formatAttr.flags |= SECUREC_FLAG_NEGATIVE;
@@ -937,14 +944,14 @@ OUTPUT_INT:
                                 l = tch + 1;
                             }
                         } else {
-                            l = (unsigned char)va_arg(arglist, int);    /* zero-extend */
+                            l = static_cast<unsigned char>(va_arg(arglist, int));    /* zero-extend */
                         }
 
                     } else if (formatAttr.flags & SECUREC_FLAG_SHORT) {
                         if (formatAttr.flags & SECUREC_FLAG_SIGNED) {
-                            l = (short)va_arg(arglist, int);    /* sign extend */
+                            l = static_cast<short>(va_arg(arglist, int));    /* sign extend */
                         } else {
-                            l = (unsigned short)va_arg(arglist, int);   /* zero-extend */
+                            l = static_cast<unsigned short>(va_arg(arglist, int));   /* zero-extend */
                         }
 
                     }
@@ -962,7 +969,7 @@ OUTPUT_INT:
                                 l = va_arg(arglist, int);   /* sign extend */
                             }
                         } else {
-                            l = (SecInt64)(size_t)va_arg(arglist, size_t);  /* sign extend */
+                            l = (SecInt64)(static_cast<size_t>(va_arg(arglist, size_t)));  /* sign extend */
                         }
                     } else if (formatAttr.flags & SECUREC_FLAG_INTMAX) {
                         if (formatAttr.flags & SECUREC_FLAG_SIGNED) {
@@ -976,7 +983,7 @@ OUTPUT_INT:
                         if (formatAttr.flags & SECUREC_FLAG_SIGNED) {
                             l = va_arg(arglist, int);   /* sign extend */
                         } else {
-                            l = (unsigned int)va_arg(arglist, int); /* zero-extend */
+                            l = static_cast<unsigned int>(va_arg(arglist, int)); /* zero-extend */
                         }
 
                     }
@@ -1121,7 +1128,8 @@ OUTPUT_INT:
 #endif
                     }           /* END if (number > 0) */
                     /* compute length of number,.if textLen > 0, then formatBuf.str must be in buffer.str */
-                    textLen = (int)((char *)&buffer.str[SECUREC_BUFFER_SIZE] - formatBuf.str);
+                    textLen = static_cast<int>(reinterpret_cast<char*>(&buffer.str[SECUREC_BUFFER_SIZE]) -
+                        formatBuf.str);
                     if (formatAttr.precision > textLen) {
                         for (ii = 0; ii < formatAttr.precision - textLen; ++ii) {
                             *--formatBuf.str = '0';

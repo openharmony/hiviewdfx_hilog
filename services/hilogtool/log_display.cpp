@@ -217,6 +217,15 @@ static string GetProcessName(const ProcStatsRsp &pStats)
     return name.substr(0, PNAME_W - 1);
 }
 
+static inline void PrintDetail(const std::string& logType, uint32_t pid, const std::string& processName,
+    const std::string& tag)
+{
+    cout << setw(LOGTYPE_W) << logType << colCmd;
+    cout << setw(PID_W) << pid << colCmd;
+    cout << setw(PNAME_W) << processName << colCmd;
+    cout << setw(TAG_W) << tag << colCmd;
+}
+
 static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
 {
     cout << "Pid Table:" << endl;
@@ -232,10 +241,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
     for (i = 0; i < rsp.procNum; i++) {
         ProcStatsRsp &pStats = vp[i];
         string name = GetProcessName(pStats);
-        cout << setw(LOGTYPE_W) << "-" << colCmd;
-        cout << setw(PID_W) << pStats.pid << colCmd;
-        cout << setw(PNAME_W) << name << colCmd;
-        cout << setw(TAG_W) << "-" << colCmd;
+        PrintDetail("-", pStats.pid, name, "-");
         PrintStats(pStats.stats);
         cout << endl;
         uint16_t j = 0;
@@ -247,10 +253,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
             if (GetTotalLines(lStats.stats) == 0) {
                 continue;
             }
-            cout << setw(LOGTYPE_W) << LogType2Str(lStats.type) << colCmd;
-            cout << setw(PID_W) << pStats.pid << colCmd;
-            cout << setw(PNAME_W) << name << colCmd;
-            cout << setw(TAG_W) << "-" << colCmd;
+            PrintDetail(LogType2Str(lStats.type), pStats.pid, name, "-");
             PrintStats(lStats.stats);
             cout << endl;
         }
@@ -261,10 +264,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
         SortTagList(vt, pStats.tStats, pStats.tagNum);
         for (j = 0; j < pStats.tagNum; j++) {
             TagStatsRsp &tStats = vt[j];
-            cout << setw(LOGTYPE_W) << "-" << colCmd;
-            cout << setw(PID_W) << pStats.pid << colCmd;
-            cout << setw(PNAME_W) << name << colCmd;
-            cout << setw(TAG_W) << tStats.tag << colCmd;
+            PrintDetail("-", pStats.pid, name, std::string(tStats.tag));
             PrintStats(tStats.stats);
             cout << endl;
         }
@@ -290,9 +290,11 @@ void HilogShowLogStatsInfo(const StatsQueryRsp& rsp)
     for (int i = 0; i < LevelNum; i++) {
         string level = LogLevel2Str(static_cast<uint16_t>(i + LevelBase));
         cout << level << " lines: " << rsp.totalLines[i];
-        cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLines[i]*PERCENT)/lines) << "%)";
+        cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLines[i] * PERCENT) / lines) <<
+            "%)";
         cout << ", length: " << Size2Str(rsp.totalLens[i]);
-        cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLens[i]*PERCENT)/lens) << "%)";
+        cout << "(" << setprecision(FLOAT_PRECSION) << (static_cast<float>(rsp.totalLens[i] * PERCENT) / lens) <<
+            "%)";
         cout<< endl;
     }
     cout << "---------------------------------------------------------------------" << endl;
