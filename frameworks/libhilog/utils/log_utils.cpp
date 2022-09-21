@@ -435,6 +435,37 @@ string GetNameByPid(uint32_t pid)
     return cmdline;
 }
 
+static const int STATUS_PATH_LEN = 32;
+static const int STATUS_LEN = 1024;
+uint32_t GetPPidByPid(uint32_t pid)
+{
+    uint32_t ppid = 0;
+    char path[STATUS_LEN] = { 0 };
+    if (snprintf_s(path, STATUS_PATH_LEN, STATUS_PATH_LEN - 1, "/proc/%u/status", pid) <= 0) {
+        return ppid;
+    }
+    FILE *fp = fopen(path, "r");
+    if (fp == nullptr) {
+        return ppid;
+    }
+    char buf[STATUS_LEN] = { 0 };
+    size_t ret = fread(buf, sizeof(char), STATUS_LEN - 1, fp);
+    if (ret <= 0) {
+        return ppid;
+    } else {
+        buf[ret++] = '\0';
+    }
+    (void)fclose(fp);
+    char *ppid_loc = strstr(buf, "PPid:");
+    if (ppid_loc) {
+        sscanf(ppid_loc, "PPid:%d", &ppid);
+    }
+    if (GetNameByPid(ppid) == "sh") {
+        return GetPPidByPid(ppid);
+    }
+    return ppid;
+}
+
 uint64_t GenerateHash(const char *p, size_t size)
 {
     static const uint64_t PRIME = 0x100000001B3ull;
