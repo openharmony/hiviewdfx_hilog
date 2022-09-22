@@ -422,7 +422,7 @@ string GetNameByPid(uint32_t pid)
         return "";
     }
     while (i < (CMDLINE_LEN - 1)) {
-        char c = fgetc(fp);
+        char c = static_cast<char>(fgetc(fp));
         // 0. don't need args of cmdline
         // 1. ignore unvisible character
         if (!isgraph(c)) {
