@@ -73,8 +73,7 @@ static const uint32_t OS_SUB_DOMAIN_MASK = 0xFFFFFF00;
 bool IsValidDomain(LogType type, uint32_t domain)
 {
     if (type == LOG_APP) {
-        // 0xD003B00 is a for cureent console log, should modify in future
-        if ((domain & APP_DOMAIN_MASK) == 0 || domain == 0xD003B00) {
+        if ((domain & APP_DOMAIN_MASK) == 0) {
             return true;
         }
         return false;
