@@ -108,11 +108,9 @@ typedef struct {
 #endif
 
 /* put a char to output */
-#define SECUREC_PUTC(_c, _stream)    ((--(_stream)->count >= 0) ? \
-    ((*(_stream)->cur++ = static_cast<char>(_c)) & 0xff) : EOF)
+#define SECUREC_PUTC(_c, _stream)    ((--(_stream)->count >= 0) ? ((*(_stream)->cur++ = (char)(_c)) & 0xff) : EOF)
 /* to clear e835 */
-#define SECUREC_PUTC_ZERO(_stream)    ((--(_stream)->count >= 0) ? \
-    ((*(_stream)->cur++ = static_cast<char>('\0'))) : EOF)
+#define SECUREC_PUTC_ZERO(_stream)    ((--(_stream)->count >= 0) ? ((*(_stream)->cur++ = (char)('\0'))) : EOF)
 
 /* state definitions */
 typedef enum {
@@ -129,11 +127,11 @@ typedef enum {
 
 #ifndef HILOG_PROHIBIT_ALLOCATION
 #ifndef SECUREC_MALLOC
-#define SECUREC_MALLOC(x) malloc(static_cast<size_t>(x))
+#define SECUREC_MALLOC(x) malloc((size_t)(x))
 #endif
 
 #ifndef SECUREC_FREE
-#define SECUREC_FREE(x)   free(reinterpret_cast<void*>(x))
+#define SECUREC_FREE(x)   free((void *)(x))
 #endif
 
 #else
