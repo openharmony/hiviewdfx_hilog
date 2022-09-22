@@ -101,6 +101,7 @@ uint32_t HexStr2Uint(const std::string& str);
 std::string GetProgName();
 #endif
 std::string GetNameByPid(uint32_t pid);
+uint32_t GetPPidByPid(uint32_t pid);
 uint64_t GenerateHash(const char *p, size_t size);
 void PrintErrorno(int err);
 } // namespace HiviewDFX
