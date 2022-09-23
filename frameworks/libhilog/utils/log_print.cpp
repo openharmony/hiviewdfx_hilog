@@ -137,13 +137,14 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
 
 void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std::ostream& out)
 {
-    // 0. set colorful log
+    // set colorful log
     if (format.colorful) {
         out << "\x1B[38;5;" << GetColor(content.level) << "m";
     }
 
     const char *pHead = content.log;
     const char *pScan = content.log;
+    // split the log content by '\n', and add log prefix(datetime, pid, tid....) to each new line
     while (*pScan != '\0') {
         if (*pScan == '\n') {
             char tmp[MAX_LOG_LEN];
@@ -153,8 +154,10 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
                 break;
             }
             tmp[(MAX_LOG_LEN - 1) > len ? len : (MAX_LOG_LEN -1)] = '\0';
-            PrintLogPrefix(content, format, out);
-            out << tmp << endl;
+            if (tmp[0] != '\0') {
+                PrintLogPrefix(content, format, out);
+                out << tmp << endl;
+            }
             pHead = pScan + 1;
         }
         pScan++;
@@ -164,11 +167,13 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
         out << pHead;
     }
 
-    // n. restore color
+    // restore color
     if (format.colorful) {
         out << "\x1B[0m";
     }
-    out << endl;
+    if (pHead[0] != '\0') {
+        out << endl;
+    }
     return;
 }
 } // namespace HiviewDFX

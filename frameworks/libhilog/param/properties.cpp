@@ -55,9 +55,10 @@ enum class PropType {
     // Below properties needn't be cached, used in low frequency
     PROP_KMSG,
     PROP_BUFFER_SIZE,
-    PROP_QUOTA,
+    PROP_PROC_QUOTA,
     PROP_STATS_ENABLE,
     PROP_STATS_TAG_ENABLE,
+    PROP_DOMAIN_QUOTA,
 
     PROP_MAX,
 };
@@ -95,9 +96,10 @@ static PropRes g_PropResources[static_cast<int>(PropType::PROP_MAX)] = {
     // Non cached:
     {"persist.sys.hilog.kmsg.on", nullptr}, // PROP_KMSG,
     {"hilog.buffersize.", nullptr}, // PROP_BUFFER_SIZE,
-    {"hilog.quota.", nullptr}, // PROP_QUOTA
+    {"hilog.quota.proc.", nullptr}, // PROP_PROC_QUOTA
     {"persist.sys.hilog.stats", nullptr}, // PROP_STATS_ENABLE,
     {"persist.sys.hilog.stats.tag", nullptr}, // PROP_STATS_TAG_ENABLE,
+    {"hilog.quota.domain.", nullptr}, // DOMAIN_QUOTA
 };
 
 static string GetPropertyName(PropType propType)
@@ -451,16 +453,28 @@ bool IsTagStatsEnable()
     return TextToBool(rawData, false);
 }
 
-int GetProcessQuota(bool debug)
+int GetProcessQuota(const string& proc)
 {
     static constexpr int default_quota = 10240;
-    static constexpr int default_quota_debug = default_quota * 5;
     char value[HILOG_PROP_VALUE_MAX] = {0};
-    string prop = GetPropertyName(PropType::PROP_QUOTA) + GetProgName();
+    string prop = GetPropertyName(PropType::PROP_PROC_QUOTA) + proc;
 
     int ret = PropertyGet(prop, value, HILOG_PROP_VALUE_MAX);
     if (ret == RET_FAIL || value[0] == 0) {
-        return debug ? default_quota_debug : default_quota;
+        return default_quota;
+    }
+    return std::stoi(value);
+}
+
+int GetDomainQuota(uint32_t domain)
+{
+    static constexpr int default_quota = 10240;
+    char value[HILOG_PROP_VALUE_MAX] = {0};
+    string prop = GetPropertyName(PropType::PROP_DOMAIN_QUOTA) + Uint2HexStr(domain);
+
+    int ret = PropertyGet(prop, value, HILOG_PROP_VALUE_MAX);
+    if (ret == RET_FAIL || value[0] == 0) {
+        return default_quota;
     }
     return std::stoi(value);
 }

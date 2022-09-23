@@ -17,15 +17,8 @@ group("hilogd_etc") {
   deps = [
     ":hilog.para",
     ":hilog.para.dac",
-    ":hilog_domains.conf",
     ":hilogd.cfg",
   ]
-}
-
-ohos_prebuilt_etc("hilog_domains.conf") {
-  source = "hilog_domains.conf"
-  part_name = "hilog_service"
-  subsystem_name = "hiviewdfx"
 }
 
 ohos_prebuilt_etc("hilogd.cfg") {
