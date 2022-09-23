@@ -33,11 +33,12 @@
 #include <securec.h>
 #include <hilog/log.h>
 #include <hilog_common.h>
+#include <log_utils.h>
 #include <properties.h>
 
 #include "log_data.h"
 #include "log_buffer.h"
-#include "log_utils.h"
+
 
 #include "service_controller.h"
 
@@ -464,10 +465,16 @@ void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilte
     filter.Print();
     // Permission check
     uid_t uid = m_communicationSocket->GetUid();
+    uint32_t pid = static_cast<uint32_t>(m_communicationSocket->GetPid());
     if (uid != ROOT_UID && uid != SHELL_UID) {
         filter.blackPid = false;
         filter.pidCount = 1;
-        filter.pids[0] = static_cast<uint32_t>(m_communicationSocket->GetPid());
+        filter.pids[0] = pid;
+        uint32_t ppid = GetPPidByPid(pid);
+        if (ppid > 0) {
+            filter.pidCount++;
+            filter.pids[1] = ppid;
+        }
     }
 }
 
