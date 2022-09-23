@@ -33,11 +33,11 @@
 #include <securec.h>
 #include <hilog/log.h>
 #include <hilog_common.h>
+#include <log_utils.h>
 #include <properties.h>
 
 #include "log_data.h"
 #include "log_buffer.h"
-#include "log_utils.h"
 #include "log_kmsg.h"
 
 #include "service_controller.h"
@@ -56,8 +56,10 @@ static constexpr int INFO_SUFFIX = 5;
 static const uid_t SHELL_UID = 2000;
 static const uid_t ROOT_UID = 0;
 
-ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket, HilogBuffer& buffer)
+ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket,
+    LogCollector& collector, HilogBuffer& buffer)
     : m_communicationSocket(std::move(communicationSocket))
+    , m_logCollector(collector)
     , m_hilogBuffer(buffer)
 {
     m_bufReader = m_hilogBuffer.CreateBufReader([this]() { NotifyForNewData(); });
@@ -728,6 +730,7 @@ void ServiceController::HandleStatsClearRqst(const StatsClearRqst& rqst)
 void ServiceController::HandleDomainFlowCtrlRqst(const DomainFlowCtrlRqst& rqst)
 {
     SetDomainSwitchOn(rqst.on);
+    m_logCollector.SetLogFlowControl(rqst.on);
     // set domain flow control later
     DomainFlowCtrlRsp rsp = { 0 };
     WriteRspHeader(IoctlCmd::DOMAIN_FLOWCTRL_RSP, sizeof(rsp));

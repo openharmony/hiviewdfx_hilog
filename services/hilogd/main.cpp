@@ -169,16 +169,15 @@ int HilogdEntry()
 #endif
     std::signal(SIGINT, SigHandler);
     HilogBuffer hilogBuffer;
+    LogCollector logCollector(hilogBuffer);
 
     // Start log_collector
 #ifndef __RECV_MSG_WITH_UCRED_
-    auto onDataReceive = [&hilogBuffer](std::vector<char>& data) {
-        static LogCollector logCollector(hilogBuffer);
+    auto onDataReceive = [&logCollector](std::vector<char>& data) {
         logCollector.onDataRecv(data);
     };
 #else
-    auto onDataReceive = [&hilogBuffer](const ucred& cred, std::vector<char>& data) {
-        static LogCollector logCollector(hilogBuffer);
+    auto onDataReceive = [&logCollector](const ucred& cred, std::vector<char>& data) {
         logCollector.onDataRecv(cred, data);
     };
 #endif
@@ -218,7 +217,7 @@ int HilogdEntry()
         (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
 
-    auto cmdExecuteTask = std::async(std::launch::async, [&hilogBuffer]() {
+    auto cmdExecuteTask = std::async(std::launch::async, [&logCollector, &hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cmd");
         CmdList controlCmdList {
             IoctlCmd::PERSIST_START_RQST,
@@ -232,12 +231,12 @@ int HilogdEntry()
             IoctlCmd::LOG_REMOVE_RQST,
             IoctlCmd::KMSG_ENABLE_RQST,
         };
-        CmdExecutor controlExecutor(hilogBuffer, controlCmdList, ("hilogd.control"));
+        CmdExecutor controlExecutor(logCollector, hilogBuffer, controlCmdList, ("hilogd.control"));
         controlExecutor.MainLoop(CONTROL_SOCKET_NAME);
     });
 
     CmdList outputList {IoctlCmd::OUTPUT_RQST};
-    CmdExecutor outputExecutor(hilogBuffer, outputList, ("hilogd.output"));
+    CmdExecutor outputExecutor(logCollector, hilogBuffer, outputList, ("hilogd.output"));
     outputExecutor.MainLoop(OUTPUT_SOCKET_NAME);
 
     return 0;
