@@ -25,16 +25,23 @@
 #include "hilog_cmd.h"
 #include "log_utils.h"
 
+namespace {
+    constexpr uint32_t ONE_KB = (1UL << 10);
+    constexpr uint32_t ONE_MB = (1UL << 20);
+    constexpr uint32_t ONE_GB = (1UL << 30);
+    constexpr uint64_t ONE_TB = (1ULL << 40);
+    constexpr uint32_t DOMAIN_MIN = DOMAIN_APP_MIN;
+    constexpr uint32_t DOMAIN_MAX = DOMAIN_OS_MAX;
+    constexpr int CMDLINE_PATH_LEN = 32;
+    constexpr int CMDLINE_LEN = 128;
+    constexpr int STATUS_PATH_LEN = 32;
+    constexpr int STATUS_LEN = 1024;
+    const std::string SH_NAMES[] = { "sh", "/bin/sh", "/system/bin/sh", "/xbin/sh", "/system/xbin/sh"};
+}
+
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-
-static constexpr uint32_t ONE_KB = (1UL << 10);
-static constexpr uint32_t ONE_MB = (1UL << 20);
-static constexpr uint32_t ONE_GB = (1UL << 30);
-static constexpr uint64_t ONE_TB = (1ULL << 40);
-static constexpr uint32_t DOMAIN_MIN = DOMAIN_APP_MIN;
-static constexpr uint32_t DOMAIN_MAX = DOMAIN_OS_MAX;
 
 // Buffer Size&Char Map
 static const KVMap<char, uint64_t> g_SizeMap({
@@ -407,8 +414,6 @@ string GetProgName()
 }
 #endif
 
-static const int CMDLINE_PATH_LEN = 32;
-static const int CMDLINE_LEN = 128;
 string GetNameByPid(uint32_t pid)
 {
     char path[CMDLINE_PATH_LEN] = { 0 };
@@ -433,6 +438,37 @@ string GetNameByPid(uint32_t pid)
     }
     (void)fclose(fp);
     return cmdline;
+}
+
+uint32_t GetPPidByPid(uint32_t pid)
+{
+    uint32_t ppid = 0;
+    char path[STATUS_PATH_LEN] = { 0 };
+    if (snprintf_s(path, STATUS_PATH_LEN, STATUS_PATH_LEN - 1, "/proc/%u/status", pid) <= 0) {
+        return ppid;
+    }
+    FILE *fp = fopen(path, "r");
+    if (fp == nullptr) {
+        return ppid;
+    }
+    char buf[STATUS_LEN] = { 0 };
+    size_t ret = fread(buf, sizeof(char), STATUS_LEN - 1, fp);
+    (void)fclose(fp);
+    if (ret <= 0) {
+        return ppid;
+    } else {
+        buf[ret++] = '\0';
+    }
+    char *ppidLoc = strstr(buf, "PPid:");
+    if ((ppidLoc == nullptr) || (sscanf_s(ppidLoc, "PPid:%d", &ppid) == -1)) {
+        return ppid;
+    }
+    std::string ppidName = GetNameByPid(ppid);
+    // ppid fork the sh to execute hilog, sh is not wanted ppid
+    if (std::find(std::begin(SH_NAMES), std::end(SH_NAMES), ppidName) != std::end(SH_NAMES)) {
+        return GetPPidByPid(ppid);
+    }
+    return ppid;
 }
 
 uint64_t GenerateHash(const char *p, size_t size)
