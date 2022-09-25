@@ -470,8 +470,11 @@ void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilte
         filter.blackPid = false;
         filter.pidCount = 1;
         filter.pids[0] = pid;
-        filter.pidCount++;
-        filter.pids[1] = GetPPidByPid(pid);
+        uint32_t ppid = GetPPidByPid(pid);
+        if (ppid > 0) {
+            filter.pidCount++;
+            filter.pids[1] = ppid;
+        }
     }
 }
 
