@@ -217,7 +217,7 @@ static string GetProcessName(const ProcStatsRsp &pStats)
     return name.substr(0, PNAME_W - 1);
 }
 
-static inline void PrintDetail(const std::string& logType, uint32_t pid, const std::string& processName,
+static inline void HiLogShowProcInfo(const std::string& logType, uint32_t pid, const std::string& processName,
     const std::string& tag)
 {
     cout << setw(LOGTYPE_W) << logType << colCmd;
@@ -241,7 +241,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
     for (i = 0; i < rsp.procNum; i++) {
         ProcStatsRsp &pStats = vp[i];
         string name = GetProcessName(pStats);
-        PrintDetail("-", pStats.pid, name, "-");
+        HiLogShowProcInfo("-", pStats.pid, name, "-");
         PrintStats(pStats.stats);
         cout << endl;
         uint16_t j = 0;
@@ -253,7 +253,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
             if (GetTotalLines(lStats.stats) == 0) {
                 continue;
             }
-            PrintDetail(LogType2Str(lStats.type), pStats.pid, name, "-");
+            HiLogShowProcInfo(LogType2Str(lStats.type), pStats.pid, name, "-");
             PrintStats(lStats.stats);
             cout << endl;
         }
@@ -264,7 +264,7 @@ static void HilogShowProcStatsInfo(const StatsQueryRsp& rsp)
         SortTagList(vt, pStats.tStats, pStats.tagNum);
         for (j = 0; j < pStats.tagNum; j++) {
             TagStatsRsp &tStats = vt[j];
-            PrintDetail("-", pStats.pid, name, std::string(tStats.tag));
+            HiLogShowProcInfo("-", pStats.pid, name, std::string(tStats.tag));
             PrintStats(tStats.stats);
             cout << endl;
         }
