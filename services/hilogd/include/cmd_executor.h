@@ -23,6 +23,7 @@
 
 #include <socket.h>
 #include "log_buffer.h"
+#include "log_collector.h"
 #include "service_controller.h"
 
 namespace OHOS {
@@ -34,8 +35,8 @@ struct ClientThread {
 
 class CmdExecutor {
 public:
-    explicit CmdExecutor(HilogBuffer& buffer, const CmdList& list, const std::string& name)
-        : m_hilogBuffer(buffer), m_cmdList(list), m_name(name) {}
+    explicit CmdExecutor(LogCollector& collector, HilogBuffer& buffer, const CmdList& list, const std::string& name)
+        : m_logCollector(collector), m_hilogBuffer(buffer), m_cmdList(list), m_name(name) {}
     ~CmdExecutor();
     void MainLoop(const std::string& sockName);
 private:
@@ -43,6 +44,7 @@ private:
     void ClientEventLoop(std::unique_ptr<Socket> handler);
     void CleanFinishedClients();
 
+    LogCollector& m_logCollector;
     HilogBuffer& m_hilogBuffer;
     CmdList m_cmdList;
     std::string m_name;

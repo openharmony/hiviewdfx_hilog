@@ -31,6 +31,7 @@
 #include "log_persister.h"
 #include "log_stats.h"
 #include "log_buffer.h"
+#include "log_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -41,7 +42,7 @@ public:
     static constexpr int MAX_DATA_LEN = 2048;
     using PacketBuf = std::array<char, MAX_DATA_LEN>;
 
-    ServiceController(std::unique_ptr<Socket> communicationSocket, HilogBuffer& buffer);
+    ServiceController(std::unique_ptr<Socket> communicationSocket, LogCollector& collector, HilogBuffer& buffer);
     ~ServiceController();
 
     void CommunicationLoop(std::atomic<bool>& stopLoop, const CmdList& list);
@@ -87,6 +88,7 @@ private:
     bool IsValidCmd(const CmdList& list, IoctlCmd cmd);
 
     std::unique_ptr<Socket> m_communicationSocket;
+    LogCollector& m_logCollector;
     HilogBuffer& m_hilogBuffer;
     HilogBuffer::ReaderId m_bufReader;
 

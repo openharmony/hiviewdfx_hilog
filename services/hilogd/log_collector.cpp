@@ -87,7 +87,7 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
     // Domain flow control
     do {
         int ret = 0;
-        if (flowControl && !debug) {
+        if (msg.type != static_cast<uint16_t>(LOG_APP) && flowControl && !debug) {
             ret = FlowCtrlDomain(msg);
         }
         if (ret < 0) {
@@ -103,7 +103,7 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
 
     // Log statistics
     if (countEnable) {
-        info = {
+        StatsInfo info = {
             .level = msg.level,
             .type = msg.type,
             .len = (msg.len - sizeof(HilogMsg) - 1 - 1), // don't count '\0' of tag and content
@@ -125,6 +125,16 @@ size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
         return ERR_LOG_TYPE_INVALID;
     }
     return m_hilogBuffer.Insert(msg);
+}
+
+void LogCollector::SetLogFlowControl(bool on)
+{
+    flowControl = on;
+}
+
+void LogCollector::SetDebuggable(bool on)
+{
+    debug = on;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

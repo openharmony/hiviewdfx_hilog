@@ -31,7 +31,8 @@ bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
 bool IsKmsgSwitchOn();
 size_t GetBufferSize(uint16_t type, bool persist);
-int GetProcessQuota(bool debug);
+int GetProcessQuota(const std::string& proc);
+int GetDomainQuota(uint32_t domain);
 bool IsStatsEnable();
 bool IsTagStatsEnable();
 

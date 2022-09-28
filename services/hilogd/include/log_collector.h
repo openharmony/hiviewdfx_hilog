@@ -28,7 +28,6 @@ public:
     explicit LogCollector(HilogBuffer& buffer) : m_hilogBuffer(buffer)
     {
         countEnable = m_hilogBuffer.GetStatsInfo().IsEnable();
-        info = { 0 };
         flowControl = IsDomainSwitchOn();
         debug = IsPersistDebugOn();
     }
@@ -39,10 +38,11 @@ public:
 #else
     void onDataRecv(const ucred& cred, std::vector<char>& data);
 #endif
+    void SetLogFlowControl(bool on);
+    void SetDebuggable(bool on);
     ~LogCollector() = default;
 private:
     HilogBuffer& m_hilogBuffer;
-    StatsInfo info;
     bool countEnable;
     bool flowControl;
     bool debug;
