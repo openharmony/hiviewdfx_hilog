@@ -25,7 +25,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
+#include <sys/stat.h>
+#include <sys/prctl.h>
 #include <init_file.h>
 #include <hilog/log.h>
 #include <log_utils.h>
@@ -33,6 +34,12 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+
+LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer)
+{
+    static LogKmsg logKmsg(hilogBuffer);
+    return logKmsg;
+}
 
 ssize_t LogKmsg::LinuxReadOneKmsg(KmsgParser& parser)
 {
@@ -68,6 +75,9 @@ int LogKmsg::LinuxReadAllKmsg()
         return -1;
     }
     while (true) {
+        if (threadStatus == STOP) {
+            break;
+        }
         ssize_t sz = LinuxReadOneKmsg(*parser);
         if (sz < 0) {
             rdFailTimes++;
@@ -85,6 +95,7 @@ int LogKmsg::LinuxReadAllKmsg()
 
 void LogKmsg::ReadAllKmsg()
 {
+    prctl(PR_SET_NAME, "hilogd.rd_kmsg");
 #ifdef __linux__
     std::cout << "Platform: Linux" << std::endl;
     LinuxReadAllKmsg();
@@ -93,10 +104,27 @@ void LogKmsg::ReadAllKmsg()
 
 void LogKmsg::Start()
 {
-    std::thread KmsgThread([this]() {
-        ReadAllKmsg();
-    });
-    KmsgThread.join();
+    std::lock_guard<decltype(startMtx)> lock(startMtx);
+    if (threadStatus == NONEXIST || threadStatus == STOP) {
+        logKmsgThread = std::thread ([this]() {
+            ReadAllKmsg();
+        });
+    } else {
+        std::cout << " Thread already started!\n";
+    }
+    threadStatus = START;
+}
+
+void LogKmsg::Stop()
+{
+    if (threadStatus == NONEXIST || threadStatus == STOP) {
+        std::cout << "Thread was exited or not started!\n";
+        return;
+    }
+    threadStatus = STOP;
+    if (logKmsgThread.joinable()) {
+        logKmsgThread.join();
+    }
 }
 
 LogKmsg::~LogKmsg()
