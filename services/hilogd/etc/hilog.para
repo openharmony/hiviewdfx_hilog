@@ -16,7 +16,7 @@ hilog.private.on=true
 hilog.debug.on=false
 persist.sys.hilog.kmsg.on=true
 persist.sys.hilog.debug.on=false
-hilog.flowctrl.proc.on=true
+hilog.flowctrl.proc.on=false
 hilog.flowctrl.domain.on=false
 
 hilog.loggable.global=I
