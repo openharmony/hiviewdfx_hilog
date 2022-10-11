@@ -104,7 +104,7 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 }
 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
-static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
+static int HiLogFlowCtrlProcess(int len, const struct timespec &ts)
 {
     static uint32_t processQuota = 0;
     static atomic_int gSumLen = 0;
@@ -113,7 +113,7 @@ static int HiLogFlowCtrlProcess(int len, const struct timespec &ts, bool debug)
     static LogTimeStamp period(1, 0);
     static std::atomic_flag isFirstFlag = ATOMIC_FLAG_INIT;
     if (!isFirstFlag.test_and_set()) {
-        processQuota = GetProcessQuota(debug);
+        processQuota = GetProcessQuota(GetProgName());
     }
     LogTimeStamp tsStart = atomic_load(&gStartTime);
     LogTimeStamp tsNow(ts);
@@ -264,8 +264,8 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     /* flow control */
-    if (IsProcessSwitchOn()) {
-        ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono, debug);
+    if (type == LOG_APP && !debug && IsProcessSwitchOn()) {
+        ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono);
         if (ret < 0) {
             return ret;
         } else if (ret > 0) {

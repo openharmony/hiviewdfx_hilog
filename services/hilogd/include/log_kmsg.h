@@ -23,15 +23,31 @@ namespace OHOS {
 namespace HiviewDFX {
 class LogKmsg {
 public:
-    explicit LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer) {}
-    ~LogKmsg();
+    static LogKmsg& GetInstance(HilogBuffer& hilogBuffer);
     ssize_t LinuxReadOneKmsg(KmsgParser& parser);
     int LinuxReadAllKmsg();
-    void ReadAllKmsg();
     void Start();
+    void Stop();
+    void ReadAllKmsg();
+    ~LogKmsg();
+
 private:
+    enum ThreadStatus {
+        START,
+        NONEXIST,
+        STOP
+    };
+
+private:
+    explicit LogKmsg(HilogBuffer& hilogBuffer) : hilogBuffer(hilogBuffer)
+    {
+        threadStatus = NONEXIST;
+    }
     int kmsgCtl = -1;
     HilogBuffer& hilogBuffer;
+    std::thread logKmsgThread;
+    ThreadStatus threadStatus;
+    std::mutex startMtx;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
