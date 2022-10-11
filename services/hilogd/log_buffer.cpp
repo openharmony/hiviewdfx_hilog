@@ -238,7 +238,7 @@ std::optional<HilogData> HilogBuffer::Query(const LogFilter& filter, const Reade
 
 int32_t HilogBuffer::Delete(uint16_t logType)
 {
-    std::list<HilogData> &msgList = (logType == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
+    std::list<HilogData> &msgList = (logType == LOG_KMSG) ? hilogKlogList : hilogDataList;
     if (logType >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;
     }
