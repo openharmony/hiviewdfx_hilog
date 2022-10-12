@@ -57,7 +57,6 @@ static inline int GetColor(uint16_t level)
     }
 }
 
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
 static inline const char* GetLogTypePrefix(uint16_t type)
 {
     switch (LogType(type)) {
@@ -68,7 +67,6 @@ static inline const char* GetLogTypePrefix(uint16_t type)
         default: return " ";
     }
 }
-#endif
 
 static inline uint32_t ShortDomain(uint32_t d)
 {
@@ -128,10 +126,8 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
     out << " " << setw(PID_WIDTH) << content.pid << " " << setw(PID_WIDTH) << content.tid;
     // 3. print level
     out << " " << LogLevel2ShortStr(content.level) << " ";
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     // 4. print log type
     out << GetLogTypePrefix(content.type);
-#endif
     // 5. print domain
     out << setfill('0');
     out << hex << setw(DOMAIN_WIDTH) << ShortDomain(content.domain) << dec;
