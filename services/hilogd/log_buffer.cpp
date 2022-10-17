@@ -87,7 +87,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
 
     LogMsgContainer &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
     {
-        std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
+        std::lock_guard<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
         // Delete old entries when full
         if (elemSize + sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
