@@ -28,6 +28,10 @@
 #error "max string is 2G"
 #endif
 
+#if defined(_WIN64) || defined(WIN64) || defined(__LP64__) || defined(_LP64)
+#define SECUREC_ON_64BITS
+#endif
+
 #if defined(_DEBUG) || defined(DEBUG)
     #if defined(SECUREC_ERROR_HANDLER_BY_ASSERT)
         #define SECUREC_ERROR_INVALID_PARAMTER(msg) assert( msg "invalid argument" == NULL)
