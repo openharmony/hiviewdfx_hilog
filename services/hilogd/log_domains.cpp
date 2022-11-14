@@ -65,6 +65,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD004300, "Storage"},
     {0xD004400, "DeviceProfile"},
     {0xD004500, "WebView"},
+    {0xD004600, "Interconnection"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
