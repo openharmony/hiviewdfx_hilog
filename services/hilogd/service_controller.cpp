@@ -26,6 +26,7 @@
 #include <sstream>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
 #include <dirent.h>
@@ -577,7 +578,18 @@ int StartPersistStoreJob(const PersistRecoveryInfo& info, HilogBuffer& hilogBuff
 
 void ServiceController::HandlePersistStartRqst(const PersistStartRqst &rqst)
 {
-    int ret = CheckPersistStartRqst(rqst);
+    int ret = WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, [](const string &path) {
+        struct stat s;
+        if (stat(path.c_str(), &s) != -1) {
+            return RET_SUCCESS;
+        }
+        return RET_FAIL;
+    });
+    if (ret != RET_SUCCESS) {
+        WriteErrorRsp(ERR_LOG_PERSIST_FILE_PATH_INVALID);
+        return;
+    }
+    ret = CheckPersistStartRqst(rqst);
     if (ret != RET_SUCCESS) {
         WriteErrorRsp(ret);
         return;
