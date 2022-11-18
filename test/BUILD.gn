@@ -60,3 +60,18 @@ ohos_moduletest("HiLogAdapterTest") {
     "//base/hiviewdfx/hilog/frameworks/libhilog/utils/include/",
   ]
 }
+
+group("hilog_moduletest") {
+  testonly = true
+  deps = [
+    ":HiLogAdapterTest",
+    ":HiLogNDKTest",
+  ]
+}
+
+group("hilog_unittest") {
+  testonly = true
+  deps = []
+
+  deps += [ "unittest/common:unittest" ]
+}
