@@ -36,7 +36,10 @@
         "//base/hiviewdfx/hilog/services/hilogd:hilogd"
       ],
       "inner_kits": [],
-      "test": [ "//base/hiviewdfx/hilog/test:HiLogNDKTest" ]
+      "test": [
+        "//base/hiviewdfx/hilog/test:hilog_unittest",
+        "//base/hiviewdfx/hilog/test:hilog_moduletest"
+      ]
     }
   }
 }
