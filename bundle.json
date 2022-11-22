@@ -31,11 +31,7 @@
       ]
     },
     "build": {
-      "sub_component": [],
-      "test": [
-        "//base/hiviewdfx/hilog/test:hilog_unittest",
-        "//base/hiviewdfx/hilog/test:hilog_moduletest"
-      ]
+      "sub_component": []
     }
   }
 }
