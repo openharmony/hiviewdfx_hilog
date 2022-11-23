@@ -16,13 +16,11 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/prctl.h>
-#include <thread>
+#include <sys/stat.h>
 #include <future>
 #include <unistd.h>
 #include <csignal>
-#include <chrono>
 #include <fcntl.h>
-
 #include <hilog_input_socket_server.h>
 #include <properties.h>
 #include <log_utils.h>
@@ -34,7 +32,6 @@
 #include "service_controller.h"
 
 #ifdef DEBUG
-#include <fcntl.h>
 #include <cstdio>
 #include <cerrno>
 #endif
@@ -42,12 +39,10 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-using namespace std::chrono;
 
 static const string SYSTEM_BG_STUNE = "/dev/stune/system-background/cgroup.procs";
 static const string SYSTEM_BG_CPUSET = "/dev/cpuset/system-background/cgroup.procs";
 static const string SYSTEM_BG_BLKIO  = "/dev/blkio/system-background/cgroup.procs";
-static constexpr int WAITING_DATA_MS = 5000;
 
 #ifdef DEBUG
 static int g_fd = -1;
@@ -64,46 +59,6 @@ static void SigHandler(int sig)
 #endif
         std::cout<<"Exited!"<<std::endl;
     }
-}
-
-static int WaitingToDo(int max, const string& path, function<int(const string &path)> func)
-{
-    chrono::steady_clock::time_point start = chrono::steady_clock::now();
-    chrono::milliseconds wait(max);
-    while (true) {
-        if (func(path) != -1) {
-            cout << "waiting for " << path << " successfully!" << endl;
-            return 0;
-        }
-
-        std::this_thread::sleep_for(10ms);
-        if ((chrono::steady_clock::now() - start) > wait) {
-            cerr << "waiting for " << path << " failed!" << endl;
-            return -1;
-        }
-    }
-}
-
-static int WaitingDataMounted(const string &path)
-{
-    struct stat st;
-    if (stat(path.c_str(), &st) != -1) {
-        return 0;
-    }
-    return -1;
-}
-
-static int WaitingCgroupMounted(const string &path)
-{
-    int fd;
-    if (!access(path.c_str(), W_OK)) {
-        fd = open(path.c_str(), O_WRONLY | O_CLOEXEC);
-        if (fd >= 0) {
-            close(fd);
-            return 0;
-        }
-    }
-    return -1;
 }
 
 static bool WriteStringToFile(int fd, const std::string& content)
@@ -123,7 +78,18 @@ static bool WriteStringToFile(int fd, const std::string& content)
 
 static bool WriteStringToFile(const std::string& content, const std::string& filePath)
 {
-    if (WaitingToDo(WAITING_DATA_MS, filePath, WaitingCgroupMounted) == -1) {
+    int ret = WaitingToDo(WAITING_DATA_MS, filePath, [](const string &path) {
+        int fd;
+        if (!access(path.c_str(), W_OK)) {
+            fd = open(path.c_str(), O_WRONLY | O_CLOEXEC);
+            if (fd >= 0) {
+                close(fd);
+                return RET_SUCCESS;
+            }
+        }
+        return RET_FAIL;
+    });
+    if (ret != RET_SUCCESS) {
         return false;
     }
     if (access(filePath.c_str(), W_OK)) {
@@ -141,7 +107,14 @@ static bool WriteStringToFile(const std::string& content, const std::string& fil
 #ifdef DEBUG
 static void RedirectStdStreamToLogFile()
 {
-    if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
+    int ret = WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, [](const string &path) {
+        struct stat s;
+        if (stat(path.c_str(), &s) != -1) {
+            return RET_SUCCESS;
+        }
+        return RET_FAIL;
+    });
+    if (ret == RET_SUCCESS) {
         const char *path = HILOG_FILE_DIR"hilogd_debug.txt";
         int mask = O_WRONLY | O_APPEND | O_CREAT;
         struct stat st;
@@ -197,7 +170,14 @@ int HilogdEntry()
 
     auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
-        if (WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, WaitingDataMounted) == 0) {
+        int ret = WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, [](const string &path) {
+            struct stat s;
+            if (stat(path.c_str(), &s) != -1) {
+                return RET_SUCCESS;
+            }
+            return RET_FAIL;
+        });
+        if (ret == RET_SUCCESS) {
             hilogBuffer.InitBuffLen();
             RestorePersistJobs(hilogBuffer);
         }

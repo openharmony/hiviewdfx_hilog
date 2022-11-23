@@ -14,13 +14,16 @@
  */
 #include <cstdint>
 #include <cstdlib>
+#include <chrono>
 #include <functional>
 #include <regex>
 #include <sstream>
+#include <thread>
 #include <fstream>
+#include <fcntl.h>
 #include <securec.h>
 #include <hilog/log.h>
-
+#include <unistd.h>
 #include "hilog_common.h"
 #include "hilog_cmd.h"
 #include "log_utils.h"
@@ -42,6 +45,7 @@ namespace {
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+using namespace std::chrono;
 
 // Buffer Size&Char Map
 static const KVMap<char, uint64_t> g_SizeMap({
@@ -495,6 +499,24 @@ void PrintErrorno(int err)
     (void)strerror_s(buf, bufSize, err);
 #endif
     std::cerr << "Errno: " << err << ", " << buf << std::endl;
+}
+
+int WaitingToDo(int max, const string& path, function<int(const string &path)> func)
+{
+    chrono::steady_clock::time_point start = chrono::steady_clock::now();
+    chrono::milliseconds wait(max);
+    while (true) {
+        if (func(path) != RET_FAIL) {
+            cout << "waiting for " << path << " successfully!" << endl;
+            return RET_SUCCESS;
+        }
+
+        std::this_thread::sleep_for(10ms);
+        if ((chrono::steady_clock::now() - start) > wait) {
+            cerr << "waiting for " << path << " failed!" << endl;
+            return RET_FAIL;
+        }
+    }
 }
 } // namespace HiviewDFX
 } // namespace OHOS

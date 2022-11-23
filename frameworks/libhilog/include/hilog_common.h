@@ -48,6 +48,7 @@ constexpr uint32_t DOMAIN_APP_MIN = 0x0;
 constexpr uint32_t DOMAIN_APP_MAX = 0xFFFF;
 constexpr uint32_t JOB_ID_MIN = 10;
 constexpr uint32_t JOB_ID_MAX = UINT_MAX;
+constexpr uint32_t WAITING_DATA_MS = 5000;
 
 /*
  * header of log message from libhilog to hilogd
