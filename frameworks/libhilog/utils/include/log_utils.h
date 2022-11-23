@@ -104,6 +104,7 @@ std::string GetNameByPid(uint32_t pid);
 uint32_t GetPPidByPid(uint32_t pid);
 uint64_t GenerateHash(const char *p, size_t size);
 void PrintErrorno(int err);
+int WaitingToDo(int max, const std::string& path, std::function<int(const std::string &path)> func);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif // LOG_UTILS_H
