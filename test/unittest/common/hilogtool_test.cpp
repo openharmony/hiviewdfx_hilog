@@ -14,6 +14,8 @@
  */
 #include "hilogtool_test.h"
 #include <log_utils.h>
+#include <properties.h>
+#include <hilog_common.h>
 #include <list>
 #include <regex>
 
@@ -106,6 +108,7 @@ bool IsExistInCmdResult(const std::string &cmd, const std::string &str)
     return ret;
 }
 
+namespace {
 const std::list<pair<string, string>> helperList = {
     /* help cmd suffix, information key word */
     {"", "Usage"},
@@ -131,6 +134,7 @@ HWTEST_F(HilogToolTest, HelperTest_001, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. show hilog help information.
+     * @tc.steps: step2. invalid cmd.
      */
     GTEST_LOG_(INFO) << "HelperTest_001: start.";
     std::string prefix = "hilog -h ";
@@ -145,6 +149,11 @@ HWTEST_F(HilogToolTest, HelperTest_001, TestSize.Level1)
         cmd = prefix + it.first;
         EXPECT_TRUE(IsExistInCmdResult(cmd, it.second));
     }
+
+	// stderr redirect to stdout
+    cmd = "hilog -o 2>&1";
+    std::string errMsg = "unrecognized option";
+    EXPECT_TRUE(IsExistInCmdResult(cmd, errMsg));
 }
 
 /**
@@ -156,6 +165,7 @@ HWTEST_F(HilogToolTest, HandleTest_001, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. set global log level to INFO.
+     * @tc.steps: step2. invalid log level.
      */
     GTEST_LOG_(INFO) << "HandleTest_001: start.";
     std::string level = "I";
@@ -164,6 +174,10 @@ HWTEST_F(HilogToolTest, HandleTest_001, TestSize.Level1)
     std::string query = "param get hilog.loggable.global";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), level + " \n");
+
+    cmd = "hilog -b test_level 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_LOG_LEVEL_INVALID) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -175,6 +189,7 @@ HWTEST_F(HilogToolTest, HandleTest_002, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. set domain xxx log level to INFO.
+     * @tc.steps: step2. invaild domain.
      */
     GTEST_LOG_(INFO) << "HandleTest_002: start.";
     uint32_t domain = 0xd002d00;
@@ -184,6 +199,10 @@ HWTEST_F(HilogToolTest, HandleTest_002, TestSize.Level1)
     std::string query = "param get hilog.loggable.domain." + Uint2HexStr(domain);
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), level + " \n");
+
+    cmd = "hilog -D test_domain 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_DOMAIN_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -195,6 +214,7 @@ HWTEST_F(HilogToolTest, HandleTest_003, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. set tag xxx log level to INFO.
+     * @tc.steps: step2. invalid tag.
      */
     GTEST_LOG_(INFO) << "HandleTest_003: start.";
     std::string tag = "test";
@@ -204,6 +224,10 @@ HWTEST_F(HilogToolTest, HandleTest_003, TestSize.Level1)
     std::string query = "param get hilog.loggable.tag." + tag;
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), level + " \n");
+
+    cmd = "hilog -T abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_TAG_STR_TOO_LONG) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -219,17 +243,22 @@ HWTEST_F(HilogToolTest, HandleTest_004, TestSize.Level1)
      * @tc.steps: step2. set app,init.core buffer size [invalid].
      * @tc.expected: step2  set app,init.core buffer size failed.
      * buffer size should be in range [64.0K, 512.0M].
+     * @tc.expected: step3  invalid buffer size str.
      */
     GTEST_LOG_(INFO) << "HandleTest_004: start.";
-    std::string validSizeCmd = "hilog -G 512K";
+    std::string cmd = "hilog -G 512K";
     std::string str = "Set log type app buffer size to 512.0K successfully\n"
         "Set log type init buffer size to 512.0K successfully\n"
         "Set log type core buffer size to 512.0K successfully\n";
-    EXPECT_EQ(GetCmdResultFromPopen(validSizeCmd), str);
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
 
-    std::string inValidSizeCmd = "hilog -G 512G";
+    cmd = "hilog -G 512G";
     str = "failed";
-    EXPECT_TRUE(IsExistInCmdResult(inValidSizeCmd, str));
+    EXPECT_TRUE(IsExistInCmdResult(cmd, str));
+
+    std::string inValidStrCmd = "hilog -G test_buffersize 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_SIZE_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(inValidStrCmd), errMsg);
 }
 
 /**
@@ -260,6 +289,7 @@ HWTEST_F(HilogToolTest, HandleTest_006, TestSize.Level1)
     /**
      * @tc.steps: step1. set hilogd storing kmsg log feature on.
      * @tc.steps: step2. set hilogd storing kmsg log feature off.
+     * @tc.steps: step3. set hilogd storing kmsg log feature invalid.
      */
     GTEST_LOG_(INFO) << "HandleTest_006: start.";
     std::string cmd = "hilog -k on";
@@ -272,6 +302,10 @@ HWTEST_F(HilogToolTest, HandleTest_006, TestSize.Level1)
     str = "Set hilogd storing kmsg log off successfully\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), "false \n");
+
+    cmd = "hilog -k test_feature 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_ARGUMENT) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -283,7 +317,8 @@ HWTEST_F(HilogToolTest, HandleTest_007, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. set hilog api privacy formatter feature on.
-     * @tc.steps: step1. set hilog api privacy formatter feature off.
+     * @tc.steps: step2. set hilog api privacy formatter feature off.
+     * @tc.steps: step3. set hilog api privacy formatter feature invalid.
      */
     GTEST_LOG_(INFO) << "HandleTest_007: start.";
     std::string cmd = "hilog -p on";
@@ -296,6 +331,10 @@ HWTEST_F(HilogToolTest, HandleTest_007, TestSize.Level1)
     str = "Set hilog privacy format off successfully\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), "false \n");
+
+    cmd = "hilog -p test_feature 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_ARGUMENT) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -310,6 +349,7 @@ HWTEST_F(HilogToolTest, HandleTest_008, TestSize.Level1)
      * @tc.steps: step2. set process flow control off.
      * @tc.steps: step3. set domain flow control on.
      * @tc.steps: step4. set domain flow control off.
+     * @tc.steps: step5. invalid cmd.
      */
     GTEST_LOG_(INFO) << "HandleTest_008: start.";
     std::string cmd = "hilog -Q pidon";
@@ -333,6 +373,10 @@ HWTEST_F(HilogToolTest, HandleTest_008, TestSize.Level1)
     str = "Set flow control by domain to disabled, result: Success [CODE: 0]\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), "false \n");
+
+    cmd = "hilog -Q test_cmd 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_ARGUMENT) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -345,6 +389,7 @@ HWTEST_F(HilogToolTest, HandleTest_009, TestSize.Level1)
     /**
      * @tc.steps: step1. show n lines logs on head of buffer.
      * @tc.steps: step2. show n lines logs on tail of buffer.
+     * @tc.steps: step3. invalid cmd.
      */
     GTEST_LOG_(INFO) << "HandleTest_009: start.";
     int lines = 5;
@@ -353,6 +398,17 @@ HWTEST_F(HilogToolTest, HandleTest_009, TestSize.Level1)
 
     cmd = "hilog -z " + std::to_string(lines);
     EXPECT_EQ(GetCmdLinesFromPopen(cmd), lines);
+
+    cmd = "hilog -a test 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_NOT_NUMBER_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -z test 2>&1";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -a 10 -z 10 2>&1";
+    errMsg = ErrorCode2Str(ERR_COMMAND_INVALID) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -402,6 +458,7 @@ HWTEST_F(HilogToolTest, HandleTest_011, TestSize.Level1)
     /**
      * @tc.steps: step1. remove app logs in hilogd buffer.
      * @tc.steps: step2. remove core logs in hilogd buffer.
+     * @tc.steps: step3. invalid log type.
      */
     GTEST_LOG_(INFO) << "HandleTest_011: start.";
     std::string cmd = "hilog -r -t app";
@@ -411,11 +468,15 @@ HWTEST_F(HilogToolTest, HandleTest_011, TestSize.Level1)
     cmd = "hilog -r -t core";
     str = "Log type core buffer clear successfully\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
+
+    cmd = "hilog -r -t test_type 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_LOG_TYPE_INVALID) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
  * @tc.name: Dfx_HilogToolTest_HandleTest_012
- * @tc.desc: PersistTaskHandler.
+ * @tc.desc: PersistTaskHandler FileNameHandler JobIdHandler FileLengthHandler FileNumberHandler.
  * @tc.type: FUNC
  */
 HWTEST_F(HilogToolTest, HandleTest_012, TestSize.Level1)
@@ -425,6 +486,11 @@ HWTEST_F(HilogToolTest, HandleTest_012, TestSize.Level1)
      * @tc.steps: step2. stop hilog persistance task control.
      * @tc.steps: step3. start hilog persistance task control with advanced options.
      * @tc.steps: step4. query tasks informations.
+     * @tc.steps: step5. invalid persistance cmd.
+     * @tc.steps: step6. query invalid filename.
+     * @tc.steps: step7. query invalid jobid.
+     * @tc.steps: step8. query invalid filelength.
+     * @tc.steps: step9. query invalid filenumber.
      */
     GTEST_LOG_(INFO) << "HandleTest_012: start.";
     (void)GetCmdResultFromPopen("hilog -w stop");
@@ -451,6 +517,28 @@ HWTEST_F(HilogToolTest, HandleTest_012, TestSize.Level1)
     str = std::to_string(jobid) + " init,core,app " + compress + " /data/log/hilog/" + filename
         + " " + Size2Str(length) + " " + std::to_string(num) + "\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
+
+    cmd = "hilog -w test 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_ARGUMENT) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    filename = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    cmd = "hilog -w query -f " + filename + " 2>&1";
+    errMsg = ErrorCode2Str(ERR_FILE_NAME_TOO_LONG) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -w query -j test 2>&1";
+    errMsg = ErrorCode2Str(ERR_NOT_NUMBER_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -w query -l test 2>&1";
+    errMsg = ErrorCode2Str(ERR_INVALID_SIZE_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -w query -n test 2>&1";
+    errMsg = ErrorCode2Str(ERR_NOT_NUMBER_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -462,6 +550,7 @@ HWTEST_F(HilogToolTest, HandleTest_013, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. show the logs which match the regular expression.
+	 * @tc.steps: step2. invaild regex.
      */
     GTEST_LOG_(INFO) << "HandleTest_013: start.";
     std::string cmd = "hilog -x -e ";
@@ -474,6 +563,12 @@ HWTEST_F(HilogToolTest, HandleTest_013, TestSize.Level1)
             EXPECT_TRUE(it.find(regex) != string::npos);
         }
     }
+
+    cmd = "hilog -x -e abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_REGEX_STR_TOO_LONG) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -485,6 +580,7 @@ HWTEST_F(HilogToolTest, HandleTest_014, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. filter log level.
+     * @tc.steps: step2. invaild log level usage.
      */
     GTEST_LOG_(INFO) << "HandleTest_014: start.";
     std::string cmd = "hilog -a 10 -L ";
@@ -496,6 +592,18 @@ HWTEST_F(HilogToolTest, HandleTest_014, TestSize.Level1)
         std::string logLevel = it.substr(31, 1);
         EXPECT_EQ(logLevel, level);
     }
+
+    cmd = "hilog -L test_level 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_LOG_LEVEL_INVALID) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -L E F 2>&1";
+    errMsg = ErrorCode2Str(ERR_TOO_MANY_ARGUMENTS) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -L E -L F 2>&1";
+    errMsg = ErrorCode2Str(ERR_DUPLICATE_OPTION) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -517,7 +625,6 @@ HWTEST_F(HilogToolTest, HandleTest_015, TestSize.Level1)
         Split(res, vec, "\n");
         for (auto& it : vec) {
             std::string logPid = it.substr(19, 5);
-            // remove the head blank space
             EXPECT_EQ(logPid, pid);
         }
     }
@@ -541,11 +648,12 @@ HWTEST_F(HilogToolTest, HandleTest_016, TestSize.Level1)
     (void)GetCmdResultFromPopen("param set persist.sys.hilog.stats.tag true");
     (void)GetCmdResultFromPopen("service_control stop hilogd");
     (void)GetCmdResultFromPopen("service_control start hilogd");
-    sleep(1);
+    sleep(5);
     std::string cmd = "hilog -s";
     std::string str = "report";
-    std::string res = GetCmdResultFromPopen(cmd);
     EXPECT_TRUE(IsExistInCmdResult(cmd, str));
+    EXPECT_TRUE(IsStatsEnable());
+    EXPECT_TRUE(IsTagStatsEnable());
 
     cmd = "hilog -S";
     str = "Statistic info clear successfully\n";
@@ -561,12 +669,17 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
 {
     /**
      * @tc.steps: step1. log format time.
-     * @tc.steps: step2. log format usec.
-     * @tc.steps: step3. log format nsec.
-     * @tc.steps: step4. log format year.
+     * @tc.steps: step2. log format epoch.
+     * @tc.steps: step3. log format monotonic.
+     * @tc.steps: step4. log format msec.
+     * @tc.steps: step5. log format usec.
+     * @tc.steps: step6. log format nsec.
+     * @tc.steps: step7. log format year.
+     * @tc.steps: step8. log format zone.
+     * @tc.steps: step9. invalid log format.
      */
     GTEST_LOG_(INFO) << "HandleTest_017: start.";
-    std::string cmd = "hilog -a 5 -v time";
+    std::string cmd = "hilog -v time -z 5";
     std::regex pattern("(0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
                         ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,3})?$");
     std::string res = GetCmdResultFromPopen(cmd);
@@ -576,7 +689,35 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
         EXPECT_TRUE(regex_match(it.substr(0, 18), pattern));
     }
 
-    cmd = "hilog -a 5 -v usec";
+    cmd = "hilog -v epoch -z 5";
+    pattern = ("\\d{0,10}.\\d{3}$");
+    res = GetCmdResultFromPopen(cmd);
+    Split(res, vec, "\n");
+    for (auto& it : vec) {
+        EXPECT_TRUE(regex_match(it.substr(0, 14), pattern));
+    }
+
+    cmd = "hilog -v monotonic -z 5";
+    pattern = ("\\d{0,8}.\\d{3}$");
+    res = GetCmdResultFromPopen(cmd);
+    Split(res, vec, "\n");
+    for (auto& it : vec) {
+        //remove the head blank space
+        std::string str = it.substr(0, 12);
+        str.erase(0, str.find_first_not_of(" "));
+        EXPECT_TRUE(regex_match(str, pattern));
+    }
+
+    cmd = "hilog -v msec -z 5";
+    pattern = ("(0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
+                        ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,3})?$");
+    res = GetCmdResultFromPopen(cmd);
+    Split(res, vec, "\n");
+    for (auto& it : vec) {
+        EXPECT_TRUE(regex_match(it.substr(0, 18), pattern));
+    }
+
+    cmd = "hilog -v usec -z 5";
     pattern = "(0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
                 ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,6})?$";
     res = GetCmdResultFromPopen(cmd);
@@ -585,7 +726,7 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
         EXPECT_TRUE(regex_match(it.substr(0, 21), pattern));
     }
 
-    cmd = "hilog -a 5 -v nsec";
+    cmd = "hilog -v nsec -z 5";
     pattern = "(0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
                 ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,9})?$";
     res = GetCmdResultFromPopen(cmd);
@@ -594,7 +735,7 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
         EXPECT_TRUE(regex_match(it.substr(0, 24), pattern));
     }
 
-    cmd = "hilog -a 5 -v year";
+    cmd = "hilog -v year -z 5";
     pattern = "(\\d{4})-(0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
             ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,3})?$";
     res = GetCmdResultFromPopen(cmd);
@@ -602,4 +743,79 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
     for (auto& it : vec) {
         EXPECT_TRUE(regex_match(it.substr(0, 23), pattern));
     }
+
+    cmd = "hilog -v zone -z 5";
+    std::regex gmtPattern("GMT (0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
+            ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,3})?$");
+    std::regex cstPattern("CST (0\\d{1}|1[0-2])-(0\\d{1}|[12]\\d{1}|3[01])\\s(0\\d{1}|1\\d{1}|2[0-3])"
+            ":[0-5]\\d{1}:([0-5]\\d{1})(\\.(\\d){0,3})?$");
+    res = GetCmdResultFromPopen(cmd);
+    Split(res, vec, "\n");
+    for (auto& it : vec) {
+        EXPECT_TRUE(regex_match(it.substr(0, 22), gmtPattern) || regex_match(it.substr(0, 22), cstPattern));
+    }
+
+    cmd = "hilog -v test 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_INVALID_ARGUMENT) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -v time -v epoch 2>&1";
+    errMsg = ErrorCode2Str(ERR_DUPLICATE_OPTION) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -v msec -v usec 2>&1";
+    errMsg = ErrorCode2Str(ERR_DUPLICATE_OPTION) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
+
+/**
+ * @tc.name: Dfx_HilogToolTest_HandleTest_018
+ * @tc.desc: QueryLogHandler.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogToolTest, HandleTest_018, TestSize.Level1)
+{
+    /**
+     * @tc.steps: step1. query log of specific pid.
+     * @tc.steps: step2. query log of specific domain.
+     * @tc.steps: step3. query log of specific tag.
+     */
+    GTEST_LOG_(INFO) << "HandleTest_018: start.";
+    std::string res = GetCmdResultFromPopen("hilog -z 1");
+    std::string pid = res.substr(19, 5);
+    std::string domain = res.substr(34, 5);
+    int tagLen = res.substr(40).find(":") + 1;
+    std::string tag = res.substr(40, tagLen);
+    std::string queryDomainCmd = "hilog -x -D d0" + domain;
+    std::string queryPidCmd = "hilog -x -P " + pid;
+    std::string queryTagCmd = "hilog -x -T " + tag;
+    vector<string> vec;
+
+    res = GetCmdResultFromPopen(queryPidCmd);
+    if (res != "") {
+        Split(res, vec, "\n");
+        for (auto& it : vec) {
+            std::string logPid = it.substr(19, 5);
+            EXPECT_EQ(logPid, pid);
+        }
+    }
+
+    res = GetCmdResultFromPopen(queryDomainCmd);
+    if (res != "") {
+        Split(res, vec, "\n");
+        for (auto& it : vec) {
+            std::string logDomain = it.substr(34, 5);
+            EXPECT_EQ(logDomain, domain);
+        }
+    }
+
+    res = GetCmdResultFromPopen(queryTagCmd);
+    if (res != "") {
+        Split(res, vec, "\n");
+        for (auto& it : vec) {
+            std::string logTag = it.substr(40, tagLen);
+            EXPECT_EQ(logTag, tag);
+        }
+    }
+}
+} // namespace
