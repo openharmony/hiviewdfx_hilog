@@ -22,6 +22,7 @@ using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::HiviewDFX;
 
+namespace {
 /**
  * @tc.name: Dfx_HilogUtilsTest_HilogUtilsTest_001
  * @tc.desc: Size2Str & Str2Size.
@@ -42,6 +43,9 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_001, TestSize.Level1)
         EXPECT_EQ(Size2Str(it.first), "1.0" + it.second);
         EXPECT_EQ(Str2Size("1" + it.second), it.first);
     }
+
+    // valid str reg [0-9]+[BKMGT]?
+    EXPECT_EQ(Str2Size("1.2A"), 0);
 }
 
 /**
@@ -85,6 +89,9 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_003, TestSize.Level1)
         EXPECT_EQ(ComboLogType2Str(it.first), it.second);
         EXPECT_EQ(Str2ComboLogType(it.second), it.first);
     }
+
+    EXPECT_EQ(Str2ComboLogType(""), (1 << LOG_APP) + (1 << LOG_CORE));
+    EXPECT_EQ(Str2ComboLogType("invalid"), 0);
 }
 
 /**
@@ -124,6 +131,8 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_004, TestSize.Level1)
         }
         EXPECT_EQ(Str2ComboLogLevel(logLevelEntries[i].str), logLevelEntries[i].comboLogLevel);
     }
+
+    EXPECT_EQ(Str2ComboLogLevel(""), 0xFFFF);
 }
 
 /**
@@ -137,6 +146,8 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_005, TestSize.Level1)
     uint64_t num1 = 1 << 4;
     uint64_t num2 = (1 << 2) + (1 << 3) + (1 << 4);
     EXPECT_EQ(GetBitPos(num1), 4);
+    // only accpet the number which is power of 2
+    EXPECT_EQ(GetBitPos(num2), 0);
     EXPECT_EQ(GetBitsCount(num2), 3);
 }
 
@@ -157,3 +168,18 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_006, TestSize.Level1)
     EXPECT_EQ(Uint2HexStr(hexNum), hexStr);
     EXPECT_EQ(HexStr2Uint(hexStr), hexNum);
 }
+
+/**
+ * @tc.name: Dfx_HilogUtilsTest_HilogUtilsTest_007
+ * @tc.desc: GetAllLogTypes.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogUtilsTest, HilogUtilsTest_007, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "HilogUtilsTest_007: start.";
+    vector<uint16_t> vec = GetAllLogTypes();
+    sort(vec.begin(), vec.end());
+    vector<uint16_t> allTypes {0, 1, 3, 4};
+    EXPECT_TRUE(vec == allTypes);
+}
+} // namespace
