@@ -105,4 +105,16 @@ HWTEST_F(PropertiesTest, LevelTest, TestSize.Level1)
         EXPECT_EQ(GetTagLevel(tag), expected[i]);
     }
 }
+
+HWTEST_F(PropertiesTest, BufferTest, TestSize.Level1)
+{
+    static const std::array<uint16_t, 6> logType = {-1, 0, 1, 3, 4, 100};
+    static const size_t size = 512 * 1024;
+    static const std::array<size_t, 6> expectedSize = {0, size, size, size, size, 0};
+
+    for (size_t i = 0; i < logType.size(); ++i) {
+        SetBufferSize(logType[i], false, size);
+        EXPECT_EQ(GetBufferSize(logType[i], false), expectedSize[i]);
+    }
+}
 } // namespace
