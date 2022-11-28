@@ -702,7 +702,7 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
     res = GetCmdResultFromPopen(cmd);
     Split(res, vec, "\n");
     for (auto& it : vec) {
-        //remove the head blank space
+        // remove the head blank space
         std::string str = it.substr(0, 12);
         str.erase(0, str.find_first_not_of(" "));
         EXPECT_TRUE(regex_match(str, pattern));
