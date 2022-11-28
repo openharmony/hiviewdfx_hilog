@@ -44,7 +44,7 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_001, TestSize.Level1)
         EXPECT_EQ(Str2Size("1" + it.second), it.first);
     }
 
-    //valid str reg [0-9]+[BKMGT]?
+    // valid str reg [0-9]+[BKMGT]?
     EXPECT_EQ(Str2Size("1.2A"), 0);
 }
 
@@ -133,7 +133,6 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_004, TestSize.Level1)
     }
 
     EXPECT_EQ(Str2ComboLogLevel(""), 0xFFFF);
-
 }
 
 /**
