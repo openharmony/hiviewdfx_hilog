@@ -116,6 +116,5 @@ HWTEST_F(PropertiesTest, BufferTest, TestSize.Level1)
         SetBufferSize(logType[i], false, size);
         EXPECT_EQ(GetBufferSize(logType[i], false), expectedSize[i]);
     }
-
 }
 } // namespace
