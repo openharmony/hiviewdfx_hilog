@@ -38,10 +38,12 @@ using namespace testing::ext;
 namespace OHOS {
 namespace HiviewDFX {
 namespace HiLogTest {
+const HiLogLabel APP_LABEL = { LOG_APP, 0x002a, "HILOGTEST_CPP" };
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOGTEST_CPP" };
 const HiLogLabel ILLEGAL_DOMAIN_LABEL = { LOG_CORE, 0xD00EEEE, "HILOGTEST_CPP" };
 static constexpr unsigned int SOME_LOGS = 10;
 static constexpr unsigned int MORE_LOGS = 100;
+static constexpr unsigned int OVER_LOGS = 1000;
 
 enum LogInterfaceType {
     DEBUG_METHOD = 0,
@@ -156,6 +158,18 @@ static void HiLogWriteTest(LogInterfaceType methodType, unsigned int count,
         allowedLeastLogCount = 0; /* 0: debug log is allowed to be closed */
     }
     EXPECT_GE(realCount, allowedLeastLogCount);
+}
+
+static void FlowCtlTest(const HiLogLabel &label, const std::string keyWord)
+{
+    const std::string str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    for (int i = 0; i < OVER_LOGS; i++) {
+        HiLog::Info(label, "%{public}s:%{public}d", str.c_str(), i);
+    }
+    sleep(1); /* 1: sleep 1 s */
+    HiLog::Info(label, "%{public}s", str.c_str());
+    std::string logMsgs = PopenToString("hilog -x -T LOGLIMIT");
+    EXPECT_TRUE(logMsgs.find(keyWord) != std::string::npos);
 }
 
 /**
@@ -357,6 +371,8 @@ HWTEST_F(HiLogNDKTest, IsLoggable_001, TestSize.Level1)
  */
 HWTEST_F(HiLogNDKTest, DomainCheck_001, TestSize.Level1)
 {
+    (void)PopenToString("param set hilog.debug.on false");
+    (void)PopenToString("param set persist.sys.hilog.debug.on false");
     std::string logMsg(RandomStringGenerator());
     for (unsigned int i = 0; i < SOME_LOGS; ++i) {
         HiLog::Info(ILLEGAL_DOMAIN_LABEL, "%{public}s", logMsg.c_str());
@@ -376,22 +392,6 @@ HWTEST_F(HiLogNDKTest, DomainCheck_001, TestSize.Level1)
 }
 
 /**
- * @tc.name: Dfx_HiLogNDKTest_hilogStatisticsTest
- * @tc.desc: test hilog statistics function
- * @tc.type: FUNC
- * @tc.require:issueI5NU71
- */
-HWTEST_F(HiLogNDKTest, hilogStatisticsTest, TestSize.Level1)
-{
-    std::string logStatsLog = "Statistic info query failed";
-    std::string logMsgs = PopenToString("/system/bin/hilog -s");
-    std::stringstream ss(logMsgs);
-    std::string str;
-    getline(ss, str);
-    EXPECT_TRUE(str.find(logStatsLog) != std::string::npos);
-}
-
-/**
  * @tc.name: Dfx_HiLogNDKTest_hilogSocketTest
  * @tc.desc: Query hilog socket rights
  * @tc.type: FUNC
@@ -405,6 +405,32 @@ HWTEST_F(HiLogNDKTest, hilogSocketTest, TestSize.Level1)
     std::stringstream ss(logMsgs);
     getline(ss, str);
     EXPECT_TRUE(str.find(hilogControlRights) != std::string::npos);
+}
+
+/**
+ * @tc.name: Dfx_HiLogNDKTest_pidFlowCtrlTest
+ * @tc.desc: hilog pidFlowCtrlTest
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiLogNDKTest, pidFlowCtrlTest, TestSize.Level1)
+{
+    (void)PopenToString("hilog -Q pidon");
+    const std::string pidCtrlLog = "DROPPED";
+    FlowCtlTest(APP_LABEL, pidCtrlLog);
+    (void)PopenToString("hilog -Q pidoff");
+}
+
+/**
+ * @tc.name: Dfx_HiLogNDKTest_domainFlowCtrlTest
+ * @tc.desc: hilog domainFlowCtrlTest
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiLogNDKTest, domainFlowCtrlTest, TestSize.Level1)
+{
+    (void)PopenToString("hilog -Q domainon");
+    const std::string domainCtrlLog = "dropped";
+    FlowCtlTest(LABEL, domainCtrlLog);
+    (void)PopenToString("hilog -Q domainoff");
 }
 } // namespace HiLogTest
 } // namespace HiviewDFX
