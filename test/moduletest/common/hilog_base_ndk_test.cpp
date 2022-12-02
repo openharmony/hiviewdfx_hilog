@@ -222,6 +222,7 @@ HWTEST_F(HiLogBaseNDKTest, IsLoggable, TestSize.Level1)
     EXPECT_TRUE(HiLogBaseIsLoggable(0xD002D00, LOG_TAG, LOG_ERROR));
     EXPECT_TRUE(HiLogBaseIsLoggable(0xD002D00, LOG_TAG, LOG_FATAL));
     EXPECT_TRUE(HiLogBaseIsLoggable(0xD002D00, "abc", LOG_WARN));
+    EXPECT_FALSE(HiLogBaseIsLoggable(0xD002D00, "abc", LOG_LEVEL_MIN));
 }
 
 } // namespace HiLogTest

@@ -149,11 +149,6 @@ HWTEST_F(HilogToolTest, HelperTest_001, TestSize.Level1)
         cmd = prefix + it.first;
         EXPECT_TRUE(IsExistInCmdResult(cmd, it.second));
     }
-
-	// stderr redirect to stdout
-    cmd = "hilog -o 2>&1";
-    std::string errMsg = "unrecognized option";
-    EXPECT_TRUE(IsExistInCmdResult(cmd, errMsg));
 }
 
 /**
@@ -175,6 +170,7 @@ HWTEST_F(HilogToolTest, HandleTest_001, TestSize.Level1)
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
     EXPECT_EQ(GetCmdResultFromPopen(query), level + " \n");
 
+    // stderr redirect to stdout
     cmd = "hilog -b test_level 2>&1";
     std::string errMsg = ErrorCode2Str(ERR_LOG_LEVEL_INVALID) + "\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
@@ -419,21 +415,21 @@ HWTEST_F(HilogToolTest, HandleTest_009, TestSize.Level1)
 HWTEST_F(HilogToolTest, HandleTest_010, TestSize.Level1)
 {
     /**
-     * @tc.steps: step1. remove all logs in hilogd buffer.
-     * @tc.steps: step2. get the localtime when clear.
+     * @tc.steps: step1. get the localtime.
+     * @tc.steps: step2. remove all logs in hilogd buffer.
      * @tc.steps: step3. compare the logtime to localtime.
      */
     GTEST_LOG_(INFO) << "HandleTest_010: start.";
-    std::string cmd = "hilog -r";
-    std::string str = "Log type core,app buffer clear successfully\n";
-    EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
-
     time_t tnow = time(nullptr);
     struct tm *tmNow = localtime(&tnow);
     char clearTime[32] = {0};
     if (tmNow != nullptr) {
         strftime(clearTime, sizeof(clearTime), "%m-%d %H:%M:%S.%s", tmNow);
     }
+    std::string cmd = "hilog -r";
+    std::string str = "Log type core,app buffer clear successfully\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
+
     sleep(1);
     std::string res = GetCmdResultFromPopen("hilog -a 5");
     std::string initStr = "HiLog: ========Zeroth log of type: init";
@@ -644,13 +640,21 @@ HWTEST_F(HilogToolTest, HandleTest_016, TestSize.Level1)
      * @tc.steps: step4. clear hilogd statistic information.
      */
     GTEST_LOG_(INFO) << "HandleTest_016: start.";
+    (void)GetCmdResultFromPopen("param set persist.sys.hilog.stats false");
+    (void)GetCmdResultFromPopen("param set persist.sys.hilog.stats.tag false");
+    (void)GetCmdResultFromPopen("service_control stop hilogd");
+    (void)GetCmdResultFromPopen("service_control start hilogd");
+    sleep(3);
+    std::string cmd = "hilog -s";
+    std::string str = "Statistic info query failed";
+    EXPECT_TRUE(IsExistInCmdResult(cmd, str));
+    
     (void)GetCmdResultFromPopen("param set persist.sys.hilog.stats true");
     (void)GetCmdResultFromPopen("param set persist.sys.hilog.stats.tag true");
     (void)GetCmdResultFromPopen("service_control stop hilogd");
     (void)GetCmdResultFromPopen("service_control start hilogd");
-    sleep(5);
-    std::string cmd = "hilog -s";
-    std::string str = "report";
+    sleep(3);
+    str = "report";
     EXPECT_TRUE(IsExistInCmdResult(cmd, str));
     EXPECT_TRUE(IsStatsEnable());
     EXPECT_TRUE(IsTagStatsEnable());
