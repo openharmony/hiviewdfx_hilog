@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "hilog_utils_test.h"
+#include "hilog_common.h"
 #include <log_utils.h>
 #include <hilog/log_c.h>
 #include <list>
@@ -21,6 +22,30 @@ using namespace std;
 using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::HiviewDFX;
+
+static std::string GetCmdResultFromPopen(const std::string& cmd)
+{
+    if (cmd.empty()) {
+        return "";
+    }
+    FILE* fp = popen(cmd.c_str(), "r");
+    if (fp == nullptr) {
+        return "";
+    }
+    std::string ret = "";
+    char* buffer = nullptr;
+    size_t len = 0;
+    while (getline(&buffer, &len, fp) != -1) {
+        std::string line = buffer;
+        ret += line;
+    }
+    if (buffer != nullptr) {
+        free(buffer);
+        buffer = nullptr;
+    }
+    pclose(fp);
+    return ret;
+}
 
 namespace {
 /**
@@ -181,5 +206,46 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_007, TestSize.Level1)
     sort(vec.begin(), vec.end());
     vector<uint16_t> allTypes {0, 1, 3, 4};
     EXPECT_TRUE(vec == allTypes);
+}
+
+/**
+ * @tc.name: Dfx_HilogUtilsTest_HilogUtilsTest_008
+ * @tc.desc: GetPPidByPid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogUtilsTest, HilogUtilsTest_008, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "HilogUtilsTest_008: start.";
+    uint32_t pid = stoi(GetCmdResultFromPopen("pidof hilogd"));
+    EXPECT_EQ(GetPPidByPid(pid), 1);
+
+    uint32_t invalidPid = 999999;
+    EXPECT_EQ(GetPPidByPid(invalidPid), 0);
+}
+
+/**
+ * @tc.name: Dfx_HilogUtilsTest_HilogUtilsTest_009
+ * @tc.desc: WaitingToDo.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogUtilsTest, HilogUtilsTest_009, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "HilogUtilsTest_009: start.";
+    int ret = WaitingToDo(WAITING_DATA_MS, "/data/log", [](const string &path) {
+        if (!access(path.c_str(), F_OK)) {
+            return RET_SUCCESS;
+        }
+        return RET_FAIL;
+    });
+    EXPECT_EQ(ret, RET_SUCCESS);
+
+    ret = WaitingToDo(WAITING_DATA_MS, "/test/ttt", [](const string &path) {
+        if (!access(path.c_str(), F_OK)) {
+            return RET_SUCCESS;
+        }
+        return RET_FAIL;
+    });
+    PrintErrorno(errno);
+    EXPECT_EQ(ret, RET_FAIL);
 }
 } // namespace
