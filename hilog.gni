@@ -17,3 +17,7 @@ platforms = [
   "mac",
   "linux",
 ]
+
+declare_args() {
+  hilog_native_feature_ohcore = false
+}
