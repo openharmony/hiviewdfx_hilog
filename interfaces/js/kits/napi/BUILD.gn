@@ -11,9 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 ohos_source_set("libhilognapi_src") {
+  if (hilog_native_feature_ohcore) {
+    defines = [ "HILOG_OHCORE_VERSION" ]
+  }
   include_dirs = [
     "//third_party/node/src",
     "//third_party/bounds_checking_function/include",
