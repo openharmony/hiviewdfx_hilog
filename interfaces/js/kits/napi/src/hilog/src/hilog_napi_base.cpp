@@ -54,7 +54,12 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
 #if not (defined(__WINDOWS__) || defined(__MAC__) || defined(__LINUX__))
     debug = IsDebugOn();
 #endif
+
+#ifndef HILOG_OHCORE_VERSION
     bool priv = (!debug) && IsPrivateSwitchOn();
+#else
+    bool priv = !debug;
+#endif
 
     for (; pos < len; ++pos) {
         bool showPriv = true;

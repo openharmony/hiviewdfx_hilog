@@ -32,7 +32,7 @@ template("libhilog") {
       output_extension = "so"
     }
 
-    install_enable = true
+    install_enable = !hilog_native_feature_ohcore
     install_images = [
       "system",
       "updater",
