@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "hilogtool_test.h"
+#include "hilog/log_c.h"
 #include <log_utils.h>
 #include <properties.h>
 #include <hilog_common.h>
@@ -624,6 +625,10 @@ HWTEST_F(HilogToolTest, HandleTest_015, TestSize.Level1)
             EXPECT_EQ(logPid, pid);
         }
     }
+
+    cmd = "hilog -P test 2>&1";
+    std::string errMsg = ErrorCode2Str(ERR_NOT_NUMBER_STR) + "\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
 }
 
 /**
@@ -770,6 +775,9 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
     cmd = "hilog -v msec -v usec 2>&1";
     errMsg = ErrorCode2Str(ERR_DUPLICATE_OPTION) + "\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), errMsg);
+
+    cmd = "hilog -x -v color";
+    EXPECT_GT(GetCmdLinesFromPopen(cmd), 0);
 }
 
 /**
@@ -821,5 +829,37 @@ HWTEST_F(HilogToolTest, HandleTest_018, TestSize.Level1)
             EXPECT_EQ(logTag, tag);
         }
     }
+}
+
+/**
+ * @tc.name: Dfx_HilogToolTest_HandleTest_019
+ * @tc.desc: tag & domain level ctl.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogToolTest, HandleTest_019, TestSize.Level1)
+{
+    /**
+     * @tc.steps: step1. tag level ctl.
+     * @tc.steps: step2. domain level ctl.
+     */
+    GTEST_LOG_(INFO) << "HandleTest_019: start.";
+    std::string res = GetCmdResultFromPopen("hilog -z 1");
+    uint32_t domain = std::stoi(res.substr(34, 5));
+    int tagLen = res.substr(40).find(":") + 1;
+    std::string tag = res.substr(40, tagLen);
+
+    // Priority: TagLevel > DomainLevel > GlobalLevel
+    SetTagLevel(tag, LOG_ERROR);
+    SetDomainLevel(domain, LOG_INFO);
+    EXPECT_FALSE(HiLogIsLoggable(domain, tag.c_str(), LOG_INFO));
+    EXPECT_TRUE(HiLogIsLoggable(domain, tag.c_str(), LOG_ERROR));
+
+    SetTagLevel(tag, LOG_INFO);
+    SetDomainLevel(domain, LOG_ERROR);
+    EXPECT_TRUE(HiLogIsLoggable(domain, tag.c_str(), LOG_INFO));
+    EXPECT_TRUE(HiLogIsLoggable(domain, tag.c_str(), LOG_ERROR));
+
+    // restore log level
+    SetDomainLevel(domain, LOG_INFO);
 }
 } // namespace
