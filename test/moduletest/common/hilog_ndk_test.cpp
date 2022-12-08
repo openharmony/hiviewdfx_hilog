@@ -163,7 +163,7 @@ static void HiLogWriteTest(LogInterfaceType methodType, unsigned int count,
 static void FlowCtlTest(const HiLogLabel &label, const std::string keyWord)
 {
     const std::string str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    for (int i = 0; i < OVER_LOGS; i++) {
+    for (unsigned int i = 0; i < OVER_LOGS; ++i) {
         HiLog::Info(label, "%{public}s:%{public}d", str.c_str(), i);
     }
     sleep(1); /* 1: sleep 1 s */

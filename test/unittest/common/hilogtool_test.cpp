@@ -658,7 +658,7 @@ HWTEST_F(HilogToolTest, HandleTest_016, TestSize.Level1)
     (void)GetCmdResultFromPopen("param set persist.sys.hilog.stats.tag true");
     (void)GetCmdResultFromPopen("service_control stop hilogd");
     (void)GetCmdResultFromPopen("service_control start hilogd");
-    sleep(3);
+    sleep(10);
     str = "report";
     EXPECT_TRUE(IsExistInCmdResult(cmd, str));
     EXPECT_TRUE(IsStatsEnable());
@@ -709,12 +709,15 @@ HWTEST_F(HilogToolTest, HandleTest_017, TestSize.Level1)
     cmd = "hilog -v monotonic -z 5";
     pattern = ("\\d{0,8}.\\d{3}$");
     res = GetCmdResultFromPopen(cmd);
+    std::string initStr = "HiLog: ========Zeroth log of type";
     Split(res, vec, "\n");
     for (auto& it : vec) {
-        // remove the head blank space
-        std::string str = it.substr(0, 12);
-        str.erase(0, str.find_first_not_of(" "));
-        EXPECT_TRUE(regex_match(str, pattern));
+        if (it.find(initStr) == string::npos) {
+            std::string str = it.substr(0, 12);
+            // remove the head blank space
+            str.erase(0, str.find_first_not_of(" "));
+            EXPECT_TRUE(regex_match(str, pattern));
+        }
     }
 
     cmd = "hilog -v msec -z 5";
