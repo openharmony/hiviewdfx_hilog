@@ -55,9 +55,28 @@ ohos_unittest("HilogUtilsTest") {
   ]
 }
 
+ohos_unittest("HilogPrintTest") {
+  module_out_path = module_output_path
+
+  sources = [ "hilog_print_test.cpp" ]
+
+  configs = [
+    ":module_private_config",
+    "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
+  ]
+
+  deps = [ "//third_party/googletest:gtest_main" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog_native:libhilog",
+  ]
+}
+
 group("unittest") {
   testonly = true
   deps = [
+    ":HilogPrintTest",
     ":HilogToolTest",
     ":HilogUtilsTest",
   ]
