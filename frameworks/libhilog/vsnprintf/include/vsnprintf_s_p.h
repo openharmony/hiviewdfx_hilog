@@ -35,4 +35,7 @@
 HILOG_LOCAL_API
 int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, va_list arglist);
 
+HILOG_LOCAL_API
+int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, ...);
+
 #endif /* __VSNPRINTFP_S_H__ */

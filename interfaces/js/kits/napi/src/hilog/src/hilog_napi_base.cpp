@@ -51,11 +51,11 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
     uint32_t pos = 0;
     uint32_t count = 0;
     bool debug = true;
-#if not (defined(__WINDOWS__) || defined(__MAC__) || defined(__LINUX__) || defined(HILOG_OHCORE_VERSION))
+#if not (defined(__WINDOWS__) || defined(__MAC__) || defined(__LINUX__) || defined(HILOG_OHCORE))
     debug = IsDebugOn();
 #endif
 
-#ifndef HILOG_OHCORE_VERSION
+#ifndef HILOG_OHCORE
     bool priv = (!debug) && IsPrivateSwitchOn();
 #else
     bool priv = !debug;
