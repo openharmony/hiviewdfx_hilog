@@ -15,6 +15,7 @@ import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 ohos_source_set("libhilognapi_src") {
+  defines = []
   if (hilog_native_feature_ohcore) {
     defines = [ "HILOG_OHCORE_VERSION" ]
   }
@@ -41,7 +42,6 @@ ohos_source_set("libhilognapi_src") {
     ]
   }
 
-  defines = []
   cflags_cc = []
   if (is_mingw) {
     deps += [
