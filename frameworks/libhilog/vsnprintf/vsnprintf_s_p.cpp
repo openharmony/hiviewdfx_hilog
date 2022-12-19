@@ -262,6 +262,16 @@ int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const c
     return retVal;
 }
 
+HILOG_LOCAL_API
+int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+    int ret = vsnprintfp_s(strDest, destMax, count, priv, format, ap);
+    va_end(ap);
+    return ret;
+}
+
 #ifdef SECUREC_FOR_WCHAR
 #undef SECUREC_FOR_WCHAR
 #endif

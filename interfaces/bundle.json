@@ -31,13 +31,23 @@
         "zlib"
       ]
     },
+    "features": [
+      "hilog_native_feature_ohcore"
+    ],
     "build": {
-      "sub_component": [
-        "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
-        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
-        "//base/hiviewdfx/hilog/interfaces/js:hilog_napi"
-      ],
+      "group_type": {
+        "base_group": [
+
+        ],
+        "fwk_group": [
+          "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
+          "//base/hiviewdfx/hilog/interfaces/js:hilog_napi"
+        ],
+        "service_group": [
+          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
+          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog"
+        ]
+      },
       "inner_kits": [
         {
           "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
