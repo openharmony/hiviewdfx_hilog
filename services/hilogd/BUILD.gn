@@ -42,7 +42,7 @@ ohos_executable("hilogd") {
   defines = [ "__RECV_MSG_WITH_UCRED_" ]
   deps = [
     "//third_party/bounds_checking_function:libsec_shared",
-    "//third_party/zlib:libz",
+    "//third_party/zlib:shared_libz",
   ]
   deps += [ "etc:hilogd_etc" ]
 
