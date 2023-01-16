@@ -238,10 +238,10 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
     LogHeader logHeader;
     uint16_t logLevel = 0;
     char tagBuf[MAX_DOMAIN_TAGSIZE] = {0};
-    int vecSize = (g_protocolType == TYPE_OHCORE) ?
+    auto vecSize = (g_protocolType == TYPE_OHCORE) ?
         BuildHilogMessageForOhCore(&msgInfo, logHeader, logLevel, tagBuf, vec) :
         BuildHilogMessageForOh(&msgInfo, vec);
-    if (vecSize <= 0) {
+    if (vecSize == 0) {
         std::cerr << "BuildHilogMessage failed ret = " << vecSize << std::endl;
         return RET_FAIL;
     }
