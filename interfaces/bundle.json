@@ -45,7 +45,8 @@
         ],
         "service_group": [
           "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
-          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog"
+          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+          "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust"
         ]
       },
       "inner_kits": [
