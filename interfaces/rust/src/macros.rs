@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-//! dylib_crate example for Rust.
+//! macros crate for Rust.
 
 /// hilog macros
 
@@ -49,7 +49,7 @@ macro_rules! hilog{
 #[macro_export]
 macro_rules! debug{
     ($log_label:ident, $($arg:tt)*) => (
-        hilog!(log_label: $log_label, $crate::LogLevel::Debug, $($arg)*)
+        hilog!($log_label, $crate::LogLevel::Debug, $($arg)*)
     );
 }
 
