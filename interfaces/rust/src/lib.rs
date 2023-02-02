@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-//! dylib_crate example for Rust.
+//! hilog dylib_crate for Rust.
 use std::ffi::{c_char};
 
 #[macro_use]
@@ -22,7 +22,7 @@ mod macros;
 /// log level
 #[derive(Debug)]
 pub enum LogLevel {
-    /// log level min
+    /// min log level
     LogLevelMin = 0,
     /// The "debug" level. 
     /// 
