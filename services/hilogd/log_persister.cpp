@@ -59,9 +59,6 @@ std::list<std::shared_ptr<LogPersister>> LogPersister::s_logPersisters;
 
 std::shared_ptr<LogPersister> LogPersister::CreateLogPersister(HilogBuffer &buffer)
 {
-    // Because of:
-    // -  static_assert(is_constructible<_Tp, _Args...>::value, "Can't construct object in make_shared");
-    // make shared can't be used!
     return std::shared_ptr<LogPersister>(new LogPersister(buffer));
 }
 
