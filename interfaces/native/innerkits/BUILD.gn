@@ -37,6 +37,12 @@ template("libhilog") {
       "system",
       "updater",
     ]
+    if (platform == "ohos") {
+      innerapi_tags = [
+        "chipsetsdk",
+        "platformsdk",
+      ]
+    }
     part_name = "hilog_native"
     subsystem_name = "hiviewdfx"
   }
