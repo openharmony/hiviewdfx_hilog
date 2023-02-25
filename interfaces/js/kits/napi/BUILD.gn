@@ -65,6 +65,11 @@ config("libhilog_js_cfg") {
 }
 
 ohos_shared_library("libhilognapi") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   deps = [ ":libhilognapi_src" ]
 
   public_configs = [ ":libhilog_js_cfg" ]
