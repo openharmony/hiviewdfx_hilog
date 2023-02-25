@@ -22,6 +22,11 @@ config("libhilog_pub_config") {
 template("libhilog") {
   forward_variables_from(invoker, "*")
   ohos_shared_library(target_name) {
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
     public_configs = [ ":libhilog_pub_config" ]
 
     deps = [
