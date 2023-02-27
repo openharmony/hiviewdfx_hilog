@@ -14,6 +14,11 @@
 import("//build/ohos.gni")
 
 ohos_shared_library("hilog_ndk") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//base/hiviewdfx/hilog/frameworks/include/",
