@@ -28,6 +28,7 @@ using namespace std::chrono_literals;
 using namespace OHOS::HiviewDFX;
 
 namespace {
+constexpr uint32_t QUERY_INTERVAL = 100000; // sleep 0.1s
 class PropertiesTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
@@ -45,6 +46,7 @@ HWTEST_F(PropertiesTest, SwitchTest, TestSize.Level1)
     SetKmsgSwitchOn(true);
     SetPersistDebugOn(true);
 
+    usleep(QUERY_INTERVAL);
     EXPECT_TRUE(IsDebugOn());
     EXPECT_TRUE(IsOnceDebugOn());
     EXPECT_TRUE(IsPersistDebugOn());
@@ -60,6 +62,7 @@ HWTEST_F(PropertiesTest, SwitchTest, TestSize.Level1)
     SetKmsgSwitchOn(false);
     SetPersistDebugOn(false);
 
+    usleep(QUERY_INTERVAL);
     EXPECT_FALSE(IsDebugOn());
     EXPECT_FALSE(IsOnceDebugOn());
     EXPECT_FALSE(IsPersistDebugOn());
@@ -70,10 +73,12 @@ HWTEST_F(PropertiesTest, SwitchTest, TestSize.Level1)
 
     SetOnceDebugOn(true);
     SetPersistDebugOn(false);
+    usleep(QUERY_INTERVAL);
     EXPECT_TRUE(IsDebugOn());
 
     SetOnceDebugOn(false);
     SetPersistDebugOn(true);
+    usleep(QUERY_INTERVAL);
     EXPECT_TRUE(IsDebugOn());
 }
 
@@ -90,18 +95,21 @@ HWTEST_F(PropertiesTest, LevelTest, TestSize.Level1)
 
     for (size_t i = 0; i < charLevels.size(); ++i) {
         SetGlobalLevel(ShortStr2LogLevel(charLevels[i]));
+        usleep(QUERY_INTERVAL);
         EXPECT_EQ(GetGlobalLevel(), expected[i]);
     }
 
     uint32_t domain = 12345;
     for (size_t i = 0; i < charLevels.size(); ++i) {
         SetDomainLevel(domain, ShortStr2LogLevel(charLevels[i]));
+        usleep(QUERY_INTERVAL);
         EXPECT_EQ(GetDomainLevel(domain), expected[i]);
     }
 
     std::string tag = "test_tag";
     for (size_t i = 0; i < charLevels.size(); ++i) {
         SetTagLevel(tag, ShortStr2LogLevel(charLevels[i]));
+        usleep(QUERY_INTERVAL);
         EXPECT_EQ(GetTagLevel(tag), expected[i]);
     }
 }
