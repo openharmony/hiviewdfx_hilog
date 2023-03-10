@@ -87,7 +87,8 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
                 ++pos;
                 break;
             case 's':
-                if (params[count].type == napi_string || params[count].type == napi_undefined) {
+                if (params[count].type == napi_string || params[count].type == napi_undefined ||
+                    params[count].type == napi_boolean || params[count].type == napi_null) {
                     ret += (priv && showPriv) ? PRIV_STR : params[count].val;
                 }
                 count++;
@@ -179,7 +180,8 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
     if (typeStatus != napi_ok) {
         return nullptr;
     }
-    if (type == napi_number || type == napi_bigint || type == napi_object || type == napi_undefined) {
+    if (type == napi_number || type == napi_bigint || type == napi_object ||
+        type == napi_undefined || type == napi_boolean || type == napi_null) {
         napi_value elmString;
         napi_status objectStatus = napi_coerce_to_string(env, element, &elmString);
         if (objectStatus != napi_ok) {
@@ -195,10 +197,12 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
             return nullptr;
         }
     } else {
-        NAPI_ASSERT(env, false, "type mismatch");
+        HiLog::Info(LABEL, "%{public}s", "type mismatch");
     }
     res.type = type;
-    res.val = name.get();
+    if (name != nullptr) {
+        res.val = name.get();
+    }
     params.emplace_back(res);
     return nullptr;
 }
@@ -259,8 +263,7 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
         }
     }
     ParseLogContent(fmtString, params, logContent);
-    HiLogPrint(DEFAULT_LOG_TYPE, static_cast<LogLevel>(level), domain, tag.get(),
-        logContent.c_str(), "");
+    HiLogPrint(DEFAULT_LOG_TYPE, static_cast<LogLevel>(level), domain, tag.get(), "%{public}s", logContent.c_str());
     return nullptr;
 }
 }  // namespace HiviewDFX
