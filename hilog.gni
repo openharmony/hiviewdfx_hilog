@@ -16,6 +16,8 @@ platforms = [
   "windows",
   "mac",
   "linux",
+  "android",
+  "ios",
 ]
 
 declare_args() {
