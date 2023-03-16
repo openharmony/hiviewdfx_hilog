@@ -112,11 +112,17 @@ static std::string PopenToString(const std::string &command)
 
 class HiLogNDKTest : public testing::Test {
 public:
-    static void SetUpTestCase() {}
+    static void SetUpTestCase();
     static void TearDownTestCase() {}
     void SetUp();
     void TearDown() {}
 };
+
+void HiLogNDKTest::SetUpTestCase()
+{
+    (void)PopenToString("hilog -Q pidoff");
+    (void)PopenToString("hilog -Q domainoff");
+}
 
 void HiLogNDKTest::SetUp()
 {
