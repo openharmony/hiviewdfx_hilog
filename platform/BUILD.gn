@@ -14,7 +14,8 @@
 import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
-ohos_source_set("platform_log") {
+PLATFORM_HILOG_PATH = "//base/hiviewdfx/hilog"
+ohos_source_set("libhilognapi_src") {
   defines = [ "DFX_PLATFORM_LOG_TAG=\"HilogPlatform\"" ]
   sources = [ "interface/native/log.cpp" ]
   if (target_os == "android") {
@@ -30,10 +31,10 @@ template("libhilog_platform_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
     include_dirs = [
-      "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
-      "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+      "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
+      "${PLATFORM_HILOG_PATH}/interfaces/native/innerkits/include",
     ]
-    deps = [ ":platform_log" ]
+    deps = [ ":libhilognapi_src" ]
     sources = [
       "hilog.cpp",
       "hilog_printf.cpp",
