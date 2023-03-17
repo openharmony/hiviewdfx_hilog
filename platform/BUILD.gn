@@ -15,30 +15,26 @@ import("//base/hiviewdfx/hilog/hilog.gni")
 import("//base/hiviewdfx/hilog/platformlog.gni")
 import("//build/ohos.gni")
 
-ohos_source_set("hilog_native") {
-  defines = [ "DFX_PLATFORM_LOG_TAG=\"HilogPlatform\"" ]
-  sources = [ "interface/native/log.cpp" ]
-  if (target_os == "android") {
-    defines += [ "ANDROID_PLATFORM" ]
-    aosp_deps = [ "shared_library:liblog" ]
-  } else if (target_os == "ios") {
-    include_dirs = [ "//third_party/bounds_checking_function/include" ]
-    defines += [ "IOS_PLATFORM" ]
-  }
-}
-
 template("libhilog_platform_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
+    defines = [ "DFX_PLATFORM_LOG_TAG=\"HilogPlatform\"" ]
     include_dirs = [
       "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
       "${PLATFORM_HILOG_PATH}/interfaces/native/innerkits/include",
     ]
-    deps = [ ":hilog_native" ]
+    if (target_os == "android") {
+      defines += [ "ANDROID_PLATFORM" ]
+      aosp_deps = [ "shared_library:liblog" ]
+    } else if (target_os == "ios") {
+      include_dirs += [ "//third_party/bounds_checking_function/include" ]
+      defines += [ "IOS_PLATFORM" ]
+    }
     sources = [
       "hilog.cpp",
       "hilog_printf.cpp",
       "hilog_utils.cpp",
+      "interface/native/log.cpp",
     ]
 
     subsystem_name = "hiviewdfx"
