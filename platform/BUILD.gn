@@ -12,10 +12,10 @@
 # limitations under the License.
 
 import("//base/hiviewdfx/hilog/hilog.gni")
+import("//base/hiviewdfx/hilog/platformlog.gni")
 import("//build/ohos.gni")
 
-PLATFORM_HILOG_PATH = "//base/hiviewdfx/hilog"
-ohos_source_set("libhilognapi_src") {
+ohos_source_set("hilog_native") {
   defines = [ "DFX_PLATFORM_LOG_TAG=\"HilogPlatform\"" ]
   sources = [ "interface/native/log.cpp" ]
   if (target_os == "android") {
@@ -34,7 +34,7 @@ template("libhilog_platform_source") {
       "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
       "${PLATFORM_HILOG_PATH}/interfaces/native/innerkits/include",
     ]
-    deps = [ ":libhilognapi_src" ]
+    deps = [ ":hilog_native" ]
     sources = [
       "hilog.cpp",
       "hilog_printf.cpp",
