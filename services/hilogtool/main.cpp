@@ -217,10 +217,10 @@ static void DomainHelper()
     cout
     << endl << endl
     << "Domain description:" << endl
-    << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is (0x" << hex << DOMAIN_OS_MIN << ","
-    << "  0x" << DOMAIN_OS_MAX << ")" << endl
-    << "  Log type \"app\" is used for applications, the range is (0x" << DOMAIN_APP_MIN << ","
-    << "  0x" << DOMAIN_APP_MAX << ")" << dec << endl
+    << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is [0x" << hex << DOMAIN_OS_MIN << ","
+    << "  0x" << DOMAIN_OS_MAX << "]" << endl
+    << "  Log type \"app\" is used for applications, the range is [0x" << DOMAIN_APP_MIN << ","
+    << "  0x" << DOMAIN_APP_MAX << "]" << dec << endl
     << "  To reduce redundant info when printing logs, only last five hex numbers of domain are printed" << endl
     << "  So if user wants to use -D option to filter OS logs, user should add 0xD0 as prefix to the printed domain:"
     << endl

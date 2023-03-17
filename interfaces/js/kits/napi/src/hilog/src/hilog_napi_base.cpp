@@ -14,6 +14,7 @@
  */
 
 #include "properties.h"
+#include "hilog_common.h"
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -129,6 +130,9 @@ napi_value HilogNapiBase::isLoggable(napi_env env, napi_callback_info info)
     tie(succ, domain) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
     if (!succ) {
         return nullptr;
+    }
+    if ((domain < DOMAIN_APP_MIN) || (domain > DOMAIN_APP_MAX)) {
+        return NVal::CreateBool(env, false).val_;
     }
     int32_t level;
     tie(succ, level) = NVal(env, funcArg[NARG_POS::THIRD]).ToInt32();
