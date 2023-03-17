@@ -24,6 +24,7 @@ bool IsPrivateSwitchOn();
 bool IsOnceDebugOn();
 bool IsPersistDebugOn();
 bool IsDebugOn();
+bool IsDebuggableHap();
 uint16_t GetGlobalLevel();
 uint16_t GetDomainLevel(uint32_t domain);
 uint16_t GetTagLevel(const std::string& tag);
