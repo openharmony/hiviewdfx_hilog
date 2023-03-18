@@ -21,35 +21,63 @@ config("libhilog_pub_config") {
 
 template("libhilog") {
   forward_variables_from(invoker, "*")
-  ohos_shared_library(target_name) {
-    sanitize = {
-      cfi = true
-      cfi_cross_dso = true
-      debug = false
-    }
-    public_configs = [ ":libhilog_pub_config" ]
-
-    deps = [
-      "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_source_$platform",
-    ]
-
-    if (platform == "ohos") {
-      output_extension = "so"
-    }
-
-    install_enable = !hilog_native_feature_ohcore
-    install_images = [
-      "system",
-      "updater",
-    ]
-    if (platform == "ohos") {
-      innerapi_tags = [
-        "chipsetsdk",
-        "platformsdk",
+  if (current_os == "android") {
+    ohos_shared_library(target_name) {
+      public_configs = [ ":libhilog_pub_config" ]
+      deps = [
+        "//base/hiviewdfx/hilog/platform:libhilog_platform_source_$platform",
       ]
+
+      install_enable = !hilog_native_feature_ohcore
+      install_images = [
+        "system",
+        "updater",
+      ]
+
+      part_name = "hilog_native"
+      subsystem_name = "hiviewdfx"
     }
-    part_name = "hilog_native"
-    subsystem_name = "hiviewdfx"
+  } else if (current_os == "ios") {
+    ohos_static_library(target_name) {
+      public_configs = [ ":libhilog_pub_config" ]
+      deps = [
+        "//base/hiviewdfx/hilog/platform:libhilog_platform_source_$platform",
+      ]
+
+      part_name = "hilog_native"
+      subsystem_name = "hiviewdfx"
+    }
+  } else {
+    ohos_shared_library(target_name) {
+      sanitize = {
+        cfi = true
+        cfi_cross_dso = true
+        debug = false
+      }
+      public_configs = [ ":libhilog_pub_config" ]
+      deps = [
+        "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_source_$platform",
+      ]
+      if (platform == "ohos") {
+        output_extension = "so"
+      }
+
+      install_enable = !hilog_native_feature_ohcore
+      install_images = [
+        "system",
+        "updater",
+      ]
+
+      if (platform == "ohos") {
+        innerapi_tags = [
+          "chipsetsdk",
+          "platformsdk",
+        ]
+      }
+
+      part_name = "hilog_native"
+      subsystem_name = "hiviewdfx"
+    }
   }
 }
 
@@ -59,7 +87,8 @@ foreach(item, platforms) {
       platform = item
     }
   }
-  if (item == "windows" || item == "mac" || item == "linux") {
+  if (item == "windows" || item == "mac" || item == "linux" || item == "ios" ||
+      item == "android") {
     libhilog("libhilog_" + item) {
       platform = item
     }
