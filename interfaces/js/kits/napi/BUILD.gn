@@ -20,6 +20,7 @@ ohos_source_set("libhilognapi_src") {
     "//third_party/node/src",
     "//third_party/bounds_checking_function/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
+    "//base/hiviewdfx/hilog/frameworks/libhilog/include",
   ]
   sources = [
     "src/common/napi/n_class.cpp",
