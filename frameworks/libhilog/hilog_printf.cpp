@@ -89,6 +89,14 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     // Priority: TagLevel > DomainLevel > GlobalLevel
     // LOG_LEVEL_MIN is default Level
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
+    // domain within the range of [DOMAIN_APP_MIN, DOMAIN_APP_MAX] is a js log,
+    // if this js log comes from debuggable hap, set the default level.
+    if ((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX)) {
+        static bool isDebuggableHap = IsDebuggableHap();
+        if (isDebuggableHap) {
+            return LOG_LEVEL_MIN;
+        }
+    }
     uint16_t tagLevel = GetTagLevel(tag);
     if (tagLevel != LOG_LEVEL_MIN) {
         return tagLevel;
@@ -165,10 +173,9 @@ static int PrintLog(HilogMsg& header, const char *tag, uint16_t tagLen, const ch
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
-    if ((tag == nullptr)  || !HiLogIsLoggable(domain, tag, level)) {
+    if (!HiLogIsLoggable(domain, tag, level)) {
         return -1;
     }
-
     HilogMsg header = {0};
     struct timespec ts = {0};
     (void)clock_gettime(CLOCK_REALTIME, &ts);
@@ -299,7 +306,7 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
 
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
-    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || tag == nullptr) {
+    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || (tag == nullptr) || (domain >= DOMAIN_OS_MAX)) {
         return false;
     }
     if (level < GetFinalLevel(domain, tag)) {
