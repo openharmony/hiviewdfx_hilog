@@ -173,6 +173,9 @@ static int PrintLog(HilogMsg& header, const char *tag, uint16_t tagLen, const ch
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
+    if ((type != LOG_APP) && ((domain < DOMAIN_OS_MIN) || (domain > DOMAIN_OS_MAX))) {
+        return -1;
+    }
     if (!HiLogIsLoggable(domain, tag, level)) {
         return -1;
     }
