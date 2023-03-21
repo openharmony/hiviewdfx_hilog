@@ -81,7 +81,7 @@ bool IsValidDomain(LogType type, uint32_t domain)
         }
         return false;
     } else {
-        if (domain > DOMAIN_OS_MIN && domain < DOMAIN_OS_MAX) {
+        if (domain >= DOMAIN_OS_MIN && domain <= DOMAIN_OS_MAX) {
             return g_DomainList.IsValidKey((domain & OS_SUB_DOMAIN_MASK));
         }
         return false;

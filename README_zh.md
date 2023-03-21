@@ -20,7 +20,7 @@ HiLog是OpenHarmony日志系统，提供给系统框架、服务、以及应用�
 
 ![](figures/zh-cn_image_0000001115534242.png)
 
-用户态Process通过日志接口将日志内容写入hilogd buffer中，用户态的hilog工具支持将输出到控制台（console）进行查看，同时也支持通过hilog工具给hilogd发送命令将日志落盘。
+用户态Process通过日志接口将日志内容写入hilogd buffer中，用户态的hilog工具支持将日志输出到控制台（console）进行查看，同时也支持通过hilog工具给hilogd发送命令将日志落盘。
 
 下述主要任务的详细内容：
 

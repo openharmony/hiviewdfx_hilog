@@ -77,6 +77,7 @@ static pthread_mutex_t g_domainLevelLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_tagLevelLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
+static constexpr const char* HAP_DEBUGGABLE = "HAP_DEBUGGABLE";
 
 using PropRes = struct {
     string name;
@@ -315,6 +316,15 @@ bool IsDebugOn()
     return IsOnceDebugOn() || IsPersistDebugOn();
 }
 
+bool IsDebuggableHap()
+{
+    const char *path = getenv(HAP_DEBUGGABLE);
+    if ((path == nullptr) || (strcmp(path, "true") != 0)) {
+        return false;
+    }
+    return true;
+}
+
 uint16_t GetGlobalLevel()
 {
     static auto *logLevelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, PropType::PROP_GLOBAL_LOG_LEVEL);
@@ -338,7 +348,7 @@ uint16_t GetDomainLevel(uint32_t domain)
             PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
             auto result = domainMap->insert({ domain, levelCache });
             if (!result.second) {
-                std::cerr << "Can't insert new LogLevelCache for domain: " << domain << "\n";
+                delete levelCache;
                 return LOG_LEVEL_MIN;
             }
             it = result.first;
@@ -365,7 +375,7 @@ uint16_t GetTagLevel(const string& tag)
             PropType::PROP_TAG_LOG_LEVEL, tag);
             auto result = tagMap->insert({ tag, levelCache });
             if (!result.second) {
-                std::cerr << "Can't insert new LogLevelCache for tag: " << tag << "\n";
+                delete levelCache;
                 return LOG_LEVEL_MIN;
             }
             it = result.first;
