@@ -83,6 +83,10 @@ template("libhilog_source") {
       cflags_cc = [ "-std=c++17" ]
       defines += [ "__WINDOWS__" ]
     } else if (platform == "mac") {
+      cflags_cc = [
+        "-std=c++17",
+        "-Wno-deprecated-declarations",
+      ]
       defines += [ "__MAC__" ]
     } else if (platform == "linux") {
       cflags_cc = [ "-std=c++17" ]
