@@ -57,7 +57,6 @@ static void SigHandler(int sig)
             g_fd = -1;
         }
 #endif
-        std::cout<<"Exited!"<<std::endl;
     }
 }
 
