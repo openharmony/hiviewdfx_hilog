@@ -131,7 +131,7 @@ napi_value HilogNapiBase::isLoggable(napi_env env, napi_callback_info info)
     if (!succ) {
         return nullptr;
     }
-    if ((domain < DOMAIN_APP_MIN) || (domain > DOMAIN_APP_MAX)) {
+    if ((domain < static_cast<int32_t>(DOMAIN_APP_MIN)) || (domain > static_cast<int32_t>(DOMAIN_APP_MAX))) {
         return NVal::CreateBool(env, false).val_;
     }
     int32_t level;
