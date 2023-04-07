@@ -70,6 +70,13 @@
             ],
             "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
           }
+        },
+        {
+          "name": "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust",
+          "header": {
+            "header_files": [],
+            "header_base": []
+          }
         }
       ],
       "test": []

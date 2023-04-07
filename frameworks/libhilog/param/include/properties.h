@@ -20,10 +20,19 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-bool IsPrivateSwitchOn();
+
 bool IsOnceDebugOn();
 bool IsPersistDebugOn();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool IsDebugOn();
+bool IsPrivateSwitchOn();
+
+#ifdef __cplusplus
+}
+#endif
 bool IsDebuggableHap();
 uint16_t GetGlobalLevel();
 uint16_t GetDomainLevel(uint32_t domain);
