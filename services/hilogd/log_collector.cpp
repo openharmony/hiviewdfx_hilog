@@ -98,11 +98,17 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
             // >0 means a new statistic period start, "ret" is the number of dropping lines in last period
             InsertDropInfo(msg, ret);
         }
-        InsertLogToBuffer(msg);
+        // If insert msg fail, return 0
+        if (InsertLogToBuffer(msg) == 0) {
+            return;
+        }
     } while (0);
 
     // Log statistics
     if (countEnable) {
+        if (*(msg.tag + msg.tag_len - 1) != '\0') {
+            return;
+        }
         StatsInfo info = {
             .level = msg.level,
             .type = msg.type,
@@ -121,9 +127,6 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
 
 size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
 {
-    if (msg.type >= LOG_TYPE_MAX) {
-        return ERR_LOG_TYPE_INVALID;
-    }
     return m_hilogBuffer.Insert(msg);
 }
 
