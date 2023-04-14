@@ -75,10 +75,14 @@ pub struct HiLogLabel {
 }
 
 
-#[link(name = "hilog")]
+// hilog ffi interface
 extern "C"{
     /// hilog ffi interface HiLogIsLoggabel
     pub fn HiLogIsLoggable(domain: u32, tag: *const c_char, level:u32) -> bool;
     /// hilog ffi interface HiLogPrint
     pub fn HiLogPrint(logType: u8, level: u8, domain: u32, tag: *const c_char, fmt: *const c_char, ...) -> u32;
+    /// hilog ffi interface IsPrivateSwitchOn
+    pub fn IsPrivateSwitchOn() -> bool;
+    /// hilog ffi interface IsDebugOn
+    pub fn IsDebugOn() -> bool;
 }
