@@ -18,16 +18,66 @@
 /// hilog macros
 
 #[macro_export]
-macro_rules! hilog{
-    ($log_label:ident, $level:expr, $($arg:tt)* ) => (
-        let log_str = format!($($arg)*);
+macro_rules! hilog {
+    (@call $log_label:ident, $level:expr, $fmt:literal, $(,)? $($processed_args:expr),* ) => (
+        let log_str = format!($fmt, $($processed_args),*);
         let res = unsafe { 
             $crate::HiLogPrint($log_label.log_type as u8, $level as u8, $log_label.domain as u32,
                 CString::new($log_label.tag).expect("default tag").as_ptr() as *const c_char,
                 CString::new(log_str).expect("default log").as_ptr() as *const c_char)
         };
         res
-    )
+    );
+
+    (@rec $priv_flag:ident; $log_label:ident; $level:expr; $fmt:literal; ($arg:expr); $(,)? $($processed_args:expr),*) => {
+        if ($priv_flag) {
+            hilog!(@call $log_label, $level, $fmt, $($processed_args),*, "<private>");
+        } else {
+            hilog!(@call $log_label, $level, $fmt, $($processed_args),*, $arg);
+        }
+    };
+
+    (@rec $priv_flag:ident; $log_label:ident; $level:expr; $fmt:literal; (@private($arg:expr)); $(,)? $($processed_args:expr),*) => {
+        if ($priv_flag) {
+            hilog!(@call $log_label, $level, $fmt, $($processed_args),*, "<private>");
+        } else {
+            hilog!(@call $log_label, $level, $fmt, $($processed_args),*, $arg);
+        }
+    };
+
+    (@rec $priv_flag:ident; $log_label:ident; $level:expr; $fmt:literal; (@public($arg:expr)); $(,)? $($processed_args:expr),*) => {
+        hilog!(@call $log_label, $level, $fmt, $($processed_args),*, $arg);
+    };
+
+    (@rec $priv_flag:ident; $log_label:ident; $level:expr; $fmt:literal; ($arg:expr, $($unprocessed_args:tt)*); $($processed_args:tt)*) => {
+        if ($priv_flag) {
+            hilog!(@rec $priv_flag; $log_label; $level; $fmt; ($($unprocessed_args)*); $($processed_args)*, "<private>");
+        } else {
+            hilog!(@rec $priv_flag; $log_label; $level; $fmt; ($($unprocessed_args)*); $($processed_args)*, $arg);
+        }
+    };
+
+    (@rec $priv_flag:ident; $log_label:ident; $level:expr; $fmt:literal; (@private($arg:expr), $($unprocessed_args:tt)*); $($processed_args:tt)*) => {
+        if ($priv_flag) {
+            hilog!(@rec $priv_flag; $log_label; $level; $fmt; ($($unprocessed_args)*); $($processed_args)*, "<private>");
+        } else {
+            hilog!(@rec $priv_flag; $log_label; $level; $fmt; ($($unprocessed_args)*); $($processed_args)*, $arg);
+        }
+    };
+
+    (@rec $priv_flag:ident; $log_label:ident; $level:expr; $fmt:literal; (@public($arg:expr), $($unprocessed_args:tt)*); $($processed_args:tt)*) => {
+        hilog!(@rec $priv_flag; $log_label; $level; $fmt; ($($unprocessed_args)*); $($processed_args)*, $arg);
+    };
+
+    // Public API
+    ($log_label:ident, $level:expr, $fmt:literal, $($unprocessed_args:tt)*) => {
+        let priv_flag = unsafe{ $crate::IsPrivateSwitchOn() && !$crate::IsDebugOn() };
+        hilog!(@rec priv_flag; $log_label; $level; $fmt; ($($unprocessed_args)*););
+    };
+
+    ($log_label:ident, $level:expr, $fmt:literal) => {
+        hilog!(@call $log_label, $level, $fmt,);
+    };
 }
 
 /// printf log at the debug level.
