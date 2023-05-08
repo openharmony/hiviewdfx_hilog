@@ -56,6 +56,7 @@ static constexpr uint32_t DEFAULT_PERSIST_KMSG_JOB_ID = 2;
 static constexpr int INFO_SUFFIX = 5;
 static const uid_t SHELL_UID = 2000;
 static const uid_t ROOT_UID = 0;
+static const uid_t LOGD_UID = 1036;
 
 ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket,
     LogCollector& collector, HilogBuffer& buffer)
@@ -469,7 +470,7 @@ void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilte
     // Permission check
     uid_t uid = m_communicationSocket->GetUid();
     uint32_t pid = static_cast<uint32_t>(m_communicationSocket->GetPid());
-    if (uid != ROOT_UID && uid != SHELL_UID) {
+    if (uid != ROOT_UID && uid != SHELL_UID && uid != LOGD_UID) {
         filter.blackPid = false;
         filter.pidCount = 1;
         filter.pids[0] = pid;
