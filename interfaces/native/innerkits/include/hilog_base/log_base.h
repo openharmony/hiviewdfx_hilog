@@ -75,4 +75,8 @@ bool HiLogBaseIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 }
 #endif
 
+#ifdef HILOG_RAWFORMAT
+#include "hilog_base/log_base_inner.h"
+#endif
+
 #endif  // HIVIEWDFX_HILOG_BASE_C_H

@@ -37,5 +37,12 @@ public:
 };
 } // namespace HiviewDFX
 } // namespace OHOS
+
+#define HiLogDebug(label, fmt, ...) HILOG_IMPL(label.type, LOG_DEBUG, label.domain, label.tag, fmt, ##__VA_ARGS__)
+#define HiLogInfo(label, fmt, ...) HILOG_IMPL(label.type, LOG_INFO, label.domain, label.tag, fmt, ##__VA_ARGS__)
+#define HiLogWarn(label, fmt, ...) HILOG_IMPL(label.type, LOG_WARN, label.domain, label.tag, fmt, ##__VA_ARGS__)
+#define HiLogError(label, fmt, ...) HILOG_IMPL(label.type, LOG_ERROR, label.domain, label.tag, fmt, ##__VA_ARGS__)
+#define HiLogFatal(label, fmt, ...) HILOG_IMPL(label.type, LOG_FATAL, label.domain, label.tag, fmt, ##__VA_ARGS__)
+
 #endif // __cplusplus
 #endif // HIVIEWDFX_HILOG_CPP_H
