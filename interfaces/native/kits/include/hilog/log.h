@@ -250,4 +250,9 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
 }
 #endif
 /** @} */
+
+#ifdef HILOG_RAWFORMAT
+#include "hilog/log_inner.h"
+#endif
+
 #endif  // HIVIEWDFX_HILOG_C_H

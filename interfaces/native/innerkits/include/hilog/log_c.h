@@ -60,20 +60,26 @@ const char* GetLastFatalMessage(void);
 int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
 
-#define HILOG_DEBUG(type, ...) ((void)HiLogPrint((type), LOG_DEBUG, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define HILOG_DEBUG(type, ...) ((void)HILOG_IMPL((type), LOG_DEBUG, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
-#define HILOG_INFO(type, ...) ((void)HiLogPrint((type), LOG_INFO, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define HILOG_INFO(type, ...) ((void)HILOG_IMPL((type), LOG_INFO, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
-#define HILOG_WARN(type, ...) ((void)HiLogPrint((type), LOG_WARN, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define HILOG_WARN(type, ...) ((void)HILOG_IMPL((type), LOG_WARN, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
-#define HILOG_ERROR(type, ...) ((void)HiLogPrint((type), LOG_ERROR, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define HILOG_ERROR(type, ...) ((void)HILOG_IMPL((type), LOG_ERROR, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
-#define HILOG_FATAL(type, ...) ((void)HiLogPrint((type), LOG_FATAL, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+#define HILOG_FATAL(type, ...) ((void)HILOG_IMPL((type), LOG_FATAL, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
+
+#define HILOG_IMPL(type, level, domain, tag, ...) HiLogPrint(type, level, domain, tag, ##__VA_ARGS__)
 
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef HILOG_RAWFORMAT
+#include "hilog/log_inner.h"
 #endif
 
 #endif  // HIVIEWDFX_HILOG_C_H
