@@ -76,7 +76,7 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
 
     HilogMsg& msg = *(reinterpret_cast<HilogMsg *>(data.data()));
     // check domain id
-    if (!debug && IsValidDomain(static_cast<LogType>(msg.type), msg.domain) == false) {
+    if (IsValidDomain(static_cast<LogType>(msg.type), msg.domain) == false) {
         std::cout << "Invalid domain id: 0x" << std::hex << msg.domain << std::dec << ", type:" << msg.type << endl;
         return;
     }
