@@ -82,7 +82,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     size_t elemSize = CONTENT_LEN((&msg)); /* include '\0' */
 
     if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || elemSize > MAX_LOG_LEN ||
-        elemSize <= 0 || msg.type >= LOG_TYPE_MAX)) {
+        elemSize == 0 || msg.type >= LOG_TYPE_MAX)) {
         return 0;
     }
 
