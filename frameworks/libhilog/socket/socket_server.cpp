@@ -77,18 +77,18 @@ int SocketServer::Recv(void *buffer, unsigned int bufferLen, int flags)
 
 int SocketServer::RecvMsg(struct msghdr *hdr, int flags)
 {
-    return recvmsg(socketHandler, hdr, flags);
+    return TEMP_FAILURE_RETRY(recvmsg(socketHandler, hdr, flags));
 }
 
 int SocketServer::Listen(unsigned int backlog)
 {
-    return listen(socketHandler, backlog);
+    return TEMP_FAILURE_RETRY(listen(socketHandler, backlog));
 }
 
 int SocketServer::Poll(short inEvent, short& outEvent, const std::chrono::milliseconds& timeout)
 {
     pollfd info {socketHandler, inEvent, outEvent};
-    int result = poll(&info, 1, timeout.count());
+    int result = TEMP_FAILURE_RETRY(poll(&info, 1, timeout.count()));
     outEvent = info.revents;
     return result;
 }
