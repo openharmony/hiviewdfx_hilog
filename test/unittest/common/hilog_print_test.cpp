@@ -88,7 +88,8 @@ const vector<string> typeVec = {
 };
 
     GTEST_LOG_(INFO) << "HilogTypeTest: start.";
-    HiLog::Info(LABEL, "%{public}s", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'+-/,.-~:;<=>?_[]{}|\\\"");
+    HiLog::Info(LABEL, "%{public}s",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()'+-/,.-~:;<=>?_[]{}|\\\"");
     HiLog::Info(LABEL, "%{public}i", 123);
     HiLog::Info(LABEL, "%{public}o", 123);
     HiLog::Info(LABEL, "%{public}u", 123);

@@ -25,17 +25,7 @@ using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::HiviewDFX;
 
-std::string GetCmdResultFromPopen(const std::string& cmd);
-
-void HilogToolTest::TearDownTestCase()
-{
-    (void)GetCmdResultFromPopen("hilog -b I");
-    (void)GetCmdResultFromPopen("hilog -G 256K");
-    (void)GetCmdResultFromPopen("hilog -w stop");
-    (void)GetCmdResultFromPopen("hilog -w start");
-}
-
-int GetCmdLinesFromPopen(const std::string& cmd)
+static int GetCmdLinesFromPopen(const std::string& cmd)
 {
     if (cmd.empty()) {
         return 0;
@@ -58,7 +48,7 @@ int GetCmdLinesFromPopen(const std::string& cmd)
     return ret;
 }
 
-std::string GetCmdResultFromPopen(const std::string& cmd)
+static std::string GetCmdResultFromPopen(const std::string& cmd)
 {
     if (cmd.empty()) {
         return "";
@@ -82,7 +72,7 @@ std::string GetCmdResultFromPopen(const std::string& cmd)
     return ret;
 }
 
-bool IsExistInCmdResult(const std::string &cmd, const std::string &str)
+static bool IsExistInCmdResult(const std::string &cmd, const std::string &str)
 {
     if (cmd.empty()) {
         return false;
@@ -107,6 +97,14 @@ bool IsExistInCmdResult(const std::string &cmd, const std::string &str)
     }
     pclose(fp);
     return ret;
+}
+
+void HilogToolTest::TearDownTestCase()
+{
+    (void)GetCmdResultFromPopen("hilog -b I");
+    (void)GetCmdResultFromPopen("hilog -G 256K");
+    (void)GetCmdResultFromPopen("hilog -w stop");
+    (void)GetCmdResultFromPopen("hilog -w start");
 }
 
 namespace {

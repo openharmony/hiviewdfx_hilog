@@ -285,7 +285,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
             char dropLogBuf[MAX_LOG_LEN] = {0};
             if (snprintf_s(dropLogBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1,
                 "==LOGS OVER PROC QUOTA, %d DROPPED==", ret) > 0) {
-                ret = HilogWriteLogMessage(&header, P_LIMIT_TAG, strlen(P_LIMIT_TAG) + 1, dropLogBuf,
+                HilogWriteLogMessage(&header, P_LIMIT_TAG, strlen(P_LIMIT_TAG) + 1, dropLogBuf,
                     strnlen(dropLogBuf, MAX_LOG_LEN - 1) + 1);
             }
             header.level = level;
