@@ -75,3 +75,8 @@ group("hilog_unittest") {
 
   deps += [ "unittest/common:unittest" ]
 }
+
+group("fuzztest") {
+  testonly = true
+  deps = [ "fuzztest/hilogclient_fuzzer:fuzztest" ]
+}
