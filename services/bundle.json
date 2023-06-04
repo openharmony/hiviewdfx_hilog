@@ -38,7 +38,8 @@
       "inner_kits": [],
       "test": [
         "//base/hiviewdfx/hilog/test:hilog_unittest",
-        "//base/hiviewdfx/hilog/test:hilog_moduletest"
+        "//base/hiviewdfx/hilog/test:hilog_moduletest",
+        "//base/hiviewdfx/hilog/test:fuzztest"
       ]
     }
   }
