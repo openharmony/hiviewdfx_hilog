@@ -97,7 +97,11 @@ foreach(item, platforms) {
 
 config("libhilog_base_pub_cfg") {
   visibility = [ "*:*" ]
-  include_dirs = [ "include" ]
+  include_dirs = [
+    "include",
+    "../../../frameworks/libhilog/include",
+    "../../../frameworks/libhilog/vsnprintf/include",
+  ]
 }
 
 ohos_static_library("libhilog_base") {
