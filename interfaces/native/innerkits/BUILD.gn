@@ -60,6 +60,7 @@ template("libhilog") {
       ]
       if (platform == "ohos") {
         output_extension = "so"
+        version_script = "libhilog.map"
       }
 
       install_enable = !hilog_native_feature_ohcore

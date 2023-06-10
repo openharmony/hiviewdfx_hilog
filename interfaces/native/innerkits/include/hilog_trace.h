@@ -24,7 +24,18 @@ extern "C" {
 
 typedef int (*RegisterFunc)(uint64_t*, uint32_t*, uint64_t*, uint64_t*);
 
+/**
+ * @brief register hilog trace.
+ *
+ * @param RegisterFunc Function pointer to RegisterFunc
+ */
 int HiLogRegisterGetIdFun(RegisterFunc);
+
+/**
+ * @brief unregister hilog trace.
+ *
+ * @param RegisterFunc Function pointer to RegisterFunc
+ */
 void HiLogUnregisterGetIdFun(RegisterFunc);
 
 #ifdef __cplusplus
