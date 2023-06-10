@@ -23,43 +23,75 @@
 extern "C" {
 #endif
 
-// Log domain
+/**
+ * Log domain, indicates the log service domainID. Different LogType have different domainID ranges.
+ * Log type of LOG_APP: 0-0xFFFF
+ * Log type of LOG_CORE & LOG_INIT: 0xD000000-0xD0FFFFF
+ */
 #ifndef LOG_DOMAIN
 #define LOG_DOMAIN 0
 #endif
 
-// Log tag
+/**
+ * Log tag, indicates the log service tag, you can customize the tag as needed, usually the keyword of the module.
+ */
 #ifndef LOG_TAG
 #define LOG_TAG NULL
 #endif
 
-// Log type
+/* Log type */
 typedef enum {
+    /* min log type */
     LOG_TYPE_MIN = 0,
+    /* Used by app log. */
     LOG_APP = 0,
+    /* Used by system log: recommended for important logs during the startup phase. */
     LOG_INIT = 1,
-    // Used by core service, framework.
+    /* Used by core service, framework. */
     LOG_CORE = 3,
+    /* Used by kmsg log. */
     LOG_KMSG = 4,
+    /* max log type */
     LOG_TYPE_MAX
 } LogType;
 
-// Log level
+/* Log level */
 typedef enum {
+    /* min log level */
     LOG_LEVEL_MIN = 0,
+    /* Designates lower priority log. */
     LOG_DEBUG = 3,
+    /* Designates useful information. */
     LOG_INFO = 4,
+    /* Designates hazardous situations. */
     LOG_WARN = 5,
+    /* Designates very serious errors. */
     LOG_ERROR = 6,
+    /* Designates major fatal anomaly. */
     LOG_FATAL = 7,
+    /* max log level */
     LOG_LEVEL_MAX,
 } LogLevel;
 
+/**
+ * @brief Get log of fatal level
+ */
 const char* GetLastFatalMessage(void);
 
+/**
+ * @brief Print hilog
+ *
+ * @return If the log is successfully printed, returns the number of bytes written,
+ * if failed, returns -1.
+ */
 int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
 
+/**
+ * @brief Hilog C interface of different log level
+ *
+ * @param type enum:LogType
+ */
 #define HILOG_DEBUG(type, ...) ((void)HILOG_IMPL((type), LOG_DEBUG, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
 #define HILOG_INFO(type, ...) ((void)HILOG_IMPL((type), LOG_INFO, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
@@ -70,8 +102,23 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
 
 #define HILOG_FATAL(type, ...) ((void)HILOG_IMPL((type), LOG_FATAL, LOG_DOMAIN, LOG_TAG, __VA_ARGS__))
 
+/**
+ * @brief Hilog C interface implementation
+ *
+ * @param type enum:LogType
+ * @param level enum:LogLevel
+ * @param domain macro:LOG_DOMAIN
+ * @param tag macro:LOG_TAG
+ */
 #define HILOG_IMPL(type, level, domain, tag, ...) HiLogPrint(type, level, domain, tag, ##__VA_ARGS__)
 
+/**
+ * @brief Check whether log of a specified domain, tag and level can be printed.
+ *
+ * @param domain macro:LOG_DOMAIN
+ * @param tag macro:LOG_TAG
+ * @param level enum:LogLevel
+ */
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level);
 
 #ifdef __cplusplus
