@@ -21,12 +21,30 @@
 #ifdef __cplusplus
 namespace OHOS {
 namespace HiviewDFX {
+/**
+ * @brief Initialize log parameters: type, domain and tag.
+ * domain: Indicates the log service domainID. Different LogType have different domainID ranges,
+ * Log type of LOG_APP: 0-0xFFFF,
+ * Log type of LOG_CORE & LOG_INIT: 0xD000000-0xD0FFFFF.
+ * tag: Indicates the log service tag, you can customize the tag as needed, usually the keyword of the module.
+ */
 using HiLogLabel = struct {
     LogType type;
     unsigned int domain;
     const char *tag;
 };
 
+/**
+ * @brief Hilog C++ class interface of different log level.
+ * Debug: Designates lower priority log.
+ * Info: Designates useful information.
+ * Warn: Designates hazardous situations.
+ * Error: Designates very serious errors.
+ * Fatal: Designates major fatal anomaly.
+ *
+ * @param label HiLogLabel for the log
+ * @param fmt Format string for the log
+ */
 class HiLog final {
 public:
     static int Debug(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
@@ -38,6 +56,17 @@ public:
 } // namespace HiviewDFX
 } // namespace OHOS
 
+/**
+ * @brief Hilog C++ macro interface of different log level.
+ * HiLogDebug: Designates lower priority log.
+ * HiLogInfo: Designates useful information.
+ * HiLogWarn: Designates hazardous situations.
+ * HiLogError: Designates very serious errors.
+ * HiLogFatal: Designates major fatal anomaly.
+ *
+ * @param label HiLogLabel for the log
+ * @param fmt Format string for the log
+ */
 #define HiLogDebug(label, fmt, ...) HILOG_IMPL(label.type, LOG_DEBUG, label.domain, label.tag, fmt, ##__VA_ARGS__)
 #define HiLogInfo(label, fmt, ...) HILOG_IMPL(label.type, LOG_INFO, label.domain, label.tag, fmt, ##__VA_ARGS__)
 #define HiLogWarn(label, fmt, ...) HILOG_IMPL(label.type, LOG_WARN, label.domain, label.tag, fmt, ##__VA_ARGS__)
