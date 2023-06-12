@@ -68,6 +68,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD004600, "Interconnection"},
     {0xD004700, "Cloud"},
     {0xD004800, "Manufacture"},
+    {0xD005100, "PcService"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
