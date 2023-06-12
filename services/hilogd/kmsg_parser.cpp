@@ -35,7 +35,8 @@ namespace HiviewDFX {
 using namespace std::chrono;
 using namespace std::literals;
 
-constexpr int  DEC = 10;
+constexpr int DEC = 10;
+constexpr int USEC_LEN = 6;
 
 // Avoid name collision between sys/syslog.h and our log_c.h
 #undef LOG_FATAL
@@ -53,45 +54,6 @@ using Priority = enum {
     PV5,
     PV6
 };
-
-static void ParseHeader(std::string& str, uint16_t* level, uint64_t* timestamp)
-{
-    static const std::string pattern = "(\\d+),(\\d+),(\\d+),(\\S);";
-    static const std::regex express(pattern);
-    std::match_results<std::string::iterator> res;
-    if (std::regex_search(str.begin(), str.end(), res, express)) {
-        *level = strtoul(res[1].str().c_str(), nullptr, DEC);
-        *timestamp = strtoumax(res[3].str().c_str(), nullptr, DEC);
-        str.erase(res.position(), res.length());
-    }
-}
-
-// Parse pid if exists
-static uint32_t ParsePid(std::string& str)
-{
-    static const std::string pattern = "\\[pid=(\\d+)\\]";
-    static const std::regex express(pattern);
-    std::match_results<std::string::iterator> res;
-    if (std::regex_search(str.begin(), str.end(), res, express)) {
-        uint32_t ret = strtoumax(res[1].str().c_str(), nullptr, DEC);
-        str.erase(res.position(), res.length());
-        return ret;
-    }
-    return 0;
-}
-
-static std::string ParseTag(std::string& str)
-{
-    static const std::string pattern = "\\[.*?\\]";
-    static const std::regex express(pattern);
-    std::match_results<std::string::iterator> res;
-    if (std::regex_search(str.begin(), str.end(), res, express)) {
-        std::string ret = res[0].str();
-        str.erase(res.position(), res.length());
-        return ret;
-    }
-    return {};
-}
 
 // Log levels are different in syslog.h and hilog log_c.h
 static uint16_t KmsgLevelMap(uint16_t prio)
@@ -120,48 +82,46 @@ static uint16_t KmsgLevelMap(uint16_t prio)
     return level;
 }
 
-static constexpr timespec TimepointToTimespec(time_point<system_clock, nanoseconds> tp)
+/*
+ *Extract log level and usec time from the raw kernel logs
+ *raw log format: 6,5972,232898993226,-;hungtask_base whitelist[1]-appspawn-255
+ *6 -> logLevel;  232898993226 -> usec
+ */
+static void ParseHeader(std::string& str, uint8_t& level, std::string& tag)
 {
-    auto secs = time_point_cast<seconds>(tp);
-    auto nsecs = time_point_cast<nanoseconds>(tp) - time_point_cast<nanoseconds>(secs);
-    return timespec{secs.time_since_epoch().count(), nsecs.count()};
+    std::string levelStr;
+    std::string usecStr;
+    std::size_t pos = str.find(',');
+    if (pos != std::string::npos) {
+        levelStr = str.substr(0, pos);
+        level = strtoul(levelStr.c_str(), nullptr, DEC);
+    } else {
+        return;
+    }
+    pos = str.find(',', pos + 1);
+    if (pos == std::string::npos) {
+        return;
+    }
+    size_t usecBeginPos = pos + 1;
+    pos = str.find(',', usecBeginPos);
+    if (pos != std::string::npos) {
+        usecStr = str.substr(usecBeginPos, pos - usecBeginPos);
+        str.erase(0, pos + 1);
+    }
+    if (usecStr.length() < (USEC_LEN + 1)) {
+        usecStr = std::string(USEC_LEN + 1 - usecStr.length(), '0') + usecStr;
+    }
+    usecStr.insert(usecStr.length() - USEC_LEN, ".");
+    tag = "<" + levelStr + ">" + " [" + usecStr + "]";
 }
 
-// Kmsg has microseconds from system boot. Now get the time of system boot.
-KmsgParser::BootTp KmsgParser::BootTime()
-{
-    struct timespec t_uptime;
-    clock_gettime(CLOCK_BOOTTIME, &t_uptime);
-    auto uptime = seconds{t_uptime.tv_sec} + nanoseconds{t_uptime.tv_nsec};
-    auto current = system_clock::now();
-    auto boottime = current - uptime;
-    return boottime;
-}
 std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& kmsgBuffer)
 {
     std::string kmsgStr(kmsgBuffer.data());
-    std::vector<char> mtag(MAX_TAG_LEN, '\0');
-    uint16_t mLevel = 0;
-    uint64_t timestamp = 0;
-    ParseHeader(kmsgStr, &mLevel, &timestamp);
-    // Parses pid if exists. Pid in kmsg content is like: [pid=xxx,...]
-    uint32_t mpid = ParsePid(kmsgStr);
-    // If there are some other content wrapped in square brackets "[]", parse it as tag
-    // Otherwise, use default tag  "kmsg"
-    size_t tagLen = 0;
-    std::string tagStr = ParseTag(kmsgStr);
-    if (!tagStr.empty()) {
-        tagLen = tagStr.size();
-        if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, tagStr.c_str(), tagStr.size()) != 0) {
-            return {};
-        }
-    } else {
-        constexpr auto defaultTag = "kmsg"sv;
-        tagLen = defaultTag.size();
-        if (strncpy_s(mtag.data(), MAX_TAG_LEN - 1, defaultTag.data(), defaultTag.size()) != 0) {
-            return {};
-        }
-    }
+    std::string tagStr = "";
+    uint8_t mLevel = 0;
+    ParseHeader(kmsgStr, mLevel, tagStr);
+    size_t tagLen = tagStr.size();
     // Now build HilogMsg and insert it into buffer
     auto len = kmsgStr.size() + 1;
     auto msgLen = sizeof(HilogMsg) + tagLen + len + 1;
@@ -170,15 +130,12 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     msg.len = msgLen;
     msg.tag_len = tagLen + 1;
     msg.type = LOG_KMSG;
-    msg.domain = 0xD002600;
     msg.level = KmsgLevelMap(mLevel);
-    time_point<system_clock, nanoseconds> logtime = BootTime() + microseconds{timestamp};
-    struct timespec logts = TimepointToTimespec(logtime);
-    msg.tv_sec = static_cast<uint32_t>(logts.tv_sec);
-    msg.tv_nsec = static_cast<uint32_t>(logts.tv_nsec);
-    msg.pid = mpid;
-    msg.tid = mpid;
-    if (strncpy_s(msg.tag, tagLen + 1, mtag.data(), tagLen) != 0) {
+    struct timespec ts = {0};
+    (void)clock_gettime(CLOCK_REALTIME, &ts);
+    msg.tv_sec = static_cast<uint32_t>(ts.tv_sec);
+    msg.tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
+    if (strncpy_s(msg.tag, tagLen + 1, tagStr.c_str(), tagLen) != 0) {
         return {};
     }
     if (strncpy_s(CONTENT_PTR((&msg)), MAX_LOG_LEN, kmsgStr.c_str(), len) != 0) {
