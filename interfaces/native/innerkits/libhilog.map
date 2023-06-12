@@ -14,11 +14,12 @@
         "OHOS::HiviewDFX::HiLog::Info(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";
         "OHOS::HiviewDFX::HiLog::Warn(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";
         "OHOS::HiviewDFX::HiLog::Error(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";
-        "OHOS::HiviewDFX::HiLog::Fatal(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";   
+        "OHOS::HiviewDFX::HiLog::Fatal(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";
         "OHOS::HiviewDFX::HiLog::Debug(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";
         "OHOS::HiviewDFX::SocketServer::SocketServer(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "OHOS::HiviewDFX::SocketServer::Init()";
         "OHOS::HiviewDFX::SeqPacketSocketServer::StartAcceptingConnection(std::__h::function<void (std::__h::unique_ptr<OHOS::HiviewDFX::Socket, std::__h::default_delete<OHOS::HiviewDFX::Socket>>)>, std::__h::chrono::duration<long long, std::__h::ratio<1ll, 1000ll>>, std::__h::function<void ()>)";
+        "OHOS::HiviewDFX::SeqPacketSocketServer::StartAcceptingConnection(std::__h::function<void (std::__h::unique_ptr<OHOS::HiviewDFX::Socket, std::__h::default_delete<OHOS::HiviewDFX::Socket>>)>, std::__h::chrono::duration<long long, std::__h::ratio<1l, 1000l>>, std::__h::function<void ()>)";
         "OHOS::HiviewDFX::SocketServer::~SocketServer()";
         "OHOS::HiviewDFX::Socket::~Socket()";
         "OHOS::HiviewDFX::GetDomainQuota(unsigned int)";
@@ -27,6 +28,7 @@
         "OHOS::HiviewDFX::PrintErrorno(int)";
         "OHOS::HiviewDFX::LogPrintWithFormat(OHOS::HiviewDFX::LogContent const&, OHOS::HiviewDFX::LogFormat const&, std::__h::basic_ostream<char, std::__h::char_traits<char>>&)";
         "OHOS::HiviewDFX::GenerateHash(char const*, unsigned int)";
+        "OHOS::HiviewDFX::GenerateHash(char const*, unsigned long)";
         "OHOS::HiviewDFX::IsStatsEnable()";
         "OHOS::HiviewDFX::IsTagStatsEnable()";
         "OHOS::HiviewDFX::GetNameByPid(unsigned int)";
@@ -36,6 +38,7 @@
         "OHOS::HiviewDFX::IsKmsgSwitchOn()";
         "OHOS::HiviewDFX::HilogInputSocketServer::~HilogInputSocketServer()";
         "OHOS::HiviewDFX::Size2Str(unsigned long long)";
+        "OHOS::HiviewDFX::Size2Str(unsigned long)";
         "OHOS::HiviewDFX::LogLevel2Str(unsigned short)";
         "OHOS::HiviewDFX::LogIoctl::LogIoctl(IoctlCmd, IoctlCmd)";
         "OHOS::HiviewDFX::LogIoctl::RequestOutput(OutputRqst const&, std::__h::function<int (OutputRsp const&)>)";
@@ -60,13 +63,16 @@
         "OHOS::HiviewDFX::Socket::GetPid()";
         "OHOS::HiviewDFX::GetPPidByPid(unsigned int)";
         "OHOS::HiviewDFX::GetBitsCount(unsigned long long)";
+        "OHOS::HiviewDFX::GetBitsCount(unsigned long)";
         "OHOS::HiviewDFX::GetAllLogTypes()";
         "OHOS::HiviewDFX::SetBufferSize(unsigned short, bool, unsigned int)";
+        "OHOS::HiviewDFX::SetBufferSize(unsigned short, bool, unsigned long)";
         "OHOS::HiviewDFX::SetKmsgSwitchOn(bool)";
         "OHOS::HiviewDFX::SetDomainSwitchOn(bool)";
         "OHOS::HiviewDFX::LogIoctl::RequestStatsQuery(StatsQueryRqst const&, std::__h::function<int (StatsQueryRsp const&)>)";
         "OHOS::HiviewDFX::Str2ComboLogType(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::LogIoctl::SendMsgHeader(IoctlCmd, unsigned int)";
+        "OHOS::HiviewDFX::LogIoctl::SendMsgHeader(IoctlCmd, unsigned long)";
         "OHOS::HiviewDFX::Socket::WriteAll(char const*, unsigned int)";
         "OHOS::HiviewDFX::LogIoctl::ReceiveMsgHeaer(MsgHeader&)";
         "OHOS::HiviewDFX::LogIoctl::GetRsp(char*, int)";
@@ -74,21 +80,22 @@
         vtable?for?OHOS::HiviewDFX::HilogInputSocketServer;
 
         "OHOS::HiviewDFX::SetOnceDebugOn(bool)";
-	"OHOS::HiviewDFX::SetPersistDebugOn(bool)";
-	"OHOS::HiviewDFX::IsOnceDebugOn()";
-	"OHOS::HiviewDFX::IsProcessSwitchOn()";
-	"OHOS::HiviewDFX::ShortStr2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-	"OHOS::HiviewDFX::GetGlobalLevel()";
-	"OHOS::HiviewDFX::GetDomainLevel(unsigned int)";
-	"OHOS::HiviewDFX::GetTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-	"OHOS::HiviewDFX::Str2LogType(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-	"OHOS::HiviewDFX::Str2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-	"OHOS::HiviewDFX::LogLevel2ShortStr(unsigned short)";
-	"OHOS::HiviewDFX::ShortStr2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-	"OHOS::HiviewDFX::ComboLogLevel2Str(unsigned short)";
-	"OHOS::HiviewDFX::GetBitPos(unsigned long long)";
-	"OHOS::HiviewDFX::Uint2DecStr(unsigned int)";
-	"OHOS::HiviewDFX::DecStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::SetPersistDebugOn(bool)";
+        "OHOS::HiviewDFX::IsOnceDebugOn()";
+        "OHOS::HiviewDFX::IsProcessSwitchOn()";
+        "OHOS::HiviewDFX::ShortStr2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::GetGlobalLevel()";
+        "OHOS::HiviewDFX::GetDomainLevel(unsigned int)";
+        "OHOS::HiviewDFX::GetTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::Str2LogType(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::Str2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::LogLevel2ShortStr(unsigned short)";
+        "OHOS::HiviewDFX::ShortStr2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::ComboLogLevel2Str(unsigned short)";
+        "OHOS::HiviewDFX::GetBitPos(unsigned long long)";
+        "OHOS::HiviewDFX::GetBitPos(unsigned long)";
+        "OHOS::HiviewDFX::Uint2DecStr(unsigned int)";
+        "OHOS::HiviewDFX::DecStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
     };
 
   local:
