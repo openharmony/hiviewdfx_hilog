@@ -18,6 +18,7 @@
 #include <vector>
 #include <sys/time.h>
 #include <regex>
+#include <string>
 
 #include <hilog_common.h>
 #include <flow_control.h>
@@ -126,6 +127,27 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
     return elemSize;
 }
 
+// Replace wildcard with regex
+static std::string WildcardToRegex(const std::string& wildcard)
+{   
+    // Original and Replacement char array
+    const static char* WILDCARDS = "*?[]+.^&";
+    const static std::string REPLACEMENT_S[] = {".*", ".", "\\[", "\\]", "\\+", "\\.", "\\^", "\\&"};
+    // Modify every wildcard to regex 
+    std::string result = "";
+    for (char c : wildcard) {
+        // strchr matches wildcard and char 
+        if (std::strchr(WILDCARDS, c) != nullptr) {
+            size_t index = std::strchr(WILDCARDS, c) - WILDCARDS;
+            result += REPLACEMENT_S[index];
+        }
+        else {
+            result += c;
+        }
+    }
+    return result;
+}
+
 static bool LogMatchFilter(const LogFilter& filter, const HilogData& logData)
 {
     // types & levels match
@@ -179,7 +201,9 @@ static bool LogMatchFilter(const LogFilter& filter, const HilogData& logData)
     }
     // regular expression match
     if (filter.regex[0] != 0) {
-        std::regex regExpress(filter.regex);
+        // Added a WildcardToRegex function for invalid regex.
+        std::string wildcardRegex = WildcardToRegex(filter.regex);
+        std::regex regExpress(wildcardRegex);
         if (std::regex_search(logData.content, regExpress) == false) {
             return false;
         }
