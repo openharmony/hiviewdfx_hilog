@@ -66,6 +66,7 @@ private:
     uint32_t m_maxLogFileNum = 0;
     std::string m_logsPath;
     std::string m_fileNameSuffix;
+    std::string m_currentLogFileName;
     uint32_t m_currentLogFileIdx = 0;
     std::fstream m_currentLogOutput;
 
