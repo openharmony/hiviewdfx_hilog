@@ -348,7 +348,6 @@ int LogPersister::ReceiveLogLoop()
                 (void)m_compressor->Compress(*m_mappedPlainLogFile, *m_compressBuffer);
                 WriteCompressedLogs();
             }
-            cout << "6" << endl;
         }
     }
     // try to compress the remaining log in cache

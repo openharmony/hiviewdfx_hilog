@@ -97,7 +97,7 @@ int LogPersisterRotator::Input(const char *buf, uint32_t length)
     if (m_needRotate) {
         Rotate();
         m_needRotate = false;
-    } else if (!m_currentLogOutput.is_open()) {
+    } else if ((access(m_currentLogFileName.c_str(), F_OK) != 0) || !m_currentLogOutput.is_open()) {
         CreateLogFile();
     }
     m_currentLogOutput.write(buf, length);
@@ -147,6 +147,10 @@ void LogPersisterRotator::CreateLogFile()
     std::stringstream newFile;
     newFile << m_logsPath << "." << GetFileNameIndex(m_currentLogFileIdx) << "." << timeBuf << m_fileNameSuffix;
     std::cout << "Filename: " << newFile.str() << std::endl;
+    m_currentLogFileName = newFile.str();
+    if (m_currentLogOutput.is_open()) {
+        m_currentLogOutput.close();
+    }
     m_currentLogOutput.open(newFile.str(), std::ios::out | std::ios::trunc);
 }
 
