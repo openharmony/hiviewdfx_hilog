@@ -26,13 +26,13 @@ ohos_shared_library("hilog_ndk") {
 
   sources = [ "hilog_ndk.c" ]
 
-  external_deps = [ "hilog_native:libhilog" ]
+  deps = [ "../../interfaces/native/innerkits:libhilog" ]
 
   install_images = [
     system_base_dir,
     "updater",
   ]
   innerapi_tags = [ "ndk" ]
-  part_name = "hilog_native"
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }

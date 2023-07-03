@@ -31,11 +31,9 @@ ohos_fuzztest("HiLogFuzzTest") {
 
   sources = [ "hilogclient_fuzzer.cpp" ]
   configs = [ "../../../frameworks/libhilog:libhilog_config" ]
-  external_deps = [
-    "hilog_native:libhilog",
-    "init:libbegetutil",
-  ]
-  part_name = "hilog_native"
+  deps = [ "../../../interfaces/native/innerkits:libhilog" ]
+  external_deps = [ "init:libbegetutil" ]
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }
 

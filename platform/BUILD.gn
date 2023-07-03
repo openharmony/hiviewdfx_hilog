@@ -38,7 +38,7 @@ template("libhilog_platform_source") {
     ]
 
     subsystem_name = "hiviewdfx"
-    part_name = "hilog_native"
+    part_name = "hilog"
   }
 }
 
