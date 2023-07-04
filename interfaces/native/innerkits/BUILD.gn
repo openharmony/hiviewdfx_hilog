@@ -50,7 +50,7 @@ if (is_mingw || is_mac || is_linux || is_ohos) {
       }
     }
 
-    part_name = "hilog_native"
+    part_name = "hilog"
     subsystem_name = "hiviewdfx"
   }
 }
@@ -60,9 +60,7 @@ template("libhilog") {
   if (current_os == "android") {
     ohos_shared_library(target_name) {
       public_configs = [ ":libhilog_pub_config" ]
-      deps = [
-        "//base/hiviewdfx/hilog/platform:libhilog_platform_source_$platform",
-      ]
+      deps = [ "../../../platform:libhilog_platform_source_$platform" ]
 
       install_enable = !hilog_native_feature_ohcore
       install_images = [
@@ -70,17 +68,15 @@ template("libhilog") {
         "updater",
       ]
 
-      part_name = "hilog_native"
+      part_name = "hilog"
       subsystem_name = "hiviewdfx"
     }
   } else if (current_os == "ios") {
     ohos_static_library(target_name) {
       public_configs = [ ":libhilog_pub_config" ]
-      deps = [
-        "//base/hiviewdfx/hilog/platform:libhilog_platform_source_$platform",
-      ]
+      deps = [ "../../../platform:libhilog_platform_source_$platform" ]
 
-      part_name = "hilog_native"
+      part_name = "hilog"
       subsystem_name = "hiviewdfx"
     }
   } else {
@@ -91,9 +87,7 @@ template("libhilog") {
         debug = false
       }
       public_configs = [ ":libhilog_pub_config" ]
-      deps = [
-        "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_source_$platform",
-      ]
+      deps = [ "../../../frameworks/libhilog:libhilog_source_$platform" ]
       if (platform == "ohos") {
         output_extension = "so"
         version_script = "libhilog.map"
@@ -112,7 +106,7 @@ template("libhilog") {
         ]
       }
 
-      part_name = "hilog_native"
+      part_name = "hilog"
       subsystem_name = "hiviewdfx"
     }
   }
@@ -139,8 +133,8 @@ config("libhilog_base_pub_cfg") {
 ohos_static_library("libhilog_base") {
   public_configs = [ ":libhilog_base_pub_cfg" ]
 
-  deps = [ "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_base_source" ]
+  deps = [ "../../../frameworks/libhilog:libhilog_base_source" ]
 
   subsystem_name = "hiviewdfx"
-  part_name = "hilog_native"
+  part_name = "hilog"
 }

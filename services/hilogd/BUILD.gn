@@ -47,7 +47,7 @@ ohos_executable("hilogd") {
   deps += [ "etc:hilogd_etc" ]
 
   external_deps = [
-    "hilog_native:libhilog",
+    "hilog:libhilog",
     "init:libbegetutil",
   ]
   install_images = [

@@ -34,10 +34,8 @@ ohos_source_set("libhilognapi_src") {
   if (is_mingw || is_mac || is_linux) {
     deps += [ "//foundation/arkui/napi:ace_napi" ]
   } else {
-    external_deps = [
-      "hilog_native:libhilog",
-      "napi:ace_napi",
-    ]
+    deps += [ "../../../../interfaces/native/innerkits:libhilog" ]
+    external_deps = [ "napi:ace_napi" ]
   }
 
   cflags_cc = []
@@ -57,7 +55,7 @@ ohos_source_set("libhilognapi_src") {
     defines += [ "__LINUX__" ]
   }
   subsystem_name = "hiviewdfx"
-  part_name = "hilog_native"
+  part_name = "hilog"
 }
 
 config("libhilog_js_cfg") {
@@ -79,5 +77,5 @@ ohos_shared_library("libhilognapi") {
   output_name = "libhilog_napi"
   relative_install_dir = "module"
   subsystem_name = "hiviewdfx"
-  part_name = "hilog_native"
+  part_name = "hilog"
 }

@@ -16,13 +16,13 @@ import("//build/ohos.gni")
 ohos_rust_shared_library("hilog_rust") {
   sources = [ "src/lib.rs" ]
 
-  external_deps = [ "hilog_native:libhilog" ]
+  deps = [ "../../interfaces/native/innerkits:libhilog" ]
 
   crate_name = "hilog_rust"
   crate_type = "dylib"
 
   subsystem_name = "hiviewdfx"
-  part_name = "hilog_native"
+  part_name = "hilog"
 }
 
 group("rust_hilog_component") {

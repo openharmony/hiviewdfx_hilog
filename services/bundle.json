@@ -22,6 +22,8 @@
     "ram": "14336KB",
     "deps": {
       "components": [
+        "c_utils",
+        "hilog",
         "init",
         "utils_base"
       ],

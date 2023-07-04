@@ -107,7 +107,7 @@ template("libhilog_source") {
       external_deps = [ "init:libbegetutil" ]
     }
 
-    part_name = "hilog_native"
+    part_name = "hilog"
     subsystem_name = "hiviewdfx"
   }
 }
@@ -141,6 +141,6 @@ ohos_source_set("libhilog_base_source") {
   public_configs = [ ":libhilog_base_config" ]
   configs = [ ":libhilog_base_config" ]
 
-  part_name = "hilog_native"
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }
