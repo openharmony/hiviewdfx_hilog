@@ -32,8 +32,8 @@ ohos_moduletest("HiLogNDKTest") {
   deps = [ "//third_party/googletest:gtest_main" ]
 
   external_deps = [
-    "hilog_native:libhilog",
-    "hilog_native:libhilog_base",
+    "hilog:libhilog",
+    "hilog:libhilog_base",
     "init:libbegetutil",
   ]
 
@@ -52,7 +52,7 @@ ohos_moduletest("HiLogAdapterTest") {
 
   deps = [ "//third_party/googletest:gtest_main" ]
 
-  external_deps = [ "hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
 
   include_dirs = [
     "//base/hiviewdfx/hilog/adapter",

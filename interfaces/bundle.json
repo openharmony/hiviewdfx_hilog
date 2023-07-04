@@ -31,55 +31,8 @@
         "zlib"
       ]
     },
-    "features": [
-      "hilog_native_feature_ohcore"
-    ],
     "build": {
-      "group_type": {
-        "base_group": [
-
-        ],
-        "fwk_group": [
-          "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
-          "//base/hiviewdfx/hilog/interfaces/js:hilog_napi"
-        ],
-        "service_group": [
-          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
-          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-          "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust"
-        ]
-      },
-      "inner_kits": [
-        {
-          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-          "header": {
-            "header_files": [
-              "hilog/log.h",
-              "hilog/log_c.h",
-              "hilog/log_cpp.h",
-              "hilog_trace.h"
-            ],
-            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
-          }
-        },
-        {
-          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
-          "header": {
-            "header_files": [
-              "hilog_base/log_base.h"
-            ],
-            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
-          }
-        },
-        {
-          "name": "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust",
-          "header": {
-            "header_files": [],
-            "header_base": []
-          }
-        }
-      ],
-      "test": []
+      "sub_component": []
     }
   }
 }
