@@ -268,7 +268,7 @@ static int HiLogBasePrintArgs(const LogType type, const LogLevel level, const un
 #ifndef __RECV_MSG_WITH_UCRED_
     header.pid = getpid();
 #endif
-    header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
+    header.tid = static_cast<uint32_t>(gettid());
     header.domain = domain;
 
     return SendMessage(&header, tag, tagLen + 1, buf, logLen + 1);
