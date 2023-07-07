@@ -28,6 +28,7 @@
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 namespace {
 constexpr int SOCKET_TYPE = SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC;
@@ -180,7 +181,7 @@ static size_t BuildHilogMessageForOhCore(struct HiLogMsgInfo* logMsgInfo, LogHea
     (void)clock_gettime(CLOCK_REALTIME, &ts);
     logHeader.realtime.tvSec = static_cast<uint32_t>(ts.tv_sec);
     logHeader.realtime.tvNsec = static_cast<uint32_t>(ts.tv_nsec);
-    logHeader.tid = static_cast<uint32_t>(gettid());
+    logHeader.tid = static_cast<uint32_t>(syscall(SYS_gettid));
     logHeader.ohPid = static_cast<uint32_t>(getpid());
     logLevel = logMsgInfo->header_->level;
     constexpr uint32_t domainFilter = 0x000FFFFF;
