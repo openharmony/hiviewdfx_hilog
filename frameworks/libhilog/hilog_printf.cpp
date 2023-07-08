@@ -27,6 +27,7 @@
 
 #ifndef __WINDOWS__
 #include <sys/syscall.h>
+#include <sys/types.h>
 #else
 #include <windows.h>
 #include <memory.h>
