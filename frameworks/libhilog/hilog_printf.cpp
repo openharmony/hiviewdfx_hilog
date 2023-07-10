@@ -90,14 +90,6 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     // Priority: TagLevel > DomainLevel > GlobalLevel
     // LOG_LEVEL_MIN is default Level
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
-    // domain within the range of [DOMAIN_APP_MIN, DOMAIN_APP_MAX] is a js log,
-    // if this js log comes from debuggable hap, set the default level.
-    if ((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX)) {
-        static bool isDebuggableHap = IsDebuggableHap();
-        if (isDebuggableHap) {
-            return LOG_LEVEL_MIN;
-        }
-    }
     uint16_t tagLevel = GetTagLevel(tag);
     if (tagLevel != LOG_LEVEL_MIN) {
         return tagLevel;
@@ -105,6 +97,14 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     uint16_t domainLevel = GetDomainLevel(domain);
     if (domainLevel != LOG_LEVEL_MIN) {
         return domainLevel;
+    }
+    // domain within the range of [DOMAIN_APP_MIN, DOMAIN_APP_MAX] is a js log,
+    // if this js log comes from debuggable hap, set the default level.
+    if ((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX)) {
+        static bool isDebuggableHap = IsDebuggableHap();
+        if (isDebuggableHap) {
+            return LOG_LEVEL_MIN;
+        }
     }
     return GetGlobalLevel();
 #else
