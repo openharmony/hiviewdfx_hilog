@@ -24,20 +24,20 @@ group("hilogd_etc") {
 ohos_prebuilt_etc("hilogd.cfg") {
   source = "hilogd.cfg"
   relative_install_dir = "init"
-  part_name = "hilog_service"
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }
 
 ohos_prebuilt_etc("hilog.para") {
   source = "hilog.para"
   relative_install_dir = "param"
-  part_name = "hilog_service"
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }
 
 ohos_prebuilt_etc("hilog.para.dac") {
   source = "hilog.para.dac"
   relative_install_dir = "param"
-  part_name = "hilog_service"
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }
