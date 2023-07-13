@@ -18,13 +18,14 @@
     "adapted_system_type": [
       "standard"
     ],
-    "rom": "188KB",
-    "ram": "2000KB",
+    "rom": "648KB",
+    "ram": "16336KB",
     "deps": {
       "components": [
         "init",
         "napi",
-        "utils_base"
+        "utils_base",
+        "c_utils"
       ],
       "third_party": [
         "bounds_checking_function",
@@ -35,20 +36,15 @@
       "hilog_native_feature_ohcore"
     ],
     "build": {
-      "group_type": {
-        "base_group": [
-
-        ],
-        "fwk_group": [
-          "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
-          "//base/hiviewdfx/hilog/interfaces/js:hilog_napi"
-        ],
-        "service_group": [
-          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
-          "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-          "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust"
-        ]
-      },
+      "sub_component": [
+        "//base/hiviewdfx/hilog/services/hilogtool:hilog",
+        "//base/hiviewdfx/hilog/services/hilogd:hilogd",
+        "//base/hiviewdfx/hilog/interfaces/js:hilog_napi",
+        "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+        "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust"
+      ],
       "inner_kits": [
         {
           "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
@@ -79,7 +75,11 @@
           }
         }
       ],
-      "test": []
+      "test": [
+        "//base/hiviewdfx/hilog/test:hilog_unittest",
+        "//base/hiviewdfx/hilog/test:hilog_moduletest",
+        "//base/hiviewdfx/hilog/test:fuzztest"
+      ]
     }
   }
 }

@@ -44,17 +44,17 @@ ohos_executable("hilogd") {
     "//third_party/bounds_checking_function:libsec_shared",
     "//third_party/zlib:shared_libz",
   ]
-  deps += [ "etc:hilogd_etc" ]
-
-  external_deps = [
-    "hilog:libhilog",
-    "init:libbegetutil",
+  deps += [
+    "../../interfaces/native/innerkits:libhilog",
+    "etc:hilogd_etc",
   ]
+
+  external_deps = [ "init:libbegetutil" ]
   install_images = [
     "system",
     "updater",
   ]
   install_enable = true
-  part_name = "hilog_service"
+  part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }
