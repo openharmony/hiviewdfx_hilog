@@ -144,6 +144,19 @@ static int HiLogFlowCtrlProcess(int len, const struct timespec &ts)
     }
     return 0;
 }
+
+static bool IsNeedProcFlowCtr(const LogType type)
+{
+    if (type != LOG_APP) {
+        return false;
+    }
+    //debuggable hap don't perform process flow control
+    static bool isDebuggableHap = IsDebuggableHap();
+    if (IsProcessSwitchOn() && !isDebuggableHap) {
+        return true;
+    }
+    return false;
+}
 #else
 static int PrintLog(HilogMsg& header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
@@ -275,7 +288,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     /* flow control */
-    if (type == LOG_APP && !debug && IsProcessSwitchOn()) {
+    if (!debug && IsNeedProcFlowCtr(type)) {
         ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono);
         if (ret < 0) {
             return ret;
