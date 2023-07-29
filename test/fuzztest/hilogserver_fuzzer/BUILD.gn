@@ -15,12 +15,15 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 module_output_path = "hiviewdfx/hilog"
 
-ohos_fuzztest("HiLogFuzzTest") {
+ohos_fuzztest("HiLogServerFuzzTest") {
   module_out_path = module_output_path
 
   fuzz_config_file = "../hilogclient_fuzzer"
 
-  include_dirs = [ "../../../interfaces/native/innerkits/include" ]
+  include_dirs = [
+    "../../../services/hilogd/include",
+    "../../../interfaces/native/innerkits/include",
+  ]
 
   cflags = [
     "-g",
@@ -29,9 +32,21 @@ ohos_fuzztest("HiLogFuzzTest") {
     "-fno-omit-frame-pointer",
   ]
 
-  sources = [ "hilogclient_fuzzer.cpp" ]
+  sources = [
+    "../../../services/hilogd/cmd_executor.cpp",
+    "../../../services/hilogd/flow_control.cpp",
+    "../../../services/hilogd/log_buffer.cpp",
+    "../../../services/hilogd/log_collector.cpp",
+    "../../../services/hilogd/log_domains.cpp",
+    "../../../services/hilogd/log_stats.cpp",
+    "hilogserver_fuzzer.cpp",
+  ]
   configs = [ "../../../frameworks/libhilog:libhilog_config" ]
-  deps = [ "../../../interfaces/native/innerkits:libhilog" ]
+  deps = [
+    "../../../interfaces/native/innerkits:libhilog",
+    "//third_party/bounds_checking_function:libsec_shared",
+    "//third_party/zlib:shared_libz",
+  ]
   external_deps = [ "init:libbegetutil" ]
   part_name = "hilog"
   subsystem_name = "hiviewdfx"
