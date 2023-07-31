@@ -18,7 +18,7 @@ module_output_path = "hiviewdfx/hilog"
 ohos_fuzztest("HiLogServerFuzzTest") {
   module_out_path = module_output_path
 
-  fuzz_config_file = "../hilogclient_fuzzer"
+  fuzz_config_file = "../hilogserver_fuzzer"
 
   include_dirs = [
     "../../../services/hilogd/include",
