@@ -70,14 +70,14 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
 #endif
 {
     if (data.size() < sizeof(HilogMsg)) {
-        std::cerr << "Internal error - received data less than HilogMsg size";
         return;
     }
-
     HilogMsg& msg = *(reinterpret_cast<HilogMsg *>(data.data()));
     // check domain id
     if (IsValidDomain(static_cast<LogType>(msg.type), msg.domain) == false) {
+#ifdef DEBUG
         std::cout << "Invalid domain id: 0x" << std::hex << msg.domain << std::dec << ", type:" << msg.type << endl;
+#endif
         return;
     }
 #ifdef __RECV_MSG_WITH_UCRED_
