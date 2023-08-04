@@ -145,12 +145,12 @@ int HilogdEntry()
 
     // Start log_collector
 #ifndef __RECV_MSG_WITH_UCRED_
-    auto onDataReceive = [&logCollector](std::vector<char>& data) {
-        logCollector.onDataRecv(data);
+    auto onDataReceive = [&logCollector](std::vector<char>& data, int dataLen) {
+        logCollector.onDataRecv(data, dataLen);
     };
 #else
-    auto onDataReceive = [&logCollector](const ucred& cred, std::vector<char>& data) {
-        logCollector.onDataRecv(cred, data);
+    auto onDataReceive = [&logCollector](const ucred& cred, std::vector<char>& data, int dataLen) {
+        logCollector.onDataRecv(cred, data, dataLen);
     };
 #endif
 

@@ -15,7 +15,7 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 module_output_path = "hiviewdfx/hilog"
 
-ohos_fuzztest("HiLogFuzzTest") {
+ohos_fuzztest("HiLogClientFuzzTest") {
   module_out_path = module_output_path
 
   fuzz_config_file = "../hilogclient_fuzzer"

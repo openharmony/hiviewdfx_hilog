@@ -64,20 +64,20 @@ void LogCollector::InsertDropInfo(const HilogMsg &msg, int droppedCount)
     }
 }
 #ifndef __RECV_MSG_WITH_UCRED_
-void LogCollector::onDataRecv(std::vector<char>& data)
+void LogCollector::onDataRecv(std::vector<char>& data, int dataLen)
 #else
-void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data)
+void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data, int dataLen)
 #endif
 {
-    if (data.size() < sizeof(HilogMsg)) {
+    if (dataLen < sizeof(HilogMsg)) {
         return;
     }
     HilogMsg& msg = *(reinterpret_cast<HilogMsg *>(data.data()));
+    if (dataLen != msg.len) {
+        return;
+    }
     // check domain id
     if (IsValidDomain(static_cast<LogType>(msg.type), msg.domain) == false) {
-#ifdef DEBUG
-        std::cout << "Invalid domain id: 0x" << std::hex << msg.domain << std::dec << ", type:" << msg.type << endl;
-#endif
         return;
     }
 #ifdef __RECV_MSG_WITH_UCRED_

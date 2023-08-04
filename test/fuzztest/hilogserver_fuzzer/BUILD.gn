@@ -33,7 +33,6 @@ ohos_fuzztest("HiLogServerFuzzTest") {
   ]
 
   sources = [
-    "../../../services/hilogd/cmd_executor.cpp",
     "../../../services/hilogd/flow_control.cpp",
     "../../../services/hilogd/log_buffer.cpp",
     "../../../services/hilogd/log_collector.cpp",
