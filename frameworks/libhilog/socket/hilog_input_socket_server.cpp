@@ -64,7 +64,7 @@ void HilogInputSocketServer::ServingThread()
 #ifndef __RECV_MSG_WITH_UCRED_
     while ((ret = RecvPacket(data)) >= 0) {
         if (ret > 0) {
-            m_packetHandler(data);
+            m_packetHandler(data, ret);
         }
         if (m_stopServer.load()) {
             break;
@@ -74,7 +74,7 @@ void HilogInputSocketServer::ServingThread()
     ucred cred;
     while ((ret = RecvPacket(data, &cred)) >= 0) {
         if (ret > 0) {
-            m_packetHandler(cred, data);
+            m_packetHandler(cred, data, ret);
         }
         if (m_stopServer.load()) {
             break;

@@ -1,5 +1,4 @@
 /*
-
 Copyright (c) 2021 Huawei Device Co., Ltd.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +28,7 @@ namespace OHOS {
         HiviewDFX::HilogBuffer hilogBuffer;
         HiviewDFX::LogCollector logCollector(hilogBuffer);
         std::vector<char> fuzzerData(reinterpret_cast<const char*>(data), reinterpret_cast<const char*>(data) + size);
-        logCollector.onDataRecv(fuzzerData);
+        logCollector.onDataRecv(fuzzerData, size);
     }
 }
 

@@ -29,9 +29,9 @@ class HilogInputSocketServer : public DgramSocketServer {
 public:
 
 #ifndef __RECV_MSG_WITH_UCRED_
-    using HandlingFunc = std::function<void(std::vector<char>& data)>;
+    using HandlingFunc = std::function<void(std::vector<char>& data, int dataLen)>;
 #else
-    using HandlingFunc = std::function<void(const ucred& credential, std::vector<char>& data)>;
+    using HandlingFunc = std::function<void(const ucred& credential, std::vector<char>& data, int dataLen)>;
 #endif
     enum class ServerThreadState {
         JUST_STARTED,
