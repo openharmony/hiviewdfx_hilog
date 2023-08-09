@@ -34,9 +34,9 @@ public:
     void InsertDropInfo(const HilogMsg &msg, int droppedCount);
     size_t InsertLogToBuffer(const HilogMsg& msg);
 #ifndef __RECV_MSG_WITH_UCRED_
-    void onDataRecv(std::vector<char>& data);
+    void onDataRecv(std::vector<char>& data, int dataLen);
 #else
-    void onDataRecv(const ucred& cred, std::vector<char>& data);
+    void onDataRecv(const ucred& cred, std::vector<char>& data, int dataLen);
 #endif
     void SetLogFlowControl(bool on);
     void SetDebuggable(bool on);
