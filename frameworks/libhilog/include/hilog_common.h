@@ -28,7 +28,7 @@
 #define OUTPUT_SOCKET_NAME "hilogOutput"
 #define CONTROL_SOCKET_NAME "hilogControl"
 #define HILOG_FILE_DIR "/data/log/hilog/"
-#define MAX_LOG_LEN 1024  /* maximum length of a log, include '\0' */
+#define MAX_LOG_LEN 4096  /* maximum length of a log, include '\0' */
 #define MAX_TAG_LEN 32  /* log tag size, include '\0' */
 #define MAX_REGEX_STR_LEN (128)
 #define MAX_FILE_NAME_LEN (64)
