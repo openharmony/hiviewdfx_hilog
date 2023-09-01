@@ -465,7 +465,7 @@ bool IsTagStatsEnable()
 
 int GetProcessQuota(const string& proc)
 {
-    static constexpr int default_quota = 10240;
+    static constexpr int default_quota = 51200;
     char value[HILOG_PROP_VALUE_MAX] = {0};
     string prop = GetPropertyName(PropType::PROP_PROC_QUOTA) + proc;
 
@@ -478,7 +478,7 @@ int GetProcessQuota(const string& proc)
 
 int GetDomainQuota(uint32_t domain)
 {
-    static constexpr int default_quota = 10240;
+    static constexpr int default_quota = 51200;
     char value[HILOG_PROP_VALUE_MAX] = {0};
     string prop = GetPropertyName(PropType::PROP_DOMAIN_QUOTA) + Uint2HexStr(domain);
 
