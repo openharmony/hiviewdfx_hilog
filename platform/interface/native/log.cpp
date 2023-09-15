@@ -20,6 +20,7 @@
 
 #if defined(IOS_PLATFORM)
 #include <securec.h>
+#import <os/log.h>
 #endif
 
 namespace OHOS::HiviewDFX::Hilog::Platform {
@@ -53,6 +54,10 @@ void LogPrint(LogLevel level, const char* fmt, va_list args)
 
 #if defined(IOS_PLATFORM)
 constexpr uint32_t MAX_BUFFER_SIZE = 4096;
+constexpr os_log_type_t LOG_TYPE[] = {OS_LOG_TYPE_DEBUG, OS_LOG_TYPE_INFO, OS_LOG_TYPE_DEFAULT, OS_LOG_TYPE_ERROR,
+    OS_LOG_TYPE_FAULT};
+constexpr const char* LOG_TYPE_NAME[] = { "DEBUG", "INFO", "WARNING", "ERROR", "FATAL" };
+
 void LogPrint(LogLevel level, const char* fmt, va_list args)
 {
     std::string newFmt(fmt);
@@ -63,8 +68,10 @@ void LogPrint(LogLevel level, const char* fmt, va_list args)
     if (ret < 0) {
         return;
     }
-    printf("%s\r\n", buf);
-    fflush(stdout);
+    os_log_type_t logType = LOG_TYPE[static_cast<int>(level)];
+    const char* levelName = LOG_TYPE_NAME[static_cast<int>(level)];
+    os_log_t log = os_log_create(DFX_PLATFORM_LOG_TAG, levelName);
+    os_log(log, "[%{public}s] %{public}s", levelName, buf);
 }
 #endif
 } // namespace OHOS::HiviewDFX::Hilog::Platform
