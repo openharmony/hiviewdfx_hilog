@@ -18,7 +18,7 @@ import("//build/ohos.gni")
 template("libhilog_platform_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
-    defines = [ "DFX_PLATFORM_LOG_TAG=\"HilogPlatform\"" ]
+    defines = [ "DFX_PLATFORM_LOG_TAG=\"Ace\"" ]
     include_dirs = [
       "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
       "${PLATFORM_HILOG_PATH}/interfaces/native/innerkits/include",
