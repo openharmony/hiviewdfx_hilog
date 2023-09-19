@@ -70,6 +70,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD004800, "Manufacture"},
     {0xD004900, "HealthSport"},
     {0xD005100, "PcService"},
+    {0xD005200, "WpaSupplicant"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
