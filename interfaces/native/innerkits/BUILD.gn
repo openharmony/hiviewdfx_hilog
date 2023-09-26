@@ -58,21 +58,7 @@ if (is_mingw || is_mac || is_linux || is_ohos) {
 
 template("libhilog") {
   forward_variables_from(invoker, "*")
-  if (current_os == "android") {
-    ohos_shared_library(target_name) {
-      public_configs = [ ":libhilog_pub_config" ]
-      deps = [ "../../../platform:libhilog_platform_source_$platform" ]
-
-      install_enable = !hilog_native_feature_ohcore
-      install_images = [
-        "system",
-        "updater",
-      ]
-
-      part_name = "hilog"
-      subsystem_name = "hiviewdfx"
-    }
-  } else if (current_os == "ios") {
+  if (current_os == "android" || current_os == "ios") {
     ohos_static_library(target_name) {
       public_configs = [ ":libhilog_pub_config" ]
       deps = [ "../../../platform:libhilog_platform_source_$platform" ]
