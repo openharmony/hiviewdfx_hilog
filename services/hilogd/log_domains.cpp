@@ -73,6 +73,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD005200, "WpaSupplicant"},
     {0xD005300, "Push"},
     {0xD00AD00, "ASystem"},
+    {0xD005400, "CarService"},
 }, __UINT32_MAX__, "Invalid");
 
 static const uint32_t APP_DOMAIN_MASK = 0xFFFF0000;
