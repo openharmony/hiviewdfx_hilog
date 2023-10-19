@@ -73,6 +73,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD005200, "WpaSupplicant"},
     {0xD005300, "Push"},
     {0xD005400, "CarService"},
+    {0xD005500, "DeviceCloudGateway"},
     {0xD005600, "AppSecurityPrivacy"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
