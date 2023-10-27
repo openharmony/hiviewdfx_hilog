@@ -76,6 +76,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD005500, "DeviceCloudGateway"},
     {0xD005600, "AppSecurityPrivacy"},
     {0xD005700, "DSoftBus"},
+    {0xD005800, "FindNetwork"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
