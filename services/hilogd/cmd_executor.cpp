@@ -91,7 +91,7 @@ void CmdExecutor::ClientEventLoop(std::unique_ptr<Socket> handler)
     }
 
     prctl(PR_SET_NAME, m_name.c_str());
-    ServiceController serviceCtrl(std::move(handler), m_logCollector, m_hilogBuffer);
+    ServiceController serviceCtrl(std::move(handler), m_logCollector, m_hilogBuffer, m_kmsgBuffer);
     serviceCtrl.CommunicationLoop((*clientInfoIt)->m_stopThread, m_cmdList);
 
     std::lock_guard<std::mutex> ul(m_finishedClientAccess);

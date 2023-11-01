@@ -35,8 +35,9 @@ struct ClientThread {
 
 class CmdExecutor {
 public:
-    explicit CmdExecutor(LogCollector& collector, HilogBuffer& buffer, const CmdList& list, const std::string& name)
-        : m_logCollector(collector), m_hilogBuffer(buffer), m_cmdList(list), m_name(name) {}
+    explicit CmdExecutor(LogCollector& collector, HilogBuffer& hilogBuffer, HilogBuffer& kmsgBuffer,
+        const CmdList& list, const std::string& name) : m_logCollector(collector), m_hilogBuffer(hilogBuffer),
+        m_kmsgBuffer(kmsgBuffer), m_cmdList(list), m_name(name) {}
     ~CmdExecutor();
     void MainLoop(const std::string& sockName);
 private:
@@ -46,6 +47,7 @@ private:
 
     LogCollector& m_logCollector;
     HilogBuffer& m_hilogBuffer;
+    HilogBuffer& m_kmsgBuffer;
     CmdList m_cmdList;
     std::string m_name;
     std::list<std::unique_ptr<ClientThread>> m_clients;

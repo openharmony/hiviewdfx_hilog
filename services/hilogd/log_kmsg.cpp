@@ -35,6 +35,9 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
+constexpr int OPEN_KMSG_TIME = 3000; // 3s
+constexpr int RETRY_WAIT = 10; // 10us
+
 LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer)
 {
     static LogKmsg logKmsg(hilogBuffer);
@@ -51,9 +54,11 @@ ssize_t LogKmsg::LinuxReadOneKmsg(KmsgParser& parser)
     if (size > 0) {
         std::optional<HilogMsgWrapper> msgWrap = parser.ParseKmsg(kmsgBuffer);
         if (msgWrap.has_value()) {
-            size_t result = hilogBuffer.Insert(msgWrap->GetHilogMsg());
-            if (result <= 0) {
-                return result;
+            bool isFull = false;
+            hilogBuffer.Insert(msgWrap->GetHilogMsg(), isFull);
+            while (isFull) {
+                usleep(RETRY_WAIT);
+                hilogBuffer.Insert(msgWrap->GetHilogMsg(), isFull);
             }
         }
     }
@@ -64,12 +69,19 @@ int LogKmsg::LinuxReadAllKmsg()
 {
     ssize_t rdFailTimes = 0;
     const ssize_t maxFailTime = 10;
-    kmsgCtl = GetControlFile("/dev/kmsg");
-    if (kmsgCtl < 0) {
-        std::cout << "Cannot open kmsg! ";
-        PrintErrorno(errno);
-        return -1;
+
+    int ret = WaitingToDo(OPEN_KMSG_TIME, "/proc/kmsg", [this] (const string &path) {
+        this->kmsgCtl = open(path.c_str(), O_RDONLY);
+        if (this->kmsgCtl < 0) {
+            std::cout << "Cannot open kmsg " << this->kmsgCtl << std::endl;
+            return RET_FAIL;
+        }
+        return RET_SUCCESS;
+    });
+    if (ret != RET_SUCCESS) {
+        return RET_FAIL;
     }
+    std::cout << "Open kmsg success." << std::endl;
     std::unique_ptr<KmsgParser> parser = std::make_unique<KmsgParser>();
     if (parser == nullptr) {
         return -1;

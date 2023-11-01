@@ -58,18 +58,26 @@ static const uid_t SHELL_UID = 2000;
 static const uid_t ROOT_UID = 0;
 static const uid_t LOGD_UID = 1036;
 
+inline bool IsKmsg(uint16_t types)
+{
+    return types == (0b01 << LOG_KMSG);
+}
+
 ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket,
-    LogCollector& collector, HilogBuffer& buffer)
+    LogCollector& collector, HilogBuffer& hilogBuffer, HilogBuffer& kmsgBuffer)
     : m_communicationSocket(std::move(communicationSocket))
     , m_logCollector(collector)
-    , m_hilogBuffer(buffer)
+    , m_hilogBuffer(hilogBuffer)
+    , m_kmsgBuffer(kmsgBuffer)
 {
-    m_bufReader = m_hilogBuffer.CreateBufReader([this]() { NotifyForNewData(); });
+    m_hilogBufferReader = m_hilogBuffer.CreateBufReader([this]() { NotifyForNewData(); });
+    m_kmsgBufferReader = m_kmsgBuffer.CreateBufReader([this]() { NotifyForNewData(); });
 }
 
 ServiceController::~ServiceController()
 {
-    m_hilogBuffer.RemoveBufReader(m_bufReader);
+    m_hilogBuffer.RemoveBufReader(m_hilogBufferReader);
+    m_kmsgBuffer.RemoveBufReader(m_kmsgBufferReader);
     m_notifyNewDataCv.notify_all();
 }
 
@@ -496,9 +504,13 @@ void ServiceController::HandleOutputRqst(const OutputRqst &rqst)
     int tailCount = rqst.tailLines;
     int linesCountDown = lines;
 
+    bool isKmsg = IsKmsg(filter.types);
+    HilogBuffer& logBuffer = isKmsg ? m_kmsgBuffer : m_hilogBuffer;
+    HilogBuffer::ReaderId readId = isKmsg ? m_kmsgBufferReader : m_hilogBufferReader;
+
     WriteRspHeader(IoctlCmd::OUTPUT_RSP, sizeof(OutputRsp));
     for (;;) {
-        std::optional<HilogData> data = m_hilogBuffer.Query(filter, m_bufReader, tailCount);
+        std::optional<HilogData> data = logBuffer.Query(filter, readId, tailCount);
         if (!data.has_value()) {
             if (rqst.noBlock) {
                 // reach the end of buffer and don't block
@@ -604,7 +616,8 @@ void ServiceController::HandlePersistStartRqst(const PersistStartRqst &rqst)
     LogPersistStartMsg msg = { 0 };
     PersistStartRqst2Msg(rqst, msg);
     PersistRecoveryInfo info = {0, msg};
-    ret = StartPersistStoreJob(info, m_hilogBuffer, false);
+    HilogBuffer& logBuffer = IsKmsg(rqst.outputFilter.types) ? m_kmsgBuffer : m_hilogBuffer;
+    ret = StartPersistStoreJob(info, logBuffer, false);
     if (ret != RET_SUCCESS) {
         WriteErrorRsp(ret);
         return;
@@ -674,7 +687,8 @@ void ServiceController::HandleBufferSizeGetRqst(const BufferSizeGetRqst& rqst)
     BufferSizeGetRsp rsp = { 0 };
     for (uint16_t t : allTypes) {
         if ((1 << t) & types) {
-            rsp.size[t] = static_cast<uint32_t>(m_hilogBuffer.GetBuffLen(t));
+            HilogBuffer& hilogBuffer = t == LOG_KMSG ? m_kmsgBuffer : m_hilogBuffer;
+            rsp.size[t] = static_cast<uint32_t>(hilogBuffer.GetBuffLen(t));
             i++;
         }
     }
@@ -697,7 +711,8 @@ void ServiceController::HandleBufferSizeSetRqst(const BufferSizeSetRqst& rqst)
     BufferSizeSetRsp rsp = { 0 };
     for (uint16_t t : allTypes) {
         if ((1 << t) & types) {
-            int ret = m_hilogBuffer.SetBuffLen(t, rqst.size);
+            HilogBuffer& hilogBuffer = t == LOG_KMSG ? m_kmsgBuffer : m_hilogBuffer;
+            int ret = hilogBuffer.SetBuffLen(t, rqst.size);
             if (ret != RET_SUCCESS) {
                 rsp.size[t] = ret;
             } else {
@@ -767,7 +782,8 @@ void ServiceController::HandleLogRemoveRqst(const LogRemoveRqst& rqst)
     LogRemoveRsp rsp = { types };
     for (uint16_t t : allTypes) {
         if ((1 << t) & types) {
-            (void)m_hilogBuffer.Delete(t);
+            HilogBuffer& hilogBuffer = (t == LOG_KMSG) ? m_kmsgBuffer : m_hilogBuffer;
+            (void)hilogBuffer.Delete(t);
             i++;
         }
     }
@@ -783,7 +799,7 @@ void ServiceController::HandleLogKmsgEnableRqst(const KmsgEnableRqst& rqst)
 {
     SetKmsgSwitchOn(rqst.on);
 
-    LogKmsg& logKmsg = LogKmsg::GetInstance(m_hilogBuffer);
+    LogKmsg& logKmsg = LogKmsg::GetInstance(m_kmsgBuffer);
     if (rqst.on) {
         logKmsg.Start();
     } else {
@@ -897,7 +913,7 @@ void ServiceController::NotifyForNewData()
     m_notifyNewDataCv.notify_one();
 }
 
-int RestorePersistJobs(HilogBuffer& hilogBuffer)
+int RestorePersistJobs(HilogBuffer& hilogBuffer, HilogBuffer& kmsgBuffer)
 {
     std::cout << " Start restoring persist jobs!\n";
     DIR *dir = opendir(LOG_PERSISTER_DIR.c_str());
@@ -929,7 +945,8 @@ int RestorePersistJobs(HilogBuffer& hilogBuffer)
                 std::cout << " Info file checksum Failed!\n";
                 continue;
             }
-            int result = StartPersistStoreJob(info, hilogBuffer, true);
+            HilogBuffer& logBuffer = IsKmsg(info.msg.filter.types) ? kmsgBuffer : hilogBuffer;
+            int result = StartPersistStoreJob(info, logBuffer, true);
             std::cout << " Recovery Info:\n"
                 << "  restoring result: " << (result == RET_SUCCESS
                     ? std::string("Success\n")

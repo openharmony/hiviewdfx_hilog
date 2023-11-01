@@ -42,7 +42,8 @@ public:
     static constexpr int MAX_DATA_LEN = 2048;
     using PacketBuf = std::array<char, MAX_DATA_LEN>;
 
-    ServiceController(std::unique_ptr<Socket> communicationSocket, LogCollector& collector, HilogBuffer& buffer);
+    ServiceController(std::unique_ptr<Socket> communicationSocket, LogCollector& collector, HilogBuffer& hilogBuffer,
+        HilogBuffer& kmsgBuffer);
     ~ServiceController();
 
     void CommunicationLoop(std::atomic<bool>& stopLoop, const CmdList& list);
@@ -90,8 +91,9 @@ private:
     std::unique_ptr<Socket> m_communicationSocket;
     LogCollector& m_logCollector;
     HilogBuffer& m_hilogBuffer;
-    HilogBuffer::ReaderId m_bufReader;
-
+    HilogBuffer& m_kmsgBuffer;
+    HilogBuffer::ReaderId m_hilogBufferReader;
+    HilogBuffer::ReaderId m_kmsgBufferReader;
     std::condition_variable m_notifyNewDataCv;
     std::mutex m_notifyNewDataMtx;
 };
@@ -110,7 +112,7 @@ void ServiceController::RequestHandler(const MsgHeader& hdr, std::function<void(
     handle(*rqst);
 }
 
-int RestorePersistJobs(HilogBuffer& _buffer);
+int RestorePersistJobs(HilogBuffer& hilogBuffer, HilogBuffer& kmsgBuffer);
 } // namespace HiviewDFX
 } // namespace OHOS
 #endif
