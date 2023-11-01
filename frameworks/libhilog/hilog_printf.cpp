@@ -20,6 +20,9 @@
 #include <iostream>
 #include <mutex>
 #include <securec.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifdef __LINUX__
 #include <atomic>
@@ -184,6 +187,25 @@ static int PrintLog(HilogMsg& header, const char *tag, uint16_t tagLen, const ch
 }
 #endif
 
+static int LogToKmsg(const LogLevel level, const char *tag, const char* info)
+{
+    static int fd = open("/dev/kmsg", O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    if (fd < 0) {
+        printf("open /dev/kmsg failed, fd=%d. \n", fd);
+        return -1;
+    }
+    char logInfo[MAX_LOG_LEN] = {0};
+    if (snprintf_s(logInfo, sizeof(logInfo), sizeof(logInfo) - 1, "<%d>%s: %s\n", level, tag, info) == -1) {
+        logInfo[sizeof(logInfo) - 2] = '\n';  // 2 add \n to tail
+        logInfo[sizeof(logInfo) - 1] = '\0';
+    }
+#ifdef __WINDOWS__
+    return write(fd, logInfo, strlen(logInfo));
+#else
+    return TEMP_FAILURE_RETRY(write(fd, logInfo, strlen(logInfo)));
+#endif
+}
+
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
@@ -193,6 +215,16 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     if (!HiLogIsLoggable(domain, tag, level)) {
         return -1;
     }
+    if (type == LOG_KMSG) {
+        char tmpFmt[MAX_LOG_LEN] = {0};
+        // format va_list info to char*
+        if (vsnprintfp_s(tmpFmt, sizeof(tmpFmt), sizeof(tmpFmt) - 1, true, fmt, ap) == -1) {
+            tmpFmt[sizeof(tmpFmt) - 2] = '\n';  // 2 add \n to tail
+            tmpFmt[sizeof(tmpFmt) - 1] = '\0';
+        }
+        return LogToKmsg(level, tag, tmpFmt);
+    }
+
     HilogMsg header = {0};
     struct timespec ts = {0};
     (void)clock_gettime(CLOCK_REALTIME, &ts);
