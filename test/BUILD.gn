@@ -13,7 +13,7 @@
 
 import("//build/test.gni")
 
-module_output_path = "hiviewdfx/hilog"
+module_output_path = "hilog/hilog"
 
 config("module_private_config") {
   visibility = [ ":*" ]
