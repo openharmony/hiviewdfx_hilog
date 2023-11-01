@@ -36,10 +36,10 @@ public:
     using LogMsgContainer = std::list<HilogData>;
     using ReaderId = uintptr_t;
 
-    HilogBuffer();
+    HilogBuffer(bool isSupportSkipLog);
     ~HilogBuffer();
 
-    size_t Insert(const HilogMsg& msg);
+    size_t Insert(const HilogMsg& msg, bool& isFull);
     std::optional<HilogData> Query(const LogFilter& filter, const ReaderId& id, int tailCount = 0);
 
     ReaderId CreateBufReader(std::function<void()> onNewDataCallback);
@@ -67,6 +67,7 @@ private:
         BUFF_OVERFLOW,
         CMD_CLEAR
     };
+    bool IsItemUsed(LogMsgContainer::iterator itemPos);
     void OnDeleteItem(LogMsgContainer::iterator itemPos, DeleteReason reason);
     void OnPushBackedItem(LogMsgContainer& msgList);
     void OnNewItem(LogMsgContainer& msgList);
@@ -74,11 +75,11 @@ private:
 
     size_t sizeByType[LOG_TYPE_MAX];
     LogMsgContainer hilogDataList;
-    LogMsgContainer hilogKlogList;
     std::shared_mutex hilogBufferMutex;
     std::map<ReaderId, std::shared_ptr<BufferReader>> m_logReaders;
     std::shared_mutex m_logReaderMtx;
     LogStats stats;
+    bool m_isSupportSkipLog;
 };
 } // namespace HiviewDFX
 } // namespace OHOS

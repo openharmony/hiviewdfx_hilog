@@ -25,7 +25,7 @@ limitations under the License.
 namespace OHOS {
     void DoSomethingInterestingWithMyAPI(const uint8_t* data, size_t size)
     {
-        HiviewDFX::HilogBuffer hilogBuffer;
+        HiviewDFX::HilogBuffer hilogBuffer(true);
         HiviewDFX::LogCollector logCollector(hilogBuffer);
         std::vector<char> fuzzerData(reinterpret_cast<const char*>(data), reinterpret_cast<const char*>(data) + size);
         logCollector.onDataRecv(fuzzerData, size);
