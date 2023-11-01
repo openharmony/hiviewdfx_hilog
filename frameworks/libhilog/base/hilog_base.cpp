@@ -166,7 +166,6 @@ static int CheckConnection(SocketHandler& socketHandler)
     auto result = TEMP_FAILURE_RETRY(connect(socketHandler.socketFd.load(),
         reinterpret_cast<const sockaddr*>(&g_sockAddr), sizeof(g_sockAddr)));
     if (result < 0) {
-        std::cerr << "Can't connect to hilog server. Errno: " << errno << std::endl;
         return result;
     }
     socketHandler.isConnected.store(true);
