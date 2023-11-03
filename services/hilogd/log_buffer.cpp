@@ -35,7 +35,7 @@ using namespace std;
 static size_t g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
 static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType);
 
-HilogBuffer::HilogBuffer()
+HilogBuffer::HilogBuffer(bool isSupportSkipLog) : m_isSupportSkipLog(isSupportSkipLog)
 {
     for (int i = 0; i < LOG_TYPE_MAX; i++) {
         sizeByType[i] = 0;
@@ -71,41 +71,46 @@ void HilogBuffer::InitBuffHead()
         }
         string tmpStr = msg + typeStr;
         if (GenerateHilogMsgInside(*headMsg, tmpStr, i) == RET_SUCCESS) {
-            Insert(*headMsg);
+            bool isFull = false;
+            Insert(*headMsg, isFull);
         }
     }
 }
 
 HilogBuffer::~HilogBuffer() {}
 
-size_t HilogBuffer::Insert(const HilogMsg& msg)
+size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
 {
     size_t elemSize = CONTENT_LEN((&msg)); /* include '\0' */
-
     if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || elemSize > MAX_LOG_LEN ||
         elemSize == 0 || msg.type >= LOG_TYPE_MAX)) {
         return 0;
     }
-
-    LogMsgContainer &msgList = (msg.type == LOG_KMSG) ? hilogKlogList : hilogDataList;
+    isFull = false;
     {
         std::lock_guard<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
         // Delete old entries when full
         if (elemSize + sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
             // Drop 5% of maximum log when full
-            std::list<HilogData>::iterator it = msgList.begin();
+            std::list<HilogData>::iterator it = hilogDataList.begin();
             static const float DROP_RATIO = 0.05;
             while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
-                it != msgList.end()) {
+                it != hilogDataList.end()) {
                 if ((*it).type != msg.type) {    // Only remove old logs of the same type
                     ++it;
                     continue;
                 }
+
+                if (IsItemUsed(it)) {
+                    isFull = true;
+                    return 0;
+                }
+
                 OnDeleteItem(it, DeleteReason::BUFF_OVERFLOW);
                 size_t cLen = it->len - it->tag_len;
                 sizeByType[(*it).type] -= cLen;
-                it = msgList.erase(it);
+                it = hilogDataList.erase(it);
             }
 
             // Re-confirm if enough elements has been removed
@@ -115,28 +120,27 @@ size_t HilogBuffer::Insert(const HilogMsg& msg)
         }
 
         // Append new log into HilogBuffer
-        msgList.emplace_back(msg);
-        OnPushBackedItem(msgList);
+        hilogDataList.emplace_back(msg);
+        // Update current size of HilogBuffer
+        sizeByType[msg.type] += elemSize;
+        OnPushBackedItem(hilogDataList);
     }
 
-    // Update current size of HilogBuffer
-    sizeByType[msg.type] += elemSize;
-
     // Notify readers about new element added
-    OnNewItem(msgList);
+    OnNewItem(hilogDataList);
     return elemSize;
 }
 
 // Replace wildcard with regex
 static std::string WildcardToRegex(const std::string& wildcard)
-{   
+{
     // Original and Replacement char array
     const static char* WILDCARDS = "*?[]+.^&";
     const static std::string REPLACEMENT_S[] = {".*", ".", "\\[", "\\]", "\\+", "\\.", "\\^", "\\&"};
-    // Modify every wildcard to regex 
+    // Modify every wildcard to regex
     std::string result = "";
     for (char c : wildcard) {
-        // strchr matches wildcard and char 
+        // strchr matches wildcard and char
         if (std::strchr(WILDCARDS, c) != nullptr) {
             size_t index = std::strchr(WILDCARDS, c) - WILDCARDS;
             result += REPLACEMENT_S[index];
@@ -218,20 +222,18 @@ std::optional<HilogData> HilogBuffer::Query(const LogFilter& filter, const Reade
         std::cerr << "Reader not registered!\n";
         return std::nullopt;
     }
-    uint16_t qTypes = filter.types;
-    LogMsgContainer &msgList = (qTypes == (0b01 << LOG_KMSG)) ? hilogKlogList : hilogDataList;
 
     std::shared_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
 
-    if (reader->m_msgList != &msgList) {
-        reader->m_msgList = &msgList;
+    if (reader->m_msgList != &hilogDataList) {
+        reader->m_msgList = &hilogDataList;
         if (tailCount == 0) {
-            reader->m_pos = msgList.begin();
+            reader->m_pos = hilogDataList.begin();
         } else {
-            reader->m_pos = msgList.end();
+            reader->m_pos = hilogDataList.end();
             reader->m_pos--;
         }
-        for (int i = 0; (i < tailCount) && (reader->m_pos != msgList.begin());) {
+        for (int i = 0; (i < tailCount) && (reader->m_pos != hilogDataList.begin());) {
             if (LogMatchFilter(filter, (*reader->m_pos))) {
                 i++;
             }
@@ -251,7 +253,7 @@ std::optional<HilogData> HilogBuffer::Query(const LogFilter& filter, const Reade
         }
     }
 
-    while (reader->m_pos != msgList.end()) {
+    while (reader->m_pos != hilogDataList.end()) {
         const HilogData& logData = *reader->m_pos;
         reader->m_pos++;
         if (LogMatchFilter(filter, logData)) {
@@ -263,16 +265,15 @@ std::optional<HilogData> HilogBuffer::Query(const LogFilter& filter, const Reade
 
 int32_t HilogBuffer::Delete(uint16_t logType)
 {
-    std::list<HilogData> &msgList = (logType == LOG_KMSG) ? hilogKlogList : hilogDataList;
     if (logType >= LOG_TYPE_MAX) {
         return ERR_LOG_TYPE_INVALID;
     }
     size_t sum = 0;
     std::unique_lock<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
-    std::list<HilogData>::iterator it = msgList.begin();
+    std::list<HilogData>::iterator it = hilogDataList.begin();
 
     // Delete logs corresponding to queryCondition
-    while (it != msgList.end()) {
+    while (it != hilogDataList.end()) {
         // Only remove old logs of the same type
         if ((*it).type != logType) {
             ++it;
@@ -284,7 +285,7 @@ int32_t HilogBuffer::Delete(uint16_t logType)
         size_t cLen = it->len - it->tag_len;
         sum += cLen;
         sizeByType[(*it).type] -= cLen;
-        it = msgList.erase(it);
+        it = hilogDataList.erase(it);
     }
     return sum;
 }
@@ -309,6 +310,20 @@ void HilogBuffer::RemoveBufReader(const ReaderId& id)
     if (it != m_logReaders.end()) {
         m_logReaders.erase(it);
     }
+}
+
+bool HilogBuffer::IsItemUsed(LogMsgContainer::iterator itemPos)
+{
+    if (m_isSupportSkipLog) {
+        return false;
+    }
+    std::shared_lock<decltype(m_logReaderMtx)> lock(m_logReaderMtx);
+    for (auto& [id, readerPtr] : m_logReaders) {
+        if (readerPtr->m_pos == itemPos) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void HilogBuffer::OnDeleteItem(LogMsgContainer::iterator itemPos, DeleteReason reason)

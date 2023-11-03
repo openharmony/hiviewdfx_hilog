@@ -140,7 +140,7 @@ int HilogdEntry()
     RedirectStdStreamToLogFile();
 #endif
     std::signal(SIGINT, SigHandler);
-    HilogBuffer hilogBuffer;
+    HilogBuffer hilogBuffer(true);
     LogCollector logCollector(hilogBuffer);
 
     // Start log_collector
@@ -167,7 +167,8 @@ int HilogdEntry()
         incomingLogsServer.RunServingThread();
     }
 
-    auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer]() {
+    HilogBuffer kmsgBuffer(false);
+    auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer, &kmsgBuffer]() {
         prctl(PR_SET_NAME, "hilogd.pst_res");
         int ret = WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, [](const string &path) {
             struct stat s;
@@ -177,18 +178,17 @@ int HilogdEntry()
             return RET_FAIL;
         });
         if (ret == RET_SUCCESS) {
-            hilogBuffer.InitBuffLen();
-            RestorePersistJobs(hilogBuffer);
+            RestorePersistJobs(hilogBuffer, kmsgBuffer);
         }
     });
 
     bool kmsgEnable = IsKmsgSwitchOn();
     if (kmsgEnable) {
-        LogKmsg& logKmsg = LogKmsg::GetInstance(hilogBuffer);
+        LogKmsg& logKmsg = LogKmsg::GetInstance(kmsgBuffer);
         logKmsg.Start();
     }
 
-    auto cgroupWriteTask = std::async(std::launch::async, [&hilogBuffer]() {
+    auto cgroupWriteTask = std::async(std::launch::async, []() {
         prctl(PR_SET_NAME, "hilogd.cgroup_set");
         string myPid = to_string(getpid());
         (void)WriteStringToFile(myPid, SYSTEM_BG_STUNE);
@@ -196,7 +196,7 @@ int HilogdEntry()
         (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     });
 
-    auto cmdExecuteTask = std::async(std::launch::async, [&logCollector, &hilogBuffer]() {
+    auto cmdExecuteTask = std::async(std::launch::async, [&logCollector, &hilogBuffer, &kmsgBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cmd");
         CmdList controlCmdList {
             IoctlCmd::PERSIST_START_RQST,
@@ -210,12 +210,12 @@ int HilogdEntry()
             IoctlCmd::LOG_REMOVE_RQST,
             IoctlCmd::KMSG_ENABLE_RQST,
         };
-        CmdExecutor controlExecutor(logCollector, hilogBuffer, controlCmdList, ("hilogd.control"));
+        CmdExecutor controlExecutor(logCollector, hilogBuffer, kmsgBuffer, controlCmdList, ("hilogd.control"));
         controlExecutor.MainLoop(CONTROL_SOCKET_NAME);
     });
 
     CmdList outputList {IoctlCmd::OUTPUT_RQST};
-    CmdExecutor outputExecutor(logCollector, hilogBuffer, outputList, ("hilogd.output"));
+    CmdExecutor outputExecutor(logCollector, hilogBuffer, kmsgBuffer, outputList, ("hilogd.output"));
     outputExecutor.MainLoop(OUTPUT_SOCKET_NAME);
 
     return 0;

@@ -127,7 +127,8 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data, int da
 
 size_t LogCollector::InsertLogToBuffer(const HilogMsg& msg)
 {
-    return m_hilogBuffer.Insert(msg);
+    bool isFull = false;
+    return m_hilogBuffer.Insert(msg, isFull);
 }
 
 void LogCollector::SetLogFlowControl(bool on)
