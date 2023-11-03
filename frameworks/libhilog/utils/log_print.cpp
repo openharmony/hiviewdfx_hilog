@@ -121,7 +121,7 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
         out << "Invalid time accuracy format" << endl;
         return;
     }
-    // The kmsg logs are taken from /dev/kmsg, cannot obtain pid, tid or domain information
+    // The kmsg logs are taken from /proc/kmsg, cannot obtain pid, tid or domain information
     // The kmsg log printing format: 08-06 16:51:04.945 <6> [4294.967295] hungtask_base whitelist[0]-init-1
     if (content.type != LOG_KMSG) {
         out << setfill(' ');

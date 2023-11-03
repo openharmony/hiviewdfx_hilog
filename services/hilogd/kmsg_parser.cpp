@@ -35,9 +35,6 @@ namespace HiviewDFX {
 using namespace std::chrono;
 using namespace std::literals;
 
-constexpr int DEC = 10;
-constexpr int USEC_LEN = 6;
-
 // Avoid name collision between sys/syslog.h and our log_c.h
 #undef LOG_FATAL
 #undef LOG_ERR
@@ -82,45 +79,10 @@ static uint16_t KmsgLevelMap(uint16_t prio)
     return level;
 }
 
-/*
- *Extract log level and usec time from the raw kernel logs
- *raw log format: 6,5972,232898993226,-;hungtask_base whitelist[1]-appspawn-255
- *6 -> logLevel;  232898993226 -> usec
- */
-static void ParseHeader(std::string& str, uint8_t& level, std::string& tag)
-{
-    std::string levelStr;
-    std::string usecStr;
-    std::size_t pos = str.find(',');
-    if (pos != std::string::npos) {
-        levelStr = str.substr(0, pos);
-        level = strtoul(levelStr.c_str(), nullptr, DEC);
-    } else {
-        return;
-    }
-    pos = str.find(',', pos + 1);
-    if (pos == std::string::npos) {
-        return;
-    }
-    size_t usecBeginPos = pos + 1;
-    pos = str.find(',', usecBeginPos);
-    if (pos != std::string::npos) {
-        usecStr = str.substr(usecBeginPos, pos - usecBeginPos);
-        str.erase(0, pos + 1);
-    }
-    if (usecStr.length() < (USEC_LEN + 1)) {
-        usecStr = std::string(USEC_LEN + 1 - usecStr.length(), '0') + usecStr;
-    }
-    usecStr.insert(usecStr.length() - USEC_LEN, ".");
-    tag = "<" + levelStr + ">" + " [" + usecStr + "]";
-}
-
 std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& kmsgBuffer)
 {
     std::string kmsgStr(kmsgBuffer.data());
     std::string tagStr = "";
-    uint8_t mLevel = 0;
-    ParseHeader(kmsgStr, mLevel, tagStr);
     size_t tagLen = tagStr.size();
     // Now build HilogMsg and insert it into buffer
     auto len = kmsgStr.size() + 1;
@@ -130,7 +92,7 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     msg.len = msgLen;
     msg.tag_len = tagLen + 1;
     msg.type = LOG_KMSG;
-    msg.level = KmsgLevelMap(mLevel);
+    msg.level = KmsgLevelMap(LOG_INFO);
     struct timespec ts = {0};
     (void)clock_gettime(CLOCK_REALTIME, &ts);
     msg.tv_sec = static_cast<uint32_t>(ts.tv_sec);
