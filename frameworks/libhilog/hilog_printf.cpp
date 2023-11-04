@@ -52,6 +52,7 @@
 using namespace std;
 using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
+static LogCallback g_logCallback = nullptr;
 static atomic_int g_hiLogGetIdCallCount = 0;
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
@@ -83,6 +84,11 @@ void HiLogUnregisterGetIdFun(RegisterFunc registerFunc)
     }
 
     return;
+}
+
+void LOG_SetCallback(LogCallback callback)
+{
+    g_logCallback = callback;
 }
 
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
@@ -251,6 +257,9 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif
     vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, priv, fmt, ap);
+    if (g_logCallback != nullptr) {
+        g_logCallback(type, level, domain, tag, logBuf);
+    }
 #ifdef __clang__
 #pragma clang diagnostic pop
 #elif __GNUC__
