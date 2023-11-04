@@ -10,6 +10,7 @@
         HiLogUnregisterGetIdFun;
         HilogWriteLogMessage;
         GetLastFatalMessage;
+        LOG_SetCallback;
     };
     extern "C++" {
         "OHOS::HiviewDFX::HiLog::Info(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";
