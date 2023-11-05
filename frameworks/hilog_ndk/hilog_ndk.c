@@ -32,3 +32,8 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
     return HiLogIsLoggable(domain, tag, level);
 }
+
+void OH_LOG_SetCallback(LogCallback callback)
+{
+    return LOG_SetCallback(callback);
+}
