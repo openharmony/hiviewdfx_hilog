@@ -199,10 +199,10 @@ static int LogToKmsg(const LogLevel level, const char *tag, const char* info)
         logInfo[sizeof(logInfo) - 2] = '\n';  // 2 add \n to tail
         logInfo[sizeof(logInfo) - 1] = '\0';
     }
-#ifdef __WINDOWS__
-    return write(fd, logInfo, strlen(logInfo));
-#else
+#ifdef __LINUX__
     return TEMP_FAILURE_RETRY(write(fd, logInfo, strlen(logInfo)));
+#else
+    return write(fd, logInfo, strlen(logInfo));
 #endif
 }
 
