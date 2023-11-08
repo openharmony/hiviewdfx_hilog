@@ -37,6 +37,8 @@ using namespace std;
 
 constexpr int OPEN_KMSG_TIME = 3000; // 3s
 constexpr int RETRY_WAIT = 10; // 10us
+const char* PROC_KMSG = "/proc/kmsg";
+const char* DEV_KMSG = "/dev/kmsg";
 
 LogKmsg& LogKmsg::GetInstance(HilogBuffer& hilogBuffer)
 {
@@ -69,18 +71,25 @@ int LogKmsg::LinuxReadAllKmsg()
 {
     ssize_t rdFailTimes = 0;
     const ssize_t maxFailTime = 10;
-
-    int ret = WaitingToDo(OPEN_KMSG_TIME, "/proc/kmsg", [this] (const string &path) {
-        this->kmsgCtl = open(path.c_str(), O_RDONLY);
+    if (access(PROC_KMSG, R_OK) != 0) {
+        this->kmsgCtl = GetControlFile(DEV_KMSG);
         if (this->kmsgCtl < 0) {
-            std::cout << "Cannot open kmsg " << this->kmsgCtl << std::endl;
             return RET_FAIL;
         }
-        return RET_SUCCESS;
-    });
-    if (ret != RET_SUCCESS) {
-        return RET_FAIL;
+    } else {
+        int ret = WaitingToDo(OPEN_KMSG_TIME, PROC_KMSG, [this] (const string &path) {
+            this->kmsgCtl = open(path.c_str(), O_RDONLY);
+            if (this->kmsgCtl < 0) {
+                std::cout << "Cannot open kmsg " << this->kmsgCtl << std::endl;
+                return RET_FAIL;
+            }
+            return RET_SUCCESS;
+        });
+        if (ret != RET_SUCCESS) {
+            return RET_FAIL;
+        }
     }
+
     std::cout << "Open kmsg success." << std::endl;
     std::unique_ptr<KmsgParser> parser = std::make_unique<KmsgParser>();
     if (parser == nullptr) {
