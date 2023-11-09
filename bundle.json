@@ -72,6 +72,13 @@
             "header_files": [],
             "header_base": []
           }
+        },
+        {
+          "name": "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
+          "header": {
+            "header_files": [],
+            "header_base": []
+          }
         }
       ],
       "test": [
