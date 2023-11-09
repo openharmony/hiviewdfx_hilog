@@ -1,20 +1,18 @@
-/*
- * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright (C) 2022 Huawei Device Co., Ltd.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 //! hilog dylib_crate for Rust.
-use std::ffi::{c_char};
+use std::ffi::c_char;
 
 #[macro_use]
 mod macros;
@@ -24,28 +22,28 @@ mod macros;
 pub enum LogLevel {
     /// min log level
     LogLevelMin = 0,
-    /// The "debug" level. 
-    /// 
+    /// The "debug" level.
+    ///
     /// Designates lower priority log.
     Debug = 3,
-    /// The "info" level. 
-    /// 
+    /// The "info" level.
+    ///
     /// Designates useful information.
     Info = 4,
-    /// The "warn" level. 
-    /// 
-    /// Designates hazardous situations. 
+    /// The "warn" level.
+    ///
+    /// Designates hazardous situations.
     Warn = 5,
-    /// The "error" level. 
-    /// 
-    /// Designates very serious errors. 
+    /// The "error" level.
+    ///
+    /// Designates very serious errors.
     Error = 6,
-    /// The "fatal" level. 
-    /// 
-    /// Designates major fatal anomaly. 
+    /// The "fatal" level.
+    ///
+    /// Designates major fatal anomaly.
     Fatal = 7,
     /// max log level
-    LogLevelMax
+    LogLevelMax,
 }
 
 /// log type
@@ -60,7 +58,7 @@ pub enum LogType {
     /// log type for kernel log
     LogKmsg = 4,
     /// max log type
-    LogTypeMax
+    LogTypeMax,
 }
 
 /// hilog label
@@ -74,13 +72,19 @@ pub struct HiLogLabel {
     pub tag: &'static str,
 }
 
-
 // hilog ffi interface
-extern "C"{
+extern "C" {
     /// hilog ffi interface HiLogIsLoggabel
-    pub fn HiLogIsLoggable(domain: u32, tag: *const c_char, level:u32) -> bool;
+    pub fn HiLogIsLoggable(domain: u32, tag: *const c_char, level: u32) -> bool;
     /// hilog ffi interface HiLogPrint
-    pub fn HiLogPrint(logType: u8, level: u8, domain: u32, tag: *const c_char, fmt: *const c_char, ...) -> u32;
+    pub fn HiLogPrint(
+        logType: u8,
+        level: u8,
+        domain: u32,
+        tag: *const c_char,
+        fmt: *const c_char,
+        ...
+    ) -> u32;
     /// hilog ffi interface IsPrivateSwitchOn
     pub fn IsPrivateSwitchOn() -> bool;
     /// hilog ffi interface IsDebugOn
