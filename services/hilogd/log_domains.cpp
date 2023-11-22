@@ -79,6 +79,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD005800, "FindNetwork"},
     {0xD005900, "VirtService"},
     {0xD00AD00, "ASystem"},
+    {0xD005B00, "Tee"},
 }, __UINT32_MAX__, "Invalid");
 
 static const uint32_t APP_DOMAIN_MASK = 0xFFFF0000;
