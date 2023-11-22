@@ -78,6 +78,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD005700, "DSoftBus"},
     {0xD005800, "FindNetwork"},
     {0xD005900, "VirtService"},
+    {0xD005A00, "AccessControl"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
