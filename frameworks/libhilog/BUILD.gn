@@ -79,13 +79,14 @@ template("libhilog_source") {
     sources += vsnprintf_sources
 
     defines = []
+    cflags_cc = [ "-Wno-deprecated-declarations" ]
     if (platform == "windows") {
-      cflags_cc = [ "-std=c++17" ]
+      cflags_cc += [ "-std=c++17" ]
       defines += [ "__WINDOWS__" ]
     } else if (platform == "mac") {
       defines += [ "__MAC__" ]
     } else if (platform == "linux") {
-      cflags_cc = [ "-std=c++17" ]
+      cflags_cc += [ "-std=c++17" ]
       defines += [ "__LINUX__" ]
     } else {
       defines = [ "__RECV_MSG_WITH_UCRED_" ]
@@ -129,6 +130,7 @@ ohos_source_set("libhilog_base_source") {
   sources = [ "$libhilog_base_root/hilog_base.cpp" ]
   sources += vsnprintf_sources
 
+  cflags_c = [ "-Wno-deprecated-declarations" ]
   defines = [
     "__RECV_MSG_WITH_UCRED_",
     "HILOG_PROHIBIT_ALLOCATION",
