@@ -26,6 +26,7 @@
 #include <log_utils.h>
 
 #include "cmd_executor.h"
+#include "ffrt.h"
 #include "flow_control.h"
 #include "log_kmsg.h"
 #include "log_collector.h"
@@ -168,8 +169,7 @@ int HilogdEntry()
     }
 
     HilogBuffer kmsgBuffer(false);
-    auto startupCheckTask = std::async(std::launch::async, [&hilogBuffer, &kmsgBuffer]() {
-        prctl(PR_SET_NAME, "hilogd.pst_res");
+    ffrt::submit([&hilogBuffer,&kmsgBuffer]() {
         int ret = WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, [](const string &path) {
             struct stat s;
             if (stat(path.c_str(), &s) != -1) {
@@ -180,7 +180,7 @@ int HilogdEntry()
         if (ret == RET_SUCCESS) {
             RestorePersistJobs(hilogBuffer, kmsgBuffer);
         }
-    });
+    }, {}, {}, ffrt::task_attr().name("hilogd.pst_res"));
 
     bool kmsgEnable = IsKmsgSwitchOn();
     if (kmsgEnable) {
@@ -188,13 +188,12 @@ int HilogdEntry()
         logKmsg.Start();
     }
 
-    auto cgroupWriteTask = std::async(std::launch::async, []() {
-        prctl(PR_SET_NAME, "hilogd.cgroup_set");
+    ffrt::submit([]() {
         string myPid = to_string(getpid());
         (void)WriteStringToFile(myPid, SYSTEM_BG_STUNE);
         (void)WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
         (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
-    });
+    }, {}, {}, ffrt::task_attr().name("hilogd.cgroup_set"));
 
     auto cmdExecuteTask = std::async(std::launch::async, [&logCollector, &hilogBuffer, &kmsgBuffer]() {
         prctl(PR_SET_NAME, "hilogd.cmd");

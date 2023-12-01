@@ -22,6 +22,7 @@
     "ram": "16336KB",
     "deps": {
       "components": [
+        "ffrt",
         "init",
         "napi",
         "c_utils"
