@@ -49,7 +49,10 @@ ohos_executable("hilogd") {
     "etc:hilogd_etc",
   ]
 
-  external_deps = [ "init:libbegetutil" ]
+  external_deps = [
+    "ffrt:libffrt",
+    "init:libbegetutil",
+  ]
   install_images = [
     "system",
     "updater",
