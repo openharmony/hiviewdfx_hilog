@@ -22,14 +22,11 @@
 #include <optional>
 #include <vector>
 #include <functional>
+#include <hilog_base.h>
 
-#define SOCKET_FILE_DIR "/dev/unix/socket/"
-#define INPUT_SOCKET_NAME "hilogInput"
 #define OUTPUT_SOCKET_NAME "hilogOutput"
 #define CONTROL_SOCKET_NAME "hilogControl"
 #define HILOG_FILE_DIR "/data/log/hilog/"
-#define MAX_LOG_LEN 4096  /* maximum length of a log, include '\0' */
-#define MAX_TAG_LEN 32  /* log tag size, include '\0' */
 #define MAX_REGEX_STR_LEN (128)
 #define MAX_FILE_NAME_LEN (64)
 #define RET_SUCCESS 0
@@ -50,24 +47,6 @@ constexpr uint32_t JOB_ID_MIN = 10;
 constexpr uint32_t JOB_ID_MAX = UINT_MAX;
 constexpr uint32_t WAITING_DATA_MS = 5000;
 
-/*
- * header of log message from libhilog to hilogd
- */
-using HilogMsg = struct __attribute__((__packed__)) {
-    uint16_t len;
-    uint16_t version : 3;
-    uint16_t type : 4;  /* APP,CORE,INIT,SEC etc */
-    uint16_t level : 3;
-    uint16_t tag_len : 6; /* include '\0' */
-    uint32_t tv_sec;
-    uint32_t tv_nsec;
-    uint32_t mono_sec;
-    uint32_t pid;
-    uint32_t tid;
-    uint32_t domain;
-    char tag[]; /* shall be end with '\0' */
-};
-
 template <typename T>
 using OptRef = std::optional<std::reference_wrapper<T>>;
 
@@ -79,14 +58,6 @@ using OptCRef = std::optional<std::reference_wrapper<const T>>;
 
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
-
-#if defined(__GNUC__) && (__GNUC__ >= 4)
-    #define HILOG_PUBLIC_API __attribute__((visibility ("default")))
-    #define HILOG_LOCAL_API __attribute__((visibility("hidden")))
-#else
-    #define HILOG_PUBLIC_API
-    #define HILOG_LOCAL_API
-#endif
 
 /*
  * ********************************************

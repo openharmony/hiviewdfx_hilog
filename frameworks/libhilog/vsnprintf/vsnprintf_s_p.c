@@ -15,8 +15,8 @@
 
 #include "vsnprintf_s_p.h"
 
-#include <cstdlib>
-#include <cstring>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 /* Define the max length of the string */
@@ -139,8 +139,8 @@ typedef enum {
 #endif
 
 #else
-#define SECUREC_MALLOC(x) (nullptr)
-#define SECUREC_FREE(x)   { printf("Malloc is not allowed, so free should not be possible to execute!"); std::abort(); }
+#define SECUREC_MALLOC(x) (NULL)
+#define SECUREC_FREE(x)   { printf("Malloc is not allowed, so free should not be possible to execute!"); exit(EXIT_FAILURE); }
 #endif
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(_MSC_VER)) || defined(__ARMCC_VERSION)
@@ -218,13 +218,13 @@ static inline int SecVsnprintfPImpl(char *string, size_t count, int priv, const 
  * If there is a runtime-constraint violation, strDest[0] will be set to the '\0' when strDest and destMax valid
  *******************************************************************************
  */
- HILOG_LOCAL_API
+HILOG_LOCAL_API
 int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, va_list arglist)
 {
     int retVal;
 
     if (format == NULL || strDest == NULL || destMax == 0 || destMax > SECUREC_STRING_MAX_LEN ||
-        (count > (SECUREC_STRING_MAX_LEN - 1) && count != static_cast<size_t>(-1))) {
+        (count > (SECUREC_STRING_MAX_LEN - 1) && count != (size_t)(-1))) {
         if (strDest != NULL && destMax > 0) {
             strDest[0] = '\0';
         }
@@ -263,7 +263,7 @@ int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const c
 }
 
 HILOG_LOCAL_API
-int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, ...)
+int snprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, ...)
 {
     va_list ap;
     va_start(ap, format);
@@ -288,7 +288,7 @@ static inline int SecVsnprintfPImpl(char *string, size_t count, int priv, const 
     SecPrintfStream str;
     int retVal;
 
-    str.count = static_cast<int>(count);     /* this count include \0 character */
+    str.count = (int)(count);     /* this count include \0 character */
     str.cur = string;
 
     retVal = SecOutputPS(&str, priv, format, arglist);
