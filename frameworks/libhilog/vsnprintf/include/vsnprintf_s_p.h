@@ -16,9 +16,9 @@
 #ifndef __VSNPRINTFP_S_H__
 #define __VSNPRINTFP_S_H__
 
-#include <hilog_common.h>
+#include <hilog_base.h>
 
-#include <cstddef>
+#include <stddef.h>
 #include <stdarg.h>
 /**
 * @Description: The vsnprintfp_s function is equivalent to the vsnprintf function except for the parameter destMax/count
@@ -32,10 +32,15 @@
 * @return:return the number of characters printed(not including the terminating null byte ('\0')),
 *         If an error occurred return -1.Pay special attention to returning -1 when truncation occurs
 */
+#ifdef __cplusplus
+extern "C" {
+#endif
 HILOG_LOCAL_API
 int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, va_list arglist);
 
 HILOG_LOCAL_API
-int vsnprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, ...);
-
+int snprintfp_s(char *strDest, size_t destMax, size_t count, int priv,  const char *format, ...);
+#ifdef __cplusplus
+}
+#endif
 #endif /* __VSNPRINTFP_S_H__ */
