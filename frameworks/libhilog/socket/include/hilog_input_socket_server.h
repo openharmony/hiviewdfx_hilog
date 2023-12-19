@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-#define MAX_SOCKET_PACKET_LEN 4096
+#define MAX_SOCKET_PACKET_LEN 5120
 
 class HilogInputSocketServer : public DgramSocketServer {
 public:
