@@ -176,7 +176,7 @@ int LogPersister::Deinit()
 
     Stop();
 
-    munmap(m_mappedPlainLogFile, MAX_PERSISTER_BUFFER_SIZE);
+    munmap(m_mappedPlainLogFile, sizeof(LogPersisterBuffer));
     std::cout << "Removing unmapped plain log file: " << m_plainLogFilePath << "\n";
     if (remove(m_plainLogFilePath.c_str())) {
         std::cerr << "File: " << m_plainLogFilePath << " can't be removed. ";
