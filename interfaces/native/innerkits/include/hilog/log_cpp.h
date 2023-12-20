@@ -42,8 +42,8 @@ using HiLogLabel = struct {
  * Error: Designates very serious errors.
  * Fatal: Designates major fatal anomaly.
  *
- * @param label HiLogLabel for the log
- * @param fmt Format string for the log
+ * label: HiLogLabel for the log
+ * fmt: Format string for the log
  */
 class HiLog final {
 public:
