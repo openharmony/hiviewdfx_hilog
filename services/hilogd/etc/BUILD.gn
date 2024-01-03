@@ -26,6 +26,10 @@ ohos_prebuilt_etc("hilogd.cfg") {
   relative_install_dir = "init"
   part_name = "hilog"
   subsystem_name = "hiviewdfx"
+  install_images = [
+    "system",
+    "updater",
+  ]
 }
 
 ohos_prebuilt_etc("hilog.para") {
@@ -33,6 +37,10 @@ ohos_prebuilt_etc("hilog.para") {
   relative_install_dir = "param"
   part_name = "hilog"
   subsystem_name = "hiviewdfx"
+  install_images = [
+    "system",
+    "updater",
+  ]
 }
 
 ohos_prebuilt_etc("hilog.para.dac") {
@@ -40,4 +48,8 @@ ohos_prebuilt_etc("hilog.para.dac") {
   relative_install_dir = "param"
   part_name = "hilog"
   subsystem_name = "hiviewdfx"
+  install_images = [
+    "system",
+    "updater",
+  ]
 }
