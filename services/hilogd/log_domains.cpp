@@ -81,6 +81,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD005A00, "AccessControl"},
     {0xD005B00, "Tee"},
     {0xD005C00, "Connectivity"},
+    {0xD005D00, "XTS"},
     {0xD00AD00, "ASystem"},
 }, __UINT32_MAX__, "Invalid");
 
