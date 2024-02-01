@@ -457,7 +457,7 @@ void LogPersister::DeregisterLogPersister(const std::shared_ptr<LogPersister>& o
             return false;
         });
     if (it == s_logPersisters.end()) {
-        std::cerr << " Inconsistent data - this should never happended!\n";
+        std::cerr << " Inconsistent data - this should never happened!\n";
         return;
     }
     s_logPersisters.erase(it);
