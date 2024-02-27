@@ -58,6 +58,7 @@ static const uid_t SHELL_UID = 2000;
 static const uid_t ROOT_UID = 0;
 static const uid_t LOGD_UID = 1036;
 static const uid_t HIVIEW_UID = 1201;
+static const uid_t PROFILER_UID = 3063;
 
 inline bool IsKmsg(uint16_t types)
 {
@@ -440,7 +441,7 @@ int ServiceController::CheckOutputRqst(const OutputRqst& rqst)
     }
     // Check Uid permission
     uid_t uid = m_communicationSocket->GetUid();
-    if (uid != ROOT_UID && uid != SHELL_UID && rqst.pidCount > 0 && uid != HIVIEW_UID) {
+    if (uid != ROOT_UID && uid != SHELL_UID && rqst.pidCount > 0 && uid != HIVIEW_UID && uid != PROFILER_UID) {
         return ERR_NO_PID_PERMISSION;
     }
     return RET_SUCCESS;
@@ -479,7 +480,7 @@ void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilte
     // Permission check
     uid_t uid = m_communicationSocket->GetUid();
     uint32_t pid = static_cast<uint32_t>(m_communicationSocket->GetPid());
-    if (uid != ROOT_UID && uid != SHELL_UID && uid != LOGD_UID && uid != HIVIEW_UID) {
+    if (uid != ROOT_UID && uid != SHELL_UID && uid != LOGD_UID && uid != HIVIEW_UID && uid != PROFILER_UID) {
         filter.blackPid = false;
         filter.pidCount = 1;
         filter.pids[0] = pid;
