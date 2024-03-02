@@ -72,12 +72,17 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
 {
     LogLevelTypeEnumInit(env, exports);
     return exports_.AddProp({
-        NVal::DeclareNapiFunction("debug", HilogNapiBase::debug),
-        NVal::DeclareNapiFunction("info", HilogNapiBase::info),
-        NVal::DeclareNapiFunction("error", HilogNapiBase::error),
-        NVal::DeclareNapiFunction("warn", HilogNapiBase::warn),
-        NVal::DeclareNapiFunction("fatal", HilogNapiBase::fatal),
-        NVal::DeclareNapiFunction("isLoggable", HilogNapiBase::isLoggable),
+        NVal::DeclareNapiFunction("debug", HilogNapiBase::Debug),
+        NVal::DeclareNapiFunction("info", HilogNapiBase::Info),
+        NVal::DeclareNapiFunction("error", HilogNapiBase::Error),
+        NVal::DeclareNapiFunction("warn", HilogNapiBase::Warn),
+        NVal::DeclareNapiFunction("fatal", HilogNapiBase::Fatal),
+        NVal::DeclareNapiFunction("sLogD", HilogNapiBase::SysLogDebug),
+        NVal::DeclareNapiFunction("sLogI", HilogNapiBase::SysLogInfo),
+        NVal::DeclareNapiFunction("sLogW", HilogNapiBase::SysLogWarn),
+        NVal::DeclareNapiFunction("sLogE", HilogNapiBase::SysLogError),
+        NVal::DeclareNapiFunction("sLogF", HilogNapiBase::SysLogFatal),
+        NVal::DeclareNapiFunction("isLoggable", HilogNapiBase::IsLoggable),
     });
 }
 
