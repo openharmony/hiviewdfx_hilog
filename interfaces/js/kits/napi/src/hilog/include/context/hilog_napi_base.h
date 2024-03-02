@@ -30,13 +30,18 @@ using napiParam = struct {
 
 class HilogNapiBase {
 public:
-    static napi_value debug(napi_env env, napi_callback_info info);
-    static napi_value HilogImpl(napi_env env, napi_callback_info info, int level);
-    static napi_value info(napi_env env, napi_callback_info info);
-    static napi_value error(napi_env env, napi_callback_info info);
-    static napi_value warn(napi_env env, napi_callback_info info);
-    static napi_value fatal(napi_env env, napi_callback_info info);
-    static napi_value isLoggable(napi_env env, napi_callback_info info);
+    static napi_value Debug(napi_env env, napi_callback_info info);
+    static napi_value HilogImpl(napi_env env, napi_callback_info info, int level, bool isAppLog);
+    static napi_value Info(napi_env env, napi_callback_info info);
+    static napi_value Error(napi_env env, napi_callback_info info);
+    static napi_value Warn(napi_env env, napi_callback_info info);
+    static napi_value Fatal(napi_env env, napi_callback_info info);
+    static napi_value SysLogDebug(napi_env env, napi_callback_info info);
+    static napi_value SysLogInfo(napi_env env, napi_callback_info info);
+    static napi_value SysLogWarn(napi_env env, napi_callback_info info);
+    static napi_value SysLogError(napi_env env, napi_callback_info info);
+    static napi_value SysLogFatal(napi_env env, napi_callback_info info);
+    static napi_value IsLoggable(napi_env env, napi_callback_info info);
 private:
     static napi_value parseNapiValue(napi_env env, napi_callback_info info,
         napi_value element, std::vector<napiParam>& params);
