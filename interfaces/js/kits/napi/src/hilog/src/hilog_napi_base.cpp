@@ -31,7 +31,6 @@ extern "C" {
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
-#define DEFAULT_LOG_TYPE LOG_APP
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "Hilog_JS" };
 static constexpr int MIN_NUMBER = 3;
 static constexpr int MAX_NUMBER = 100;
@@ -118,7 +117,7 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
     return;
 }
 
-napi_value HilogNapiBase::isLoggable(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::IsLoggable(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
 
@@ -148,29 +147,54 @@ napi_value HilogNapiBase::isLoggable(napi_env env, napi_callback_info info)
     return NVal::CreateBool(env, res).val_;
 }
 
-napi_value HilogNapiBase::debug(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::Debug(napi_env env, napi_callback_info info)
 {
-    return HilogImpl(env, info, LOG_DEBUG);
+    return HilogImpl(env, info, LOG_DEBUG, true);
 }
 
-napi_value HilogNapiBase::info(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::Info(napi_env env, napi_callback_info info)
 {
-    return HilogImpl(env, info, LOG_INFO);
+    return HilogImpl(env, info, LOG_INFO, true);
 }
 
-napi_value HilogNapiBase::warn(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::Warn(napi_env env, napi_callback_info info)
 {
-    return HilogImpl(env, info, LOG_WARN);
+    return HilogImpl(env, info, LOG_WARN, true);
 }
 
-napi_value HilogNapiBase::error(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::Error(napi_env env, napi_callback_info info)
 {
-    return HilogImpl(env, info, LOG_ERROR);
+    return HilogImpl(env, info, LOG_ERROR, true);
 }
 
-napi_value HilogNapiBase::fatal(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::Fatal(napi_env env, napi_callback_info info)
 {
-    return HilogImpl(env, info, LOG_FATAL);
+    return HilogImpl(env, info, LOG_FATAL, true);
+}
+
+napi_value HilogNapiBase::SysLogDebug(napi_env env, napi_callback_info info)
+{
+    return HilogImpl(env, info, LOG_DEBUG, false);
+}
+
+napi_value HilogNapiBase::SysLogInfo(napi_env env, napi_callback_info info)
+{
+    return HilogImpl(env, info, LOG_INFO, false);
+}
+
+napi_value HilogNapiBase::SysLogWarn(napi_env env, napi_callback_info info)
+{
+    return HilogImpl(env, info, LOG_WARN, false);
+}
+
+napi_value HilogNapiBase::SysLogError(napi_env env, napi_callback_info info)
+{
+    return HilogImpl(env, info, LOG_ERROR, false);
+}
+
+napi_value HilogNapiBase::SysLogFatal(napi_env env, napi_callback_info info)
+{
+    return HilogImpl(env, info, LOG_FATAL, false);
 }
 
 napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
@@ -211,7 +235,7 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
     return nullptr;
 }
 
-napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int level)
+napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int level, bool isAppLog)
 {
     NFuncArg funcArg(env, info);
     funcArg.InitArgs(MIN_NUMBER, MAX_NUMBER);
@@ -267,7 +291,8 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
         }
     }
     ParseLogContent(fmtString, params, logContent);
-    HiLogPrint(DEFAULT_LOG_TYPE, static_cast<LogLevel>(level), domain, tag.get(), "%{public}s", logContent.c_str());
+    HiLogPrint((isAppLog ? LOG_APP : LOG_CORE),
+        static_cast<LogLevel>(level), domain, tag.get(), "%{public}s", logContent.c_str());
     return nullptr;
 }
 }  // namespace HiviewDFX
