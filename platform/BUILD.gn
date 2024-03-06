@@ -22,12 +22,11 @@ template("libhilog_platform_source") {
     include_dirs = [
       "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
       "${PLATFORM_HILOG_PATH}/interfaces/native/innerkits/include",
+      "${PLATFORM_ACE_ENGINE_ROOT}/frameworks",
     ]
     if (target_os == "android") {
       defines += [ "ANDROID_PLATFORM" ]
-      libs = [ "log" ]
     } else if (target_os == "ios") {
-      include_dirs += [ "//third_party/bounds_checking_function/include" ]
       defines += [ "IOS_PLATFORM" ]
     }
     sources = [
