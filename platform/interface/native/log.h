@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <string>
+#include "base/log/log.h"
 
 #define __FILENAME__ strrchr(__FILE__, '/') + 1
 
@@ -31,18 +32,12 @@ enum class LogLevel : uint32_t {
     Fatal,
 };
 
-void LogPrint(LogLevel level, const char* fmt, ...);
-void LogPrint(LogLevel level, const char* fmt, va_list args);
+void LogPrint(OHOS::Ace::LogLevel level, const char* fmt, ...);
+void LogPrint(OHOS::Ace::LogLevel level, const char* fmt, va_list args);
 
 #define LOG_PRINT(Level, fmt, ...) \
-    OHOS::HiviewDFX::Hilog::Platform::LogPrint(OHOS::HiviewDFX::Hilog::Platform::LogLevel::Level, \
+    OHOS::Ace::Platform::LogPrint(OHOS::HiviewDFX::Hilog::Platform::LogLevel::Level, \
         "[%-20s(%s)] " fmt, __FILENAME__, __FUNCTION__, ##__VA_ARGS__)
-
-#define LOGF(fmt, ...) LOG_PRINT(Fatal, fmt, ##__VA_ARGS__)
-#define LOGE(fmt, ...) LOG_PRINT(Error, fmt, ##__VA_ARGS__)
-#define LOGW(fmt, ...) LOG_PRINT(Warn, fmt, ##__VA_ARGS__)
-#define LOGI(fmt, ...) LOG_PRINT(Info, fmt, ##__VA_ARGS__)
-#define LOGD(fmt, ...) LOG_PRINT(Debug, fmt, ##__VA_ARGS__)
 } // namespace OHOS::HiviewDFX::Hilog::Platform
 
 #endif // PLATFORM_INTERFACE_NATIVE_LOG_H
