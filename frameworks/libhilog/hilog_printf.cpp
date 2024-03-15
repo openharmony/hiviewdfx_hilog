@@ -319,7 +319,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #elif defined(__OHOS__)
     header.tid = static_cast<uint32_t>(getproctid());
 #else
-    header.tid = static_cast<uint32_t>(getproctid());
+    header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
 #endif
     header.domain = domain;
 
