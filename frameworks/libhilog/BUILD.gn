@@ -92,12 +92,12 @@ template("libhilog_source") {
       cflags_cc = [ "-std=c++17" ]
       defines += [ "__LINUX__" ]
     } else {
-      if (platform == "ohos") {
-        defines += [ "__OHOS__" ]
-      }
       defines = [ "__RECV_MSG_WITH_UCRED_" ]
       if (use_musl) {
         defines += [ "HILOG_USE_MUSL" ]
+      }
+      if (platform == "ohos") {
+        defines += [ "__OHOS__" ]
       }
     }
     cflags = [ "-Wno-deprecated-declarations" ]
