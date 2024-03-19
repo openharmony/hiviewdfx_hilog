@@ -96,6 +96,9 @@ template("libhilog_source") {
       if (use_musl) {
         defines += [ "HILOG_USE_MUSL" ]
       }
+      if (platform == "ohos") {
+        defines += [ "__OHOS__" ]
+      }
     }
     cflags = [ "-Wno-deprecated-declarations" ]
     public_configs = [ ":libhilog_config" ]
