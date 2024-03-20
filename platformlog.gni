@@ -12,3 +12,5 @@
 # limitations under the License.
 
 PLATFORM_HILOG_PATH = "//base/hiviewdfx/hilog"
+
+PLATFORM_ACE_ENGINE_ROOT = "//foundation/arkui/ace_engine"

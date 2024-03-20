@@ -16,21 +16,22 @@
 #include "hilog/log.h"
 #include "interface/native/log.h"
 
-static OHOS::HiviewDFX::Hilog::Platform::LogLevel ConvertLogLevel(LogLevel level)
+static OHOS::Ace::LogLevel ConvertLogLevel(LogLevel level)
 {
-    if (level == LogLevel::LOG_DEBUG) {
-        return OHOS::HiviewDFX::Hilog::Platform::LogLevel::Debug;
-    } else if (level == LogLevel::LOG_INFO) {
-        return OHOS::HiviewDFX::Hilog::Platform::LogLevel::Info;
-    } else if (level == LogLevel::LOG_WARN) {
-        return OHOS::HiviewDFX::Hilog::Platform::LogLevel::Warn;
-    } else if (level == LogLevel::LOG_ERROR) {
-        return OHOS::HiviewDFX::Hilog::Platform::LogLevel::Error;
-    } else if (level == LogLevel::LOG_FATAL) {
-        return OHOS::HiviewDFX::Hilog::Platform::LogLevel::Fatal;
+    switch (level) {
+        case LogLevel::LOG_DEBUG:
+            return OHOS::Ace::LogLevel::DEBUG;
+        case LogLevel::LOG_INFO:
+            return OHOS::Ace::LogLevel::INFO;
+        case LogLevel::LOG_WARN:
+            return OHOS::Ace::LogLevel::WARN;
+        case LogLevel::LOG_ERROR:
+            return OHOS::Ace::LogLevel::ERROR;
+        case LogLevel::LOG_FATAL:
+            return OHOS::Ace::LogLevel::FATAL;
+        default:
+            return OHOS::Ace::LogLevel::DEBUG;
     }
-
-    return OHOS::HiviewDFX::Hilog::Platform::LogLevel::Debug;
 }
 
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
