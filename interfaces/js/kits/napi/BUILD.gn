@@ -17,10 +17,11 @@ import("//build/ohos.gni")
 ohos_source_set("libhilognapi_src") {
   defines = []
   include_dirs = [
-    "//third_party/node/src",
     "//third_party/bounds_checking_function/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/include",
+    "//base/hiviewdfx/hilog/interfaces/js/kits/napi/src/common/napi",
+    "//base/hiviewdfx/hilog/interfaces/js/kits/napi/src/hilog/include/context",
   ]
   sources = [
     "src/common/napi/n_class.cpp",
@@ -30,12 +31,16 @@ ohos_source_set("libhilognapi_src") {
     "src/hilog/src/hilog_napi.cpp",
     "src/hilog/src/hilog_napi_base.cpp",
   ]
-  deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
+
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "node:node_header_notice",
+  ]
   if (is_mingw || is_mac || is_linux) {
-    deps += [ "//foundation/arkui/napi:ace_napi" ]
+    deps = [ "//foundation/arkui/napi:ace_napi" ]
   } else {
-    deps += [ "../../../../interfaces/native/innerkits:libhilog" ]
-    external_deps = [ "napi:ace_napi" ]
+    deps = [ "../../../../interfaces/native/innerkits:libhilog" ]
+    external_deps += [ "napi:ace_napi" ]
   }
 
   cflags_cc = []

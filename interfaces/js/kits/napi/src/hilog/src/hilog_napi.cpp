@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#include "../include/context/hilog_napi.h"
-#include "../../common/napi/n_class.h"
-#include "../../common/napi/n_func_arg.h"
+#include "hilog_napi.h"
 #include "hilog/log.h"
 #include "hilog/log_c.h"
+#include "n_class.h"
+#include "n_func_arg.h"
 
 #ifdef __cplusplus
 extern "C" {
