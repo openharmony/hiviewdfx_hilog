@@ -104,10 +104,10 @@ template("libhilog_source") {
     public_configs = [ ":libhilog_config" ]
     configs = [ ":libhilog_config" ]
 
-    deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
+    external_deps = [ "bounds_checking_function:libsec_shared" ]
 
     if (platform != "windows" && platform != "mac" && platform != "linux") {
-      external_deps = [ "init:libbegetutil" ]
+      external_deps += [ "init:libbegetutil" ]
     }
 
     part_name = "hilog"

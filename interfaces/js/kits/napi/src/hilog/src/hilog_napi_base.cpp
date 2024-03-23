@@ -15,15 +15,14 @@
 
 #include "properties.h"
 #include "hilog_common.h"
-
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-#include "../../common/napi/n_func_arg.h"
-#include "../../common/napi/n_class.h"
 #include "hilog/log.h"
 #include "hilog/log_c.h"
+#include "hilog_napi_base.h"
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
+#include "n_func_arg.h"
+#include "n_class.h"
 #include "securec.h"
-#include "../include/context/hilog_napi_base.h"
 
 #ifdef __cplusplus
 extern "C" {
