@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "include/context/hilog_napi.h"
-#include "../common/napi/n_val.h"
+#include "n_val.h"
 using namespace std;
 
 namespace OHOS {

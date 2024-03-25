@@ -16,7 +16,7 @@
 #ifndef HIVIEWDFX_NAPI_HILOG_BASE
 #define HIVIEWDFX_NAPI_HILOG_BASE
 
-#include "../../../common/napi/n_exporter.h"
+#include "n_exporter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

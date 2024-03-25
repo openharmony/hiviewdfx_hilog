@@ -40,18 +40,17 @@ ohos_executable("hilogd") {
     "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
   ]
   defines = [ "__RECV_MSG_WITH_UCRED_" ]
+
   deps = [
-    "//third_party/bounds_checking_function:libsec_shared",
-    "//third_party/zlib:shared_libz",
-  ]
-  deps += [
     "../../interfaces/native/innerkits:libhilog",
     "etc:hilogd_etc",
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "ffrt:libffrt",
     "init:libbegetutil",
+    "zlib:shared_libz",
   ]
   install_images = [
     "system",

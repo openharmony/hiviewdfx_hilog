@@ -30,13 +30,13 @@ ohos_executable("hilog") {
     "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
   ]
 
-  deps = [
-    "../../interfaces/native/innerkits:libhilog",
-    "//third_party/bounds_checking_function:libsec_shared",
-    "//third_party/zlib:shared_libz",
-  ]
+  deps = [ "../../interfaces/native/innerkits:libhilog" ]
 
-  external_deps = [ "c_utils:utils" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
+    "zlib:shared_libz",
+  ]
   install_images = [
     "system",
     "updater",

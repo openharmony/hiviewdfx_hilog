@@ -17,7 +17,7 @@
 #define HIVIEWDFX_NAPI_HILOG
 
 #include "hilog_napi_base.h"
-#include "../../../common/napi/n_exporter.h"
+#include "n_exporter.h"
 
 namespace OHOS {
 namespace HiviewDFX {

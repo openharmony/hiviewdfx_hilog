@@ -22,13 +22,12 @@
     "ram": "16336KB",
     "deps": {
       "components": [
+        "bounds_checking_function",
+        "c_utils",
         "ffrt",
         "init",
         "napi",
-        "c_utils"
-      ],
-      "third_party": [
-        "bounds_checking_function",
+        "node",
         "zlib"
       ]
     },
