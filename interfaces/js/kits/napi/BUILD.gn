@@ -17,7 +17,6 @@ import("//build/ohos.gni")
 ohos_source_set("libhilognapi_src") {
   defines = []
   include_dirs = [
-    "//third_party/bounds_checking_function/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/include",
     "//base/hiviewdfx/hilog/interfaces/js/kits/napi/src/common/napi",
