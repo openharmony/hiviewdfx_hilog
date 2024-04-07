@@ -1,0 +1,11 @@
+[
+    {
+        "name": "OH_LOG_Print"
+    },
+    {
+        "name": "OH_LOG_IsLoggable"
+    },
+    {
+        "name": "OH_LOG_SetCallback"
+    }
+]
