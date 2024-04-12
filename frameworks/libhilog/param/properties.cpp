@@ -339,20 +339,22 @@ uint16_t GetDomainLevel(uint32_t domain)
     {
         ReadLock lock(*mtx);
         it = domainMap->find(domain);
-    }
-    if (it == domainMap->end()) { // new domain
-        InsertLock lock(*mtx);
-        it = domainMap->find(domain); // secured for two thread went across above condition
-        if (it == domainMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-            PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
-            auto result = domainMap->insert({ domain, levelCache });
-            if (!result.second) {
-                delete levelCache;
-                return LOG_LEVEL_MIN;
-            }
-            it = result.first;
+        if (it != domainMap->end()) {
+            LogLevelCache* levelCache = it->second;
+            return levelCache->getValue();
         }
+    }
+    InsertLock lock(*mtx);
+    it = domainMap->find(domain); // secured for two thread went across above condition
+    if (it == domainMap->end()) {
+        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
+        PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
+        auto result = domainMap->insert({ domain, levelCache });
+        if (!result.second) {
+            delete levelCache;
+            return LOG_LEVEL_MIN;
+        }
+        it = result.first;
     }
     LogLevelCache* levelCache = it->second;
     return levelCache->getValue();
@@ -366,20 +368,22 @@ uint16_t GetTagLevel(const string& tag)
     {
         ReadLock lock(*mtx);
         it = tagMap->find(tag);
-    }
-    if (it == tagMap->end()) { // new tag
-        InsertLock lock(*mtx);
-        it = tagMap->find(tag); // secured for two thread went across above condition
-        if (it == tagMap->end()) {
-            LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-            PropType::PROP_TAG_LOG_LEVEL, tag);
-            auto result = tagMap->insert({ tag, levelCache });
-            if (!result.second) {
-                delete levelCache;
-                return LOG_LEVEL_MIN;
-            }
-            it = result.first;
+        if (it != tagMap->end()) {
+            LogLevelCache* levelCache = it->second;
+            return levelCache->getValue();
         }
+    }
+    InsertLock lock(*mtx);
+    it = tagMap->find(tag); // secured for two thread went across above condition
+    if (it == tagMap->end()) {
+        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
+        PropType::PROP_TAG_LOG_LEVEL, tag);
+        auto result = tagMap->insert({ tag, levelCache });
+        if (!result.second) {
+            delete levelCache;
+            return LOG_LEVEL_MIN;
+        }
+        it = result.first;
     }
     LogLevelCache* levelCache = it->second;
     return levelCache->getValue();
