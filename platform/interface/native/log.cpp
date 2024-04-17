@@ -28,6 +28,6 @@ void LogPrint(OHOS::Ace::LogLevel level, const char* fmt, ...)
 void LogPrint(OHOS::Ace::LogLevel level, const char* fmt, va_list args)
 {
     OHOS::Ace::LogWrapper::PrintLog(OHOS::Ace::LogDomain::JS_APP, level,
-        OHOS::Ace::AceLogTag::DEFAULT, fmt, args);
+        OHOS::Ace::AceLogTag::ACE_DEFAULT_DOMAIN, fmt, args);
 }
 } // namespace OHOS::HiviewDFX::Hilog::Platform
