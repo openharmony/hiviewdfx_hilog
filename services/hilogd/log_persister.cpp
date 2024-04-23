@@ -29,8 +29,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <dirent.h>
 #include <iostream>
 #include <mutex>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -403,6 +405,51 @@ void LogPersister::Stop()
 
     if (m_persisterThread.joinable()) {
         m_persisterThread.join();
+    }
+}
+
+int LogPersister::Refresh(uint32_t id)
+{
+    auto logPersisterPtr = GetLogPersisterById(id);
+    if (logPersisterPtr) {
+        std::optional<HilogData> data = logPersisterPtr->m_hilogBuffer.Query(logPersisterPtr->m_startMsg.filter,
+            logPersisterPtr->m_bufReader);
+        if (data.has_value()) {
+            if (logPersisterPtr->WriteLogData(data.value())) {
+                std::cerr << " Can't write new log data!\n";
+            }
+        } else {
+            std::unique_lock<decltype(logPersisterPtr->m_receiveLogCvMtx)> lk(logPersisterPtr->m_receiveLogCvMtx);
+            static const std::chrono::seconds waitTime(MAX_LOG_WRITE_INTERVAL);
+            if (cv_status::timeout == logPersisterPtr->m_receiveLogCv.wait_for(lk, waitTime)) {
+                std::cout << "no log timeout, write log forcely" << std::endl;
+                (void)logPersisterPtr->m_compressor->Compress(*(logPersisterPtr->m_mappedPlainLogFile),
+                    *(logPersisterPtr->m_compressBuffer));
+                logPersisterPtr->WriteCompressedLogs();
+            }
+        }
+        return 0;
+    }
+    std::cerr << " Log persister with id: " << id << " does not exist.\n";
+    return ERR_LOG_PERSIST_JOBID_FAIL;
+}
+
+void LogPersister::Clear()
+{
+    std::regex hilogFilePattern("^hilog.*gz$");
+    DIR *dir = nullptr;
+    struct dirent *ent = nullptr;
+    if ((dir = opendir(HILOG_FILE_DIR)) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            size_t length = strlen(ent->d_name);
+            std::string dName(ent->d_name, length);
+            if (std::regex_match(dName, hilogFilePattern)) {
+                remove((HILOG_FILE_DIR + dName).c_str());
+            }
+        }
+    }
+    if (dir != nullptr) {
+        closedir(dir);
     }
 }
 

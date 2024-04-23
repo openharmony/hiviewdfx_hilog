@@ -54,6 +54,8 @@ public:
 
     static int Kill(uint32_t id);
     static int Query(std::list<LogPersistQueryResult> &results);
+    static int Refresh(uint32_t id);
+    static void Clear();
 
     int Init(const PersistRecoveryInfo& msg, bool restore);
     int Deinit();

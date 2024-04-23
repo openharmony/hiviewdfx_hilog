@@ -678,6 +678,39 @@ void ServiceController::HandlePersistQueryRqst(const PersistQueryRqst& rqst)
     (void)m_communicationSocket->Write(reinterpret_cast<char*>(&rsp), sizeof(rsp));
 }
 
+void ServiceController::HandlePersistRefreshRqst(const PersistRefreshRqst& rqst)
+{
+    PersistRefreshRsp rsp = { 0 };
+    list<LogPersistQueryResult> resultList;
+    LogPersister::Query(resultList);
+    if (rqst.jobId == 0 && resultList.empty()) {
+        WriteErrorRsp(ERR_PERSIST_TASK_EMPTY);
+        return;
+    }
+    for (auto it = resultList.begin(); it != resultList.end() && rsp.jobNum < MAX_JOBS; ++it) {
+        uint32_t jobId = it->jobId;
+        if (rqst.jobId == 0 || rqst.jobId == jobId) {
+            (void)LogPersister::Refresh(jobId);
+            rsp.jobId[rsp.jobNum] = jobId;
+            rsp.jobNum++;
+        }
+    }
+    if (rsp.jobNum == 0) {
+        WriteErrorRsp(ERR_JOBID_NOT_EXSIST);
+        return;
+    }
+    WriteRspHeader(IoctlCmd::PERSIST_REFRESH_RSP, sizeof(rsp));
+    (void)m_communicationSocket->Write(reinterpret_cast<char*>(&rsp), sizeof(rsp));
+}
+
+void ServiceController::HandlePersistClearRqst()
+{
+    LogPersister::Clear();
+    PersistClearRsp rsp = { 0 };
+    WriteRspHeader(IoctlCmd::PERSIST_CLEAR_RSP, sizeof(rsp));
+    (void)m_communicationSocket->Write(reinterpret_cast<char*>(&rsp), sizeof(rsp));
+}
+
 void ServiceController::HandleBufferSizeGetRqst(const BufferSizeGetRqst& rqst)
 {
     vector<uint16_t> allTypes = GetAllLogTypes();
@@ -874,6 +907,18 @@ void ServiceController::CommunicationLoop(std::atomic<bool>& stopLoop, const Cmd
         case IoctlCmd::STATS_QUERY_RQST: {
             RequestHandler<StatsQueryRqst>(hdr, [this](const StatsQueryRqst& rqst) {
                 HandleStatsQueryRqst(rqst);
+            });
+            break;
+        }
+        case IoctlCmd::PERSIST_REFRESH_RQST: {
+            RequestHandler<PersistRefreshRqst>(hdr, [this](const PersistRefreshRqst& rqst) {
+                HandlePersistRefreshRqst(rqst);
+            });
+            break;
+        }
+        case IoctlCmd::PERSIST_CLEAR_RQST: {
+            RequestHandler<PersistClearRqst>(hdr, [this](const PersistClearRqst& rqst) {
+                HandlePersistClearRqst();
             });
             break;
         }
