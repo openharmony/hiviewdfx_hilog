@@ -14,6 +14,7 @@
  */
 #include "hilogtool_test.h"
 #include "hilog/log_c.h"
+#include <dirent.h>
 #include <log_utils.h>
 #include <properties.h>
 #include <hilog_common.h>
@@ -862,5 +863,32 @@ HWTEST_F(HilogToolTest, HandleTest_019, TestSize.Level1)
 
     // restore log level
     SetDomainLevel(domain, LOG_INFO);
+}
+
+/**
+ * @tc.name: Dfx_HilogToolTest_ClearTest_020
+ * @tc.desc: hilog -w clear can delete /data/log/hilog/hilog*.gz.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogToolTest, HandleTest_020, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "HandleTest_020: start.";
+    (void)GetCmdResultFromPopen("hilog -w stop");
+    std::string cmd = "hilog -w clear";
+    std::string str = "Persist log /data/log/hilog clear successfully\n";
+    EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
+    
+    std::regex hilogFilePattern("^hilog.*gz$");
+    DIR *dir = nullptr;
+    struct dirent *ent = nullptr;
+    if ((dir = opendir("/data/log/hilog")) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            EXPECT_FALSE(std::regex_match(ent->d_name, hilogFilePattern));
+        }
+    }
+    if (dir != nullptr) {
+        closedir(dir);
+    }
+    (void)GetCmdResultFromPopen("hilog -w start");
 }
 } // namespace

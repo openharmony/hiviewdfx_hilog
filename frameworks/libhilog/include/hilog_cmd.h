@@ -41,6 +41,10 @@ enum class IoctlCmd {
     PERSIST_STOP_RSP,
     PERSIST_QUERY_RQST,
     PERSIST_QUERY_RSP,
+    PERSIST_REFRESH_RQST,
+    PERSIST_REFRESH_RSP,
+    PERSIST_CLEAR_RQST,
+    PERSIST_CLEAR_RSP,
     BUFFERSIZE_GET_RQST,
     BUFFERSIZE_GET_RSP,
     BUFFERSIZE_SET_RQST,
@@ -144,6 +148,23 @@ using PersistTaskInfo = struct PersistStartRqst;
 struct PersistQueryRsp {
     uint8_t jobNum;
     PersistTaskInfo taskInfo[MAX_JOBS];
+} __attribute__((__packed__));
+
+struct PersistRefreshRqst {
+    uint32_t jobId;
+} __attribute__((__packed__));
+ 
+struct PersistRefreshRsp {
+    uint8_t jobNum;
+    uint32_t jobId[MAX_JOBS];
+} __attribute__((__packed__));
+
+struct PersistClearRqst {
+    char placeholder; // Clear tasks needn't any parameter, this is just a placeholder
+} __attribute__((__packed__));
+ 
+struct PersistClearRsp {
+    char placeholder;
 } __attribute__((__packed__));
 
 struct BufferSizeSetRqst {
