@@ -439,10 +439,12 @@ void LogPersister::Clear()
     std::regex hilogFilePattern("^hilog.*gz$");
     DIR *dir = nullptr;
     struct dirent *ent = nullptr;
-    if ((dir = opendir(HILOG_FILE_DIR.c_str())) != nullptr) {
+    if ((dir = opendir(HILOG_FILE_DIR)) != nullptr) {
         while ((ent = readdir(dir)) != nullptr) {
-            if (std::regex_match(ent->d_name, hilogFilePattern)) {
-                remove((HILOG_FILE_DIR + ent->d_name).c_str());
+            size_t length = strlen(ent->d_name);
+            std::string dName(ent->d_name, length);
+            if (std::regex_match(dName, hilogFilePattern)) {
+                remove((HILOG_FILE_DIR + dName).c_str());
             }
         }
     }
