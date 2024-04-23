@@ -142,6 +142,8 @@ static void PersistTaskHelper()
     << "    query      query tasks informations" << endl
     << "    stop       stop all tasks" << endl
     << "    start      start one task" << endl
+    << "    refresh    refresh buffer content to file" << endl
+    << "    clear      clear /data/log/hilog/hilog*.gz" << endl
     << "  Persistance task is used for saving logs in files." << endl
     << "  The files are saved in directory: " << HILOG_FILE_DIR << endl
     << "  Advanced options:" << endl
@@ -878,6 +880,36 @@ static int PersistTaskQuery()
     return ret;
 }
 
+static int PersistTaskRefresh()
+{
+    PersistRefreshRqst rqst = { 0 };
+    LogIoctl ioctl(IoctlCmd::PERSIST_REFRESH_RQST, IoctlCmd::PERSIST_REFRESH_RSP);
+    int ret = ioctl.Request<PersistRefreshRqst, PersistRefreshRsp>(rqst, [&rqst](const PersistRefreshRsp& rsp) {
+        for (int i = 0; i < rsp.jobNum; i++) {
+            PrintResult(RET_SUCCESS, (string("Persist task [jobid:") + to_string(rsp.jobId[i]) + "] refresh"));
+        }
+        return RET_SUCCESS;
+    });
+    if (ret != RET_SUCCESS) {
+        PrintResult(RET_FAIL, (string("Persist task refresh")));
+    }
+    return ret;
+}
+
+static int ClearPersistLog()
+{
+    PersistClearRqst rqst = { 0 };
+    LogIoctl ioctl(IoctlCmd::PERSIST_CLEAR_RQST, IoctlCmd::PERSIST_CLEAR_RSP);
+    int ret = ioctl.Request<PersistClearRqst, PersistClearRsp>(rqst, [&rqst](const PersistClearRsp& rsp) {
+        PrintResult(RET_SUCCESS, (string("Persist log /data/log/hilog clear")));
+        return RET_SUCCESS;
+    });
+    if (ret != RET_SUCCESS) {
+        PrintResult(RET_FAIL, (string("Persist log /data/log/hilog clear")));
+    }
+    return ret;
+}
+
 static int PersistTaskHandler(HilogArgs& context, const char *arg)
 {
     string strArg = arg;
@@ -887,6 +919,10 @@ static int PersistTaskHandler(HilogArgs& context, const char *arg)
         return PersistTaskStop(context);
     } else if (strArg == "query") {
         return PersistTaskQuery();
+    } else if (strArg == "refresh") {
+        return PersistTaskRefresh();
+    } else if (strArg == "clear") {
+        return ClearPersistLog();
     } else {
         return ERR_INVALID_ARGUMENT;
     }
