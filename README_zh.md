@@ -6,7 +6,7 @@
   - [约束<a name="section119744591305"></a>](#约束)
   - [说明<a name="section06487425716"></a>](#说明)
     - [接口说明<a name="section1551164914237"></a>](#接口说明)
-    - [使用说明<a name="section129654513264"></a>](#使用说明)
+    - [使用说明<a name="section129654513264"></a>](#使用说明)                                               
   - [涉及仓<a name="section177639411669"></a>](#涉及仓)
 
 -   [涉及仓](#section177639411669)
@@ -62,49 +62,103 @@ HiLog是OpenHarmony日志系统，提供给系统框架、服务、以及应用�
 
 ## 说明<a name="section06487425716"></a>
 
-### 接口说明<a name="section1551164914237"></a>
+### 1、日志打印及显示<a name="section1551164914237"></a>
 
-**表 1**  主要API说明
+js接口: https://gitee.com/openharmony/docs/blob/master/zh-cn/application-dev/reference/apis-performance-analysis-kit/js-apis-hilog.md
 
-<a name="table5489165165714"></a>
-<table><thead align="left"><tr id="row12490195195718"><th class="cellrowborder" valign="top" width="14.09%" id="mcps1.2.4.1.1"><p id="p862411212488"><a name="p862411212488"></a><a name="p862411212488"></a>类</p>
-</th>
-<th class="cellrowborder" valign="top" width="33.98%" id="mcps1.2.4.1.2"><p id="p10859172921116"><a name="p10859172921116"></a><a name="p10859172921116"></a>方法</p>
-</th>
-<th class="cellrowborder" valign="top" width="51.93%" id="mcps1.2.4.1.3"><p id="p104901150576"><a name="p104901150576"></a><a name="p104901150576"></a>描述</p>
-</th>
-</tr>
-</thead>
-<tbody><tr id="row34901758577"><td class="cellrowborder" valign="top" width="14.09%" headers="mcps1.2.4.1.1 "><p id="p16501115918497"><a name="p16501115918497"></a><a name="p16501115918497"></a>HiLogLabel</p>
-</td>
-<td class="cellrowborder" valign="top" width="33.98%" headers="mcps1.2.4.1.2 "><p id="p1550175974917"><a name="p1550175974917"></a><a name="p1550175974917"></a>HiLogLabel(int type, int domain, String tag)</p>
-</td>
-<td class="cellrowborder" valign="top" width="51.93%" headers="mcps1.2.4.1.3 "><p id="p135021859104915"><a name="p135021859104915"></a><a name="p135021859104915"></a>构造日志标签，包括：日志类型、领域标识、日志tag。</p>
-</td>
-</tr>
-<tr id="row868117162916"><td class="cellrowborder" valign="top" width="14.09%" headers="mcps1.2.4.1.1 "><p id="p1215914385013"><a name="p1215914385013"></a><a name="p1215914385013"></a>HiLog</p>
-</td>
-<td class="cellrowborder" valign="top" width="33.98%" headers="mcps1.2.4.1.2 "><p id="p1415914345011"><a name="p1415914345011"></a><a name="p1415914345011"></a>Info(const HiLogLabel &amp;label, const char *fmt, ...)</p>
-</td>
-<td class="cellrowborder" valign="top" width="51.93%" headers="mcps1.2.4.1.3 "><p id="p1274814305510"><a name="p1274814305510"></a><a name="p1274814305510"></a>info级别日志打印接口。</p>
-</td>
-</tr>
-</tbody>
-</table>
+ndk接口: https://gitee.com/openharmony/docs/blob/master/zh-cn/application-dev/dfx/hilog-guidelines-ndk.md
 
-### 使用说明<a name="section129654513264"></a>
-
-1. 查看日志
-
-通过shell , 执行命令 hilog  | grep “MY\_TAG”。
-
+日志打印格式：
 ```
-Debug模式输出：
-01-26 11:01:06.870 1051 1051 W 00201/test: Failed to visit [https://gitee.com/openharmony](https://gitee.com/openharmony), reason:503.
-release模式输出：
-01-26 11:01:06.870 1051 1051 W 00201/test: Failed to visit <private>, reason:503.
+日期 时间 进程号 线程号 日志级别 domainID/日志标签: 日志内容
 ```
-2. hilog命令行使用说明
+如下所示，这是一条domainID为0x3200和标签是"testTag"的info级别的日志：
+```
+04-19 17:02:14.735  5394  5394 I A00032/testTag: this is a info level hilog
+```
+说明：
+-  日志级别：I表示Info级别，其余级别参考日志等级首字母。
+-  domainID：A003200中A表示应用日志，3200表示domainID为0x3200，domainID具体定义详见接口指导。
+
+### 2、日志配置
+
+#### （1）日志等级
+  **说明**： 日志级别要符合日志内容的实际级别，日志级别说明如下：
+
+**FATAL**：重大致命异常，表明程序或功能即将崩溃，故障无法恢复。
+
+**ERROR**：程序或功能发生了错误，该错误会影响功能的正常运行或用户的正常使用，可以恢复但恢复代价较高，如重置数据等。
+
+**WARN**：发生了较为严重的非预期情况，但是对用户影响不大，程序可以自动恢复或通过简单的操作就可以恢复的问题。
+
+**INFO**：用来记录业务关键流程节点，可以还原业务的主要运行过程；用来记录非正常情况信息，但这些情况都是可以预期的(如无网络信号、登录失败等)。这些日志都应该由该业务内处于支配地位的模块来记录，避免在多个被调用的模块或低级函数中重复记录。
+
+**DEBUG**：比INFO级别更详细的流程记录，通过该级别的日志可以更详细地分析业务流程和定位分析问题。DEBUG级别的日志在正式发布版本中默认不会被打印，只有在调试版本或打开调试开关的情况下才会打印。
+
+**日志等级设置**： 日志级别默认是Info级别，可以通过命令修改日志级别。
+
+读取日志级别命令：
+```
+param get hilog.loggable.global
+```
+
+设置日志级别命令：
+```
+hilog -b W \\设置全局日志级别为Warn级别。
+hilog -b D -T testTag \\设置日志Tag为"testTag"的日志级别为Debug级别。
+hilog -b D -D 0x3200 \\设置日志domainID为0x3200的日志级别为Debug级别。
+```
+注：建议不要将全局的日志级别修改为Debug级别，系统后台D级别日志量过大，会导致日志打印时IPC通信超负荷，从而打印失败，可以通过设置本模块使用的domainID或Tag为debug级别的方式，打印出本模块的Debug日志。
+
+
+  
+#### （2）日志超限机制
+
+背景：为了防止日志打印流量过大导致应用性能恶化和打印失败问题，hilog日志打印时增加超限机制，debug应用默认关闭此机制。
+应用进程级别超限机制：应用日志打印时受进程级别超限机制管控，每个进程每秒日志量不超过50K，超过的日志不进行打印，并且有超限提示日志打印，本地调试是可以通过命令关闭应用日志超限机制： hilog -Q pidoff
+```
+应用超限提示日志打印：
+04-19 17:02:34.219  5394  5394 W A00032/LOGLIMIT: ==com.example.myapplication LOGS OVER PROC QUOTA, 3091 DROPPED==
+```
+说明：本条日志标识进程5394在17:02:34时由于日志打印超限，超限日志有3091行未打印。
+
+#### （3）日志隐私机制 
+
+背景：为了防止隐私信息泄露，开发者编写代码是需要考虑日志内容是否敏感，对于隐私信息（格式化控制符没有%{public}标识符）的打印，默认打印出来是“private”字符串，debug应用默认关闭此机制。
+```
+日志打印：OH_LOG_ERROR(LOG_APP, "%s failed to visit %{private}s, reason:%{public}d.", name, url, errno);
+日志显示：12-11 12:21:47.579 2695 2695 E A03200/MY_TAG: <private> failed to visit <private>, reason:11.
+name和url参数格式化符没有%{public}开头，则显示为隐私数据，默认显示"<private>"字符串
+```
+
+
+#### （4）日志落盘机制
+
+开发者可以通过命令将buffer中的日志落盘到/data/log/hilog中。
+
+**hilog日志落盘命令**：
+// 不增加扩展参数默认落盘数量为10个文件，每个文件4M。
+```
+hilog -w start
+```
+// 扩展命令 -n 指定落盘数量，最大1000个文件，-l 指定落盘文件大小，大小范围[64.0K, 512.0M]。
+// 启动落盘命令，日志大小8M，落盘100个文件。
+```
+hilog -w start -l 8M -n 100
+```
+日志落盘任务查询命令：
+```
+hilog -w query
+```
+
+停止日志落盘命令：
+```
+hilog -w stop
+```
+
+### 3、日志常用命令<a name="section129654513264"></a>
+
+(1) hilog命令行参数说明
    
 |     短选项                                                                                   |     长选项           |     参数                                                                                                                              |     说明                                                                                                     |
 |----------------------------------------------------------------------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
@@ -159,16 +213,34 @@ release模式输出：
 |     -b                                                                                       |     --baselevel      |     \<loglevel>                                                                                                                        |     设置可打印日志的最低等级：D(DEBUG)/I(INFO)/W(WARN)/E(ERROR)/F(FATAL)                                     |
 
 ```
-示例：hilog -G 2M -t core                                                                
-解释：设置buffer大小为2M，日志类型为core。                                                                                          
-示例：hilog -g -t app                                                                    
-解释：查询日志类型为app的buffer大小。                                                                                             
-示例：hilog -w start -f "hilog" -l 66k -m zlib -n 10                                   
-解释：执行名字为hilog的落盘任务，10个落盘文件进行轮转，单个文件落盘大小为66k，采用zlib压缩算法。                                  
+示例：hilog -G 4M                                                                
+解释：设置hilogd buffer大小为4M。                                                                                          
+示例：hilog -g                                                                   
+解释：查询hilogd buffer大小。                                                                                             
+示例：hilog -w start -n 100                                  
+解释：执行名字为hilog的落盘任务，不指定-n 参数默认落盘10个文件。
+示例：hilog -b I
+解释：将全局日志级别设置为I级别                                  
 type、level、domain、tag支持排除查询，排除查询可以使用以"^"开头的参数和分隔符"，"."来完成   
 示例：hilog -t ^core,app 排除core和app类型的日志，可以与其他参数一起使用。
 示例：hilog -t app core 打印core和app类型的日志，可以与其他参数一起使用。                                         
 ```          
+
+## hilog调试
+
+### 日志未打印问题定位
+1、排查日志级别是否合理。
+2、排查日志domainID是否合理。
+3、排查代码分支是否走到。
+4、排查日志打印时间点附件有无“LOGLIMIT”、“Slow reader”关键字。  
+LOGLIMIT: 进程日志量过大触发了超限机制、可以使用hilog -Q pidoff命令关闭超限机制。 
+```
+04-24 17:02:50.167  2650  2650 W A01B01/LOGLIMIT: ==com.ohos.sceneboard LOGS OVER PROC QUOTA, 46 DROPPED==
+```
+Slow reader: 整机日志量过大导致hilogd buffer中日志被老化掉，可以使用hilog -G 8M增加hilogd buffer内存大小。  
+```
+04-24 17:02:19.315     0     0 I C00000/HiLog: ========Slow reader missed log lines: 209
+```
 
 ## 涉及仓<a name="section177639411669"></a>
 
