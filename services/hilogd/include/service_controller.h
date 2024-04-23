@@ -77,6 +77,8 @@ private:
     void HandlePersistStartRqst(const PersistStartRqst &rqst);
     void HandlePersistStopRqst(const PersistStopRqst &rqst);
     void HandlePersistQueryRqst(const PersistQueryRqst& rqst);
+    void HandlePersistRefreshRqst(const PersistRefreshRqst& rqst);
+    void HandlePersistClearRqst();
     void HandleBufferSizeGetRqst(const BufferSizeGetRqst& rqst);
     void HandleBufferSizeSetRqst(const BufferSizeSetRqst& rqst);
     void HandleStatsQueryRqst(const StatsQueryRqst& rqst);

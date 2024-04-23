@@ -201,6 +201,8 @@ int HilogdEntry()
             IoctlCmd::PERSIST_START_RQST,
             IoctlCmd::PERSIST_STOP_RQST,
             IoctlCmd::PERSIST_QUERY_RQST,
+            IoctlCmd::PERSIST_REFRESH_RQST,
+            IoctlCmd::PERSIST_CLEAR_RQST,
             IoctlCmd::BUFFERSIZE_GET_RQST,
             IoctlCmd::BUFFERSIZE_SET_RQST,
             IoctlCmd::STATS_QUERY_RQST,
