@@ -20,6 +20,7 @@ ohos_rust_shared_library("hilog_rust") {
 
   crate_name = "hilog_rust"
   crate_type = "dylib"
+  rustflags = [ "-Zstack-protector=all" ]
 
   subsystem_name = "hiviewdfx"
   part_name = "hilog"
