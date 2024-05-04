@@ -67,10 +67,10 @@ inline bool IsKmsg(uint16_t types)
 
 ServiceController::ServiceController(std::unique_ptr<Socket> communicationSocket,
     LogCollector& collector, HilogBuffer& hilogBuffer, HilogBuffer& kmsgBuffer)
-    : m_communicationSocket(std::move(communicationSocket))
-    , m_logCollector(collector)
-    , m_hilogBuffer(hilogBuffer)
-    , m_kmsgBuffer(kmsgBuffer)
+    : m_communicationSocket(std::move(communicationSocket)),
+    m_logCollector(collector),
+    m_hilogBuffer(hilogBuffer),
+    m_kmsgBuffer(kmsgBuffer)
 {
     m_hilogBufferReader = m_hilogBuffer.CreateBufReader([this]() { NotifyForNewData(); });
     m_kmsgBufferReader = m_kmsgBuffer.CreateBufReader([this]() { NotifyForNewData(); });
@@ -141,10 +141,10 @@ int ServiceController::WriteQueryResponse(OptCRef<HilogData> pData)
         return m_communicationSocket->Write(reinterpret_cast<char*>(&rsp), sizeof(rsp));
     }
     const HilogData& data = pData->get();
-    rsp.len = data.len; /* data len, equals tag_len plus content length, include '\0' */
+    rsp.len = data.len; /* data len, equals tagLen plus content length, include '\0' */
     rsp.level = data.level;
     rsp.type = data.type;
-    rsp.tagLen = data.tag_len; /* include '\0' */
+    rsp.tagLen = data.tagLen; /* include '\0' */
     rsp.pid = data.pid;
     rsp.tid = data.tid;
     rsp.domain = data.domain;

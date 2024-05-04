@@ -110,7 +110,8 @@ template <typename FuncType,
           size_t... I,
           typename Traits = function_traits<FuncType>,
           typename ReturnT = typename Traits::result_type>
-ReturnT do_call(FuncType& func, VecType& args, indices<I...>) {
+ReturnT do_call(FuncType& func, VecType& args, indices<I...>)
+{
     return func(args[I]...);
 }
 }  // namespace details

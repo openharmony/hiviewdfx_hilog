@@ -82,7 +82,7 @@ HilogBuffer::~HilogBuffer() {}
 size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
 {
     size_t elemSize = CONTENT_LEN((&msg)); /* include '\0' */
-    if (unlikely(msg.tag_len > MAX_TAG_LEN || msg.tag_len == 0 || elemSize > MAX_LOG_LEN ||
+    if (unlikely(msg.tagLen > MAX_TAG_LEN || msg.tagLen == 0 || elemSize > MAX_LOG_LEN ||
         elemSize == 0 || msg.type >= LOG_TYPE_MAX)) {
         return 0;
     }
@@ -108,7 +108,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
                 }
 
                 OnDeleteItem(it, DeleteReason::BUFF_OVERFLOW);
-                size_t cLen = it->len - it->tag_len;
+                size_t cLen = it->len - it->tagLen;
                 sizeByType[(*it).type] -= cLen;
                 it = hilogDataList.erase(it);
             }
@@ -282,7 +282,7 @@ int32_t HilogBuffer::Delete(uint16_t logType)
         // Delete corresponding logs
         OnDeleteItem(it, DeleteReason::CMD_CLEAR);
 
-        size_t cLen = it->len - it->tag_len;
+        size_t cLen = it->len - it->tagLen;
         sum += cLen;
         sizeByType[(*it).type] -= cLen;
         it = hilogDataList.erase(it);
@@ -426,11 +426,11 @@ static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_
     hilogMsg.pid = 0;
     hilogMsg.tid = 0;
     hilogMsg.domain = 0;
-    hilogMsg.tag_len = tag.length() + 1;
-    if (memcpy_s(hilogMsg.tag, contentLen, tag.c_str(), hilogMsg.tag_len) != 0) {
+    hilogMsg.tagLen = tag.length() + 1;
+    if (memcpy_s(hilogMsg.tag, contentLen, tag.c_str(), hilogMsg.tagLen) != 0) {
         return RET_FAIL;
     }
-    if (memcpy_s(hilogMsg.tag + hilogMsg.tag_len, contentLen - hilogMsg.tag_len, msg.c_str(), msg.length() + 1) != 0) {
+    if (memcpy_s(hilogMsg.tag + hilogMsg.tagLen, contentLen - hilogMsg.tagLen, msg.c_str(), msg.length() + 1) != 0) {
         return RET_FAIL;
     }
 

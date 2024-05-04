@@ -90,7 +90,7 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     HilogMsgWrapper msgWrap((std::vector<char>(msgLen, '\0')));
     HilogMsg& msg = msgWrap.GetHilogMsg();
     msg.len = msgLen;
-    msg.tag_len = tagLen + 1;
+    msg.tagLen = tagLen + 1;
     msg.type = LOG_KMSG;
     msg.level = KmsgLevelMap(LOG_INFO);
     struct timespec ts = {0};
