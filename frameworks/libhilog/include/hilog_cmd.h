@@ -90,7 +90,7 @@ struct OutputRqst {
 } __attribute__((__packed__));
 
 struct OutputRsp {
-    uint16_t len; /* data len, equals tag_len plus content length, include '\0' */
+    uint16_t len; /* data len, equals tagLen plus content length, include '\0' */
     uint8_t level;
     uint8_t type;
     uint32_t pid;

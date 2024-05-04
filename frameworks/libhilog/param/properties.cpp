@@ -65,7 +65,8 @@ enum class PropType {
 using ReadLock = shared_lock<shared_timed_mutex>;
 using InsertLock = unique_lock<shared_timed_mutex>;
 
-static const int HILOG_PROP_VALUE_MAX = 92;
+static constexpr int HILOG_PROP_VALUE_MAX = 92;
+static constexpr int DEFAULT_QUOTA = 51200;
 static int LockByProp(PropType propType);
 static void UnlockByProp(PropType propType);
 
@@ -83,7 +84,7 @@ using PropRes = struct {
     string name;
     pthread_mutex_t* lock;
 };
-static PropRes g_PropResources[static_cast<int>(PropType::PROP_MAX)] = {
+static PropRes g_propResources[static_cast<int>(PropType::PROP_MAX)] = {
     // Cached:
     {"hilog.private.on", &g_privateLock}, // PROP_PRIVATE
     {"hilog.debug.on", &g_onceDebugLock}, // PROP_ONCE_DEBUG
@@ -105,23 +106,23 @@ static PropRes g_PropResources[static_cast<int>(PropType::PROP_MAX)] = {
 
 static string GetPropertyName(PropType propType)
 {
-    return g_PropResources[static_cast<int>(propType)].name;
+    return g_propResources[static_cast<int>(propType)].name;
 }
 
 static int LockByProp(PropType propType)
 {
-    if (g_PropResources[static_cast<int>(propType)].lock == nullptr) {
+    if (g_propResources[static_cast<int>(propType)].lock == nullptr) {
         return -1;
     }
-    return pthread_mutex_trylock(g_PropResources[static_cast<int>(propType)].lock);
+    return pthread_mutex_trylock(g_propResources[static_cast<int>(propType)].lock);
 }
 
 static void UnlockByProp(PropType propType)
 {
-    if (g_PropResources[static_cast<int>(propType)].lock == nullptr) {
+    if (g_propResources[static_cast<int>(propType)].lock == nullptr) {
         return;
     }
-    pthread_mutex_unlock(g_PropResources[static_cast<int>(propType)].lock);
+    pthread_mutex_unlock(g_propResources[static_cast<int>(propType)].lock);
     return;
 }
 
@@ -469,26 +470,24 @@ bool IsTagStatsEnable()
 
 int GetProcessQuota(const string& proc)
 {
-    static constexpr int default_quota = 51200;
     char value[HILOG_PROP_VALUE_MAX] = {0};
     string prop = GetPropertyName(PropType::PROP_PROC_QUOTA) + proc;
 
     int ret = PropertyGet(prop, value, HILOG_PROP_VALUE_MAX);
     if (ret == RET_FAIL || value[0] == 0) {
-        return default_quota;
+        return DEFAULT_QUOTA;
     }
     return std::stoi(value);
 }
 
 int GetDomainQuota(uint32_t domain)
 {
-    static constexpr int default_quota = 51200;
     char value[HILOG_PROP_VALUE_MAX] = {0};
     string prop = GetPropertyName(PropType::PROP_DOMAIN_QUOTA) + Uint2HexStr(domain);
 
     int ret = PropertyGet(prop, value, HILOG_PROP_VALUE_MAX);
     if (ret == RET_FAIL || value[0] == 0) {
-        return default_quota;
+        return DEFAULT_QUOTA;
     }
     return std::stoi(value);
 }

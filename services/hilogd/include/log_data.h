@@ -30,7 +30,7 @@ struct HilogData {
     uint16_t version : 3;
     uint16_t type : 3;  /* APP,CORE,INIT,SEC etc */
     uint16_t level : 4;
-    uint16_t tag_len : 6; /* include '\0' */
+    uint16_t tagLen : 6; /* include '\0' */
     uint32_t tv_sec;
     uint32_t tv_nsec;
     uint32_t mono_sec;
@@ -67,11 +67,11 @@ struct HilogData {
     }
     HilogData() : len(0), tag(nullptr), content(nullptr) {}
     explicit HilogData(const HilogMsg& msg)
-        : len(0), version(msg.version), type(msg.type), level(msg.level), tag_len(msg.tag_len),
+        : len(0), version(msg.version), type(msg.type), level(msg.level), tagLen(msg.tagLen),
         tv_sec(msg.tv_sec), tv_nsec(msg.tv_nsec), mono_sec(msg.mono_sec), pid(msg.pid), tid(msg.tid),
         domain(msg.domain), tag(nullptr), content(nullptr)
     {
-        init(msg.tag, msg.tag_len, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
+        init(msg.tag, msg.tagLen, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
     }
     HilogData(const HilogData& copy)
     {
@@ -85,7 +85,7 @@ struct HilogData {
         if (unlikely(memcpy_s(tag, len, copy.tag, len) != 0)) {
             return;
         }
-        content = tag + tag_len;
+        content = tag + tagLen;
     }
     HilogData& operator=(const HilogData&) = delete;
     HilogData(HilogData&&) = delete;
