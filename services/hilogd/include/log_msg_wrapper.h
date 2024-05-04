@@ -38,7 +38,7 @@ public:
         return *reinterpret_cast<HilogMsg*>(msgBuffer.data());
     }
 
-    const std::vector<char> & GetRawData() const
+    const std::vector<char>& GetRawData() const
     {
         return msgBuffer;
     }

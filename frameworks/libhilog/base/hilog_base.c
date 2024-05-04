@@ -61,7 +61,7 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
     header->tv_nsec = (uint32_t)(ts.tv_nsec);
     header->mono_sec = (uint32_t)(ts_mono.tv_sec);
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
-    header->tag_len = tagLen;
+    header->tagLen = tagLen;
 
     struct iovec vec[LOG_LEN] = {0};
     vec[0].iov_base = header;                   // 0 : index of hos log header

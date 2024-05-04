@@ -477,8 +477,8 @@ uint32_t GetPPidByPid(uint32_t pid)
 
 uint64_t GenerateHash(const char *p, size_t size)
 {
-    static const uint64_t PRIME = 0x100000001B3ull;
-    static const uint64_t BASIS = 0xCBF29CE484222325ull;
+    static const uint64_t PRIME = 0x100000001B3ULL;
+    static const uint64_t BASIS = 0xCBF29CE484222325ULL;
     uint64_t ret {BASIS};
     unsigned long i = 0;
     while (i < size) {

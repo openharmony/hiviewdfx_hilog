@@ -37,7 +37,7 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
     }
 
     header->len = sizeof(HilogMsg) + tagLen + fmtLen;
-    header->tag_len = tagLen;
+    header->tagLen = tagLen;
 
     iovec vec[3];
     vec[0].iov_base = header;                                              // 0 : index of hos log header
