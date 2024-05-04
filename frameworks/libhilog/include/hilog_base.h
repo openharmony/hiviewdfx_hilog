@@ -33,7 +33,7 @@ typedef struct __attribute__((__packed__)) {
     uint16_t version : 3;
     uint16_t type : 4; /* APP,CORE,INIT,SEC etc */
     uint16_t level : 3;
-    uint16_t tag_len : 6; /* include '\0' */
+    uint16_t tagLen : 6; /* include '\0' */
     uint32_t tv_sec;
     uint32_t tv_nsec;
     uint32_t mono_sec;

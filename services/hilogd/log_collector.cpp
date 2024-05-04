@@ -41,7 +41,7 @@ void LogCollector::InsertDropInfo(const HilogMsg &msg, int droppedCount)
         dropMsg->version = msg.version;
         dropMsg->type    = msg.type;
         dropMsg->level   = msg.level;
-        dropMsg->tag_len = tag.size();
+        dropMsg->tagLen = tag.size();
         dropMsg->tv_sec  = msg.tv_sec;
         dropMsg->tv_nsec = msg.tv_nsec;
         dropMsg->mono_sec = msg.mono_sec;
@@ -106,7 +106,7 @@ void LogCollector::onDataRecv(const ucred& cred, std::vector<char>& data, int da
 
     // Log statistics
     if (countEnable) {
-        if (*(msg.tag + msg.tag_len - 1) != '\0') {
+        if (*(msg.tag + msg.tagLen - 1) != '\0') {
             return;
         }
         StatsInfo info = {

@@ -53,8 +53,8 @@ using OptRef = std::optional<std::reference_wrapper<T>>;
 template <typename T>
 using OptCRef = std::optional<std::reference_wrapper<const T>>;
 
-#define CONTENT_LEN(pMsg) ((pMsg)->len - sizeof(HilogMsg) - (pMsg)->tag_len) /* include '\0' */
-#define CONTENT_PTR(pMsg) ((pMsg)->tag + (pMsg)->tag_len)
+#define CONTENT_LEN(pMsg) ((pMsg)->len - sizeof(HilogMsg) - (pMsg)->tagLen) /* include '\0' */
+#define CONTENT_PTR(pMsg) ((pMsg)->tag + (pMsg)->tagLen)
 
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
