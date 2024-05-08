@@ -86,6 +86,7 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_002, TestSize.Level1)
         {LOG_CORE, "core"},
         {LOG_APP, "app"},
         {LOG_KMSG, "kmsg"},
+        {LOG_ONLY_PRERELEASE, "only_prerelease"},
         {LOG_TYPE_MAX, "invalid"},
     };
     for (auto &it : logTypesList) {
@@ -107,15 +108,17 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_003, TestSize.Level1)
         {1 << LOG_APP, "app"},
         {1 << LOG_INIT, "init"},
         {1 << LOG_CORE, "core"},
+        {1 << LOG_ONLY_PRERELEASE, "only_prerelease"},
         {1 << LOG_KMSG, "kmsg"},
-        {(1 << LOG_APP) + (1 << LOG_INIT) + (1 << LOG_CORE) + (1 << LOG_KMSG), "init,core,app,kmsg"},
+        {(1 << LOG_APP) + (1 << LOG_INIT) + (1 << LOG_CORE) + (1 << LOG_ONLY_PRERELEASE) + (1 << LOG_KMSG),
+            "init,core,app,only_prerelease,kmsg"},
     };
     for (auto &it : logTypesList) {
         EXPECT_EQ(ComboLogType2Str(it.first), it.second);
         EXPECT_EQ(Str2ComboLogType(it.second), it.first);
     }
 
-    EXPECT_EQ(Str2ComboLogType(""), (1 << LOG_APP) + (1 << LOG_CORE));
+    EXPECT_EQ(Str2ComboLogType(""), (1 << LOG_APP) + (1 << LOG_CORE) + (1 << LOG_ONLY_PRERELEASE));
     EXPECT_EQ(Str2ComboLogType("invalid"), 0);
 }
 
@@ -204,7 +207,7 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_007, TestSize.Level1)
     GTEST_LOG_(INFO) << "HilogUtilsTest_007: start.";
     vector<uint16_t> vec = GetAllLogTypes();
     sort(vec.begin(), vec.end());
-    vector<uint16_t> allTypes {0, 1, 3, 4};
+    vector<uint16_t> allTypes {0, 1, 3, 4, 5};
     EXPECT_TRUE(vec == allTypes);
 }
 
