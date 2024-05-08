@@ -95,7 +95,7 @@ static const KVMap<int16_t, string> g_ErrorMsgs({
     {RET_FAIL, "Unknown failure reason"},
     {ERR_LOG_LEVEL_INVALID, "Invalid log level, the valid log levels include D/I/W/E/F"
     " or DEBUG/INFO/WARN/ERROR/FATAL"},
-    {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init/kmsg"},
+    {ERR_LOG_TYPE_INVALID, "Invalid log type, the valid log types include app/core/init/kmsg/only_prerelease"},
     {ERR_INVALID_RQST_CMD, "Invalid request cmd, please check sourcecode"},
     {ERR_QUERY_TYPE_INVALID, "Can't query kmsg type logs combined with other types logs."},
     {ERR_INVALID_DOMAIN_STR, "Invalid domain string"},
@@ -149,7 +149,8 @@ string ErrorCode2Str(int16_t errorCode)
 
 // Log Types&Strings Map
 static const StringMap g_LogTypes({
-        {LOG_INIT, "init"}, {LOG_CORE, "core"}, {LOG_APP, "app"}, {LOG_KMSG, "kmsg"}
+        {LOG_INIT, "init"}, {LOG_CORE, "core"}, {LOG_APP, "app"}, {LOG_KMSG, "kmsg"},
+        {LOG_ONLY_PRERELEASE, "only_prerelease"}
 }, LOG_TYPE_MAX, "invalid");
 
 string LogType2Str(uint16_t logType)
@@ -188,7 +189,7 @@ uint16_t Str2ComboLogType(const string& str)
 {
     uint16_t logTypes = 0;
     if (str == "") {
-        logTypes = (1 << LOG_CORE) | (1 << LOG_APP);
+        logTypes = (1 << LOG_CORE) | (1 << LOG_APP) | (1 << LOG_ONLY_PRERELEASE);
         return logTypes;
     }
     vector<string> vec;

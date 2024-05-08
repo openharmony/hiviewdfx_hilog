@@ -64,6 +64,7 @@ static inline const char* GetLogTypePrefix(uint16_t type)
         case LOG_INIT: return "I";
         case LOG_CORE: return "C";
         case LOG_KMSG: return "K";
+        case LOG_ONLY_PRERELEASE: return "P";
         default: return " ";
     }
 }
