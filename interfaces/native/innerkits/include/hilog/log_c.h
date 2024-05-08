@@ -51,6 +51,8 @@ typedef enum {
     LOG_CORE = 3,
     /* Used by kmsg log. */
     LOG_KMSG = 4,
+    /* Not print in release version. */
+    LOG_ONLY_PRERELEASE = 5,
     /* max log type */
     LOG_TYPE_MAX
 } LogType;

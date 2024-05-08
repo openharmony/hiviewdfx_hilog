@@ -32,8 +32,14 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-static size_t g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144};
+static size_t g_maxBufferSizeByType[LOG_TYPE_MAX] = {262144, 262144, 262144, 262144, 262144, 0};
 static int GenerateHilogMsgInside(HilogMsg& hilogMsg, const string& msg, uint16_t logType);
+
+// LOG_ONLY_PRERELEASE and LOG_CORE use the same buffer.
+static inline int ConvertBufType(int type)
+{
+    return type == LOG_ONLY_PRERELEASE ? LOG_CORE : type;
+}
 
 HilogBuffer::HilogBuffer(bool isSupportSkipLog) : m_isSupportSkipLog(isSupportSkipLog)
 {
@@ -89,15 +95,16 @@ size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
     isFull = false;
     {
         std::lock_guard<decltype(hilogBufferMutex)> lock(hilogBufferMutex);
+        int bufferType = ConvertBufType(msg.type);
 
         // Delete old entries when full
-        if (elemSize + sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
+        if (elemSize + sizeByType[bufferType] >= g_maxBufferSizeByType[bufferType]) {
             // Drop 5% of maximum log when full
             std::list<HilogData>::iterator it = hilogDataList.begin();
             static const float DROP_RATIO = 0.05;
-            while (sizeByType[msg.type] > g_maxBufferSizeByType[msg.type] * (1 - DROP_RATIO) &&
+            while (sizeByType[bufferType] > g_maxBufferSizeByType[bufferType] * (1 - DROP_RATIO) &&
                 it != hilogDataList.end()) {
-                if ((*it).type != msg.type) {    // Only remove old logs of the same type
+                if ((*it).type != bufferType) {    // Only remove old logs of the same type
                     ++it;
                     continue;
                 }
@@ -114,7 +121,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
             }
 
             // Re-confirm if enough elements has been removed
-            if (sizeByType[msg.type] >= g_maxBufferSizeByType[msg.type]) {
+            if (sizeByType[bufferType] >= g_maxBufferSizeByType[bufferType]) {
                 std::cout << "Failed to clean old logs." << std::endl;
             }
         }
@@ -122,7 +129,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
         // Append new log into HilogBuffer
         hilogDataList.emplace_back(msg);
         // Update current size of HilogBuffer
-        sizeByType[msg.type] += elemSize;
+        sizeByType[bufferType] += elemSize;
         OnPushBackedItem(hilogDataList);
     }
 
