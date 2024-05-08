@@ -245,7 +245,8 @@ HWTEST_F(HilogToolTest, HandleTest_004, TestSize.Level1)
     std::string cmd = "hilog -G 512K";
     std::string str = "Set log type app buffer size to 512.0K successfully\n"
         "Set log type init buffer size to 512.0K successfully\n"
-        "Set log type core buffer size to 512.0K successfully\n";
+        "Set log type core buffer size to 512.0K successfully\n"
+        "Set log type only_prerelease buffer size to 512.0K successfully\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
 
     cmd = "hilog -G 512G";
@@ -271,7 +272,8 @@ HWTEST_F(HilogToolTest, HandleTest_005, TestSize.Level1)
     std::string cmd = "hilog -g";
     std::string str = "Log type app buffer size is 512.0K\n"
         "Log type init buffer size is 512.0K\n"
-        "Log type core buffer size is 512.0K\n";
+        "Log type core buffer size is 512.0K\n"
+        "Log type only_prerelease buffer size is 512.0K\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
 }
 
@@ -427,7 +429,7 @@ HWTEST_F(HilogToolTest, HandleTest_010, TestSize.Level1)
         strftime(clearTime, sizeof(clearTime), "%m-%d %H:%M:%S.%s", tmNow);
     }
     std::string cmd = "hilog -r";
-    std::string str = "Log type core,app buffer clear successfully\n";
+    std::string str = "Log type core,app,only_prerelease buffer clear successfully\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
 
     sleep(1);
@@ -510,7 +512,7 @@ HWTEST_F(HilogToolTest, HandleTest_012, TestSize.Level1)
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
 
     cmd = "hilog -w query";
-    str = std::to_string(jobid) + " init,core,app " + compress + " /data/log/hilog/" + filename
+    str = std::to_string(jobid) + " init,core,app,only_prerelease " + compress + " /data/log/hilog/" + filename
         + " " + Size2Str(length) + " " + std::to_string(num) + "\n";
     EXPECT_EQ(GetCmdResultFromPopen(cmd), str);
 
