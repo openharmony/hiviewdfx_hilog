@@ -47,8 +47,10 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 static const string LOG_PERSISTER_DIR = HILOG_FILE_DIR;
-static constexpr uint16_t DEFAULT_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE) | (0b01 << LOG_INIT));
-static constexpr uint16_t DEFAULT_REMOVE_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE));
+static constexpr uint16_t DEFAULT_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE)
+                                              | (0b01 << LOG_INIT) | (0b01 << LOG_ONLY_PRERELEASE));
+static constexpr uint16_t DEFAULT_REMOVE_LOG_TYPES = ((0b01 << LOG_APP) | (0b01 << LOG_CORE)
+                                                     | (0b01 << LOG_ONLY_PRERELEASE));
 static constexpr uint32_t DEFAULT_PERSIST_FILE_NUM = 10;
 static constexpr uint32_t DEFAULT_PERSIST_FILE_SIZE = (4 * 1024 * 1024);
 static constexpr uint32_t DEFAULT_PERSIST_NORMAL_JOB_ID = 1;
