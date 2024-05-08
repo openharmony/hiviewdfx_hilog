@@ -48,8 +48,8 @@ static void QueryHelper()
     << "  -t <type>, --type=<type>" << endl
     << "    Show specific type/types logs with format: type1,type2,type3" << endl
     << "    Don't show specific type/types logs with format: ^type1,type2,type3" << endl
-    << "    Type coule be: app/core/init/kmsg, kmsg can't combine with others." << endl
-    << "    Default types are: app,core,init." << endl
+    << "    Type coule be: app/core/init/kmsg/only_prerelease, kmsg can't combine with others." << endl
+    << "    Default types are: app,core,init,only_prerelease." << endl
     << "  -L <level>, --level=<level>" << endl
     << "    Show specific level/levels logs with format: level1,level2,level3" << endl
     << "    Don't show specific level/levels logs with format: ^level1,level2,level3" << endl
@@ -98,8 +98,8 @@ static void ClearHelper()
     << "  Remove all logs in hilogd buffer, advanced option:" << endl
     << "  -t <type>, --type=<type>" << endl
     << "    Remove specific type/types logs in buffer with format: type1,type2,type3" << endl
-    << "    Type coule be: app/core/init/kmsg." << endl
-    << "    Default types are: app,core" << endl;
+    << "    Type coule be: app/core/init/kmsg/only_prerelease." << endl
+    << "    Default types are: app,core,only_prerelease" << endl;
 }
 
 static void BufferHelper()
@@ -109,8 +109,8 @@ static void BufferHelper()
     << "  Query hilogd buffer size, advanced option:" << endl
     << "  -t <type>, --type=<type>" << endl
     << "    Query specific type/types buffer size with format: type1,type2,type3" << endl
-    << "    Type coule be: app/core/init/kmsg." << endl
-    << "    Default types are: app,core" << endl
+    << "    Type coule be: app/core/init/kmsg/only_prerelease." << endl
+    << "    Default types are: app,core,only_prerelease" << endl
     << "-G <size>, --buffer-size=<size>" << endl
     << "  Set hilogd buffer size, <size> could be number or number with unit." << endl
     << "  Unit could be: B/K/M/G which represents Byte/Kilobyte/Megabyte/Gigabyte." << endl
@@ -118,8 +118,8 @@ static void BufferHelper()
     << "  Advanced option:" << endl
     << "  -t <type>, --type=<type>" << endl
     << "    Set specific type/types log buffer size with format: type1,type2,type3" << endl
-    << "    Type coule be: app/core/init/kmsg." << endl
-    << "    Default types are: app,core" << endl
+    << "    Type coule be: app/core/init/kmsg/only_prerelease." << endl
+    << "    Default types are: app,core,only_prerelease" << endl
     << "  **It's a persistant configuration**" << endl;
 }
 
@@ -219,8 +219,8 @@ static void DomainHelper()
     cout
     << endl << endl
     << "Domain description:" << endl
-    << "  Log type \"core\" & \"init\" are used for OS subsystems, the range is [0x" << hex << DOMAIN_OS_MIN << ","
-    << "  0x" << DOMAIN_OS_MAX << "]" << endl
+    << "  Log type \"core\" & \"init\" & \"only_prerelease\" are used for OS subsystems, the range is"
+    << "  [0x" << hex << DOMAIN_OS_MIN << ",  0x" << DOMAIN_OS_MAX << "]" << endl
     << "  Log type \"app\" is used for applications, the range is [0x" << DOMAIN_APP_MIN << ","
     << "  0x" << DOMAIN_APP_MAX << "]" << dec << endl
     << "  To reduce redundant info when printing logs, only last five hex numbers of domain are printed" << endl
