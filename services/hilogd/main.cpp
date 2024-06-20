@@ -189,7 +189,7 @@ int HilogdEntry()
     }
 
     ffrt::submit([]() {
-        string myPid = to_string(getpid());
+        string myPid = to_string(getprocpid());
         (void)WriteStringToFile(myPid, SYSTEM_BG_STUNE);
         (void)WriteStringToFile(myPid, SYSTEM_BG_CPUSET);
         (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
