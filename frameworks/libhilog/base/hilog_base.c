@@ -89,7 +89,7 @@ int HiLogBasePrintArgs(
     header.type = type;
     header.level = level;
 #ifndef __RECV_MSG_WITH_UCRED_
-    header.pid = getpid();
+    header.pid = getprocpid();
 #endif
     header.tid = (uint32_t)(gettid());
     header.domain = domain;
