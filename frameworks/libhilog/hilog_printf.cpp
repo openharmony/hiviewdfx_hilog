@@ -304,7 +304,6 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     header.type = type;
     header.level = level;
 #ifndef __RECV_MSG_WITH_UCRED_
-
 #if defined(is_ohos) && is_ohos
     header.pid = static_cast<uint32_t>(getprocpid());
 #elif not defined(__WINDOWS__)
