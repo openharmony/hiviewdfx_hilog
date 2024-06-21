@@ -36,7 +36,7 @@ namespace OHOS {
         header.tv_sec = static_cast<uint32_t>(ts.tv_sec);
         header.tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
         header.mono_sec = static_cast<uint32_t>(tsMono.tv_sec);
-        header.pid = getpid();
+        header.pid = getprocpid();
         header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
         header.type = LOG_CORE;
         header.level = LOG_INFO;
