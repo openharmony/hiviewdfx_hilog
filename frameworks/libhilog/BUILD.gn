@@ -16,7 +16,6 @@ import("//build/ohos.gni")
 
 framework_root = "//base/hiviewdfx/hilog/frameworks"
 libhilog_root = "$framework_root/libhilog"
-libhilog_base_root = "$libhilog_root/base"
 ioctl_root = "$libhilog_root/ioctl"
 param_root = "$libhilog_root/param"
 socket_root = "$libhilog_root/socket"
@@ -119,31 +118,4 @@ foreach(item, platforms) {
   libhilog_source("libhilog_source_" + item) {
     platform = item
   }
-}
-
-config("libhilog_base_config") {
-  visibility = [ "*:*" ]
-  include_dirs = [ "include" ]
-}
-
-ohos_source_set("libhilog_base_source") {
-  include_dirs = [
-    "$vsnprintf_root/include",
-    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
-  ]
-
-  vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.c" ]
-
-  sources = [ "$libhilog_base_root/hilog_base.c" ]
-  sources += vsnprintf_sources
-
-  defines = [
-    "__RECV_MSG_WITH_UCRED_",
-    "HILOG_PROHIBIT_ALLOCATION",
-  ]
-  public_configs = [ ":libhilog_base_config" ]
-  configs = [ ":libhilog_base_config" ]
-
-  part_name = "hilog"
-  subsystem_name = "hiviewdfx"
 }
