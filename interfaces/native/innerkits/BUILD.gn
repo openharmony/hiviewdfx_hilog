@@ -14,6 +14,11 @@
 import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
+framework_root = "//base/hiviewdfx/hilog/frameworks"
+libhilog_root = "$framework_root/libhilog"
+libhilog_base_root = "$libhilog_root/base"
+vsnprintf_root = "$libhilog_root/vsnprintf"
+
 config("libhilog_pub_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
@@ -118,10 +123,28 @@ config("libhilog_base_pub_cfg") {
   ]
 }
 
+config("libhilog_base_config") {
+  visibility = [ "*:*" ]
+  include_dirs = [ "../../../frameworks/libhilog/include" ]
+}
+
 ohos_static_library("libhilog_base") {
   public_configs = [ ":libhilog_base_pub_cfg" ]
 
-  deps = [ "../../../frameworks/libhilog:libhilog_base_source" ]
+  include_dirs = [
+    "$vsnprintf_root/include",
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  ]
+
+  vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.c" ]
+
+  sources = [ "$libhilog_base_root/hilog_base.c" ]
+  sources += vsnprintf_sources
+  defines = [
+    "__RECV_MSG_WITH_UCRED_",
+    "HILOG_PROHIBIT_ALLOCATION",
+  ]
+  configs = [ ":libhilog_base_config" ]
 
   subsystem_name = "hiviewdfx"
   part_name = "hilog"
