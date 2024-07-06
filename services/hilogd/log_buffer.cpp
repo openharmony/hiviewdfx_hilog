@@ -104,7 +104,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
             static const float DROP_RATIO = 0.05;
             while (sizeByType[bufferType] > g_maxBufferSizeByType[bufferType] * (1 - DROP_RATIO) &&
                 it != hilogDataList.end()) {
-                if ((*it).type != bufferType) {    // Only remove old logs of the same type
+                if (ConvertBufType((*it).type) != bufferType) {    // Only remove old logs of the same type
                     ++it;
                     continue;
                 }
@@ -116,7 +116,7 @@ size_t HilogBuffer::Insert(const HilogMsg& msg, bool& isFull)
 
                 OnDeleteItem(it, DeleteReason::BUFF_OVERFLOW);
                 size_t cLen = it->len - it->tagLen;
-                sizeByType[(*it).type] -= cLen;
+                sizeByType[ConvertBufType((*it).type)] -= cLen;
                 it = hilogDataList.erase(it);
             }
 
