@@ -56,6 +56,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD002F00, "Security"},
     {0xD003100, "TestSystem"},
     {0xD003200, "TestSystem"},
+    {0xD003300, "DevelopmentToolchain"},
     {0xD003900, "Ace"},
     {0xD003B00, "JSConsole"},
     {0xD003D00, "Utils"},
