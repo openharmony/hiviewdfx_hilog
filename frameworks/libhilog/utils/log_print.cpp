@@ -183,7 +183,6 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
         pScan++;
     }
     if (pHead[0] != '\0') {
-        PrintLogPrefix(content, format, out);
         out << pHead;
     }
 
