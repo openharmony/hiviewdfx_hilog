@@ -94,7 +94,7 @@ static void QueryHelper()
     << "    Don't show specific domain/domains logs with format: ^pid1,pid2,pid3" << endl
     << "    Max pid count is " << MAX_PIDS << "." << endl
     << "  -e <expr>, --regex=<expr>" << endl
-    << "    Show the logs which match the regular expression <expr>." << endl
+    << "    Show the logs which match the regular expression <expr>." << endl;
     FormatHelper();
 }
 
