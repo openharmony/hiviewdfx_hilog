@@ -146,7 +146,8 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
 static void AdaptWrap(const LogContent& content, const LogFormat& format, std::ostream& out)
 {
     if (format.wrap) {
-        out << " " << setw(PREFIX_LEN + StringToWstring(content.tag).length());
+        out << setfill(' ');
+        out << std::setw(PREFIX_LEN + StringToWstring(content.tag).length()) << " ";
     } else {
         PrintLogPrefix(content, format, out);
     }
@@ -159,9 +160,11 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
         out << "\x1B[38;5;" << GetColor(content.level) << "m";
     }
 
-    PrintLogPrefix(content, format, out);
     const char *pHead = content.log;
     const char *pScan = content.log;
+    if (*pScan != '\0') {
+        PrintLogPrefix(content, format, out);
+    }
     // split the log content by '\n', and add log prefix(datetime, pid, tid....) to each new line
     while (*pScan != '\0') {
         if (*pScan == '\n') {
