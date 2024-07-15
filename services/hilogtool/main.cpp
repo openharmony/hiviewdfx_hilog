@@ -52,7 +52,7 @@ static void FormatHelper()
     << "        nsec       display time by nanosecond." << endl
     << "      year       display the year when -v time is specified." << endl
     << "      zone       display the time zone when -v time is specified." << endl
-    << "      wrap       display the \n in each log." << endl
+    << "      wrap       display the log without prefix when a log line is wrapped." << endl
     << "    Different types of formats can be combined, such as:" << endl
     << "    -v color -v time -v msec -v year -v zone." << endl;
 }
