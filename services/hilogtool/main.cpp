@@ -17,7 +17,7 @@
 #include <iostream>
 #include <iomanip>
 #include <ctime>
-
+#include <functional>
 #include <string_ex.h>
 #include <securec.h>
 #include <list>
@@ -34,6 +34,29 @@
 namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
+static void FormatHelper()
+{
+    cout
+    << "  -v <format>, --format=<format>" << endl
+    << "    Show logs in different formats, options are:" << endl
+    << "      color or colour      display colorful logs by log level.i.e." << endl
+    << "        \x1B[38;5;75mDEBUG        \x1B[38;5;40mINFO        \x1B[38;5;166mWARN"
+    << "        \x1B[38;5;196mERROR       \x1B[38;5;226mFATAL\x1B[0m" << endl
+    << "      time format options are(single accepted):" << endl
+    << "        time       display local time, this is default." << endl
+    << "        epoch      display the time from 1970/1/1." << endl
+    << "        monotonic  display the cpu time from bootup." << endl
+    << "      time accuracy format options are(single accepted):" << endl
+    << "        msec       display time by millisecond, this is default." << endl
+    << "        usec       display time by microsecond." << endl
+    << "        nsec       display time by nanosecond." << endl
+    << "      year       display the year when -v time is specified." << endl
+    << "      zone       display the time zone when -v time is specified." << endl
+    << "      wrap       display the log without prefix when a log line is wrapped." << endl
+    << "    Different types of formats can be combined, such as:" << endl
+    << "    -v color -v time -v msec -v year -v zone." << endl;
+}
+
 static void QueryHelper()
 {
     cout
@@ -71,24 +94,8 @@ static void QueryHelper()
     << "    Don't show specific domain/domains logs with format: ^pid1,pid2,pid3" << endl
     << "    Max pid count is " << MAX_PIDS << "." << endl
     << "  -e <expr>, --regex=<expr>" << endl
-    << "    Show the logs which match the regular expression <expr>." << endl
-    << "  -v <format>, --format=<format>" << endl
-    << "    Show logs in different formats, options are:" << endl
-    << "      color or colour      display colorful logs by log level.i.e." << endl
-    << "        \x1B[38;5;75mDEBUG        \x1B[38;5;40mINFO        \x1B[38;5;166mWARN"
-    << "        \x1B[38;5;196mERROR       \x1B[38;5;226mFATAL\x1B[0m" << endl
-    << "      time format options are(single accepted):" << endl
-    << "        time       display local time, this is default." << endl
-    << "        epoch      display the time from 1970/1/1." << endl
-    << "        monotonic  display the cpu time from bootup." << endl
-    << "      time accuracy format options are(single accepted):" << endl
-    << "        msec       display time by millisecond, this is default." << endl
-    << "        usec       display time by microsecond." << endl
-    << "        nsec       display time by nanosecond." << endl
-    << "      year       display the year when -v time is specified." << endl
-    << "      zone       display the time zone when -v time is specified." << endl
-    << "    Different types of formats can be combined, such as:" << endl
-    << "    -v color -v time -v msec -v year -v zone." << endl;
+    << "    Show the logs which match the regular expression <expr>." << endl;
+    FormatHelper();
 }
 
 static void ClearHelper()
@@ -319,6 +326,7 @@ struct HilogArgs {
     FormatTimeAccu timeAccuFormat;
     bool year;
     bool zone;
+    bool wrap;
     bool noBlock;
     uint16_t tailLines;
 
@@ -326,7 +334,7 @@ struct HilogArgs {
         fileName(""), buffSize(0), jobId(0), fileSize(0), levels(0), stream(""), fileNum(0), blackPid(false),
         pidCount(0), pids { 0 }, types(0), blackTag(false), tagCount(0), tags { "" }, colorful(false),
         timeFormat(FormatTime::INVALID), timeAccuFormat(FormatTimeAccu::INVALID), year(false), zone(false),
-        noBlock(false), tailLines(0) {}
+        wrap(false), noBlock(false), tailLines(0) {}
 
     void ToOutputRqst(OutputRqst& rqst)
     {
@@ -425,7 +433,8 @@ static int QueryLogHandler(HilogArgs& context, const char *arg)
             .timeAccuFormat =
                 ((context.timeAccuFormat == FormatTimeAccu::INVALID) ? FormatTimeAccu::MSEC : context.timeAccuFormat),
             .year = context.year,
-            .zone = context.zone
+            .zone = context.zone,
+            .wrap = context.wrap
         };
         LogPrintWithFormat(content, format);
         return static_cast<int>(SUCCESS_CONTINUE);
@@ -788,42 +797,73 @@ static int TagHandler(HilogArgs& context, const char *arg)
     return RET_SUCCESS;
 }
 
+static int TimeHandler(HilogArgs& context, FormatTime value)
+{
+    if (context.timeFormat != FormatTime::INVALID) {
+        return ERR_DUPLICATE_OPTION;
+    }
+    context.timeFormat = value;
+    return RET_SUCCESS;
+}
+ 
+static int TimeAccuHandler(HilogArgs& context, FormatTimeAccu value)
+{
+    if (context.timeAccuFormat != FormatTimeAccu::INVALID) {
+        return ERR_DUPLICATE_OPTION;
+    }
+    context.timeAccuFormat = value;
+    return RET_SUCCESS;
+}
+
 static int FormatHandler(HilogArgs& context, const char *arg)
 {
-    string strArg = arg;
-    if (strArg == "color" || strArg == "colour") {
-        context.colorful = true;
-    } else if (strArg == "time" || strArg == "epoch" || strArg == "monotonic") {
-        if (context.timeFormat != FormatTime::INVALID) {
-            return ERR_DUPLICATE_OPTION;
-        }
-        if (strArg == "time") {
-            context.timeFormat = FormatTime::TIME;
-        } else if (strArg == "epoch") {
-            context.timeFormat = FormatTime::EPOCH;
-        } else if (strArg == "monotonic") {
-            context.timeFormat = FormatTime::MONOTONIC;
-        }
-    } else if (strArg == "msec" || strArg == "usec" || strArg == "nsec") {
-        if (context.timeAccuFormat != FormatTimeAccu::INVALID) {
-            return ERR_DUPLICATE_OPTION;
-        }
-        if (strArg == "msec") {
-            context.timeAccuFormat = FormatTimeAccu::MSEC;
-        } else if (strArg == "usec") {
-            context.timeAccuFormat = FormatTimeAccu::USEC;
-        } else if (strArg == "nsec") {
-            context.timeAccuFormat = FormatTimeAccu::NSEC;
-        }
-    } else if (strArg == "year") {
-        context.year = true;
-    } else if (strArg == "zone") {
-        context.zone = true;
-        tzset();
-    } else {
+    static std::unordered_map<std::string, std::function<int(HilogArgs&, int)>> handlers = {
+        {"color", [] (HilogArgs& context, int value) {
+            context.colorful = true;
+            return RET_SUCCESS;
+        }},
+        {"colour", [] (HilogArgs& context, int value) {
+            context.colorful = true;
+            return RET_SUCCESS;
+        }},
+        {"time", [] (HilogArgs& context, int value) {
+            return TimeHandler(context, FormatTime::TIME);
+        }},
+        {"epoch", [] (HilogArgs& context, int value) {
+            return TimeHandler(context, FormatTime::EPOCH);
+        }},
+        {"monotonic", [] (HilogArgs& context, int value) {
+            return TimeHandler(context, FormatTime::MONOTONIC);
+        }},
+        {"msec", [] (HilogArgs& context, int value) {
+            return TimeAccuHandler(context, FormatTimeAccu::MSEC);
+        }},
+        {"usec", [] (HilogArgs& context, int value) {
+            return TimeAccuHandler(context, FormatTimeAccu::USEC);
+        }},
+        {"nsec", [] (HilogArgs& context, int value) {
+            return TimeAccuHandler(context, FormatTimeAccu::NSEC);
+        }},
+        {"year", [] (HilogArgs& context, int value) {
+            context.year = true;
+            return RET_SUCCESS;
+        }},
+        {"zone", [] (HilogArgs& context, int value) {
+            context.zone = true;
+            tzset();
+            return RET_SUCCESS;
+        }},
+        {"wrap", [] (HilogArgs& context, int value) {
+            context.wrap = true;
+            return RET_SUCCESS;
+        }},
+    };
+ 
+    auto handler = handlers.find(arg);
+    if (handler == handlers.end() || handler->second == nullptr) {
         return ERR_INVALID_ARGUMENT;
     }
-    return RET_SUCCESS;
+    return handler->second(context, 0);
 }
 
 static int PersistTaskStart(HilogArgs& context)

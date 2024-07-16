@@ -44,6 +44,7 @@ static constexpr int NSEC_WIDTH = 9;
 static constexpr int PID_WIDTH = 5;
 static constexpr int DOMAIN_WIDTH = 5;
 static constexpr int DOMAIN_SHORT_MASK = 0xFFFFF;
+static constexpr int PREFIX_LEN = 42;
 
 static inline int GetColor(uint16_t level)
 {
@@ -142,6 +143,16 @@ static void PrintLogPrefix(const LogContent& content, const LogFormat& format, s
     }
 }
 
+static void AdaptWrap(const LogContent& content, const LogFormat& format, std::ostream& out)
+{
+    if (format.wrap) {
+        out << setfill(' ');
+        out << std::setw(PREFIX_LEN + StringToWstring(content.tag).length()) << " ";
+    } else {
+        PrintLogPrefix(content, format, out);
+    }
+}
+
 void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std::ostream& out)
 {
     // set colorful log
@@ -151,6 +162,9 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
 
     const char *pHead = content.log;
     const char *pScan = content.log;
+    if (*pScan != '\0') {
+        PrintLogPrefix(content, format, out);
+    }
     // split the log content by '\n', and add log prefix(datetime, pid, tid....) to each new line
     while (*pScan != '\0') {
         if (*pScan == '\n') {
@@ -162,15 +176,16 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
             }
             tmp[(MAX_LOG_LEN - 1) > len ? len : (MAX_LOG_LEN -1)] = '\0';
             if (tmp[0] != '\0') {
-                PrintLogPrefix(content, format, out);
                 out << tmp << endl;
             }
             pHead = pScan + 1;
+            if (pHead[0] != '\0' && pHead[0] != '\n') {
+                AdaptWrap(content, format, out);
+            }
         }
         pScan++;
     }
     if (pHead[0] != '\0') {
-        PrintLogPrefix(content, format, out);
         out << pHead;
     }
 

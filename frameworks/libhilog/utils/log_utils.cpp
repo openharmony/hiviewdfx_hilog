@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <codecvt>
 #include <cstdint>
 #include <cstdlib>
 #include <chrono>
@@ -518,6 +519,12 @@ int WaitingToDo(int max, const string& path, function<int(const string &path)> f
             return RET_FAIL;
         }
     }
+}
+
+std::wstring StringToWstring(const std::string& input)
+{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.from_bytes(input);
 }
 } // namespace HiviewDFX
 } // namespace OHOS

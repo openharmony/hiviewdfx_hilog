@@ -39,6 +39,7 @@ struct LogFormat {
     FormatTimeAccu timeAccuFormat;
     bool year;
     bool zone;
+    bool wrap;
 };
 
 void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std::ostream& out = std::cout);
