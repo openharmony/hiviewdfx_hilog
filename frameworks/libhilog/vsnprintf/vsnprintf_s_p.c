@@ -34,15 +34,15 @@
 
 #if defined(_DEBUG) || defined(DEBUG)
     #if defined(SECUREC_ERROR_HANDLER_BY_ASSERT)
-        #define SECUREC_ERROR_INVALID_PARAMTER(msg) assert( msg "invalid argument" == NULL)
-        #define SECUREC_ERROR_INVALID_RANGE(msg)    assert( msg "invalid dest buffer size" == NULL)
+        #define SECUREC_ERROR_INVALID_PARAMTER(msg) assert(msg "invalid argument" == NULL)
+        #define SECUREC_ERROR_INVALID_RANGE(msg)    assert(msg "invalid dest buffer size" == NULL)
     #elif defined(SECUREC_ERROR_HANDLER_BY_PRINTF)
         #if SECUREC_IN_KERNEL
-            #define SECUREC_ERROR_INVALID_PARAMTER(msg) printk( "%s invalid argument\n",msg)
-            #define SECUREC_ERROR_INVALID_RANGE(msg)    printk( "%s invalid dest buffer size\n", msg)
+            #define SECUREC_ERROR_INVALID_PARAMTER(msg) printk("%s invalid argument\n", msg)
+            #define SECUREC_ERROR_INVALID_RANGE(msg)    printk("%s invalid dest buffer size\n", msg)
         #else
-            #define SECUREC_ERROR_INVALID_PARAMTER(msg) printf( "%s invalid argument\n",msg)
-            #define SECUREC_ERROR_INVALID_RANGE(msg)    printf( "%s invalid dest buffer size\n", msg)
+            #define SECUREC_ERROR_INVALID_PARAMTER(msg) printf("%s invalid argument\n", msg)
+            #define SECUREC_ERROR_INVALID_RANGE(msg)    printf("%s invalid dest buffer size\n", msg)
         #endif
     #elif defined(SECUREC_ERROR_HANDLER_BY_FILE_LOG)
         #define SECUREC_ERROR_INVALID_PARAMTER(msg) LogSecureCRuntimeError(msg " EINVAL\n")
@@ -140,7 +140,8 @@ typedef enum {
 
 #else
 #define SECUREC_MALLOC(x) (NULL)
-#define SECUREC_FREE(x)   { printf("Malloc is not allowed, so free should not be possible to execute!"); exit(EXIT_FAILURE); }
+#define SECUREC_FREE(x) { printf("Malloc is not allowed, so free should not be possible to execute!"); \
+    exit(EXIT_FAILURE); }
 #endif
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(_MSC_VER)) || defined(__ARMCC_VERSION)

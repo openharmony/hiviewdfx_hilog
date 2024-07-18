@@ -156,8 +156,8 @@ static void SecWritePrivateStr(SecPrintfStream *stream, int *pCharsOut)
     int ii = 0;
 #define PRIVATE_STR_LEN (9)
 #ifndef SECUREC_FOR_WCHAR
-    static const char privacyString[] = "<private>";
-    const char *pPrivStr = privacyString;
+    static const char PRIVACY_STRING[] = "<private>";
+    const char *pPrivStr = PRIVACY_STRING;
 
     if (SECUREC_IS_REST_BUF_ENOUGH(PRIVATE_STR_LEN)) {
         SECUREC_SAFE_WRITE_STR(pPrivStr, PRIVATE_STR_LEN, stream, pCharsOut);
@@ -253,10 +253,11 @@ static int SecDecodeSize(SecChar ch, SecFormatAttr *attr, const SecChar **format
         break;
 
     case SECUREC_CHAR('h'):
-        if (**format == SECUREC_CHAR('h'))
+        if (**format == SECUREC_CHAR('h')) {
             attr->flags |= SECUREC_FLAG_CHAR;   /* char */
-        else
+        } else {
             attr->flags |= SECUREC_FLAG_SHORT;  /* short int */
+        }
         break;
 
     case SECUREC_CHAR('w'):
@@ -428,7 +429,7 @@ int SecOutputPS(SecPrintfStream *stream, int priv, const char *cformat, va_list 
     SecChar prefix[2] = { 0 };
     SecChar ch;                 /* currently read character */
 
-    static const unsigned char fmtCharTable[337] = {
+    static const unsigned char FMT_CHAR_TABLE[337] = {
         /* type 0:    nospecial meaning;
            1:   '%';
            2:    '.'
@@ -494,7 +495,7 @@ int SecOutputPS(SecPrintfStream *stream, int priv, const char *cformat, va_list 
     /* remove format != NULL */
     while ((ch = *format++) != SECUREC_CHAR('\0') && charsOut >= 0) {
         laststate = state;
-        state = SECUREC_DECODE_STATE(ch, fmtCharTable, laststate);
+        state = SECUREC_DECODE_STATE(ch, FMT_CHAR_TABLE, laststate);
 
         switch (state) {
         case STAT_NORMAL:
@@ -538,7 +539,7 @@ NORMAL_CHAR:
                 isPrivacy = 1;
             }
 
-            if (0 == priv) {
+            if (priv == 0) {
                 isPrivacy = 0;
             }
 
@@ -736,7 +737,7 @@ NORMAL_CHAR:
                         char *fltFmtHeap = NULL;    /* to clear warning */
 
                         /* must meet '%' (normal format) or '}'(with{private} or{public} format)*/
-                        while (SECUREC_CHAR('%') != *pFltFmt && SECUREC_CHAR('}') != *pFltFmt) {
+                        while (*pFltFmt != SECUREC_CHAR('%') && *pFltFmt != SECUREC_CHAR('}')) {
                             --pFltFmt;
                         }
                         fltFmtStrLen = (int)((format - pFltFmt) + 1);   /* with ending terminator */
