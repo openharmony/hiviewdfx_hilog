@@ -259,7 +259,7 @@ bool OH_LOG_IsLoggable(unsigned int domain, const char *tag, LogLevel level);
  */
 typedef void (*LogCallback)(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *msg);
- 
+
 /**
  * @brief Set the user-defined log processing function.
  *
