@@ -151,8 +151,7 @@ static std::string WildcardToRegex(const std::string& wildcard)
         if (std::strchr(WILDCARDS, c) != nullptr) {
             size_t index = std::strchr(WILDCARDS, c) - WILDCARDS;
             result += REPLACEMENT_S[index];
-        }
-        else {
+        } else {
             result += c;
         }
     }
@@ -178,8 +177,7 @@ static bool LogMatchFilter(const LogFilter& filter, const HilogData& logData)
        (0xd0123ff & 0xffffff00 == 0xd012345 & 0xffffff00) */
     bool match = false;
     for (i = 0; i < filter.domainCount; i++) {
-        if ((logData.domain == filter.domains[i])
-        || ((static_cast<uint8_t>(filter.domains[i]) == LOW_BYTE)
+        if ((logData.domain == filter.domains[i]) || ((static_cast<uint8_t>(filter.domains[i]) == LOW_BYTE)
              && ((logData.domain & LOW_BYTE_REVERSE) == (filter.domains[i] & LOW_BYTE_REVERSE)))) {
             match = true;
             break;

@@ -169,7 +169,7 @@ int HilogdEntry()
     }
 
     HilogBuffer kmsgBuffer(false);
-    ffrt::submit([&hilogBuffer,&kmsgBuffer]() {
+    ffrt::submit([&hilogBuffer, &kmsgBuffer]() {
         int ret = WaitingToDo(WAITING_DATA_MS, HILOG_FILE_DIR, [](const string &path) {
             struct stat s;
             if (stat(path.c_str(), &s) != -1) {
