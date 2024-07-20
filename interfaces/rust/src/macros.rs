@@ -18,11 +18,19 @@
 #[macro_export]
 macro_rules! hilog {
     (@call $log_label:ident, $level:expr, $fmt:literal, $(,)? $($processed_args:expr),* ) => (
-        let log_str = format!($fmt, $($processed_args),*);
+        let _ = Option::<CString>::None;    // Use this to avoid `unused` warnings.
+
+        let mut buf = [0u8; 31]; // All tags ending in `\0` must not exceed 31 bytes in length.
+        let tag = $log_label.tag.as_bytes();
+        let min_len = std::cmp::min(tag.len(), 30); // 30 is the max length of tag.
+        buf[0..min_len].copy_from_slice(&tag[0..min_len]);
+
+        let mut log_str = format!($fmt, $($processed_args),*);
+        log_str.push('\0');
         let res = unsafe {
             $crate::HiLogPrint($log_label.log_type as u8, $level as u8, $log_label.domain as u32,
-                CString::new($log_label.tag).expect("default tag").as_ptr() as *const c_char,
-                CString::new(log_str).expect("default log").as_ptr() as *const c_char)
+                buf.as_ptr() as *const c_char,
+                log_str.as_ptr() as *const c_char)
         };
         res
     );
