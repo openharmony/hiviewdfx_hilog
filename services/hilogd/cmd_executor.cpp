@@ -70,7 +70,9 @@ void CmdExecutor::OnAcceptedConnection(std::unique_ptr<Socket> handler)
     auto newVal = std::make_unique<ClientThread>();
     if (newVal != nullptr) {
         newVal->m_stopThread.store(false);
-        newVal->m_clientThread = std::thread(&CmdExecutor::ClientEventLoop, this, std::move(handler));
+        newVal->m_clientThread = std::thread([this](std::unique_ptr<Socket> handler) {
+            ClientEventLoop(std::move(handler));
+        }, std::move(handler));
         m_clients.push_back(std::move(newVal));
     }
 }
