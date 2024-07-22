@@ -195,7 +195,7 @@ int HilogdEntry()
         (void)WriteStringToFile(myPid, SYSTEM_BG_BLKIO);
     }, {}, {}, ffrt::task_attr().name("hilogd.cgroup_set"));
 
-    auto cmdExecuteTask = std::async(std::launch::async, [&logCollector, &hilogBuffer, &kmsgBuffer]() {
+    std::thread([&logCollector, &hilogBuffer, &kmsgBuffer] () {
         prctl(PR_SET_NAME, "hilogd.cmd");
         CmdList controlCmdList {
             IoctlCmd::PERSIST_START_RQST,
@@ -213,7 +213,7 @@ int HilogdEntry()
         };
         CmdExecutor controlExecutor(logCollector, hilogBuffer, kmsgBuffer, controlCmdList, ("hilogd.control"));
         controlExecutor.MainLoop(CONTROL_SOCKET_NAME);
-    });
+    }).detach();
 
     CmdList outputList {IoctlCmd::OUTPUT_RQST};
     CmdExecutor outputExecutor(logCollector, hilogBuffer, kmsgBuffer, outputList, ("hilogd.output"));

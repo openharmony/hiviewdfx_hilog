@@ -323,7 +323,9 @@ void LogPersister::Start()
     }
 
     if (IsEmptyThread(m_persisterThread)) {
-        m_persisterThread = std::thread(&LogPersister::ReceiveLogLoop, shared_from_this());
+        m_persisterThread = std::thread([shared = shared_from_this()]() {
+            shared->ReceiveLogLoop();
+        });
     } else {
         std::cout << " Persister thread already started!\n";
     }

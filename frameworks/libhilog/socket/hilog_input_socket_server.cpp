@@ -36,7 +36,9 @@ HilogInputSocketServer::ServerThreadState HilogInputSocketServer::RunServingThre
         return ServerThreadState::ALREADY_STARTED;
     }
     m_stopServer.store(false);
-    m_serverThread = std::thread(&HilogInputSocketServer::ServingThread, this);
+    m_serverThread = std::thread([this]() {
+        ServingThread();
+    });
     if (m_serverThread.get_id() != std::thread().get_id()) {
         return ServerThreadState::JUST_STARTED;
     }
