@@ -162,7 +162,8 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
 
     const char *pHead = content.log;
     const char *pScan = content.log;
-    if (*pScan != '\0') {
+    // not print prefix if log is empty string or start with \n
+    if (*pScan != '\0' && *pScan != '\n') {
         PrintLogPrefix(content, format, out);
     }
     // split the log content by '\n', and add log prefix(datetime, pid, tid....) to each new line
