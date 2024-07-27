@@ -39,7 +39,8 @@ struct HilogData {
     uint32_t domain;
     char* tag;
     char* content;
-    void init(const char *mtag, uint16_t mtagLen, const char *mfmt, size_t mfmtLen)
+
+    void Init(const char *mtag, uint16_t mtagLen, const char *mfmt, size_t mfmtLen)
     {
         if (unlikely(mtagLen > MAX_TAG_LEN || mtagLen == 0 || mfmtLen > MAX_LOG_LEN || mfmtLen <= 0)) {
             return;
@@ -59,20 +60,16 @@ struct HilogData {
             return;
         }
     }
-    void deinit()
-    {
-        delete []tag;
-        tag = nullptr;
-        content = nullptr;
-    }
+
     HilogData() : len(0), tag(nullptr), content(nullptr) {}
     explicit HilogData(const HilogMsg& msg)
         : len(0), version(msg.version), type(msg.type), level(msg.level), tagLen(msg.tagLen),
         tv_sec(msg.tv_sec), tv_nsec(msg.tv_nsec), mono_sec(msg.mono_sec), pid(msg.pid), tid(msg.tid),
         domain(msg.domain), tag(nullptr), content(nullptr)
     {
-        init(msg.tag, msg.tagLen, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
+        Init(msg.tag, msg.tagLen, CONTENT_PTR((&msg)), CONTENT_LEN((&msg)));
     }
+
     HilogData(const HilogData& copy)
     {
         if (unlikely(memcpy_s(this, sizeof(HilogData), &copy, sizeof(HilogData)) != 0)) {
@@ -87,12 +84,16 @@ struct HilogData {
         }
         content = tag + tagLen;
     }
+
     HilogData& operator=(const HilogData&) = delete;
+
     HilogData(HilogData&&) = delete;
 
     ~HilogData()
     {
-        deinit();
+        delete []tag;
+        tag = nullptr;
+        content = nullptr;
     }
 };
 } // namespace HiviewDFX
