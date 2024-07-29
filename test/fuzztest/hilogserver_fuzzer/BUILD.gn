@@ -41,12 +41,12 @@ ohos_fuzztest("HiLogServerFuzzTest") {
     "hilogserver_fuzzer.cpp",
   ]
   configs = [ "../../../frameworks/libhilog:libhilog_config" ]
-  deps = [
-    "../../../interfaces/native/innerkits:libhilog",
-    "//third_party/bounds_checking_function:libsec_shared",
-    "//third_party/zlib:shared_libz",
+  deps = [ "../../../interfaces/native/innerkits:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "init:libbegetutil",
+    "zlib:shared_libz",
   ]
-  external_deps = [ "init:libbegetutil" ]
   part_name = "hilog"
   subsystem_name = "hiviewdfx"
 }

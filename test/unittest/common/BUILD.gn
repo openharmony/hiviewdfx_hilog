@@ -29,8 +29,6 @@ ohos_unittest("HilogToolTest") {
     "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
   ]
 
-  deps = [ "//third_party/googletest:gtest_main" ]
-
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
@@ -47,8 +45,6 @@ ohos_unittest("HilogUtilsTest") {
     "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
   ]
 
-  deps = [ "//third_party/googletest:gtest_main" ]
-
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
@@ -64,8 +60,6 @@ ohos_unittest("HilogPrintTest") {
     ":module_private_config",
     "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config",
   ]
-
-  deps = [ "//third_party/googletest:gtest_main" ]
 
   external_deps = [
     "c_utils:utils",
