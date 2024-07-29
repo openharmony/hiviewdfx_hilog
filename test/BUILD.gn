@@ -29,8 +29,6 @@ ohos_moduletest("HiLogNDKTest") {
 
   configs = [ ":module_private_config" ]
 
-  deps = [ "//third_party/googletest:gtest_main" ]
-
   external_deps = [
     "hilog:libhilog",
     "hilog:libhilog_base",
@@ -49,8 +47,6 @@ ohos_moduletest("HiLogAdapterTest") {
   sources = [ "moduletest/common/adapter_test.cpp" ]
 
   configs = [ ":module_private_config" ]
-
-  deps = [ "//third_party/googletest:gtest_main" ]
 
   external_deps = [ "hilog:libhilog" ]
 
