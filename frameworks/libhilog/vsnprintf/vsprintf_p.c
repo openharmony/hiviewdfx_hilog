@@ -17,7 +17,7 @@
 
 #include <securec.h>
  
-int vsprintf_p(char *strDest, size_t destMax, const char *format, va_list argList)
+int VsprintfP(char *strDest, size_t destMax, const char *format, va_list argList)
 {
     return vsprintf_s(strDest, destMax, format, argList);
 }
