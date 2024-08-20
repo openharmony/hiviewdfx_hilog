@@ -67,7 +67,7 @@ static int SecIndirectSprintf(char *strDest, size_t destMax, const char *format,
 
     va_start(arglist, format);
     SECUREC_MASK_MSVC_CRT_WARNING
-    ret = vsprintf_p(strDest, destMax, format, arglist);
+    ret = VsprintfP(strDest, destMax, format, arglist);
     SECUREC_END_MASK_MSVC_CRT_WARNING
     va_end(arglist);
     (void)arglist;              /* to clear e438 last value assigned not used , the compiler will optimize this code */
