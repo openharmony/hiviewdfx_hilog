@@ -720,8 +720,7 @@ NORMAL_CHAR:
 
                     if (bufferSize >= SECUREC_BUFFER_SIZE) {
                         /* the current value of SECUREC_BUFFER_SIZE could NOT store the formatted float string */
-                        /* size include '+' and '\0' */
-                        formatBufLen = (size_t)(unsigned int)bufferSize + (size_t)2;
+                        formatBufLen = (size_t)(unsigned int)bufferSize + (size_t)2; // size 2: include '+' and '\0'
                         floatBuf = (char *)SECUREC_MALLOC(formatBufLen);
                         if (floatBuf != NULL) {
                             formatBuf.str = floatBuf;
