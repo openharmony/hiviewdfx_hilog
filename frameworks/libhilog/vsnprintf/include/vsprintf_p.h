@@ -19,6 +19,6 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-int vsprintf_p(char *strDest, size_t destMax, const char *format, va_list argList);
+int VsprintfP(char *strDest, size_t destMax, const char *format, va_list argList);
  
 #endif /* HILOG_OVERRIDE_VSPRINTF_P_H */
