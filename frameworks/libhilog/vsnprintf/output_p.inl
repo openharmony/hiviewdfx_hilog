@@ -19,6 +19,8 @@
  *          And sufficient input validation is performed before calling
  */
 
+#include "vsprintf_p.h"
+
 #ifndef OUTPUT_P_INL_2B263E9C_43D8_44BB_B17A_6D2033DECEE5
 #define OUTPUT_P_INL_2B263E9C_43D8_44BB_B17A_6D2033DECEE5
 
@@ -58,14 +60,14 @@ typedef union {
 #endif
 } SecBuffer;
 
-static int SecIndirectSprintf(char *strDest, const char *format, ...)
+static int SecIndirectSprintf(char *strDest, size_t destMax, const char *format, ...)
 {
     int ret;                    /* If initialization causes  e838 */
     va_list arglist;
 
     va_start(arglist, format);
     SECUREC_MASK_MSVC_CRT_WARNING
-    ret = vsprintf(strDest, format, arglist);
+    ret = VsprintfP(strDest, destMax, format, arglist);
     SECUREC_END_MASK_MSVC_CRT_WARNING
     va_end(arglist);
     (void)arglist;              /* to clear e438 last value assigned not used , the compiler will optimize this code */
@@ -689,6 +691,7 @@ NORMAL_CHAR:
 
                     /* floating point conversion */
                     formatBuf.str = buffer.str; /* output buffer for float string with default size */
+                    size_t formatBufLen = sizeof(buffer);
 
                     /* compute the precision value */
                     if (formatAttr.precision < 0) {
@@ -717,8 +720,8 @@ NORMAL_CHAR:
 
                     if (bufferSize >= SECUREC_BUFFER_SIZE) {
                         /* the current value of SECUREC_BUFFER_SIZE could NOT store the formatted float string */
-                        /* size include '+' and '\0' */
-                        floatBuf = (char *)SECUREC_MALLOC(((size_t)(unsigned int)bufferSize + (size_t)2));
+                        formatBufLen = (size_t)(unsigned int)bufferSize + (size_t)2; // size 2: include '+' and '\0'
+                        floatBuf = (char *)SECUREC_MALLOC(formatBufLen);
                         if (floatBuf != NULL) {
                             formatBuf.str = floatBuf;
                         } else {
@@ -772,32 +775,32 @@ NORMAL_CHAR:
                             long double tmp = (long double)va_arg(arglist, long double);
                             /* call system sprintf to format float value */
                             if (formatAttr.dynWidth && formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr,
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr,
                                                              formatAttr.fldWidth,formatAttr.precision, tmp);
                             } else if (formatAttr.dynWidth) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr,
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr,
                                                              formatAttr.fldWidth, tmp);
                             } else if (formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr,
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr,
                                                              formatAttr.precision, tmp);
                             } else {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr, tmp);
                             }
                         } else
 #endif
                         {
                             double tmp = (double)va_arg(arglist, double);
                             if (formatAttr.dynWidth && formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, formatAttr.fldWidth,
-                                                             formatAttr.precision, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr,
+                                                             formatAttr.fldWidth, formatAttr.precision, tmp);
                             } else if (formatAttr.dynWidth) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, formatAttr.fldWidth,
-                                                             tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr,
+                                                             formatAttr.fldWidth, tmp);
                             } else if (formatAttr.dynPrecision) {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, formatAttr.precision,
-                                                             tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr,
+                                                             formatAttr.precision, tmp);
                             } else {
-                                textLen = SecIndirectSprintf(formatBuf.str, (char *)fltFmtStr, tmp);
+                                textLen = SecIndirectSprintf(formatBuf.str, formatBufLen, (char *)fltFmtStr, tmp);
                             }
                         }
 
