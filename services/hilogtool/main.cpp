@@ -121,7 +121,7 @@ static void BufferHelper()
     << "-G <size>, --buffer-size=<size>" << endl
     << "  Set hilogd buffer size, <size> could be number or number with unit." << endl
     << "  Unit could be: B/K/M/G which represents Byte/Kilobyte/Megabyte/Gigabyte." << endl
-    << "  <size> range: [" << Size2Str(MIN_BUFFER_SIZE) << "," << Size2Str(MIN_BUFFER_SIZE) << "]." << endl
+    << "  <size> range: [" << Size2Str(MIN_BUFFER_SIZE) << "," << Size2Str(MAX_BUFFER_SIZE) << "]." << endl
     << "  Advanced option:" << endl
     << "  -t <type>, --type=<type>" << endl
     << "    Set specific type/types log buffer size with format: type1,type2,type3" << endl
