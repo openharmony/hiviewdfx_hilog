@@ -33,7 +33,7 @@
 #define RET_FAIL (-1)
 #define MAX_JOBS (10)
 constexpr size_t MIN_BUFFER_SIZE = (64 * 1024);
-constexpr size_t MAX_BUFFER_SIZE = (512 * 1024 * 1024);
+constexpr size_t MAX_BUFFER_SIZE = (16 * 1024 * 1024);
 constexpr uint32_t MAX_PERSISTER_BUFFER_SIZE = 64 * 1024;
 constexpr uint32_t MIN_LOG_FILE_SIZE = MAX_PERSISTER_BUFFER_SIZE;
 constexpr uint32_t MAX_LOG_FILE_SIZE = (512 * 1024 * 1024);
