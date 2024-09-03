@@ -253,7 +253,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         ret = -1;  /* default value -1: invalid trace id */
         atomic_fetch_add_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
         RegisterFunc func = g_registerFunc;
-        if (g_registerFunc != nullptr) {
+        if (func != nullptr) {
             ret = func(&chainId, &flag, &spanId, &parentSpanId);
         }
         atomic_fetch_sub_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
@@ -289,8 +289,9 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif
     vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, priv, fmt, ap);
-    if (g_logCallback != nullptr) {
-        g_logCallback(type, level, domain, tag, logBuf);
+    LogCallback logCallbackFunc = g_logCallback;
+    if (logCallbackFunc != nullptr) {
+        logCallbackFunc(type, level, domain, tag, logBuf);
     }
 #ifdef __clang__
 #pragma clang diagnostic pop
