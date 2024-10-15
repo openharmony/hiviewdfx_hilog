@@ -15,10 +15,18 @@
 
 #include <array>
 #include <cstdlib>
+#include <cstdio>
 #include <ctime>
+#include <dirent.h>
 #include <iostream>
+#include <securec.h>
 #include <sstream>
+#include <stdatomic.h>
 #include <string>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <thread>
 
 #include <gtest/gtest.h>
 #include <hilog_common.h>
@@ -41,6 +49,10 @@ static constexpr unsigned int MORE_LOGS = 100;
 static constexpr unsigned int SHORT_LOG = 16;
 static constexpr unsigned int LONG_LOG = 1000;
 static constexpr unsigned int VERY_LONG_LOG = 2048;
+static constexpr unsigned int THREAD_COUNT = 10;
+static std::string g_str[THREAD_COUNT];
+#define TWO (2)
+#define NEGATIVE_ONE (-1)
 
 enum LogInterfaceType {
     DEBUG_METHOD = 0,
@@ -90,6 +102,100 @@ static std::string PopenToString(const std::string &command)
         pclose(fp);
     }
     return str;
+}
+
+// Function executed by the subthread to print logs
+void FunctionPrintLog(int index)
+{
+    HiLogBasePrint(LOG_INIT, LOG_ERROR, 0xD002D00, LOG_TAG, "FunctionPrintLog %{public}s", g_str[index].c_str());
+}
+ 
+//Check whether corresponding logs are generated. If yes, true is returned. If no, false is returned.
+bool CheckHiLogPrint(char *needToMatch)
+{
+    constexpr int COMMAND_SIZE = 50;
+    constexpr int BUFFER_SIZE = 1024;
+    constexpr int FAIL_CLOSE = -1;
+    bool ret = false;
+    // Use the system function to read the current hilog information.
+    char command[] = "/bin/hilog -x | grep ";
+    char finalCommand[COMMAND_SIZE];
+    int res = snprintf_s(finalCommand, COMMAND_SIZE, COMMAND_SIZE - 1, "%s%s", command, needToMatch);
+    if (res == NEGATIVE_ONE) {
+        printf("CheckHiLogPrint command generate snprintf_s failed\n");
+        return false;
+    }
+    finalCommand[COMMAND_SIZE - 1] = '\0';
+    char buffer[BUFFER_SIZE];
+    FILE* pipe = popen(finalCommand, "r");
+    if (pipe == nullptr) {
+        printf("CheckHiLogPrint: Failed to run command\n");
+        return false;
+    }
+ 
+    // Read command output and print
+    while (fgets(buffer, BUFFER_SIZE, pipe) != nullptr) {
+        printf("%s", buffer);
+        ret = true;
+    }
+ 
+    // Close the pipe and get the return value
+    int returnValue = pclose(pipe);
+    if (returnValue == FAIL_CLOSE) {
+        printf("CheckHiLogPrint pclose failed returnValue=-1 errno=%d\n", errno);
+    }
+    return ret;
+}
+ 
+// Detects how many FDs are linked to hilogd.
+int CheckHiLogdLinked()
+{
+    #define PROC_PATH_LENGTH (64)
+    int result = 0;
+    char procPath[PROC_PATH_LENGTH];
+    int res = snprintf_s(procPath, PROC_PATH_LENGTH, PROC_PATH_LENGTH - 1, "/proc/%d/fd", getpid());
+    if (res == NEGATIVE_ONE) {
+        printf("CheckHiLogdLinked getpid snprintf_s failed\n");
+        return 0;
+    }
+    DIR *dir = opendir(procPath);
+    if (dir == nullptr) {
+        return result;
+    }
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_type != DT_LNK) {
+            continue;
+        }
+        char fdPath[128];
+        res = snprintf_s(fdPath, sizeof(fdPath), sizeof(fdPath) - 1, "%s/%s", procPath, entry->d_name);
+        if (res == NEGATIVE_ONE) {
+            printf("CheckHiLogdLinked fd search snprintf_s failed\n");
+            return 0;
+        }
+ 
+        char target[256];
+        ssize_t len = readlink(fdPath, target, sizeof(target) - 1);
+        if (len == -1) {
+            continue;
+        }
+        target[len] = '\0';
+        if (!strstr(target, "socket")) {
+            continue;
+        }
+        struct sockaddr_un addr;
+        socklen_t addrLen = sizeof(addr);
+ 
+        // Obtains the peer address connected to the socket.
+        getpeername(atoi(entry->d_name), reinterpret_cast<struct sockaddr *>(&addr), &addrLen);
+        if (strstr(addr.sun_path, "hilogInput")) {
+            printf("FD: %s Connected to: %s\n", entry->d_name, addr.sun_path);
+            result++;
+        }
+    }
+ 
+    closedir(dir);
+    return result;
 }
 
 class HiLogBaseNDKTest : public testing::Test {
@@ -231,6 +337,27 @@ HWTEST_F(HiLogBaseNDKTest, IsLoggable, TestSize.Level1)
     EXPECT_FALSE(HiLogBaseIsLoggable(0xD002D00, "abc", LOG_LEVEL_MIN));
 }
 
+HWTEST_F(HiLogBaseNDKTest, HilogBasePrintCheck, TestSize.Level1)
+{
+    std::thread threads[THREAD_COUNT];
+    // Create threads and print logs concurrently. Logs printed by each thread cannot be lost.
+    for (int i = 0; i < THREAD_COUNT; i++) {
+        // Generate a random string, and then pass the subscript to the child thread through the value,
+        // so that the child thread can obtain the global data.
+        g_str[i] = RandomStringGenerator();
+        threads[i] = std::thread(FunctionPrintLog, i);
+    }
+    // Wait for the thread execution to complete.
+    for (int i = 0; i < THREAD_COUNT; i++) {
+        threads[i].join();
+        bool result = CheckHiLogPrint(g_str[i].data());
+        EXPECT_EQ(result, true);
+    }
+ 
+    // Check the number of socket links to hilogInput.
+    int result = CheckHiLogdLinked();
+    EXPECT_EQ(result, TWO);
+}
 } // namespace HiLogTest
 } // namespace HiviewDFX
 } // namespace OHOS
