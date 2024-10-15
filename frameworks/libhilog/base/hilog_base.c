@@ -18,7 +18,6 @@
 #include <vsnprintf_s_p.h>
 
 #include <errno.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -32,61 +31,25 @@
 
 static const int SOCKET_TYPE = SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC;
 static const struct sockaddr_un SOCKET_ADDR = {AF_UNIX, SOCKET_FILE_DIR INPUT_SOCKET_NAME};
-static const int INVALID_FD = -1;
-static const int CAS_FAIL = -1;
-static const int CAS_INVALID_PARAM = -2;
-static const int CAS_SUCCESS = 0;
-static const int INVALID_RESULT = -1;
-static atomic_int g_socketFd = INVALID_FD;
- 
-static void CleanSocket(void) __attribute__((destructor));
- 
-static int GenerateSocketFd(void)
-{
-    int socketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
-    if (socketFd == INVALID_FD) {
-        dprintf(ERROR_FD, "HiLogBase: Can't create socket! Errno: %d\n", errno);
-        return INVALID_FD;
-    }
-    long int result =
-        TEMP_FAILURE_RETRY(connect(socketFd, (const struct sockaddr *)(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
-    if (result == INVALID_RESULT) {
-        dprintf(ERROR_FD, "HiLogBase: Can't connect to server. Errno: %d\n", errno);
-        close(socketFd);
-        return INVALID_FD;
-    }
-    return socketFd;
-}
- 
-static int CASGlobalSocketFd(int socketFd)
-{
-    if (socketFd == INVALID_FD) {
-        return CAS_INVALID_PARAM;
-    }
-    int expected = INVALID_FD;
-    // we should use CAS to avoid multi-thread problem
-    if (!atomic_compare_exchange_strong(&g_socketFd, &expected, socketFd)) {
-        // failure CAS: other threads execute to this branch to close extra fd
-        return CAS_FAIL;
-    }
-    // success CAS: only one thread can execute to this branch
-    return CAS_SUCCESS;
-}
 
 static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen)
 {
-    bool releaseSocket = false;
-    int socketFd = INVALID_FD;
-    // read fd by using atomic operation
-    socketFd = atomic_load(&g_socketFd);
-    if (socketFd == INVALID_FD) {
-        socketFd = GenerateSocketFd();
-        int result = CASGlobalSocketFd(socketFd);
-        if (result == CAS_INVALID_PARAM) {
-            return INVALID_RESULT;
-        } else if (result == CAS_FAIL) {
-            releaseSocket = true;
+    // The hilogbase interface cannot has mutex, so need to re-open and connect to the socketof the hilogd
+    // server each time you write logs. Althougth there is some overhead, you can only do this.
+    int socketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
+    if (socketFd < 0) {
+        dprintf(ERROR_FD, "HiLogBase: Can't create socket! Errno: %d\n", errno);
+        return socketFd;
+    }
+
+    long int result =
+        TEMP_FAILURE_RETRY(connect(socketFd, (const struct sockaddr *)(&SOCKET_ADDR), sizeof(SOCKET_ADDR)));
+    if (result < 0) {
+        dprintf(ERROR_FD, "HiLogBase: Can't connect to server. Errno: %d\n", errno);
+        if (socketFd >= 0) {
+            close(socketFd);
         }
+        return result;
     }
 
     struct timespec ts = {0};
@@ -107,19 +70,10 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
     vec[2].iov_base = (void *)((char *)(fmt));  // 2 : index of log content
     vec[2].iov_len = fmtLen;                    // 2 : index of log content
     int ret = TEMP_FAILURE_RETRY(writev(socketFd, vec, LOG_LEN));
-    if (releaseSocket) {
+    if (socketFd >= 0) {
         close(socketFd);
     }
     return ret;
-}
-
-static void CleanSocket(void)
-{
-    int socketFd = atomic_load(&g_socketFd);
-    if (socketFd >= 0) {
-        close(socketFd);
-        atomic_store(&g_socketFd, INVALID_FD);
-    }
 }
 
 int HiLogBasePrintArgs(
