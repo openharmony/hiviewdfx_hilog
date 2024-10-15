@@ -67,6 +67,16 @@
           }
         },
         {
+          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base_for_musl",
+          "header": {
+            "header_files": [
+              "hilog_base/log_base.h"
+            ],
+            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
+          },
+          "visibility": [ "musl" ]
+        },
+        {
           "name": "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust",
           "header": {
             "header_files": [],

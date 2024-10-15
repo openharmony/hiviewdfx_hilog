@@ -30,6 +30,7 @@ ohos_moduletest("HiLogNDKTest") {
   configs = [ ":module_private_config" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "hilog:libhilog",
     "hilog:libhilog_base",
     "init:libbegetutil",
