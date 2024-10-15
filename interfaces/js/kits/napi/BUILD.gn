@@ -31,10 +31,7 @@ ohos_source_set("libhilognapi_src") {
     "src/hilog/src/hilog_napi_base.cpp",
   ]
 
-  external_deps = [
-    "bounds_checking_function:libsec_shared",
-    "node:node_header_notice",
-  ]
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
   if (is_mingw || is_mac || is_linux) {
     deps = [ "//foundation/arkui/napi:ace_napi" ]
   } else {
