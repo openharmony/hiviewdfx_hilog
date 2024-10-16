@@ -130,7 +130,6 @@ config("libhilog_base_config") {
 
 # part of default_compiler_configs from build/config/BUILDCONFIG.gn
 musl_inherited_configs_for_musl = [
-  "//build/config/compiler:afdo",
   "//build/config/compiler:afdo_optimize_size",
   "//build/config/compiler:compiler",
   "//build/config/compiler:compiler_arm_fpu",
