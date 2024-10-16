@@ -128,6 +128,36 @@ config("libhilog_base_config") {
   include_dirs = [ "../../../frameworks/libhilog/include" ]
 }
 
+# part of default_compiler_configs from build/config/BUILDCONFIG.gn
+musl_inherited_configs_for_musl = [
+  "//build/config/compiler:afdo",
+  "//build/config/compiler:afdo_optimize_size",
+  "//build/config/compiler:compiler",
+  "//build/config/compiler:compiler_arm_fpu",
+  "//build/config/compiler:compiler_arm_thumb",
+  "//build/config/compiler:chromium_code",
+  "//build/config/compiler:default_include_dirs",
+  "//build/config/compiler:default_optimization",
+  "//build/config/compiler:default_stack_frames",
+  "//build/config/compiler:default_symbols",
+  "//build/config/compiler:export_dynamic",
+  "//build/config/compiler:no_exceptions",
+  "//build/config/compiler:no_rtti",
+  "//build/config/compiler:runtime_library",
+  "//build/config/sanitizers:default_sanitizer_flags",
+]
+
+ohos_static_library("libhilog_base_for_musl") {
+  print("************libhilog_base use_musl ***************")
+  ldflags = [ "-nostdlib" ]
+  remove_configs = musl_inherited_configs_for_musl
+  configs = [ "//build/config/components/musl:soft_musl_config" ]
+  public_configs = [ ":libhilog_base_pub_cfg" ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
+}
+
 ohos_static_library("libhilog_base") {
   public_configs = [ ":libhilog_base_pub_cfg" ]
 
