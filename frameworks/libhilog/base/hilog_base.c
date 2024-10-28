@@ -25,8 +25,6 @@
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
 
 #define LOG_LEN 3
 #define ERROR_FD 2
@@ -76,10 +74,6 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
         close(socketFd);
     }
     return ret;
-}
-
-pid_t gettid(void) {
-    return (pid_t)syscall(SYS_gettid);
 }
 
 int HiLogBasePrintArgs(
