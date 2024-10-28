@@ -25,8 +25,6 @@
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
 
 #define LOG_LEN 3
 #define ERROR_FD 2
