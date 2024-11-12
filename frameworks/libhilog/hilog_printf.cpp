@@ -320,7 +320,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     pthread_threadid_np(NULL, &tid);
     header.tid = static_cast<uint32_t>(tid);
 #elif defined(__OHOS__)
-    header.tid = static_cast<uint32_t>(getproctid());
+    header.tid = static_cast<uint32_t>(gettid());
 #else
     header.tid = static_cast<uint32_t>(syscall(SYS_gettid));
 #endif
