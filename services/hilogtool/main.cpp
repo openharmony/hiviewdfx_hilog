@@ -218,7 +218,11 @@ static void BaseLevelHelper()
     << "  -T <tag>, --tag=<tag>" << endl
     << "    Set specific tag loggable level." << endl
     << "    The priority is: tag level > domain level > global level." << endl
-    << "  **It's a temporary configuration, will be lost after reboot**" << endl;
+    << "  **It's a temporary configuration, will be lost after reboot**" << endl
+    << "  --persist" << endl
+    << "    Set persist configuration." << endl
+    << "    The priority is: tag level > persist tag level > domain level > persist domain level > global level"
+            " > persist global level." << endl;
 }
 
 static void DomainHelper()
@@ -314,6 +318,7 @@ struct HilogArgs {
     uint16_t levels;
     string stream;
     uint16_t fileNum;
+    bool persist;
     bool blackPid;
     int pidCount;
     uint32_t pids[MAX_PIDS];
@@ -331,10 +336,10 @@ struct HilogArgs {
     uint16_t tailLines;
 
     HilogArgs() : headLines (0), baseLevel(0), blackDomain(false), domainCount(0), domains { 0 }, regex(""),
-        fileName(""), buffSize(0), jobId(0), fileSize(0), levels(0), stream(""), fileNum(0), blackPid(false),
-        pidCount(0), pids { 0 }, types(0), blackTag(false), tagCount(0), tags { "" }, colorful(false),
-        timeFormat(FormatTime::INVALID), timeAccuFormat(FormatTimeAccu::INVALID), year(false), zone(false),
-        wrap(false), noBlock(false), tailLines(0) {}
+        fileName(""), buffSize(0), jobId(0), fileSize(0), levels(0), stream(""), fileNum(0), persist(false),
+        blackPid(false), pidCount(0), pids { 0 }, types(0), blackTag(false), tagCount(0), tags { "" },
+        colorful(false), timeFormat(FormatTime::INVALID), timeAccuFormat(FormatTimeAccu::INVALID),
+        year(false), zone(false), wrap(false), noBlock(false), tailLines(0) {}
 
     void ToOutputRqst(OutputRqst& rqst)
     {
@@ -468,17 +473,30 @@ static int BaseLogLevelHandler(HilogArgs& context, const char *arg)
     if (context.domainCount == 0 && context.tagCount == 0) {
         ret = SetGlobalLevel(context.baseLevel);
         PrintResult(ret, (string("Set global log level to ") + arg));
+        if (context.persist) {
+            ret = SetPersistGlobalLevel(context.baseLevel);
+            PrintResult(ret, (string("Set persist global log level to ") + arg));
+        }
     }
     if (context.domainCount != 0) {
         for (int i = 0; i < context.domainCount; i++) {
             ret = SetDomainLevel(context.domains[i], context.baseLevel);
             PrintResult(ret, (string("Set domain 0x") + Uint2HexStr(context.domains[i]) +  " log level to " + arg));
+            if (context.persist) {
+                ret = SetPersistDomainLevel(context.domains[i], context.baseLevel);
+                PrintResult(ret, (string("Set persist domain 0x") +
+                                  Uint2HexStr(context.domains[i]) +  " log level to " + arg));
+            }
         }
     }
     if (context.tagCount != 0) {
         for (int i = 0; i < context.tagCount; i++) {
             ret = SetTagLevel(context.tags[i], context.baseLevel);
             PrintResult(ret, (string("Set tag ") + context.tags[i] +  " log level to " + arg));
+            if (context.persist) {
+                ret = SetPersistTagLevel(context.tags[i], context.baseLevel);
+                PrintResult(ret, (string("Set persist tag ") + context.tags[i] +  " log level to " + arg));
+            }
         }
     }
     return RET_SUCCESS;
@@ -514,6 +532,12 @@ static int RegexHandler(HilogArgs& context, const char *arg)
     if (context.regex.length() >= MAX_REGEX_STR_LEN) {
         return ERR_REGEX_STR_TOO_LONG;
     }
+    return RET_SUCCESS;
+}
+
+static int PersistHandler(HilogArgs& context, const char *arg)
+{
+    context.persist = true;
     return RET_SUCCESS;
 }
 
@@ -1002,6 +1026,7 @@ static OptEntry optEntries[] = {
     {'b', "baselevel", ControlCmd::CMD_LOGLEVEL_SET, BaseLogLevelHandler, true, 1},
     {'D', "domain", ControlCmd::NOT_CMD, DomainHandler, true, 1},
     {'e', "regex", ControlCmd::NOT_CMD, RegexHandler, true, 1},
+    {0, "persist", ControlCmd::NOT_CMD, PersistHandler, false, 1},
     {'f', "filename", ControlCmd::NOT_CMD, FileNameHandler, true, 1},
     {'g', nullptr, ControlCmd::CMD_BUFFER_SIZE_QUERY, BufferSizeGetHandler, false, 1},
     {'G', "buffer-size", ControlCmd::CMD_BUFFER_SIZE_SET, BufferSizeSetHandler, true, 1},
@@ -1034,13 +1059,12 @@ static void GetOpts(string& opts, struct option(&longOptions)[OPT_ENTRY_CNT])
     opts = "";
     int i;
     for (i = 0; i < OPT_ENTRY_CNT; i++) {
-        if (optEntries[i].opt == 0) {
-            break;
-        }
-        // opts
-        opts += optEntries[i].opt;
-        if (optEntries[i].needArg) {
-            opts += ':';
+        if (optEntries[i].opt != 0) {
+            // opts
+            opts += optEntries[i].opt;
+            if (optEntries[i].needArg) {
+                opts += ':';
+            }
         }
         // long option
         if (optEntries[i].longOpt == nullptr) {

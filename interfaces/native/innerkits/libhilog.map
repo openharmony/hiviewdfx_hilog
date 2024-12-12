@@ -46,9 +46,12 @@
         "OHOS::HiviewDFX::LogIoctl::RequestOutput(OutputRqst const&, std::__h::function<int (OutputRsp const&)>)";
         "OHOS::HiviewDFX::PrettyStr2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::SetGlobalLevel(unsigned short)";
+        "OHOS::HiviewDFX::SetPersistGlobalLevel(unsigned short)";
         "OHOS::HiviewDFX::SetDomainLevel(unsigned int, unsigned short)";
+        "OHOS::HiviewDFX::SetPersistDomainLevel(unsigned int, unsigned short)";
         "OHOS::HiviewDFX::Uint2HexStr(unsigned int)";
         "OHOS::HiviewDFX::SetTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned short)";
+        "OHOS::HiviewDFX::SetPersistTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned short)";
         "OHOS::HiviewDFX::Split(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>>&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::HexStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::ComboLogType2Str(unsigned short)";
@@ -87,6 +90,7 @@
         "OHOS::HiviewDFX::IsProcessSwitchOn()";
         "OHOS::HiviewDFX::ShortStr2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::GetGlobalLevel()";
+        "OHOS::HiviewDFX::GetPersistGlobalLevel()";
         "OHOS::HiviewDFX::GetDomainLevel(unsigned int)";
         "OHOS::HiviewDFX::GetTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::Str2LogType(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
