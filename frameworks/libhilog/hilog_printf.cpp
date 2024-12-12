@@ -103,9 +103,17 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     if (tagLevel != LOG_LEVEL_MIN) {
         return tagLevel;
     }
+    uint16_t persistTagLevel = GetPersistTagLevel(tag);
+    if (persistTagLevel != LOG_LEVEL_MIN) {
+        return persistTagLevel;
+    }
     uint16_t domainLevel = GetDomainLevel(domain);
     if (domainLevel != LOG_LEVEL_MIN) {
         return domainLevel;
+    }
+    uint16_t persistDomainLevel = GetPersistDomainLevel(domain);
+    if (persistDomainLevel != LOG_LEVEL_MIN) {
+        return persistDomainLevel;
     }
     // domain within the range of [DOMAIN_APP_MIN, DOMAIN_APP_MAX] is a js log,
     // if this js log comes from debuggable hap, set the default level.
@@ -115,7 +123,7 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
             return LOG_LEVEL_MIN;
         }
     }
-    return GetGlobalLevel();
+    return GetGlobalLogLevel();
 #else
     return LOG_LEVEL_MIN;
 #endif

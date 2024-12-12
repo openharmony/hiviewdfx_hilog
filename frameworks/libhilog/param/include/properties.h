@@ -34,9 +34,13 @@ bool IsPrivateSwitchOn();
 }
 #endif
 bool IsDebuggableHap();
+uint16_t GetGlobalLogLevel();
 uint16_t GetGlobalLevel();
+uint16_t GetPersistGlobalLevel();
 uint16_t GetDomainLevel(uint32_t domain);
+uint16_t GetPersistDomainLevel(uint32_t domain);
 uint16_t GetTagLevel(const std::string& tag);
+uint16_t GetPersistTagLevel(const std::string& tag);
 bool IsProcessSwitchOn();
 bool IsDomainSwitchOn();
 bool IsKmsgSwitchOn();
@@ -50,8 +54,11 @@ int SetPrivateSwitchOn(bool on);
 int SetOnceDebugOn(bool on);
 int SetPersistDebugOn(bool on);
 int SetGlobalLevel(uint16_t lvl);
+int SetPersistGlobalLevel(uint16_t lvl);
 int SetTagLevel(const std::string& tag, uint16_t lvl);
+int SetPersistTagLevel(const std::string& tag, uint16_t lvl);
 int SetDomainLevel(uint32_t domain, uint16_t lvl);
+int SetPersistDomainLevel(uint32_t domain, uint16_t lvl);
 int SetProcessSwitchOn(bool on);
 int SetDomainSwitchOn(bool on);
 int SetKmsgSwitchOn(bool on);
