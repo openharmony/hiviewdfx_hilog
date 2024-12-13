@@ -357,25 +357,23 @@ uint16_t GetPersistGlobalLevel()
     return logLevelCache->getValue();
 }
 
-uint16_t GetDomainLevel(uint32_t domain)
+uint16_t GetLevel(std::unordered_map<uint32_t, LogLevelCache*>* map, uint32_t key, PropType propType)
 {
-    static auto *domainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
-    static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*domainMap)>::type::iterator it;
+    static shared_timed_mutex* levelMtx = new shared_timed_mutex;
+    std::decay<decltype(*map)>::type::iterator it;
     {
-        ReadLock lock(*mtx);
-        it = domainMap->find(domain);
-        if (it != domainMap->end()) {
+        ReadLock lock(*levelMtx);
+        it = map->find(key);
+        if (it != map->end()) {
             LogLevelCache* levelCache = it->second;
-            return levelCache->getValue();
+            return levelCache->GetValue();
         }
     }
-    InsertLock lock(*mtx);
-    it = domainMap->find(domain); // secured for two thread went across above condition
-    if (it == domainMap->end()) {
-        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-        PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
-        auto result = domainMap->insert({ domain, levelCache });
+    InsertLock lock(*levelMtx);
+    it = map->find(key); // secured for two thread went across above condition
+    if (it == map->end()) {
+        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, propType, Uint2HexStr(key));
+        auto result = map->insert({ key, levelCache });
         if (!result.second) {
             delete levelCache;
             return LOG_LEVEL_MIN;
@@ -383,95 +381,60 @@ uint16_t GetDomainLevel(uint32_t domain)
         it = result.first;
     }
     LogLevelCache* levelCache = it->second;
-    return levelCache->getValue();
+    return levelCache->GetValue();
+}
+
+uint16_t GetLevel(std::unordered_map<std::string, LogLevelCache*>* map, const string& key, PropType propType)
+{
+    static shared_timed_mutex* levelMtx = new shared_timed_mutex;
+    std::decay<decltype(*map)>::type::iterator it;
+    {
+        ReadLock lock(*levelMtx);
+        it = map->find(key);
+        if (it != map->end()) {
+            LogLevelCache* levelCache = it->second;
+            return levelCache->GetValue();
+        }
+    }
+    InsertLock lock(*levelMtx);
+    it = map->find(key); // secured for two thread went across above condition
+    if (it == map->end()) {
+        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, propType, key);
+        auto result = map->insert({ key, levelCache });
+        if (!result.second) {
+            delete levelCache;
+            return LOG_LEVEL_MIN;
+        }
+        it = result.first;
+    }
+    LogLevelCache* levelCache = it->second;
+    return levelCache->GetValue();
+}
+
+uint16_t GetDomainLevel(uint32_t domain)
+{
+    static auto *domainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
+    return GetLevel(domainMap, domain, PropType::PROP_DOMAIN_LOG_LEVEL);
 }
 
 uint16_t GetPersistDomainLevel(uint32_t domain)
 {
     static auto *persistDomainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
-    static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*persistDomainMap)>::type::iterator it;
-    {
-        ReadLock lock(*mtx);
-        it = persistDomainMap->find(domain);
-        if (it != persistDomainMap->end()) {
-            LogLevelCache* levelCache = it->second;
-            return levelCache->getValue();
-        }
-    }
-    InsertLock lock(*mtx);
-    it = persistDomainMap->find(domain); // secured for two thread went across above condition
-    if (it == persistDomainMap->end()) {
-        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-        PropType::PROP_PERSIST_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
-        auto result = persistDomainMap->insert({ domain, levelCache });
-        if (!result.second) {
-            delete levelCache;
-            return LOG_LEVEL_MIN;
-        }
-        it = result.first;
-    }
-    LogLevelCache* levelCache = it->second;
-    return levelCache->getValue();
+    return GetLevel(persistDomainMap, domain, PropType::PROP_PERSIST_DOMAIN_LOG_LEVEL);
 }
 
-uint16_t GetTagLevel(const string& tag)
+uint16_t GetTagLevel(const std::string& tag)
 {
     static auto *tagMap = new std::unordered_map<std::string, LogLevelCache*>();
-    static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*tagMap)>::type::iterator it;
-    {
-        ReadLock lock(*mtx);
-        it = tagMap->find(tag);
-        if (it != tagMap->end()) {
-            LogLevelCache* levelCache = it->second;
-            return levelCache->getValue();
-        }
-    }
-    InsertLock lock(*mtx);
-    it = tagMap->find(tag); // secured for two thread went across above condition
-    if (it == tagMap->end()) {
-        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-        PropType::PROP_TAG_LOG_LEVEL, tag);
-        auto result = tagMap->insert({ tag, levelCache });
-        if (!result.second) {
-            delete levelCache;
-            return LOG_LEVEL_MIN;
-        }
-        it = result.first;
-    }
-    LogLevelCache* levelCache = it->second;
-    return levelCache->getValue();
+    return GetLevel(tagMap, tag, PropType::PROP_TAG_LOG_LEVEL);
 }
 
-uint16_t GetPersistTagLevel(const string& tag)
+uint16_t GetPersistTagLevel(const std::string& tag)
 {
     static auto *persistTagMap = new std::unordered_map<std::string, LogLevelCache*>();
-    static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*persistTagMap)>::type::iterator it;
-    {
-        ReadLock lock(*mtx);
-        it = persistTagMap->find(tag);
-        if (it != persistTagMap->end()) {
-            LogLevelCache* levelCache = it->second;
-            return levelCache->getValue();
-        }
-    }
-    InsertLock lock(*mtx);
-    it = persistTagMap->find(tag); // secured for two thread went across above condition
-    if (it == persistTagMap->end()) {
-        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-        PropType::PROP_PERSIST_TAG_LOG_LEVEL, tag);
-        auto result = persistTagMap->insert({ tag, levelCache });
-        if (!result.second) {
-            delete levelCache;
-            return LOG_LEVEL_MIN;
-        }
-        it = result.first;
-    }
-    LogLevelCache* levelCache = it->second;
-    return levelCache->getValue();
+    return GetLevel(persistTagMap, tag, PropType::PROP_PERSIST_TAG_LOG_LEVEL);
 }
+
 
 bool IsProcessSwitchOn()
 {
