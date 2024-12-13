@@ -58,6 +58,7 @@
  *
  * @since 8
  */
+#include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
@@ -149,6 +150,69 @@ typedef enum {
  */
 int OH_LOG_Print(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, ...)
     __attribute__((__format__(os_log, 5, 6)));
+
+/**
+ * @brief Outputs logs.
+ *
+ * You can use this function to output logs based on the specified log type, log level, service domain, log tag,
+ * and message text.
+ *
+ * @param type Indicates the log type. The type for third-party applications is defined by {@link LOG_APP}.
+ * @param level Indicates the log level, which can be <b>LOG_DEBUG</b>, <b>LOG_INFO</b>, <b>LOG_WARN</b>,
+ * <b>LOG_ERROR</b>, and <b>LOG_FATAL</b>.
+ * @param domain Indicates the service domain of logs. Its value is a hexadecimal integer ranging from 0x0 to 0xFFFF.
+ * @param tag Indicates the log tag, which is a string used to identify the class, file, or service behavior.
+ * @param message Indicates the log string.
+ * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
+ * than <b>0</b> otherwise.
+ * @since 16
+ */
+int OH_LOG_PrintMsg(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *message);
+ 
+/**
+ * @brief Outputs logs.
+ *
+ * You can use this function to output logs based on the specified log type, log level, service domain, log tag,
+ * message text and message length.
+ *
+ * @param type Indicates the log type. The type for third-party applications is defined by {@link LOG_APP}.
+ * @param level Indicates the log level, which can be <b>LOG_DEBUG</b>, <b>LOG_INFO</b>, <b>LOG_WARN</b>,
+ * <b>LOG_ERROR</b>, and <b>LOG_FATAL</b>.
+ * @param domain Indicates the service domain of logs. Its value is a hexadecimal integer ranging from 0x0 to 0xFFFF.
+ * @param tag Indicates the log tag, which is a string used to identify the class, file, or service behavior.
+ * @param tagLen Indicates the length of tag.
+ * @param message Indicates the log string.
+ * @param messageLen Indicates the length of message.
+ * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
+ * than <b>0</b> otherwise.
+ * @since 16
+ */
+int OH_LOG_PrintMsgByLen(LogType type, LogLevel level, unsigned int domain, const char *tag, size_t tagLen,
+    const char *message, size_t messageLen);
+ 
+/**
+ * @brief Outputs logs.
+ *
+ * You can use this function to output logs based on the specified log type, log level, service domain, log tag,
+ * and a va_list instead of variable parameters determined by the format specifier and privacy identifier in the printf
+ * format.
+ *
+ * @param type Indicates the log type. The type for third-party applications is defined by {@link LOG_APP}.
+ * @param level Indicates the log level, which can be <b>LOG_DEBUG</b>, <b>LOG_INFO</b>, <b>LOG_WARN</b>,
+ * <b>LOG_ERROR</b>, and <b>LOG_FATAL</b>.
+ * @param domain Indicates the service domain of logs. Its value is a hexadecimal integer ranging from 0x0 to 0xFFFF.
+ * @param tag Indicates the log tag, which is a string used to identify the class, file, or service behavior.
+ * @param fmt Indicates the format string, which is an enhancement of a printf format string and supports the privacy
+ * identifier. Specifically, {public} or {private} is added between the % character and the format specifier
+ * in each parameter. \n
+ * @param ap Indicates a list of parameters. The number and type of parameters must map onto the format specifiers
+ * in the format string.
+ * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
+ * than <b>0</b> otherwise.
+ * @since 16
+ */
+int OH_LOG_VPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, va_list ap)
+    __attribute__((__format__(os_log, 5, 0)));
 
 /**
  * @brief Checks whether logs of the specified service domain, log tag, and log level can be output.
