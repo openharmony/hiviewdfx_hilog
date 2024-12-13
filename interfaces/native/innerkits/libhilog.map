@@ -92,7 +92,9 @@
         "OHOS::HiviewDFX::GetGlobalLevel()";
         "OHOS::HiviewDFX::GetPersistGlobalLevel()";
         "OHOS::HiviewDFX::GetDomainLevel(unsigned int)";
+        "OHOS::HiviewDFX::GetPersistDomainLevel(unsigned int)";
         "OHOS::HiviewDFX::GetTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::GetPersistTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::Str2LogType(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::Str2LogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::LogLevel2ShortStr(unsigned short)";
