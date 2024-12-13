@@ -56,6 +56,7 @@ using namespace std;
 using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
 static LogCallback g_logCallback = nullptr;
+static int g_logLevel = LOG_LEVEL_MIN;
 static atomic_int g_hiLogGetIdCallCount = 0;
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
@@ -92,6 +93,11 @@ void HiLogUnregisterGetIdFun(RegisterFunc registerFunc)
 void LOG_SetCallback(LogCallback callback)
 {
     g_logCallback = callback;
+}
+
+void HiLogSetAppMinLogLevel(LogLevel level)
+{
+    g_logLevel = level;
 }
 
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
@@ -367,8 +373,16 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
     return ret;
 }
 
+static bool IsAppDomain(const unsigned int domain)
+{
+    return ((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX));
+}
+
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
+    if (IsAppDomain(domain) && level < g_logLevel) {
+        return false;
+    }
     if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || (tag == nullptr) || (domain >= DOMAIN_OS_MAX)) {
         return false;
     }
