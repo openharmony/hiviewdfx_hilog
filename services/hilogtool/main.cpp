@@ -305,41 +305,35 @@ enum class ControlCmd {
 };
 
 struct HilogArgs {
-    uint16_t headLines;
-    uint16_t baseLevel;
-    bool blackDomain;
-    int domainCount;
-    uint32_t domains[MAX_DOMAINS];
-    string regex;
-    string fileName;
-    int32_t buffSize;
-    uint32_t jobId;
-    uint32_t fileSize;
-    uint16_t levels;
-    string stream;
-    uint16_t fileNum;
-    bool persist;
-    bool blackPid;
-    int pidCount;
-    uint32_t pids[MAX_PIDS];
-    uint16_t types;
-    bool blackTag;
-    int tagCount;
-    string tags[MAX_TAGS];
-    bool colorful;
-    FormatTime timeFormat;
-    FormatTimeAccu timeAccuFormat;
-    bool year;
-    bool zone;
-    bool wrap;
-    bool noBlock;
-    uint16_t tailLines;
-
-    HilogArgs() : headLines (0), baseLevel(0), blackDomain(false), domainCount(0), domains { 0 }, regex(""),
-        fileName(""), buffSize(0), jobId(0), fileSize(0), levels(0), stream(""), fileNum(0), persist(false),
-        blackPid(false), pidCount(0), pids { 0 }, types(0), blackTag(false), tagCount(0), tags { "" },
-        colorful(false), timeFormat(FormatTime::INVALID), timeAccuFormat(FormatTimeAccu::INVALID),
-        year(false), zone(false), wrap(false), noBlock(false), tailLines(0) {}
+    uint16_t headLines = 0;
+    uint16_t baseLevel = 0;
+    bool blackDomain = false;
+    int domainCount = 0;
+    uint32_t domains[MAX_DOMAINS] = {0};
+    string regex = "";
+    string fileName = "";
+    int32_t buffSize = 0;
+    uint32_t jobId = 0;
+    uint32_t fileSize = 0;
+    uint16_t levels = 0;
+    string stream = "";
+    uint16_t fileNum = 0;
+    bool persist = false;
+    bool blackPid = false;
+    int pidCount = 0;
+    uint32_t pids[MAX_PIDS] = {0};
+    uint16_t types = 0;
+    bool blackTag = false;
+    int tagCount = 0;
+    string tags[MAX_TAGS] = {""};
+    bool colorful = false;
+    FormatTime timeFormat = FormatTime::INVALID;
+    FormatTimeAccu timeAccuFormat = FormatTimeAccu::INVALID;
+    bool year = false;
+    bool zone = false;
+    bool wrap = false;
+    bool noBlock = false;
+    uint16_t tailLines = 0;
 
     void ToOutputRqst(OutputRqst& rqst)
     {
