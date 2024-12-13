@@ -50,8 +50,8 @@ int OH_LOG_PrintMsgByLen(LogType type, LogLevel level, unsigned int domain, cons
     char newMessage[copyMsgLen + 1];
     (void)memset_s(newTag, copyTagLen + 1, 0, copyTagLen + 1);
     (void)memset_s(newMessage, copyMsgLen + 1, 0, copyMsgLen + 1);
-    if (strncpy_s(newTag, copyTagLen + 1, tag, copyTagLen) < 0
-        || strncpy_s(newMessage, copyMsgLen + 1, message, copyMsgLen) < 0) {
+    if (strncpy_s(newTag, copyTagLen + 1, tag, copyTagLen) < 0 ||
+        strncpy_s(newMessage, copyMsgLen + 1, message, copyMsgLen) < 0) {
         return -1;
     }
     return OH_LOG_Print(type, level, domain, newTag, "%{public}s", newMessage);
