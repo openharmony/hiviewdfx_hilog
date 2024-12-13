@@ -366,7 +366,7 @@ uint16_t GetLevel(std::unordered_map<uint32_t, LogLevelCache*>* map, uint32_t ke
         it = map->find(key);
         if (it != map->end()) {
             LogLevelCache* levelCache = it->second;
-            return levelCache->GetValue();
+            return levelCache->getValue();
         }
     }
     InsertLock lock(*levelMtx);
@@ -381,7 +381,7 @@ uint16_t GetLevel(std::unordered_map<uint32_t, LogLevelCache*>* map, uint32_t ke
         it = result.first;
     }
     LogLevelCache* levelCache = it->second;
-    return levelCache->GetValue();
+    return levelCache->getValue();
 }
 
 uint16_t GetLevel(std::unordered_map<std::string, LogLevelCache*>* map, const string& key, PropType propType)
@@ -393,7 +393,7 @@ uint16_t GetLevel(std::unordered_map<std::string, LogLevelCache*>* map, const st
         it = map->find(key);
         if (it != map->end()) {
             LogLevelCache* levelCache = it->second;
-            return levelCache->GetValue();
+            return levelCache->getValue();
         }
     }
     InsertLock lock(*levelMtx);
@@ -408,7 +408,7 @@ uint16_t GetLevel(std::unordered_map<std::string, LogLevelCache*>* map, const st
         it = result.first;
     }
     LogLevelCache* levelCache = it->second;
-    return levelCache->GetValue();
+    return levelCache->getValue();
 }
 
 uint16_t GetDomainLevel(uint32_t domain)
