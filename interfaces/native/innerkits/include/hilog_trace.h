@@ -27,16 +27,16 @@ typedef int (*RegisterFunc)(uint64_t*, uint32_t*, uint64_t*, uint64_t*);
 /**
  * @brief register hilog trace.
  *
- * @param RegisterFunc Function pointer to RegisterFunc
+ * @param func Function pointer to RegisterFunc
  */
-int HiLogRegisterGetIdFun(RegisterFunc);
+int HiLogRegisterGetIdFun(RegisterFunc func);
 
 /**
  * @brief unregister hilog trace.
  *
- * @param RegisterFunc Function pointer to RegisterFunc
+ * @param func Function pointer to RegisterFunc
  */
-void HiLogUnregisterGetIdFun(RegisterFunc);
+void HiLogUnregisterGetIdFun(RegisterFunc func);
 
 #ifdef __cplusplus
 }
