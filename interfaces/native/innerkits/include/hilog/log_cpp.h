@@ -34,19 +34,20 @@ using HiLogLabel = struct {
     const char *tag;
 };
 
-/**
- * @brief Hilog C++ class interface of different log level.
- * Debug: Designates lower priority log.
- * Info: Designates useful information.
- * Warn: Designates hazardous situations.
- * Error: Designates very serious errors.
- * Fatal: Designates major fatal anomaly.
- *
- * @param label HiLogLabel for the log
- * @param fmt Format string for the log
- */
+
 class HiLog final {
 public:
+    /**
+     * @brief Hilog C++ class interface of different log level.
+     * Debug: Designates lower priority log.
+     * Info: Designates useful information.
+     * Warn: Designates hazardous situations.
+     * Error: Designates very serious errors.
+     * Fatal: Designates major fatal anomaly.
+     *
+     * @param label HiLogLabel for the log
+     * @param fmt Format string for the log
+     */
     static int Debug(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
     static int Info(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
     static int Warn(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
