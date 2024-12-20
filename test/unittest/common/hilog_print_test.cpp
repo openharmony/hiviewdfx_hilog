@@ -24,6 +24,8 @@ using namespace OHOS::HiviewDFX;
 namespace {
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOGTEST_C" };
 const int LOGINDEX = 42 + strlen("HILOGTEST_C");
+const HiLogLabel KMSG_LABEL = { LOG_KMSG, 0xD002D00, "HILOGTEST_C" };
+const std::string PRIV_STR = "<private>";
 
 std::string GetCmdResultFromPopen(const std::string& cmd)
 {
@@ -40,6 +42,33 @@ std::string GetCmdResultFromPopen(const std::string& cmd)
     while (getline(&buffer, &len, fp) != -1) {
         std::string line = buffer;
         ret += line;
+    }
+    if (buffer != nullptr) {
+        free(buffer);
+        buffer = nullptr;
+    }
+    pclose(fp);
+    return ret;
+}
+
+bool IsExistInCmdResult(const std::string &cmd, const std::string &str)
+{
+    if (cmd.empty()) {
+        return false;
+    }
+    FILE* fp = popen(cmd.c_str(), "r");
+    if (fp == nullptr) {
+        return false;
+    }
+    bool ret = false;
+    char* buffer = nullptr;
+    size_t len = 0;
+    while (getline(&buffer, &len, fp) != -1) {
+        std::string line = buffer;
+        if (line.find(str) != string::npos) {
+            ret = true;
+            break;
+        }
     }
     if (buffer != nullptr) {
         free(buffer);
@@ -204,5 +233,26 @@ const vector<string> PrecisionVec = {
         log = vec[i].substr(LOGINDEX);
         EXPECT_EQ(log, PrecisionVec[i]);
     }
+}
+
+/**
+ * @tc.name: Dfx_HilogPrintTest_HilogKmsgPrivacyTest
+ * @tc.desc: HilogKmsgPrivacyTest.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogPrintTest, HilogKmsgPrivacyTest, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "HilogKmsgPrivacyTest: start.";
+    std::string msg = "HilogPrintTest:HilogKmsgPrivacyTest";
+    HiLog::Info(KMSG_LABEL, "%s", msg.c_str());
+    sleep(QUERY_INTERVAL);
+    EXPECT_TRUE(IsExistInCmdResult("hilog -t kmsg -x |grep HILOGTEST_C", PRIV_STR));
+ 
+    (void)GetCmdResultFromPopen("hilog -r");
+    (void)GetCmdResultFromPopen("hilog -p off");
+    HiLog::Info(KMSG_LABEL, "%s", msg.c_str());
+    sleep(QUERY_INTERVAL);
+    EXPECT_TRUE(IsExistInCmdResult("hilog -t kmsg -x |grep HILOGTEST_C", msg));
+    (void)GetCmdResultFromPopen("hilog -p on");
 }
 } // namespace

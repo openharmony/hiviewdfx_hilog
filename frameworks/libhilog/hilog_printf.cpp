@@ -224,7 +224,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     if (type == LOG_KMSG) {
         char tmpFmt[MAX_LOG_LEN] = {0};
         // format va_list info to char*
-        if (vsnprintfp_s(tmpFmt, sizeof(tmpFmt), sizeof(tmpFmt) - 1, true, fmt, ap) == -1) {
+        if (vsnprintfp_s(tmpFmt, sizeof(tmpFmt), sizeof(tmpFmt) - 1, HiLogIsPrivacyOn(), fmt, ap) == -1) {
             tmpFmt[sizeof(tmpFmt) - 2] = '\n';  // 2 add \n to tail
             tmpFmt[sizeof(tmpFmt) - 1] = '\0';
         }
