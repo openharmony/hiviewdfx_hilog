@@ -47,8 +47,11 @@ enum class PropType {
     PROP_ONCE_DEBUG,
     PROP_PERSIST_DEBUG,
     PROP_GLOBAL_LOG_LEVEL,
+    PROP_PERSIST_GLOBAL_LOG_LEVEL,
     PROP_DOMAIN_LOG_LEVEL,
+    PROP_PERSIST_DOMAIN_LOG_LEVEL,
     PROP_TAG_LOG_LEVEL,
+    PROP_PERSIST_TAG_LOG_LEVEL,
     PROP_DOMAIN_FLOWCTRL,
     PROP_PROCESS_FLOWCTRL,
 
@@ -74,8 +77,11 @@ static pthread_mutex_t g_privateLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_onceDebugLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_persistDebugLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_globalLevelLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_persistGlobalLevelLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainLevelLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_persistDomainLevelLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_tagLevelLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_persistTagLevelLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_domainFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t g_processFlowLock = PTHREAD_MUTEX_INITIALIZER;
 static constexpr const char* HAP_DEBUGGABLE = "HAP_DEBUGGABLE";
@@ -90,8 +96,11 @@ static PropRes g_propResources[static_cast<int>(PropType::PROP_MAX)] = {
     {"hilog.debug.on", &g_onceDebugLock}, // PROP_ONCE_DEBUG
     {"persist.sys.hilog.debug.on", &g_persistDebugLock}, // PROP_PERSIST_DEBUG
     {"hilog.loggable.global", &g_globalLevelLock}, // PROP_GLOBAL_LOG_LEVEL
+    {"persist.sys.hilog.loggable.global", &g_persistGlobalLevelLock}, // PROP_PERSIST_GLOBAL_LOG_LEVEL
     {"hilog.loggable.domain.", &g_domainLevelLock}, // PROP_DOMAIN_LOG_LEVEL
+    {"persist.sys.hilog.loggable.domain.", &g_persistDomainLevelLock}, // PROP_PERSIST_DOMAIN_LOG_LEVEL
     {"hilog.loggable.tag.", &g_tagLevelLock}, // PROP_TAG_LOG_LEVEL
+    {"persist.sys.hilog.loggable.tag.", &g_persistTagLevelLock}, // PROP_PERSIST_TAG_LOG_LEVEL
     {"hilog.flowctrl.domain.on", &g_domainFlowLock}, // PROP_DOMAIN_FLOWCTRL
     {"hilog.flowctrl.proc.on", &g_processFlowLock}, // PROP_PROCESS_FLOWCTRL
 
@@ -326,31 +335,45 @@ bool IsDebuggableHap()
     return true;
 }
 
+uint16_t GetGlobalLogLevel()
+{
+    uint16_t globalLevel = GetGlobalLevel();
+    if (globalLevel == LOG_LEVEL_MIN) {
+        globalLevel = GetPersistGlobalLevel();
+    }
+    return globalLevel;
+}
+
 uint16_t GetGlobalLevel()
 {
     static auto *logLevelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, PropType::PROP_GLOBAL_LOG_LEVEL);
     return logLevelCache->getValue();
 }
 
-uint16_t GetDomainLevel(uint32_t domain)
+uint16_t GetPersistGlobalLevel()
 {
-    static auto *domainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
-    static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*domainMap)>::type::iterator it;
+    static auto *logLevelCache =
+                new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, PropType::PROP_PERSIST_GLOBAL_LOG_LEVEL);
+    return logLevelCache->getValue();
+}
+
+uint16_t GetLevel(std::unordered_map<uint32_t, LogLevelCache*>* map, uint32_t key, PropType propType)
+{
+    static shared_timed_mutex* levelMtx = new shared_timed_mutex;
+    std::decay<decltype(*map)>::type::iterator it;
     {
-        ReadLock lock(*mtx);
-        it = domainMap->find(domain);
-        if (it != domainMap->end()) {
+        ReadLock lock(*levelMtx);
+        it = map->find(key);
+        if (it != map->end()) {
             LogLevelCache* levelCache = it->second;
             return levelCache->getValue();
         }
     }
-    InsertLock lock(*mtx);
-    it = domainMap->find(domain); // secured for two thread went across above condition
-    if (it == domainMap->end()) {
-        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-        PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain));
-        auto result = domainMap->insert({ domain, levelCache });
+    InsertLock lock(*levelMtx);
+    it = map->find(key); // secured for two thread went across above condition
+    if (it == map->end()) {
+        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, propType, Uint2HexStr(key));
+        auto result = map->insert({ key, levelCache });
         if (!result.second) {
             delete levelCache;
             return LOG_LEVEL_MIN;
@@ -361,25 +384,23 @@ uint16_t GetDomainLevel(uint32_t domain)
     return levelCache->getValue();
 }
 
-uint16_t GetTagLevel(const string& tag)
+uint16_t GetLevel(std::unordered_map<std::string, LogLevelCache*>* map, const string& key, PropType propType)
 {
-    static auto *tagMap = new std::unordered_map<std::string, LogLevelCache*>();
-    static shared_timed_mutex* mtx = new shared_timed_mutex;
-    std::decay<decltype(*tagMap)>::type::iterator it;
+    static shared_timed_mutex* levelMtx = new shared_timed_mutex;
+    std::decay<decltype(*map)>::type::iterator it;
     {
-        ReadLock lock(*mtx);
-        it = tagMap->find(tag);
-        if (it != tagMap->end()) {
+        ReadLock lock(*levelMtx);
+        it = map->find(key);
+        if (it != map->end()) {
             LogLevelCache* levelCache = it->second;
             return levelCache->getValue();
         }
     }
-    InsertLock lock(*mtx);
-    it = tagMap->find(tag); // secured for two thread went across above condition
-    if (it == tagMap->end()) {
-        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN,
-        PropType::PROP_TAG_LOG_LEVEL, tag);
-        auto result = tagMap->insert({ tag, levelCache });
+    InsertLock lock(*levelMtx);
+    it = map->find(key); // secured for two thread went across above condition
+    if (it == map->end()) {
+        LogLevelCache* levelCache = new LogLevelCache(TextToLogLevel, LOG_LEVEL_MIN, propType, key);
+        auto result = map->insert({ key, levelCache });
         if (!result.second) {
             delete levelCache;
             return LOG_LEVEL_MIN;
@@ -389,6 +410,31 @@ uint16_t GetTagLevel(const string& tag)
     LogLevelCache* levelCache = it->second;
     return levelCache->getValue();
 }
+
+uint16_t GetDomainLevel(uint32_t domain)
+{
+    static auto *domainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
+    return GetLevel(domainMap, domain, PropType::PROP_DOMAIN_LOG_LEVEL);
+}
+
+uint16_t GetPersistDomainLevel(uint32_t domain)
+{
+    static auto *persistDomainMap = new std::unordered_map<uint32_t, LogLevelCache*>();
+    return GetLevel(persistDomainMap, domain, PropType::PROP_PERSIST_DOMAIN_LOG_LEVEL);
+}
+
+uint16_t GetTagLevel(const std::string& tag)
+{
+    static auto *tagMap = new std::unordered_map<std::string, LogLevelCache*>();
+    return GetLevel(tagMap, tag, PropType::PROP_TAG_LOG_LEVEL);
+}
+
+uint16_t GetPersistTagLevel(const std::string& tag)
+{
+    static auto *persistTagMap = new std::unordered_map<std::string, LogLevelCache*>();
+    return GetLevel(persistTagMap, tag, PropType::PROP_PERSIST_TAG_LOG_LEVEL);
+}
+
 
 bool IsProcessSwitchOn()
 {
@@ -524,14 +570,29 @@ int SetGlobalLevel(uint16_t lvl)
     return SetLevel(PropType::PROP_GLOBAL_LOG_LEVEL, "", lvl);
 }
 
+int SetPersistGlobalLevel(uint16_t lvl)
+{
+    return SetLevel(PropType::PROP_PERSIST_GLOBAL_LOG_LEVEL, "", lvl);
+}
+
 int SetTagLevel(const std::string& tag, uint16_t lvl)
 {
     return SetLevel(PropType::PROP_TAG_LOG_LEVEL, tag, lvl);
 }
 
+int SetPersistTagLevel(const std::string& tag, uint16_t lvl)
+{
+    return SetLevel(PropType::PROP_PERSIST_TAG_LOG_LEVEL, tag, lvl);
+}
+
 int SetDomainLevel(uint32_t domain, uint16_t lvl)
 {
     return SetLevel(PropType::PROP_DOMAIN_LOG_LEVEL, Uint2HexStr(domain), lvl);
+}
+
+int SetPersistDomainLevel(uint32_t domain, uint16_t lvl)
+{
+    return SetLevel(PropType::PROP_PERSIST_DOMAIN_LOG_LEVEL, Uint2HexStr(domain), lvl);
 }
 
 int SetProcessSwitchOn(bool on)

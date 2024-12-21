@@ -19,5 +19,5 @@ persist.sys.hilog.debug.on=false
 hilog.flowctrl.proc.on=false
 hilog.flowctrl.domain.on=false
 
-hilog.loggable.global=I
+persist.sys.hilog.loggable.global=I
 hilog.buffersize.global=262144
