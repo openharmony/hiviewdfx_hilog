@@ -23,6 +23,7 @@ template("libhilog_platform_source") {
       "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
       "${PLATFORM_HILOG_PATH}/interfaces/native/innerkits/include",
       "${PLATFORM_ACE_ENGINE_ROOT}/frameworks",
+      "${PLATFORM_ACE_ENGINE_ROOT}/interfaces/inner_api/ace_kit/include",
     ]
     if (target_os == "android") {
       defines += [ "ANDROID_PLATFORM" ]
