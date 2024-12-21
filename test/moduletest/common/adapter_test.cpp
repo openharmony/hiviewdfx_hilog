@@ -114,6 +114,38 @@ HWTEST_F(PropertiesTest, LevelTest, TestSize.Level1)
     }
 }
 
+HWTEST_F(PropertiesTest, PersistLevelTest, TestSize.Level1)
+{
+    static const std::array<const char*, 10> charLevels = {"d", "D", "f", "F", "e", "E", "w", "W", "i", "I"};
+    static const std::array<uint16_t, 10> expected = {
+        LOG_DEBUG, LOG_DEBUG,
+        LOG_FATAL, LOG_FATAL,
+        LOG_ERROR, LOG_ERROR,
+        LOG_WARN, LOG_WARN,
+        LOG_INFO, LOG_INFO,
+    };
+
+    for (size_t i = 0; i < charLevels.size(); ++i) {
+        SetPersistGlobalLevel(ShortStr2LogLevel(charLevels[i]));
+        usleep(QUERY_INTERVAL);
+        EXPECT_EQ(GetPersistGlobalLevel(), expected[i]);
+    }
+
+    uint32_t domain = 12345;
+    for (size_t i = 0; i < charLevels.size(); ++i) {
+        SetPersistDomainLevel(domain, ShortStr2LogLevel(charLevels[i]));
+        usleep(QUERY_INTERVAL);
+        EXPECT_EQ(GetPersistDomainLevel(domain), expected[i]);
+    }
+
+    std::string tag = "test_tag";
+    for (size_t i = 0; i < charLevels.size(); ++i) {
+        SetPersistTagLevel(tag, ShortStr2LogLevel(charLevels[i]));
+        usleep(QUERY_INTERVAL);
+        EXPECT_EQ(GetPersistTagLevel(tag), expected[i]);
+    }
+}
+
 HWTEST_F(PropertiesTest, BufferTest, TestSize.Level1)
 {
     static const std::array<uint16_t, 7> logType = {-1, 0, 1, 3, 4, 5, 100};
