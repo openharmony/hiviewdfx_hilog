@@ -71,3 +71,8 @@ void OH_LOG_SetCallback(LogCallback callback)
 {
     return LOG_SetCallback(callback);
 }
+
+void OH_LOG_SetMinLogLevel(LogLevel level)
+{
+    return HiLogSetAppMinLogLevel(level);
+}

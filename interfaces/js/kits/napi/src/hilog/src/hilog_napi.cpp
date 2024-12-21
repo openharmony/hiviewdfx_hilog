@@ -83,6 +83,7 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
         NVal::DeclareNapiFunction("sLogE", HilogNapiBase::SysLogError),
         NVal::DeclareNapiFunction("sLogF", HilogNapiBase::SysLogFatal),
         NVal::DeclareNapiFunction("isLoggable", HilogNapiBase::IsLoggable),
+        NVal::DeclareNapiFunction("setMinLogLevel", HilogNapiBase::SetMinLogLevel),
     });
 }
 

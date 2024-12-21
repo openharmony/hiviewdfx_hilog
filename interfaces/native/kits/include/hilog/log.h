@@ -338,6 +338,14 @@ typedef void (*LogCallback)(const LogType type, const LogLevel level, const unsi
  */
 void OH_LOG_SetCallback(LogCallback callback);
 
+/**
+ * @brief Set the lowest log level of the current application process.
+ *
+ * @param level log level
+ * @since 16
+ */
+void OH_LOG_SetMinLogLevel(LogLevel level);
+
 #ifdef __cplusplus
 }
 #endif
