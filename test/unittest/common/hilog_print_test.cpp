@@ -24,6 +24,7 @@ using namespace OHOS::HiviewDFX;
 namespace {
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOGTEST_C" };
 const int LOGINDEX = 42 + strlen("HILOGTEST_C");
+constexpr uint32_t QUERY_INTERVAL = 1; // sleep 1s
 const HiLogLabel KMSG_LABEL = { LOG_KMSG, 0xD002D00, "HILOGTEST_C" };
 const std::string PRIV_STR = "<private>";
 
@@ -247,7 +248,7 @@ HWTEST_F(HilogPrintTest, HilogKmsgPrivacyTest, TestSize.Level1)
     HiLog::Info(KMSG_LABEL, "%s", msg.c_str());
     sleep(QUERY_INTERVAL);
     EXPECT_TRUE(IsExistInCmdResult("hilog -t kmsg -x |grep HILOGTEST_C", PRIV_STR));
- 
+
     (void)GetCmdResultFromPopen("hilog -r");
     (void)GetCmdResultFromPopen("hilog -p off");
     HiLog::Info(KMSG_LABEL, "%s", msg.c_str());
