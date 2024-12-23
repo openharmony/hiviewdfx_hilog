@@ -212,6 +212,15 @@ static int LogToKmsg(const LogLevel level, const char *tag, const char* info)
 #endif
 }
 
+bool HiLogIsPrivacyOn()
+{
+    bool priv = true;
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
+    priv = (!IsDebugOn()) && IsPrivateSwitchOn();
+#endif
+    return priv;
+}
+
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
@@ -271,14 +280,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
         }
     }
 
-    /* format log string */
-#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
-    bool debug = IsDebugOn();
-    bool priv = (!debug) && IsPrivateSwitchOn();
-#else
-    bool priv = true;
-#endif
-
+/* format log string */
 #ifdef __clang__
 /* code specific to clang compiler */
 #pragma clang diagnostic push
@@ -288,7 +290,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif
-    vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, priv, fmt, ap);
+    vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, HiLogIsPrivacyOn(), fmt, ap);
     LogCallback logCallbackFunc = g_logCallback;
     if (logCallbackFunc != nullptr) {
         logCallbackFunc(type, level, domain, tag, logBuf);
@@ -334,7 +336,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     /* flow control */
-    if (!debug && IsNeedProcFlowCtr(type)) {
+    if (!IsDebugOn() && IsNeedProcFlowCtr(type)) {
         ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono);
         if (ret < 0) {
             return ret;
