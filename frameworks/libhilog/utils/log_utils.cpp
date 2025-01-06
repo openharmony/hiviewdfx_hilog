@@ -86,7 +86,7 @@ uint64_t Str2Size(const string& str)
     uint64_t index = str.size() - 1;
     uint64_t unit = g_SizeMap.GetValue(str[index]);
 
-    uint64_t value = stoull(str.substr(0, unit !=0 ? index : index + 1));
+    uint64_t value = stoull(str.substr(0, unit != 0 ? index : index + 1));
     return value * (unit != 0 ? unit : 1);
 }
 
@@ -337,21 +337,21 @@ uint32_t GetBitsCount(uint64_t n)
     uint32_t count = 0;
     while (n != 0) {
         ++count;
-        n = n & (n-1);
+        n = n & (n - 1);
     }
     return count;
 }
 
 uint16_t GetBitPos(uint64_t n)
 {
-    if (!(n && (!(n & (n-1))))) { // only accpet the number which is power of 2
+    if (!(n && (!(n & (n - 1))))) { // only accpet the number which is power of 2
         return 0;
     }
 
     uint16_t i = 0;
     while (n >> (i++)) {}
     i--;
-    return i-1;
+    return i - 1;
 }
 
 enum class Radix {
