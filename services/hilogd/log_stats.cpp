@@ -32,7 +32,7 @@ LogStats::LogStats()
 }
 LogStats::~LogStats() {}
 
-static inline int idxLvl(uint16_t lvl)
+static inline int IdxLvl(uint16_t lvl)
 {
     return static_cast<int>(lvl) - LevelBase;
 }
@@ -63,7 +63,7 @@ static void UpdateStats(StatsEntry &entry, const StatsInfo &info)
         entry.monoTimeAuditStart.SetTimeStamp(info.mono_sec, info.tv_nsec);
     }
 
-    int lvl = idxLvl(info.level);
+    int lvl = IdxLvl(info.level);
     entry.lines[lvl]++;
     entry.len[lvl] += info.len;
     entry.dropped += info.dropped;
@@ -110,7 +110,7 @@ static void StatsInfo2NewStatsEntry(const StatsInfo &info, StatsEntry &entry)
     for (uint64_t &i : entry.len) {
         i = 0;
     }
-    int lvl = idxLvl(info.level);
+    int lvl = IdxLvl(info.level);
     entry.lines[lvl] = 1;
     entry.len[lvl] = info.len;
 }
@@ -178,7 +178,7 @@ void LogStats::Count(const StatsInfo &info)
 {
     if (enable) {
         std::scoped_lock lk(lock);
-        int index = idxLvl(info.level);
+        int index = IdxLvl(info.level);
         totalLines[index]++;
         totalLens[index] += info.len;
         UpdateDomainTable(info);
