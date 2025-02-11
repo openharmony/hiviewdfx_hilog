@@ -146,6 +146,22 @@ napi_value HilogNapiBase::IsLoggable(napi_env env, napi_callback_info info)
     return NVal::CreateBool(env, res).val_;
 }
 
+napi_value HilogNapiBase::SetMinLogLevel(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::ONE)) {
+        return nullptr;
+    }
+    bool succ = false;
+    int32_t level = LOG_LEVEL_MIN;
+    tie(succ, level) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
+    if (!succ) {
+        return nullptr;
+    }
+    HiLogSetAppMinLogLevel(static_cast<LogLevel>(level));
+    return nullptr;
+}
+
 napi_value HilogNapiBase::Debug(napi_env env, napi_callback_info info)
 {
     return HilogImpl(env, info, LOG_DEBUG, true);
