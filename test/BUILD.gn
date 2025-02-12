@@ -41,6 +41,21 @@ ohos_moduletest("HiLogNDKTest") {
   ]
 }
 
+ohos_moduletest("HiLogNDKZTest") {
+  module_out_path = module_output_path
+
+  sources = [ "moduletest/common/hilog_ndk_z_test.cpp" ]
+
+  configs = [ ":module_private_config" ]
+
+  external_deps = [
+    "hilog:hilog_ndk",
+    "init:libbegetutil",
+  ]
+
+  include_dirs = [ "//base/hiviewdfx/hilog/interfaces/native/kits/include" ]
+}
+
 ohos_moduletest("HiLogAdapterTest") {
   module_out_path = module_output_path
 
@@ -62,6 +77,7 @@ group("hilog_moduletest") {
   deps = [
     ":HiLogAdapterTest",
     ":HiLogNDKTest",
+    ":HiLogNDKZTest",
   ]
 }
 

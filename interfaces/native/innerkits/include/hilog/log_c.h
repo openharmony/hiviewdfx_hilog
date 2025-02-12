@@ -151,6 +151,14 @@ typedef void (*LogCallback)(const LogType type, const LogLevel level, const unsi
  */
 void LOG_SetCallback(LogCallback callback);
 
+/**
+ * @brief Sets the lowest app log level of the current application process.
+ *
+ * @param level log level
+ * @since 15
+ */
+void HiLogSetAppMinLogLevel(LogLevel level);
+
 #ifdef __cplusplus
 }
 #endif
