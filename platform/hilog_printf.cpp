@@ -16,6 +16,8 @@
 #include "hilog/log.h"
 #include "interface/native/log.h"
 
+static int g_logLevel = LOG_LEVEL_MIN;
+
 static OHOS::Ace::LogLevel ConvertLogLevel(LogLevel level)
 {
     switch (level) {
@@ -51,9 +53,14 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
     return ret;
 }
 
+void HiLogSetAppMinLogLevel(LogLevel level)
+{
+    g_logLevel = level;
+}
+
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
-    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || tag == nullptr) {
+    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || (level < g_logLevel) || tag == nullptr) {
         return false;
     }
 
