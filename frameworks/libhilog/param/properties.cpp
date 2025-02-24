@@ -90,28 +90,33 @@ using PropRes = struct {
     string name;
     pthread_mutex_t* lock;
 };
-static PropRes g_propResources[static_cast<int>(PropType::PROP_MAX)] = {
-    // Cached:
-    {"hilog.private.on", &g_privateLock}, // PROP_PRIVATE
-    {"hilog.debug.on", &g_onceDebugLock}, // PROP_ONCE_DEBUG
-    {"persist.sys.hilog.debug.on", &g_persistDebugLock}, // PROP_PERSIST_DEBUG
-    {"hilog.loggable.global", &g_globalLevelLock}, // PROP_GLOBAL_LOG_LEVEL
-    {"persist.sys.hilog.loggable.global", &g_persistGlobalLevelLock}, // PROP_PERSIST_GLOBAL_LOG_LEVEL
-    {"hilog.loggable.domain.", &g_domainLevelLock}, // PROP_DOMAIN_LOG_LEVEL
-    {"persist.sys.hilog.loggable.domain.", &g_persistDomainLevelLock}, // PROP_PERSIST_DOMAIN_LOG_LEVEL
-    {"hilog.loggable.tag.", &g_tagLevelLock}, // PROP_TAG_LOG_LEVEL
-    {"persist.sys.hilog.loggable.tag.", &g_persistTagLevelLock}, // PROP_PERSIST_TAG_LOG_LEVEL
-    {"hilog.flowctrl.domain.on", &g_domainFlowLock}, // PROP_DOMAIN_FLOWCTRL
-    {"hilog.flowctrl.proc.on", &g_processFlowLock}, // PROP_PROCESS_FLOWCTRL
 
-    // Non cached:
-    {"persist.sys.hilog.kmsg.on", nullptr}, // PROP_KMSG,
-    {"hilog.buffersize.", nullptr}, // PROP_BUFFER_SIZE,
-    {"hilog.quota.proc.", nullptr}, // PROP_PROC_QUOTA
-    {"persist.sys.hilog.stats", nullptr}, // PROP_STATS_ENABLE,
-    {"persist.sys.hilog.stats.tag", nullptr}, // PROP_STATS_TAG_ENABLE,
-    {"hilog.quota.domain.", nullptr}, // DOMAIN_QUOTA
-};
+static PropRes *g_propResources = nullptr;
+static __attribute__((constructor)) void InitProps()
+{
+    g_propResources = new PropRes[static_cast<int>(PropType::PROP_MAX)]{
+        // Cached:
+        {"hilog.private.on", &g_privateLock}, // PROP_PRIVATE
+        {"hilog.debug.on", &g_onceDebugLock}, // PROP_ONCE_DEBUG
+        {"persist.sys.hilog.debug.on", &g_persistDebugLock}, // PROP_PERSIST_DEBUG
+        {"hilog.loggable.global", &g_globalLevelLock}, // PROP_GLOBAL_LOG_LEVEL
+        {"persist.sys.hilog.loggable.global", &g_persistGlobalLevelLock}, // PROP_PERSIST_GLOBAL_LOG_LEVEL
+        {"hilog.loggable.domain.", &g_domainLevelLock}, // PROP_DOMAIN_LOG_LEVEL
+        {"persist.sys.hilog.loggable.domain.", &g_persistDomainLevelLock}, // PROP_PERSIST_DOMAIN_LOG_LEVEL
+        {"hilog.loggable.tag.", &g_tagLevelLock}, // PROP_TAG_LOG_LEVEL
+        {"persist.sys.hilog.loggable.tag.", &g_persistTagLevelLock}, // PROP_PERSIST_TAG_LOG_LEVEL
+        {"hilog.flowctrl.domain.on", &g_domainFlowLock}, // PROP_DOMAIN_FLOWCTRL
+        {"hilog.flowctrl.proc.on", &g_processFlowLock}, // PROP_PROCESS_FLOWCTRL
+
+        // Non cached:
+        {"persist.sys.hilog.kmsg.on", nullptr}, // PROP_KMSG,
+        {"hilog.buffersize.", nullptr}, // PROP_BUFFER_SIZE,
+        {"hilog.quota.proc.", nullptr}, // PROP_PROC_QUOTA
+        {"persist.sys.hilog.stats", nullptr}, // PROP_STATS_ENABLE,
+        {"persist.sys.hilog.stats.tag", nullptr}, // PROP_STATS_TAG_ENABLE,
+        {"hilog.quota.domain.", nullptr}, // DOMAIN_QUOTA
+    };
+}
 
 static string GetPropertyName(PropType propType)
 {
