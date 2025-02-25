@@ -155,7 +155,7 @@ void LOG_SetCallback(LogCallback callback);
  * @brief Sets the lowest app log level of the current application process.
  *
  * @param level log level
- * @since 16
+ * @since 15
  */
 void HiLogSetAppMinLogLevel(LogLevel level);
 
