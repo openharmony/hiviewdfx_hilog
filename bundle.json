@@ -27,7 +27,8 @@
         "ffrt",
         "init",
         "napi",
-        "zlib"
+        "zlib",
+        "runtime_core"
       ]
     },
     "features": [
@@ -41,7 +42,8 @@
         "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
-        "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust"
+        "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust",
+        "//base/hiviewdfx/hilog/interfaces/ani:hilogani"
       ],
       "inner_kits": [
         {
