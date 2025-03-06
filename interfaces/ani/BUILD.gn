@@ -1,0 +1,81 @@
+# Copyright (c) 2025 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//base/hiviewdfx/hilog/hilog.gni")
+import("//build/config/components/ets_frontend/ets2abc_config.gni")
+import("//build/ohos.gni")
+
+group("hilogani") {
+  deps = [
+    ":hilog_abc_etc",
+    ":hilog_ani",
+  ]
+}
+ohos_shared_library("hilog_ani") {
+  include_dirs = [ "//base/hiviewdfx/hilog/interfaces/ani/" ]
+  sources = [ "//base/hiviewdfx/hilog/interfaces/ani/hilog_ani.cpp" ]
+  configs = [ "//base/hiviewdfx/hilog/frameworks/libhilog:libhilog_config" ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  deps = []
+
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "runtime_core:ani",
+  ]
+
+  if (!is_mingw && !is_mac && !is_linux) {
+    deps += [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog" ]
+  }
+
+  cflags_cc = []
+  if (is_mingw) {
+    deps += [
+      "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_windows",
+    ]
+    defines += [ "__WINDOWS__" ]
+    cflags_cc += [ "-std=c++17" ]
+  } else if (is_mac) {
+    deps +=
+        [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_mac" ]
+    defines += [ "__MAC__" ]
+  } else if (is_linux) {
+    deps +=
+        [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_linux" ]
+    defines += [ "__LINUX__" ]
+  }
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
+  output_extension = "so"
+}
+
+generate_static_abc("hilog_abc") {
+  arktsconfig = "//base/hiviewdfx/hilog/interfaces/ani/arktsconfig.json"
+  dst_file = "$target_out_dir/hilog.abc"
+  out_puts = [ "$target_out_dir/hilog.abc" ]
+  is_boot_abc = "True"
+  device_dst_file = "system/framework/hilog.abc"
+}
+
+ohos_prebuilt_etc("hilog_abc_etc") {
+  source = "$target_out_dir/hilog.abc"
+  module_install_dir = "framework"
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
+  deps = [ ":hilog_abc" ]
+}
