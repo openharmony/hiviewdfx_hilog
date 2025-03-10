@@ -46,21 +46,12 @@ static const std::string FUNC_NAME_GETLONG = "getLong";
 static const std::string FUNC_NAME_OBJECT_REF = "$_get";
 static const std::string PROP_NAME_LENGTH = "length";
 
-static ani_status EnumGetValueInt32(ani_env *env, ani_int enumIndex, int32_t &value)
+static ani_status EnumGetValueInt32(ani_env *env, ani_enum_item enumItem, int32_t &value)
 {
-    ani_enum aniEnum {};
-    if (ANI_OK != env->FindEnum(CLASS_NAME_HILOGANI.c_str(), &aniEnum)) {
-        HiLog::Info(LABEL, "FindEnum failed %{public}s", CLASS_NAME_HILOGANI.c_str());
-        return ANI_ERROR;
-    }
-    ani_enum_item enumItem {};
-    if (ANI_OK != env->Enum_GetEnumItemByIndex(aniEnum, static_cast<ani_size>(enumIndex), &enumItem)) {
-        HiLog::Info(LABEL, "Enum_GetEnumItemByIndex failed %{public}d", static_cast<int32_t>(enumIndex));
-        return ANI_ERROR;
-    }
     ani_int aniInt {};
     if (ANI_OK != env->EnumItem_GetValue_Int(enumItem, &aniInt)) {
-        HiLog::Info(LABEL, "Enum_GetEnumItemByIndex failed %{public}d", static_cast<int32_t>(enumIndex));
+        ani_size aniInt = 0;
+        HiLog::Info(LABEL, "EnumItem_GetValue_Int failed %{public}d", env->EnumItem_GetIndex(enumItem, &aniInt));
         return ANI_ERROR;
     }
     value = static_cast<int32_t>(aniInt);
@@ -442,7 +433,8 @@ void HilogAni::Fatal(ani_env *env, ani_object object, ani_double domain, ani_str
     return HilogImpl(env, domain, tag, format, args, LOG_FATAL, true);
 }
 
-ani_boolean HilogAni::IsLoggable(ani_env *env, ani_object object, ani_double domain, ani_string tag, ani_int level)
+ani_boolean HilogAni::IsLoggable(ani_env *env, ani_object object, ani_double domain, ani_string tag,
+    ani_enum_item level)
 {
     int32_t domainVal = static_cast<int32_t>(domain);
     if (domainVal < static_cast<int32_t>(DOMAIN_APP_MIN) || (domainVal > static_cast<int32_t>(DOMAIN_APP_MAX))) {
