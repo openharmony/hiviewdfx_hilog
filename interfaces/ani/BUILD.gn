@@ -69,7 +69,7 @@ generate_static_abc("hilog_abc") {
   dst_file = "$target_out_dir/hilog.abc"
   out_puts = [ "$target_out_dir/hilog.abc" ]
   is_boot_abc = "True"
-  device_dst_file = "system/framework/hilog.abc"
+  device_dst_file = "/system/framework/hilog.abc"
 }
 
 ohos_prebuilt_etc("hilog_abc_etc") {
