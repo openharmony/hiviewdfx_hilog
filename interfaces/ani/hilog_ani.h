@@ -45,7 +45,8 @@ public:
                       ani_string format, ani_object args);
     static void Fatal(ani_env *env, ani_object object, ani_double domain, ani_string tag,
                       ani_string format, ani_object args);
-    static ani_boolean IsLoggable(ani_env *env, ani_object object, ani_double domain, ani_string tag, ani_int level);
+    static ani_boolean IsLoggable(ani_env *env, ani_object object, ani_double domain, ani_string tag,
+                                  ani_enum_item level);
 
 private:
     static void HilogImpl(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_object args,
