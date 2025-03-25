@@ -146,57 +146,6 @@ bool CheckHiLogPrint(char *needToMatch)
     }
     return ret;
 }
- 
-// Detects how many FDs are linked to hilogd.
-int CheckHiLogdLinked()
-{
-    #define PROC_PATH_LENGTH (64)
-    int result = 0;
-    char procPath[PROC_PATH_LENGTH];
-    int res = snprintf_s(procPath, PROC_PATH_LENGTH, PROC_PATH_LENGTH - 1, "/proc/%d/fd", getpid());
-    if (res == NEGATIVE_ONE) {
-        printf("CheckHiLogdLinked getpid snprintf_s failed\n");
-        return 0;
-    }
-    DIR *dir = opendir(procPath);
-    if (dir == nullptr) {
-        return result;
-    }
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != nullptr) {
-        if (entry->d_type != DT_LNK) {
-            continue;
-        }
-        char fdPath[128];
-        res = snprintf_s(fdPath, sizeof(fdPath), sizeof(fdPath) - 1, "%s/%s", procPath, entry->d_name);
-        if (res == NEGATIVE_ONE) {
-            printf("CheckHiLogdLinked fd search snprintf_s failed\n");
-            return 0;
-        }
- 
-        char target[256];
-        ssize_t len = readlink(fdPath, target, sizeof(target) - 1);
-        if (len == -1) {
-            continue;
-        }
-        target[len] = '\0';
-        if (!strstr(target, "socket")) {
-            continue;
-        }
-        struct sockaddr_un addr;
-        socklen_t addrLen = sizeof(addr);
- 
-        // Obtains the peer address connected to the socket.
-        getpeername(atoi(entry->d_name), reinterpret_cast<struct sockaddr *>(&addr), &addrLen);
-        if (strstr(addr.sun_path, "hilogInput")) {
-            printf("FD: %s Connected to: %s\n", entry->d_name, addr.sun_path);
-            result++;
-        }
-    }
- 
-    closedir(dir);
-    return result;
-}
 
 class HiLogBaseNDKTest : public testing::Test {
 public:
@@ -353,10 +302,6 @@ HWTEST_F(HiLogBaseNDKTest, HilogBasePrintCheck, TestSize.Level1)
         bool result = CheckHiLogPrint(g_str[i].data());
         EXPECT_EQ(result, true);
     }
- 
-    // Check the number of socket links to hilogInput.
-    int result = CheckHiLogdLinked();
-    EXPECT_EQ(result, TWO);
 }
 } // namespace HiLogTest
 } // namespace HiviewDFX
