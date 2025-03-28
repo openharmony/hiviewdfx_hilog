@@ -42,7 +42,7 @@ template("libhilog_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
     branch_protector_ret = "pac_ret"
-      sanitize = {
+    sanitize = {
       cfi = true
       cfi_cross_dso = true
       debug = false
