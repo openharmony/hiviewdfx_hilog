@@ -20,6 +20,12 @@ config("hilog_config") {
 }
 
 ohos_executable("hilog") {
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   sources = [
     "log_display.cpp",
     "main.cpp",

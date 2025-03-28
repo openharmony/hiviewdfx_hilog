@@ -20,6 +20,12 @@ config("hilogd_config") {
 }
 
 ohos_executable("hilogd") {
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   sources = [
     "cmd_executor.cpp",
     "flow_control.cpp",
