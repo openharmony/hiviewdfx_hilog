@@ -41,6 +41,12 @@ config("libhilog_config") {
 template("libhilog_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
+    branch_protector_ret = "pac_ret"
+      sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
     if (platform != "windows" && platform != "mac" && platform != "linux") {
       param_sources = [ "$param_root/properties.cpp" ]
       ioctl_sources = [ "$ioctl_root/log_ioctl.cpp" ]
