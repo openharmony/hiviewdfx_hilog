@@ -28,7 +28,7 @@
 
 using namespace OHOS::HiviewDFX;
 
-const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOG_ANI" };
+static const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOG_ANI" };
 static constexpr int MIN_NUMBER = 0;
 static constexpr int MAX_NUMBER = 97;
 static constexpr int PUBLIC_LEN = 6;
@@ -290,8 +290,8 @@ static void HandleFormatFlags(const std::string& formatStr, uint32_t& pos, bool&
     return;
 }
 
-static uint32_t ProcessLogContent(const std::string& formatStr, uint32_t pos, const std::vector<AniParam>& params,
-    uint32_t& count, std::string& ret, bool isPriv)
+static uint32_t ProcessLogContent(const std::string& formatStr, LogContentInfo& info, uint32_t pos,
+    const std::vector<AniParam>& params, std::string& ret)
 {
     if (pos + 1 >= formatStr.size()) {
         return pos;
@@ -299,26 +299,26 @@ static uint32_t ProcessLogContent(const std::string& formatStr, uint32_t pos, co
     switch (formatStr[pos + 1]) {
         case 'd':
         case 'i':
-            if (params[count].type == AniArgsType::ANI_INT ||
-                params[count].type == AniArgsType::ANI_NUMBER ||
-                params[count].type == AniArgsType::ANI_BIGINT) {
-                ret += isPriv ? PRIV_STR : params[count].val;
+            if (params[info.count].type == AniArgsType::ANI_INT ||
+                params[info.count].type == AniArgsType::ANI_NUMBER ||
+                params[info.count].type == AniArgsType::ANI_BIGINT) {
+                ret += info.isPriv ? PRIV_STR : params[info.count].val;
             }
-            count++;
+            info.count++;
             ++pos;
             break;
         case 's':
-            if (params[count].type == AniArgsType::ANI_STRING ||
-                params[count].type == AniArgsType::ANI_UNDEFINED ||
-                params[count].type == AniArgsType::ANI_BOOLEAN) {
-                ret += isPriv ? PRIV_STR : params[count].val;
+            if (params[info.count].type == AniArgsType::ANI_STRING ||
+                params[info.count].type == AniArgsType::ANI_UNDEFINED ||
+                params[info.count].type == AniArgsType::ANI_BOOLEAN) {
+                ret += info.isPriv ? PRIV_STR : params[info.count].val;
             }
-            count++;
+            info.count++;
             ++pos;
             break;
         case 'O':
         case 'o':
-            ++count;
+            ++info.count;
             ++pos;
             break;
         case '%':
@@ -332,7 +332,7 @@ static uint32_t ProcessLogContent(const std::string& formatStr, uint32_t pos, co
     return pos;
 }
 
-void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std::string& logContent)
+static void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std::string& logContent)
 {
     std::string& ret = logContent;
     if (params.empty()) {
@@ -342,15 +342,16 @@ void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std:
     auto size = params.size();
     auto len = formatStr.size();
     uint32_t pos = 0;
-    uint32_t count = 0;
     bool debug = true;
 #if not (defined(__WINDOWS__) || defined(__MAC__) || defined(__LINUX__))
     debug = IsDebugOn();
 #endif
     bool priv = (!debug) && IsPrivateSwitchOn();
+    LogContentInfo info;
+    info.count = 0;
     for (; pos < len; ++pos) {
         bool showPriv = true;
-        if (count >= size) {
+        if (info.count >= size) {
             break;
         }
         if (formatStr[pos] != '%') {
@@ -358,8 +359,8 @@ void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std:
             continue;
         }
         HandleFormatFlags(formatStr, pos, showPriv);
-        bool isPriv = priv && showPriv;
-        pos = ProcessLogContent(formatStr, pos, params, count, ret, isPriv);
+        info.isPriv = priv && showPriv;
+        pos = ProcessLogContent(formatStr, info, pos, params, ret);
     }
     if (pos < len) {
         ret += formatStr.substr(pos, len - pos);

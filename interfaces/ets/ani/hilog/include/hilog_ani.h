@@ -33,6 +33,11 @@ using AniParam = struct {
     std::string val;
 };
 
+struct LogContentInfo {
+    uint32_t count = 0;
+    bool isPriv = true;
+};
+
 class HilogAni {
 public:
     static void Debug(ani_env *env, ani_object object, ani_double domain, ani_string tag,
