@@ -93,9 +93,9 @@ uint32_t GetBitsCount(uint64_t n);
 uint16_t GetBitPos(uint64_t n);
 
 std::string Uint2DecStr(uint32_t i);
-uint32_t DecStr2Uint(const std::string& str);
+uint32_t DecStr2Uint(const std::string& str, bool& success);
 std::string Uint2HexStr(uint32_t i);
-uint32_t HexStr2Uint(const std::string& str);
+uint32_t HexStr2Uint(const std::string& str, bool& success);
 
 #if !defined(__WINDOWS__) and !defined(__LINUX__)
 std::string GetProgName();
