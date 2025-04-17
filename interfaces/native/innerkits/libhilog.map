@@ -54,7 +54,7 @@
         "OHOS::HiviewDFX::SetTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned short)";
         "OHOS::HiviewDFX::SetPersistTagLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned short)";
         "OHOS::HiviewDFX::Split(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>>&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-        "OHOS::HiviewDFX::HexStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::HexStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool&)";
         "OHOS::HiviewDFX::ComboLogType2Str(unsigned short)";
         "OHOS::HiviewDFX::Str2Size(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::Str2ComboLogLevel(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
@@ -104,7 +104,7 @@
         "OHOS::HiviewDFX::GetBitPos(unsigned long long)";
         "OHOS::HiviewDFX::GetBitPos(unsigned long)";
         "OHOS::HiviewDFX::Uint2DecStr(unsigned int)";
-        "OHOS::HiviewDFX::DecStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::DecStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool&)";
     };
 
   local:
