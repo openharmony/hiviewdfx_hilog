@@ -510,11 +510,17 @@ static int DomainHandler(HilogArgs& context, const char *arg)
         if (index >= MAX_DOMAINS) {
             return ERR_TOO_MANY_DOMAINS;
         }
-        uint32_t domain = HexStr2Uint(d);
-        if (domain == 0) {
+        bool success = false;
+        uint32_t domain = HexStr2Uint(d, success);
+        if (!success) {
             return ERR_INVALID_DOMAIN_STR;
         }
-        context.domains[index++] = domain;
+        if (((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX)) ||
+            ((domain >= DOMAIN_OS_MIN) && (domain <= DOMAIN_OS_MAX))) {
+            context.domains[index++] = domain;
+        } else {
+            return ERR_INVALID_DOMAIN_STR;
+        }
     }
     context.domainCount = index;
     return RET_SUCCESS;
