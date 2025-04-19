@@ -95,7 +95,8 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
                 break;
             case 'O':
             case 'o':
-                if (params[count].type == napi_object) {
+                if (params[count].type == napi_object || params[count].type == napi_function ||
+                    params[count].type == napi_undefined || params[count].type == napi_null) {
                     ret += (priv && showPriv) ? PRIV_STR : params[count].val;
                 }
                 count++;
@@ -223,8 +224,8 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
     if (typeStatus != napi_ok) {
         return nullptr;
     }
-    if (type == napi_number || type == napi_bigint || type == napi_object ||
-        type == napi_undefined || type == napi_boolean || type == napi_null) {
+    if (type == napi_number || type == napi_bigint || type == napi_undefined ||
+        type == napi_boolean || type == napi_null) {
         napi_value elmString;
         napi_status objectStatus = napi_coerce_to_string(env, element, &elmString);
         if (objectStatus != napi_ok) {
@@ -234,6 +235,8 @@ napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
         if (!succ) {
             return nullptr;
         }
+    } else if (type == napi_object || type == napi_function) {
+        tie(succ, res.val) = NVal(env, element).GetValObjectAsStr();
     } else if (type == napi_string) {
         tie(succ, name, ignore) = NVal(env, element).ToUTF8String();
         if (!succ) {
