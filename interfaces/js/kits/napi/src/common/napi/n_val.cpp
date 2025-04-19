@@ -31,12 +31,17 @@ NVal::operator bool() const
 
 bool NVal::TypeIs(napi_valuetype expType) const
 {
+    return ValueTypeIs(val_, expType);
+}
+
+bool NVal::ValueTypeIs(napi_value value, napi_valuetype expType) const
+{
     if (!*this) {
         return false;
     }
 
     napi_valuetype valueType;
-    napi_typeof(env_, val_, &valueType);
+    napi_typeof(env_, value, &valueType);
 
     if (expType != valueType) {
         return false;
@@ -171,6 +176,47 @@ tuple<bool, void *, size_t, size_t, napi_typedarray_type> NVal::ToTypedArrayInfo
     napi_status status =
         napi_get_typedarray_info(env_, val_, &type, &length, (void **)&data, &in_array_buffer, &byte_offset);
     return make_tuple(status == napi_ok, data, length, byte_offset, type);
+}
+
+string NVal::GetPrintString(napi_value value) const
+{
+    string str;
+    if (!ValueTypeIs(value, napi_string)) {
+        napi_value strValue = nullptr;
+        if (napi_coerce_to_string(env_, value, &strValue) != napi_ok) {
+            return str;
+        }
+        value = strValue;
+    }
+    napi_get_print_string(env_, value, str);
+    return str;
+}
+
+tuple<bool, string> NVal::GetValObjectAsStr() const
+{
+    napi_value globalValue = nullptr;
+    auto fail = make_tuple(false, "");
+    napi_status status = napi_get_global(env_, &globalValue);
+    if (status != napi_ok) {
+        return fail;
+    }
+    napi_value jsonValue = nullptr;
+    status = napi_get_named_property(env_, globalValue, "JSON", &jsonValue);
+    if (status != napi_ok) {
+        return fail;
+    }
+    napi_value stringifyValue = nullptr;
+    status = napi_get_named_property(env_, jsonValue, "stringify", &stringifyValue);
+    if (status != napi_ok) {
+        return fail;
+    }
+    napi_value transValue = nullptr;
+    status = napi_call_function(env_, jsonValue, stringifyValue, 1, &val_, &transValue);
+    if (status != napi_ok || transValue == nullptr) {
+        return fail;
+    }
+    string content = GetPrintString(transValue);
+    return make_tuple(true, content);
 }
 
 bool NVal::HasProp(string propName) const
