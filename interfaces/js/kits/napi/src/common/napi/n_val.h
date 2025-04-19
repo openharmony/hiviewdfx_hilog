@@ -41,6 +41,8 @@ public:
 
     bool TypeIs(napi_valuetype expType) const;
 
+    bool ValueTypeIs(napi_value value, napi_valuetype expType) const;
+
     /* SHOULD ONLY BE USED FOR EXPECTED TYPE */
     std::tuple<bool, std::unique_ptr<char[]>, size_t> ToUTF8String() const;
 
@@ -67,6 +69,8 @@ public:
     std::tuple<bool, bool> IsArray() const;
 
     std::tuple<bool, void *, size_t, size_t, napi_typedarray_type> ToTypedArrayInfo() const;
+
+    std::tuple<bool, std::string> GetValObjectAsStr() const;
 
     /* Static helpers to create js objects */
     static NVal CreateUndefined(napi_env env);
@@ -109,6 +113,8 @@ public:
 
     static inline napi_property_descriptor DeclareNapiGetterSetter(const char *name,
         napi_callback getter, napi_callback setter);
+private:
+    std::string GetPrintString(napi_value value) const;
 };
 } // namespace HiviewDFX
 } // namespace OHOS
