@@ -150,7 +150,7 @@ void HilogAniBase::HilogImpl(ani_env *env, ani_double domain, ani_string tag,
     std::vector<AniParam> params;
     for (ani_size i = 0; i < length; i++) {
         ani_ref element;
-        if (ANI_OK != env->Array_Get_Ref(static_cast<ani_array_ref>(args), i, &element)) {
+        if (ANI_OK != env->Array_Get(args, i, &element)) {
             HiLog::Info(LABEL, "Get element at index %{public}zu from array failed", i);
             return;
         }
