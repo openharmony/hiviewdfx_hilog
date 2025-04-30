@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -106,6 +107,8 @@ int HiLogBasePrint(LogType type, LogLevel level, unsigned int domain, const char
  * @param level enum:LogLevel
  */
 bool HiLogBaseIsLoggable(unsigned int domain, const char *tag, LogLevel level);
+
+void HiLogRecordSnapshot(int lines, int64_t time);
 
 #ifdef __cplusplus
 }
