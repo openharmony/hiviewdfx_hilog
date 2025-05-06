@@ -25,7 +25,6 @@ config("libhilog_pub_config") {
 }
 if (is_mingw || is_mac || is_linux || is_ohos) {
   ohos_shared_library("libhilog") {
-    branch_protector_ret = "pac_ret"
     public_configs = [ ":libhilog_pub_config" ]
     if (is_ohos) {
       deps = [ "../../../frameworks/libhilog:libhilog_source_ohos" ]
