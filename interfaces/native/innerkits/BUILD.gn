@@ -50,6 +50,7 @@ if (is_mingw || is_mac || is_linux || is_ohos) {
         "system",
         "updater",
       ]
+      branch_protector_ret = "pac_ret"
       sanitize = {
         cfi = true
         cfi_cross_dso = true
@@ -74,6 +75,7 @@ template("libhilog") {
     }
   } else {
     ohos_shared_library(target_name) {
+      branch_protector_ret = "pac_ret"
       sanitize = {
         cfi = true
         cfi_cross_dso = true

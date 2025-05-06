@@ -371,7 +371,7 @@ static string Num2Str(T num, Radix radix)
 }
 
 template<typename T>
-static void Str2Num(const string& str, T& num, Radix radix)
+static bool Str2Num(const string& str, T& num, Radix radix)
 {
     T  i = 0;
     std::stringstream ss;
@@ -380,9 +380,12 @@ static void Str2Num(const string& str, T& num, Radix radix)
         r = std::hex;
     }
     ss << r << str;
-    ss >> i;
+    bool success = false;
+    if (ss >> i) {
+        success = true;
+    }
     num = i;
-    return;
+    return success;
 }
 
 string Uint2DecStr(uint32_t i)
@@ -390,10 +393,10 @@ string Uint2DecStr(uint32_t i)
     return Num2Str(i, Radix::RADIX_DEC);
 }
 
-uint32_t DecStr2Uint(const string& str)
+uint32_t DecStr2Uint(const string& str, bool& success)
 {
     uint32_t i = 0;
-    Str2Num(str, i, Radix::RADIX_DEC);
+    success = Str2Num(str, i, Radix::RADIX_DEC);
     return i;
 }
 
@@ -402,10 +405,10 @@ string Uint2HexStr(uint32_t i)
     return Num2Str(i, Radix::RADIX_HEX);
 }
 
-uint32_t HexStr2Uint(const string& str)
+uint32_t HexStr2Uint(const string& str, bool& success)
 {
     uint32_t i = 0;
-    Str2Num(str, i, Radix::RADIX_HEX);
+    success = Str2Num(str, i, Radix::RADIX_HEX);
     return i;
 }
 

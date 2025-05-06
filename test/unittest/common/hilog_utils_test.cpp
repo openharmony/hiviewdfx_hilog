@@ -191,10 +191,13 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_006, TestSize.Level1)
     uint32_t hexNum = 0xd002d00;
     std::string decStr = "1250";
     std::string hexStr = "d002d00";
+    bool success = false;
     EXPECT_EQ(Uint2DecStr(decNum), decStr);
-    EXPECT_EQ(DecStr2Uint(decStr), decNum);
+    EXPECT_EQ(DecStr2Uint(decStr, success), decNum);
+    EXPECT_TRUE(success);
     EXPECT_EQ(Uint2HexStr(hexNum), hexStr);
-    EXPECT_EQ(HexStr2Uint(hexStr), hexNum);
+    EXPECT_EQ(HexStr2Uint(hexStr, success), hexNum);
+    EXPECT_TRUE(success);
 }
 
 /**
@@ -250,5 +253,23 @@ HWTEST_F(HilogUtilsTest, HilogUtilsTest_009, TestSize.Level1)
     });
     PrintErrorno(errno);
     EXPECT_EQ(ret, RET_FAIL);
+}
+
+/**
+ * @tc.name: Dfx_HilogUtilsTest_HilogUtilsTest_010
+ * @tc.desc: HexStr2Uint.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HilogUtilsTest, HilogUtilsTest_010, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "HilogUtilsTest_010: start.";
+    uint32_t hexNum = 0x0;
+    std::string hexStr = "0x0";
+    bool success = false;
+    EXPECT_EQ(HexStr2Uint(hexStr, success), hexNum);
+    EXPECT_TRUE(success);
+    std::string str = "zzz";
+    EXPECT_EQ(HexStr2Uint(str, success), hexNum);
+    EXPECT_FALSE(success);
 }
 } // namespace

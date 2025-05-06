@@ -122,6 +122,11 @@ static void CleanSocket(void)
     }
 }
 
+void HiLogRecordSnapshot(int lines, int64_t time)
+{
+    return;
+}
+
 int HiLogBasePrintArgs(
     const LogType type, const LogLevel level, const unsigned int domain, const char *tag, const char *fmt, va_list ap)
 {
