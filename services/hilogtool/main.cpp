@@ -407,6 +407,9 @@ using OptHandler = std::function<int(HilogArgs& context, const char *arg)>;
 
 static int QueryLogHandler(HilogArgs& context, const char *arg)
 {
+    if (setvbuf(stdout, nullptr, _IOLBF, MAX_LOG_LEN) != 0) {
+        cout << "failed to setvbuf _IOLBF " << endl;
+    }
     OutputRqst rqst = { 0 };
     context.ToOutputRqst(rqst);
     LogIoctl ioctl(IoctlCmd::OUTPUT_RQST, IoctlCmd::OUTPUT_RSP);
