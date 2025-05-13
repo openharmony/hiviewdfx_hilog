@@ -118,3 +118,8 @@ bool HiLogBaseIsLoggable(unsigned int domain, const char *tag, LogLevel level)
     }
     return true;
 }
+
+void HiLogRecordSnapshot(int lines, int64_t time)
+{
+    return;
+}
