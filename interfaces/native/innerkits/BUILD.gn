@@ -23,6 +23,11 @@ config("libhilog_pub_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
+
+group("libhilog_host") {
+  deps = [ ":libhilog($host_toolchain)" ]
+}
+
 if (is_mingw || is_mac || is_linux || is_ohos) {
   ohos_shared_library("libhilog") {
     public_configs = [ ":libhilog_pub_config" ]
