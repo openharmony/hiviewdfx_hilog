@@ -42,6 +42,7 @@
         "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_host",
         "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust",
         "//base/hiviewdfx/hilog/interfaces/ets/ani:ani_hilog_package"
       ],
