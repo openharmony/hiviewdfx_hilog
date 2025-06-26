@@ -19,7 +19,7 @@
 #include "hilog_ani_base.h"
 
 using namespace OHOS::HiviewDFX;
-static const std::string NAMESPACE_NAME_HILOG = "L@ohos/hilog/hilog;";
+static const std::string NAMESPACE_NAME_HILOG = "@ohos.hilog.hilog";
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
     ani_env *env;
