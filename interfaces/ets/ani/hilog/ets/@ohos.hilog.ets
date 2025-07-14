@@ -13,81 +13,33 @@
  * limitations under the License.
  */
 
-class hilogAni {
-    native static debug(domain: number, tag: string, format: string,
-        args: Array<int | boolean | number | string | bigint | undefined>): void;
-    native static info(domain: number, tag: string, format: string,
-        args: Array<int | boolean | number | string | bigint | undefined>): void;
-    native static warn(domain: number, tag: string, format: string,
-        args: Array<int | boolean | number | string | bigint | undefined>): void;
-    native static error(domain: number, tag: string, format: string,
-        args: Array<int | boolean | number | string | bigint | undefined>): void;
-    native static fatal(domain: number, tag: string, format: string,
-        args: Array<int | boolean | number | string | bigint | undefined>): void;
-    native static isLoggable(domain: number, tag: string, level: hilog.LogLevel): boolean;
-}
-
 export default namespace hilog {
     loadLibrary("hilog_ani");
+
+    export native function debug(domain: number, tag: string, format: string,
+        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+
+    export native function info(domain: number, tag: string, format: string,
+        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+
+    export native function warn(domain: number, tag: string, format: string,
+        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+
+    export native function error(domain: number, tag: string, format: string,
+        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+
+    export native function fatal(domain: number, tag: string, format: string,
+        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+
+    export native function isLoggable(domain: number, tag: string, level: LogLevel): boolean;
+
+    export native function setMinLogLevel(level: LogLevel): void;
+
     export enum LogLevel {
         DEBUG = 3,
         INFO = 4,
         WARN = 5,
         ERROR = 6,
         FATAL = 7
-    }
-
-    export function debug(domain: number, tag: string, format: string,
-        ...args: (int | boolean | number | string | bigint | undefined)[]): void {
-        let arr: Array<int | boolean | number | string | bigint | undefined> = {}
-        for (let i = 0; i < args.length; i++) {
-            arr.push(args[i])
-        }
-        const args_casted = arr as (Array<int | boolean | number | string | bigint | undefined>)
-        hilogAni.debug(domain, tag, format, arr)
-    }
-
-    export function info(domain: number, tag: string, format: string,
-        ...args: (int | boolean | number | string | bigint | undefined)[]): void {
-        let arr: Array<int | boolean | number | string | bigint | undefined> = {}
-        for (let i = 0; i < args.length; i++) {
-            arr.push(args[i])
-        }
-        const args_casted = arr as (Array<int | boolean | number | string | bigint | undefined>)
-        hilogAni.info(domain, tag, format, arr)
-    }
-
-    export function warn(domain: number, tag: string, format: string,
-        ...args: (int | boolean | number | string | bigint | undefined)[]): void {
-        let arr: Array<int | boolean | number | string | bigint | undefined> = {}
-        for (let i = 0; i < args.length; i++) {
-            arr.push(args[i])
-        }
-        const args_casted = arr as (Array<int | boolean | number | string | bigint | undefined>)
-        hilogAni.warn(domain, tag, format, arr)
-    }
-
-    export function error(domain: number, tag: string, format: string,
-        ...args: (int | boolean | number | string | bigint | undefined)[]): void {
-        let arr: Array<int | boolean | number | string | bigint | undefined> = {}
-        for (let i = 0; i < args.length; i++) {
-            arr.push(args[i])
-        }
-        const args_casted = arr as (Array<int | boolean | number | string | bigint | undefined>)
-        hilogAni.error(domain, tag, format, arr)
-    }
-
-    export function fatal(domain: number, tag: string, format: string,
-        ...args: (int | boolean | number | string | bigint | undefined)[]): void {
-        let arr: Array<int | boolean | number | string | bigint | undefined> = {}
-        for (let i = 0; i < args.length; i++) {
-            arr.push(args[i])
-        }
-        const args_casted = arr as (Array<int | boolean | number | string | bigint | undefined>)
-        hilogAni.fatal(domain, tag, format, arr)
-    }
-
-    export function isLoggable(domain: number, tag: string, level: LogLevel): boolean {
-        return hilogAni.isLoggable(domain, tag, level)
     }
 }
