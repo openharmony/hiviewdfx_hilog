@@ -17,7 +17,11 @@ import("//build/ohos.gni")
 
 ohos_shared_library("hilog_ani") {
   include_dirs = [ "./include" ]
-  sources = [ "./src/hilog_ani.cpp" ]
+  sources = [
+    "./src/ani_util.cpp",
+    "./src/hilog_ani.cpp",
+    "./src/hilog_ani_base.cpp",
+  ]
   configs = [ "../../../../frameworks/libhilog:libhilog_config" ]
 
   sanitize = {
