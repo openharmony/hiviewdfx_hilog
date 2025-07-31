@@ -117,7 +117,7 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
 /**
  * @brief Hilog C interface of different log level in release version
  *
- * @param type enum:LogType
+ * @param fmt:format string
  */
 #define HILOG_COMM_INFO(fmt, ...) ((void)HILOG_COMM_IMPL(LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__))
 #define HILOG_COMM_WARN(fmt, ...) ((void)HILOG_COMM_IMPL(LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__))
