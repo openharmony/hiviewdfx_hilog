@@ -115,6 +115,25 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
 #define HILOG_IMPL(type, level, domain, tag, ...) HiLogPrint(type, level, domain, tag, ##__VA_ARGS__)
 
 /**
+ * @brief Hilog C interface of different log level in release version
+ *
+ * @param fmt:format string
+ */
+#define HILOG_COMM_INFO(fmt, ...) ((void)HILOG_COMM_IMPL(LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__))
+#define HILOG_COMM_WARN(fmt, ...) ((void)HILOG_COMM_IMPL(LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__))
+#define HILOG_COMM_ERROR(fmt, ...) ((void)HILOG_COMM_IMPL(LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__))
+#define HILOG_COMM_FATAL(fmt, ...) ((void)HILOG_COMM_IMPL(LOG_FATAL, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__))
+
+/**
+ * @brief Hilog C interface implementation in release version
+ *
+ * @param level enum:LogLevel
+ * @param domain macro:LOG_DOMAIN
+ * @param tag macro:LOG_TAG
+ */
+#define HILOG_COMM_IMPL(level, domain, tag, ...) HiLogPrint(LOG_CORE, level, domain, tag, ##__VA_ARGS__)
+
+/**
  * @brief Check whether log of a specified domain, tag and level can be printed.
  *
  * @param domain macro:LOG_DOMAIN
