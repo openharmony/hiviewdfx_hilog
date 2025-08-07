@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef ANI_UTIL_H
-#define ANI_UTIL_H
+#ifndef HILOG_ANI_UTIL_H
+#define HILOG_ANI_UTIL_H
 
 #include <ani.h>
 #include <string>
@@ -45,4 +45,4 @@ public:
 }  // namespace HiviewDFX
 }  // namespace OHOS
 
-#endif //ANI_UTIL_H
+#endif //HILOG_ANI_UTIL_H
