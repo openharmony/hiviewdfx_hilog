@@ -13,23 +13,25 @@
  * limitations under the License.
  */
 
+type RecordData = undefined | null | Object | Record<string, RecordData> | Array<RecordData>;
+
 export default namespace hilog {
     loadLibrary("hilog_ani");
 
     export native function debug(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function info(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function warn(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function error(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function fatal(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function isLoggable(domain: number, tag: string, level: LogLevel): boolean;
 
