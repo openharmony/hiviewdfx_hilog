@@ -13,16 +13,17 @@
  * limitations under the License.
  */
 
+#include "hilog_ani_base.h"
+
 #include <ani.h>
 #include <array>
+
 #include "hilog/log.h"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
 #include "hilog_common.h"
 #include "properties.h"
 #include "securec.h"
-
-#include "hilog_ani_base.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -45,7 +46,6 @@ static void HandleFormatFlags(const std::string& formatStr, uint32_t& pos, bool&
         formatStr.substr(pos + PROPERTY_POS, PRIVATE_LEN) == "private") {
         pos += (PRIVATE_LEN + PROPERTY_POS);
     }
-    return;
 }
 
 static void ProcessLogContent(const std::string &formatStr, const std::vector<AniParam> &params, bool isPriv,
@@ -62,7 +62,7 @@ static void ProcessLogContent(const std::string &formatStr, const std::vector<An
                 params[contentPos.count].type == AniArgsType::ANI_BIGINT) {
                 ret += isPriv ? PRIV_STR : params[contentPos.count].val;
             }
-            contentPos.count++;
+            ++contentPos.count;
             ++contentPos.pos;
             break;
         case 's':
@@ -72,7 +72,7 @@ static void ProcessLogContent(const std::string &formatStr, const std::vector<An
                 params[contentPos.count].type == AniArgsType::ANI_NULL) {
                 ret += isPriv ? PRIV_STR : params[contentPos.count].val;
             }
-            contentPos.count++;
+            ++contentPos.count;
             ++contentPos.pos;
             break;
         case 'O':
@@ -80,7 +80,7 @@ static void ProcessLogContent(const std::string &formatStr, const std::vector<An
             if (params[contentPos.count].type == AniArgsType::ANI_OBJECT) {
                 ret += isPriv ? PRIV_STR : params[contentPos.count].val;
             }
-            contentPos.count++;
+            ++contentPos.count;
             ++contentPos.pos;
             break;
         case '%':
@@ -91,59 +91,49 @@ static void ProcessLogContent(const std::string &formatStr, const std::vector<An
             ret += formatStr[contentPos.pos];
             break;
     }
-    return;
 }
 
 void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std::string& logContent)
 {
-    std::string& ret = logContent;
     if (params.empty()) {
-        ret += formatStr;
+        logContent += formatStr;
         return;
     }
     auto size = params.size();
     auto len = formatStr.size();
     LogContentPosition contentPos;
-    contentPos.pos = 0;
-    contentPos.count = 0;
-    bool debug = true;
+    bool isPrivateEnable = true;
 #if not (defined(__WINDOWS__) || defined(__MAC__) || defined(__LINUX__))
-    debug = IsDebugOn();
+    isPrivateEnable = IsPrivateModeEnable();
 #endif
-    bool priv = (!debug) && IsPrivateSwitchOn();
     for (; contentPos.pos < len; ++contentPos.pos) {
         bool showPriv = true;
         if (contentPos.count >= size) {
             break;
         }
         if (formatStr[contentPos.pos] != '%') {
-            ret += formatStr[contentPos.pos];
+            logContent += formatStr[contentPos.pos];
             continue;
         }
         HandleFormatFlags(formatStr, contentPos.pos, showPriv);
-        bool isPriv = priv && showPriv;
-        ProcessLogContent(formatStr, params, isPriv, contentPos, ret);
+        bool isPriv = isPrivateEnable && showPriv;
+        ProcessLogContent(formatStr, params, isPriv, contentPos, logContent);
     }
     if (contentPos.pos < len) {
-        ret += formatStr.substr(contentPos.pos, len - contentPos.pos);
+        logContent += formatStr.substr(contentPos.pos, len - contentPos.pos);
     }
-    return;
 }
 
 void HilogAniBase::HilogImpl(ani_env *env, ani_double domain, ani_string tag,
     ani_string format, ani_array args, int level, bool isAppLog)
 {
-    int32_t domainVal = static_cast<int32_t>(domain);
-    std::string tagString = AniUtil::AniStringToStdString(env, tag);
-    std::string fmtString = AniUtil::AniStringToStdString(env, format);
-
     ani_size length = 0;
     if (ANI_OK != env->Array_GetLength(args, &length)) {
-        HiLog::Info(LABEL, "Get array length failed");
+        HiLog::Warn(LABEL, "Get array length failed");
         return;
     }
     if (MIN_NUMBER > length || MAX_NUMBER < length) {
-        HiLog::Info(LABEL, "%{public}s", "Argc mismatch");
+        HiLog::Warn(LABEL, "Argc mismatch, length:%{public}zu", length);
         return;
     }
     std::string logContent;
@@ -151,18 +141,20 @@ void HilogAniBase::HilogImpl(ani_env *env, ani_double domain, ani_string tag,
     for (ani_size i = 0; i < length; i++) {
         ani_ref element;
         if (ANI_OK != env->Array_Get_Ref(static_cast<ani_array_ref>(args), i, &element)) {
-            HiLog::Info(LABEL, "Get element at index %{public}zu from array failed", i);
+            HiLog::Warn(LABEL, "Get element at index %{public}zu from array failed", i);
             return;
         }
-        parseAniValue(env, element, params);
+        ParseAniValue(env, element, params);
     }
+    std::string fmtString = AniUtil::AniStringToStdString(env, format);
     ParseLogContent(fmtString, params, logContent);
+    int32_t domainVal = static_cast<int32_t>(domain);
+    std::string tagString = AniUtil::AniStringToStdString(env, tag);
     HiLogPrint((isAppLog ? LOG_APP : LOG_CORE),
                static_cast<LogLevel>(level), domainVal, tagString.c_str(), "%{public}s", logContent.c_str());
-    return;
 }
 
-void HilogAniBase::parseAniValue(ani_env *env, ani_ref element, std::vector<AniParam>& params)
+void HilogAniBase::ParseAniValue(ani_env *env, ani_ref element, std::vector<AniParam>& params)
 {
     AniParam res;
     AniArgsType type = AniUtil::AniArgGetType(env, static_cast<ani_object>(element));
@@ -177,7 +169,6 @@ void HilogAniBase::parseAniValue(ani_env *env, ani_ref element, std::vector<AniP
         HiLog::Info(LABEL, "%{public}s", "Type mismatch");
     }
     params.emplace_back(res);
-    return;
 }
 
 void HilogAniBase::Debug(ani_env *env, ani_double domain, ani_string tag,
@@ -233,7 +224,6 @@ void HilogAniBase::SetMinLogLevel(ani_env *env, ani_enum_item level)
         return;
     }
     HiLogSetAppMinLogLevel(static_cast<LogLevel>(levelVal));
-    return;
 }
 }  // namespace HiviewDFX
 }  // namespace OHOS

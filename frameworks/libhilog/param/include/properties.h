@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 bool IsDebugOn();
+bool IsPrivateModeEnable();
 bool IsPrivateSwitchOn();
 
 #ifdef __cplusplus
