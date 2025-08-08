@@ -340,6 +340,11 @@ bool IsDebuggableHap()
     return true;
 }
 
+bool IsPrivateModeEnable()
+{
+    return !IsDebugOn() && !IsDebuggableHap() && IsPrivateSwitchOn();
+}
+
 uint16_t GetGlobalLogLevel()
 {
     uint16_t globalLevel = GetGlobalLevel();

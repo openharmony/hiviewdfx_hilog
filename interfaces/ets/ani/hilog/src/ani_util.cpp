@@ -13,8 +13,11 @@
  * limitations under the License.
  */
 
+#include "ani_util.h"
+
 #include <ani.h>
 #include <array>
+
 #include "hilog/log.h"
 #include "hilog/log_c.h"
 #include "hilog/log_cpp.h"
@@ -22,7 +25,6 @@
 #include "properties.h"
 #include "securec.h"
 
-#include "ani_util.h"
 namespace OHOS {
 namespace HiviewDFX {
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOG_ANI_UTIL" };

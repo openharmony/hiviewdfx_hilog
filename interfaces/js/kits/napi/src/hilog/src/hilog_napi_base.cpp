@@ -40,27 +40,25 @@ static const string PRIV_STR = "<private>";
 
 void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logContent)
 {
-    string& ret = logContent;
     if (params.empty()) {
-        ret += formatStr;
+        logContent += formatStr;
         return;
     }
     auto size = params.size();
     auto len = formatStr.size();
     uint32_t pos = 0;
     uint32_t count = 0;
-    bool debug = true;
+    bool isPrivateEnable = true;
 #if not (defined(__WINDOWS__) || defined(__MAC__) || defined(__LINUX__))
-    debug = IsDebugOn();
+    isPrivateEnable = IsPrivateModeEnable();
 #endif
-    bool priv = (!debug) && IsPrivateSwitchOn();
     for (; pos < len; ++pos) {
         bool showPriv = true;
         if (count >= size) {
             break;
         }
         if (formatStr[pos] != '%') {
-            ret += formatStr[pos];
+            logContent += formatStr[pos];
             continue;
         }
 
@@ -80,41 +78,40 @@ void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logCo
             case 'd':
             case 'i':
                 if (params[count].type == napi_number || params[count].type == napi_bigint) {
-                    ret += (priv && showPriv) ? PRIV_STR : params[count].val;
+                    logContent += (isPrivateEnable && showPriv) ? PRIV_STR : params[count].val;
                 }
-                count++;
+                ++count;
                 ++pos;
                 break;
             case 's':
                 if (params[count].type == napi_string || params[count].type == napi_undefined ||
                     params[count].type == napi_boolean || params[count].type == napi_null) {
-                    ret += (priv && showPriv) ? PRIV_STR : params[count].val;
+                    logContent += (isPrivateEnable && showPriv) ? PRIV_STR : params[count].val;
                 }
-                count++;
+                ++count;
                 ++pos;
                 break;
             case 'O':
             case 'o':
                 if (params[count].type == napi_object || params[count].type == napi_function ||
                     params[count].type == napi_undefined || params[count].type == napi_null) {
-                    ret += (priv && showPriv) ? PRIV_STR : params[count].val;
+                    logContent += (isPrivateEnable && showPriv) ? PRIV_STR : params[count].val;
                 }
-                count++;
+                ++count;
                 ++pos;
                 break;
             case '%':
-                ret += formatStr[pos];
+                logContent += formatStr[pos];
                 ++pos;
                 break;
             default:
-                ret += formatStr[pos];
+                logContent += formatStr[pos];
                 break;
         }
     }
     if (pos < len) {
-        ret += formatStr.substr(pos, len - pos);
+        logContent += formatStr.substr(pos, len - pos);
     }
-    return;
 }
 
 napi_value HilogNapiBase::IsLoggable(napi_env env, napi_callback_info info)
