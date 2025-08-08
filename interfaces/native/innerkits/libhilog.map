@@ -4,6 +4,7 @@
         HiLogPrintArgs;
         HiLogPrint;
         HiLogIsLoggable;
+        IsPrivateModeEnable;
         IsPrivateSwitchOn;
         IsDebugOn;
         HiLogRegisterGetIdFun;

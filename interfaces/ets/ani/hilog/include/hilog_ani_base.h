@@ -26,9 +26,9 @@ using AniParam = struct {
     std::string val;
 };
 
-typedef struct {
-    uint32_t pos;
-    uint32_t count;
+typedef struct LogContentPosition {
+    uint32_t pos = 0;
+    uint32_t count = 0;
 } LogContentPosition;
 
 class HilogAniBase {
@@ -44,7 +44,7 @@ public:
     static void SetMinLogLevel(ani_env *env, ani_enum_item level);
 
 private:
-    static void parseAniValue(ani_env *env, ani_ref element, std::vector<AniParam> &params);
+    static void ParseAniValue(ani_env *env, ani_ref element, std::vector<AniParam> &params);
 };
 }  // namespace HiviewDFX
 }  // namespace OHOS
