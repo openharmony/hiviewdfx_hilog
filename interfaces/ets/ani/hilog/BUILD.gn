@@ -16,6 +16,7 @@ import("//build/config/components/ets_frontend/ets2abc_config.gni")
 import("//build/ohos.gni")
 
 ohos_shared_library("hilog_ani") {
+  shlib_type = "ani"
   include_dirs = [ "./include" ]
   sources = [
     "./src/ani_util.cpp",
