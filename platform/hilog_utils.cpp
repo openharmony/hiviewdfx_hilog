@@ -21,7 +21,7 @@ bool IsDebugOn()
     return false;
 }
 
-bool IsPrivateSwitchOn()
+bool IsPrivateModeEnable()
 {
     return true;
 }
