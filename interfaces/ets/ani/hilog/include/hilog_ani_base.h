@@ -33,14 +33,14 @@ typedef struct {
 
 class HilogAniBase {
 public:
-    static void Debug(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args);
-    static void HilogImpl(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args,
+    static void Debug(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args);
+    static void HilogImpl(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args,
                           int level, bool isAppLog);
-    static void Info(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args);
-    static void Warn(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args);
-    static void Error(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args);
-    static void Fatal(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args);
-    static ani_boolean IsLoggable(ani_env *env, ani_double domain, ani_string tag, ani_enum_item level);
+    static void Info(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args);
+    static void Warn(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args);
+    static void Error(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args);
+    static void Fatal(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args);
+    static ani_boolean IsLoggable(ani_env *env, ani_int domain, ani_string tag, ani_enum_item level);
     static void SetMinLogLevel(ani_env *env, ani_enum_item level);
 
 private:
