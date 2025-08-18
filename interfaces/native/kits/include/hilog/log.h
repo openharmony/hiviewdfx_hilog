@@ -165,7 +165,7 @@ int OH_LOG_Print(LogType type, LogLevel level, unsigned int domain, const char *
  * @param message Indicates the log string.
  * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
  * than <b>0</b> otherwise.
- * @since 16
+ * @since 18
  */
 int OH_LOG_PrintMsg(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *message);
  
@@ -185,7 +185,7 @@ int OH_LOG_PrintMsg(LogType type, LogLevel level, unsigned int domain, const cha
  * @param messageLen Indicates the length of message.
  * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
  * than <b>0</b> otherwise.
- * @since 16
+ * @since 18
  */
 int OH_LOG_PrintMsgByLen(LogType type, LogLevel level, unsigned int domain, const char *tag, size_t tagLen,
     const char *message, size_t messageLen);
@@ -209,7 +209,7 @@ int OH_LOG_PrintMsgByLen(LogType type, LogLevel level, unsigned int domain, cons
  * in the format string.
  * @return Returns <b>0</b> or a larger value if the operation is successful; returns a value smaller
  * than <b>0</b> otherwise.
- * @since 16
+ * @since 18
  */
 int OH_LOG_VPrint(LogType type, LogLevel level, unsigned int domain, const char *tag, const char *fmt, va_list ap)
     __attribute__((__format__(os_log, 5, 0)));
