@@ -16,22 +16,22 @@
 export default namespace hilog {
     loadLibrary("hilog_ani");
 
-    export native function debug(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+    export native function debug(domain: int, tag: string, format: string,
+        ...args: (Object|undefined|null)[]): void;
 
-    export native function info(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+    export native function info(domain: int, tag: string, format: string,
+        ...args: (Object|undefined|null)[]): void;
 
-    export native function warn(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+    export native function warn(domain: int, tag: string, format: string,
+        ...args: (Object|undefined|null)[]): void;
 
-    export native function error(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+    export native function error(domain: int, tag: string, format: string,
+        ...args: (Object|undefined|null)[]): void;
 
-    export native function fatal(domain: number, tag: string, format: string,
-        ...args: (int|boolean|number|string|bigint|Object|undefined|null)[]): void;
+    export native function fatal(domain: int, tag: string, format: string,
+        ...args: (Object|undefined|null)[]): void;
 
-    export native function isLoggable(domain: number, tag: string, level: LogLevel): boolean;
+    export native function isLoggable(domain: int, tag: string, level: LogLevel): boolean;
 
     export native function setMinLogLevel(level: LogLevel): void;
 
