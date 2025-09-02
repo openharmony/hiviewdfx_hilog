@@ -129,6 +129,30 @@ typedef enum {
 } LogLevel;
 
 /**
+ * @brief Enumerates preference strategy to be used in {@link OH_LOG_SetLogLevel}.
+ *
+ * You are advised to select preference strategy based on their respective usage scenarios.
+ *
+ * @since 21
+ */
+typedef enum {
+    /** Used to unset SetLogLevel, then none is set
+     */
+    UNSET_LOGLEVEL = 0,
+    /**
+     * The actual lowest log level is determined by
+     * the maximum level between the new level and the system-controlled level.
+     * This is equivalent to calling OH_LOG_SetMinLogLevel.
+     */
+    PREFER_CLOSE_LOG = 1,
+    /**
+     * The actual lowest log level is determined by
+     * the minimum level between the new level and the system-controlled level.
+     */
+    PREFER_OPEN_LOG = 2,
+} PreferStrategy;
+
+/**
  * @brief Outputs logs.
  *
  * You can use this function to output logs based on the specified log type, log level, service domain, log tag,
@@ -345,6 +369,15 @@ void OH_LOG_SetCallback(LogCallback callback);
  * @since 15
  */
 void OH_LOG_SetMinLogLevel(LogLevel level);
+
+/**
+ * @brief Sets the lowest log level of the current application process. Different preference strategy can be set.
+ *
+ * @param level log level.
+ * @param prefer preference strategy. See {@link PreferStrategy}.
+ * @since 21
+ */
+void OH_LOG_SetLogLevel(LogLevel level, PreferStrategy prefer);
 
 #ifdef __cplusplus
 }

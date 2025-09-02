@@ -37,11 +37,19 @@ export default namespace hilog {
 
     export native function setMinLogLevel(level: LogLevel): void;
 
+    export native function setLogLevel(level: LogLevel, prefer: PreferStrategy): void;
+
     export enum LogLevel {
         DEBUG = 3,
         INFO = 4,
         WARN = 5,
         ERROR = 6,
         FATAL = 7
+    }
+
+    export enum PreferStrategy {
+        UNSET_LOGLEVEL = 0,
+        PREFER_CLOSE_LOG = 1,
+        PREFER_OPEN_LOG = 2
     }
 }
