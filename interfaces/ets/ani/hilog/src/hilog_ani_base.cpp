@@ -225,5 +225,19 @@ void HilogAniBase::SetMinLogLevel(ani_env *env, ani_enum_item level)
     }
     HiLogSetAppMinLogLevel(static_cast<LogLevel>(levelVal));
 }
+
+void HilogAniBase::SetLogLevel(ani_env *env, ani_enum_item level, ani_enum_item prefer)
+{
+    int32_t levelVal = LOG_LEVEL_MIN;
+    if (!AniUtil::AniEnumToInt32(env, level, levelVal)) {
+        return;
+    }
+    int32_t preferVal = UNSET_LOGLEVEL;
+    if (!AniUtil::AniEnumToInt32(env, prefer, preferVal)) {
+        return;
+    }
+
+    HiLogSetAppLogLevel(static_cast<LogLevel>(levelVal), static_cast<PreferStrategy>(preferVal));
+}
 }  // namespace HiviewDFX
 }  // namespace OHOS

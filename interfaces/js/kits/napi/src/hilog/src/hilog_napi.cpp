@@ -27,7 +27,7 @@ namespace OHOS {
 namespace HiviewDFX {
 using namespace std;
 
-napi_value LogLevelTypeConstructor(napi_env env, napi_callback_info info)
+napi_value TypeConstructor(napi_env env, napi_callback_info info)
 {
     napi_value thisArg = nullptr;
     void* data = nullptr;
@@ -62,15 +62,38 @@ static void LogLevelTypeEnumInit(napi_env env, napi_value exports)
     };
 
     napi_value result = nullptr;
-    napi_define_class(env, "LogLevel", NAPI_AUTO_LENGTH, LogLevelTypeConstructor, nullptr,
+    napi_define_class(env, "LogLevel", NAPI_AUTO_LENGTH, TypeConstructor, nullptr,
                       sizeof(descriptors) / sizeof(*descriptors), descriptors, &result);
 
     napi_set_named_property(env, exports, "LogLevel", result);
 }
 
+static void PreferStrategyTypeEnumInit(napi_env env, napi_value exports)
+{
+    napi_value UNSET_LOGLEVEL = nullptr;
+    napi_value PREFER_CLOSE_LOG = nullptr;
+    napi_value PREFER_OPEN_LOG = nullptr;
+    napi_create_int32(env, PreferStrategy::UNSET_LOGLEVEL, &UNSET_LOGLEVEL);
+    napi_create_int32(env, PreferStrategy::PREFER_CLOSE_LOG, &PREFER_CLOSE_LOG);
+    napi_create_int32(env, PreferStrategy::PREFER_OPEN_LOG, &PREFER_OPEN_LOG);
+
+    napi_property_descriptor descriptors[] = {
+        NVal::DeclareNapiStaticProperty("UNSET_LOGLEVEL", UNSET_LOGLEVEL),
+        NVal::DeclareNapiStaticProperty("PREFER_CLOSE_LOG", PREFER_CLOSE_LOG),
+        NVal::DeclareNapiStaticProperty("PREFER_OPEN_LOG", PREFER_OPEN_LOG),
+    };
+
+    napi_value result = nullptr;
+    napi_define_class(env, "PreferStrategy", NAPI_AUTO_LENGTH, TypeConstructor, nullptr,
+                      sizeof(descriptors) / sizeof(*descriptors), descriptors, &result);
+
+    napi_set_named_property(env, exports, "PreferStrategy", result);
+}
+
 bool HilogNapi::Export(napi_env env, napi_value exports)
 {
     LogLevelTypeEnumInit(env, exports);
+    PreferStrategyTypeEnumInit(env, exports);
     return exports_.AddProp({
         NVal::DeclareNapiFunction("debug", HilogNapiBase::Debug),
         NVal::DeclareNapiFunction("info", HilogNapiBase::Info),
@@ -84,6 +107,7 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
         NVal::DeclareNapiFunction("sLogF", HilogNapiBase::SysLogFatal),
         NVal::DeclareNapiFunction("isLoggable", HilogNapiBase::IsLoggable),
         NVal::DeclareNapiFunction("setMinLogLevel", HilogNapiBase::SetMinLogLevel),
+        NVal::DeclareNapiFunction("setLogLevel", HilogNapiBase::SetLogLevel),
     });
 }
 

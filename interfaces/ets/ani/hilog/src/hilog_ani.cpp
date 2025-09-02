@@ -40,6 +40,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"fatal", nullptr, reinterpret_cast<void *>(HilogAniBase::Fatal)},
         ani_native_function {"isLoggable", nullptr, reinterpret_cast<void *>(HilogAniBase::IsLoggable)},
         ani_native_function {"setMinLogLevel", nullptr, reinterpret_cast<void *>(HilogAniBase::SetMinLogLevel)},
+        ani_native_function {"setLogLevel", nullptr, reinterpret_cast<void *>(HilogAniBase::SetLogLevel)},
     };
 
     if (ANI_OK != env->Namespace_BindNativeFunctions(ns, methods.data(), methods.size())) {

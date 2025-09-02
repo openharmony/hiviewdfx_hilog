@@ -57,6 +57,7 @@ using namespace OHOS::HiviewDFX;
 static RegisterFunc g_registerFunc = nullptr;
 static LogCallback g_logCallback = nullptr;
 static int g_logLevel = LOG_LEVEL_MIN;
+static int g_preferStrategy = UNSET_LOGLEVEL;
 static atomic_int g_hiLogGetIdCallCount = 0;
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
@@ -97,7 +98,13 @@ void LOG_SetCallback(LogCallback callback)
 
 void HiLogSetAppMinLogLevel(LogLevel level)
 {
+    HiLogSetAppLogLevel(level, PREFER_CLOSE_LOG);
+}
+
+void HiLogSetAppLogLevel(LogLevel level, PreferStrategy prefer)
+{
     g_logLevel = level;
+    g_preferStrategy = prefer;
 }
 
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
@@ -390,8 +397,12 @@ static bool IsAppDomain(const unsigned int domain)
 
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
-    if (IsAppDomain(domain) && level < g_logLevel) {
-        return false;
+    if (IsAppDomain(domain) && g_preferStrategy != UNSET_LOGLEVEL) {
+        if (g_preferStrategy == PREFER_CLOSE_LOG && level < g_logLevel) {
+            return false;
+        } else if (g_preferStrategy == PREFER_OPEN_LOG && level >= g_logLevel) {
+            return true;
+        }
     }
     if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || (tag == nullptr) || (domain >= DOMAIN_OS_MAX)) {
         return false;
