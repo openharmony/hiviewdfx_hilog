@@ -13,23 +13,25 @@
  * limitations under the License.
  */
 
+import { RecordData } from '@ohos.base';
+
 export default namespace hilog {
     loadLibrary("hilog_ani");
 
     export native function debug(domain: int, tag: string, format: string,
-        ...args: (Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function info(domain: int, tag: string, format: string,
-        ...args: (Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function warn(domain: int, tag: string, format: string,
-        ...args: (Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function error(domain: int, tag: string, format: string,
-        ...args: (Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function fatal(domain: int, tag: string, format: string,
-        ...args: (Object|undefined|null)[]): void;
+        ...args: RecordData[]): void;
 
     export native function isLoggable(domain: int, tag: string, level: LogLevel): boolean;
 
