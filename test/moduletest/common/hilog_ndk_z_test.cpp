@@ -331,6 +331,35 @@ HWTEST_F(HiLogNDKZTest, setMinLevelTest, TestSize.Level1)
     HiLogWriteTest(INFO_METHOD, SOME_LOGS, LOG_C_METHODS);
 }
 
+/**
+ * @tc.name: Dfx_HiLogNDKZTest_SetLevelTest
+ * @tc.desc: hilog setLevelTest
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiLogNDKZTest, setLevelTest, TestSize.Level1)
+{
+    HiLogWriteTest(INFO_METHOD, SOME_LOGS, LOG_C_METHODS);
+    OH_LOG_SetLogLevel(LOG_WARN, PREFER_CLOSE_LOG);
+    HiLogWriteFailedTest(INFO_METHOD, SOME_LOGS, LOG_C_METHODS);
+    OH_LOG_SetLogLevel(LOG_DEBUG, PREFER_CLOSE_LOG);
+    HiLogWriteFailedTest(DEBUG_METHOD, SOME_LOGS, LOG_C_METHODS);
+    HiLogWriteTest(INFO_METHOD, SOME_LOGS, LOG_C_METHODS);
+}
+
+/**
+ * @tc.name: Dfx_HiLogNDKZTest_SetLevelTest
+ * @tc.desc: hilog setLevelTest2
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiLogNDKZTest, setLevelTest2, TestSize.Level1)
+{
+    HiLogWriteTest(INFO_METHOD, SOME_LOGS, LOG_C_METHODS);
+    OH_LOG_SetLogLevel(LOG_WARN, PREFER_OPEN_LOG);
+    HiLogWriteTest(WARN_METHOD, SOME_LOGS, LOG_C_METHODS);
+    OH_LOG_SetLogLevel(LOG_DEBUG, PREFER_OPEN_LOG);
+    HiLogWriteTest(INFO_METHOD, SOME_LOGS, LOG_C_METHODS);
+}
+
 } // namespace HiLogTest
 } // namespace HiviewDFX
 } // namespace OHOS

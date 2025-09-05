@@ -160,6 +160,28 @@ napi_value HilogNapiBase::SetMinLogLevel(napi_env env, napi_callback_info info)
     return nullptr;
 }
 
+napi_value HilogNapiBase::SetLogLevel(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::TWO)) {
+        return nullptr;
+    }
+    bool succ = false;
+    int32_t level = LOG_LEVEL_MIN;
+    tie(succ, level) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
+    if (!succ) {
+        return nullptr;
+    }
+    int32_t prefer = UNSET_LOGLEVEL;
+    tie(succ, prefer) = NVal(env, funcArg[NARG_POS::SECOND]).ToInt32();
+    if (!succ) {
+        return nullptr;
+    }
+
+    HiLogSetAppLogLevel(static_cast<LogLevel>(level), static_cast<PreferStrategy>(prefer));
+    return nullptr;
+}
+
 napi_value HilogNapiBase::Debug(napi_env env, napi_callback_info info)
 {
     return HilogImpl(env, info, LOG_DEBUG, true);

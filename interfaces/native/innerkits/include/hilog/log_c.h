@@ -75,6 +75,24 @@ typedef enum {
     LOG_LEVEL_MAX,
 } LogLevel;
 
+/* Preference strategy to be used in HiLogSetAppLogLevel */
+typedef enum {
+    /** Used to unset SetLogLevel, then none is set
+     */
+    UNSET_LOGLEVEL = 0,
+    /**
+     * The actual lowest log level is determined by
+     * the maximum level between the new level and the system-controlled level.
+     * This is equivalent to calling OH_LOG_SetMinLogLevel.
+     */
+    PREFER_CLOSE_LOG = 1,
+    /**
+     * The actual lowest log level is determined by
+     * the minimum level between the new level and the system-controlled level.
+     */
+    PREFER_OPEN_LOG = 2,
+} PreferStrategy;
+
 /**
  * @brief Get log of fatal level
  */
@@ -177,6 +195,15 @@ void LOG_SetCallback(LogCallback callback);
  * @since 15
  */
 void HiLogSetAppMinLogLevel(LogLevel level);
+
+/**
+ * Sets the lowest log level of the current application process. Different preference strategy can be set.
+ *
+ * @param level log level.
+ * @param prefer preference strategy. See {@link PreferStrategy}.
+ * @since 21
+ */
+void HiLogSetAppLogLevel(LogLevel level, PreferStrategy prefer);
 
 #ifdef __cplusplus
 }
