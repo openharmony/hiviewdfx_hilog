@@ -19,7 +19,7 @@
  *          And sufficient input validation is performed before calling
  */
 
-#include <securec.h>>
+#include <securec.h>
 
 #ifndef OUTPUT_P_INL_2B263E9C_43D8_44BB_B17A_6D2033DECEE5
 #define OUTPUT_P_INL_2B263E9C_43D8_44BB_B17A_6D2033DECEE5
