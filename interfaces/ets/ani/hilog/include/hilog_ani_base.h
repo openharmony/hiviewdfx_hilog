@@ -42,7 +42,8 @@ public:
     static void Fatal(ani_env *env, ani_double domain, ani_string tag, ani_string format, ani_array args);
     static ani_boolean IsLoggable(ani_env *env, ani_double domain, ani_string tag, ani_enum_item level);
     static void SetMinLogLevel(ani_env *env, ani_enum_item level);
-
+    static void SetLogLevel(ani_env *env, ani_enum_item level, ani_enum_item prefer);
+    
 private:
     static void ParseAniValue(ani_env *env, ani_ref element, std::vector<AniParam> &params);
 };

@@ -10,5 +10,9 @@
     },
     {
         "name": "OH_LOG_SetMinLogLevel"
+    },
+    {
+        "first_instroduced":"21",
+        "name": "OH_LOG_SetLogLevel"
     }
 ]

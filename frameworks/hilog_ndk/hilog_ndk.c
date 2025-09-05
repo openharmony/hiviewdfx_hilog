@@ -76,3 +76,8 @@ void OH_LOG_SetMinLogLevel(LogLevel level)
 {
     return HiLogSetAppMinLogLevel(level);
 }
+
+void OH_LOG_SetLogLevel(LogLevel level, PreferStrategy prefer)
+{
+    return HiLogSetAppLogLevel(level, prefer);
+}

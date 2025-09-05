@@ -13,6 +13,7 @@
         GetLastFatalMessage;
         LOG_SetCallback;
         HiLogSetAppMinLogLevel;
+        HiLogSetAppLogLevel;
     };
     extern "C++" {
         "OHOS::HiviewDFX::HiLog::Info(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";

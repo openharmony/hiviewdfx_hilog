@@ -43,6 +43,7 @@ public:
     static napi_value SysLogFatal(napi_env env, napi_callback_info info);
     static napi_value IsLoggable(napi_env env, napi_callback_info info);
     static napi_value SetMinLogLevel(napi_env env, napi_callback_info info);
+    static napi_value SetLogLevel(napi_env env, napi_callback_info info);
 private:
     static napi_value parseNapiValue(napi_env env, napi_callback_info info,
         napi_value element, std::vector<napiParam>& params);
