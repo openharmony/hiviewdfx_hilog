@@ -173,10 +173,7 @@ ohos_static_library("libhilog_base") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
 
-  vsnprintf_sources = [
-    "$vsnprintf_root/vsnprintf_s_p.c",
-    "$vsnprintf_root/vsprintf_p.c",
-  ]
+  vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.c" ]
 
   sources = [ "$libhilog_base_root/hilog_base.c" ]
   sources += vsnprintf_sources

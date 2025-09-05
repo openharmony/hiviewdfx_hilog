@@ -69,10 +69,7 @@ template("libhilog_source") {
       "$utils_root/log_utils.cpp",
     ]
 
-    vsnprintf_sources = [
-      "$vsnprintf_root/vsnprintf_s_p.c",
-      "$vsnprintf_root/vsprintf_p.c",
-    ]
+    vsnprintf_sources = [ "$vsnprintf_root/vsnprintf_s_p.c" ]
 
     sources = [
       "hilog.cpp",

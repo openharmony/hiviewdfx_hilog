@@ -32,7 +32,9 @@ namespace HiviewDFX {
 std::string GetFileNameIndex(const int index)
 {
     char res[MAX_LOG_INDEX_LEN];
-    (void)snprintf_s(res, sizeof(res), sizeof(res) - 1, "%03d", index % MAX_LOG_FILE_NUM);
+    if (snprintf_s(res, sizeof(res), sizeof(res) - 1, "%03d", index % MAX_LOG_FILE_NUM) < 0) {
+        return "";
+    }
     std::string fileNameIndex(res);
     return fileNameIndex;
 }
