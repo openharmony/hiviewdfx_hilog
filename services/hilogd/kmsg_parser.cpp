@@ -97,10 +97,10 @@ std::optional<HilogMsgWrapper> KmsgParser::ParseKmsg(const std::vector<char>& km
     (void)clock_gettime(CLOCK_REALTIME, &ts);
     msg.tv_sec = static_cast<uint32_t>(ts.tv_sec);
     msg.tv_nsec = static_cast<uint32_t>(ts.tv_nsec);
-    if (strncpy_s(msg.tag, tagLen + 1, tagStr.c_str(), tagLen) != 0) {
+    if (strncpy_s(msg.tag, msgLen - sizeof(HilogMsg), tagStr.c_str(), tagLen) != 0) {
         return {};
     }
-    if (strncpy_s(CONTENT_PTR((&msg)), MAX_LOG_LEN, kmsgStr.c_str(), len) != 0) {
+    if (strncpy_s(CONTENT_PTR((&msg)), msgLen - sizeof(HilogMsg) - tagLen, kmsgStr.c_str(), len) != 0) {
         return {};
     }
     return msgWrap;

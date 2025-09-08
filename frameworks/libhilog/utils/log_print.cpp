@@ -171,7 +171,7 @@ void LogPrintWithFormat(const LogContent& content, const LogFormat& format, std:
         if (*pScan == '\n') {
             char tmp[MAX_LOG_LEN];
             int len = static_cast<int>(pScan - pHead);
-            errno_t ret = memcpy_s(tmp, MAX_LOG_LEN - 1, pHead, len);
+            errno_t ret = memcpy_s(tmp, MAX_LOG_LEN, pHead, len);
             if (ret != EOK) {
                 break;
             }
