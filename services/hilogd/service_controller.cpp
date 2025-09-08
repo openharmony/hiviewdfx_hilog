@@ -470,14 +470,18 @@ void ServiceController::LogFilterFromOutputRqst(const OutputRqst& rqst, LogFilte
     filter.blackTag = rqst.blackTag;
     filter.tagCount = rqst.tagCount;
     for (i = 0; i < rqst.tagCount; i++) {
-        (void)strncpy_s(filter.tags[i], MAX_TAG_LEN, rqst.tags[i], MAX_TAG_LEN - 1);
+        if (strncpy_s(filter.tags[i], MAX_TAG_LEN, rqst.tags[i], MAX_TAG_LEN - 1) != EOK) {
+            return;
+        }
     }
     filter.blackPid = rqst.blackPid;
     filter.pidCount = rqst.pidCount;
     for (i = 0; i < rqst.pidCount; i++) {
         filter.pids[i] = rqst.pids[i];
     }
-    (void)strncpy_s(filter.regex, MAX_REGEX_STR_LEN, rqst.regex, MAX_REGEX_STR_LEN - 1);
+    if (strncpy_s(filter.regex, MAX_REGEX_STR_LEN, rqst.regex, MAX_REGEX_STR_LEN - 1) != EOK) {
+        return;
+    }
     filter.Print();
     // Permission check
     uid_t uid = m_communicationSocket->GetUid();
@@ -576,7 +580,9 @@ void ServiceController::PersistStartRqst2Msg(const PersistStartRqst &rqst, LogPe
         fileName = (isKmsgType ? "hilog_kmsg" : "hilog");
     }
     string filePath = LOG_PERSISTER_DIR + fileName;
-    (void)strncpy_s(msg.filePath, FILE_PATH_MAX_LEN, filePath.c_str(), filePath.length());
+    if (strncpy_s(msg.filePath, FILE_PATH_MAX_LEN, filePath.c_str(), filePath.length()) != EOK) {
+        return;
+    }
 }
 
 int StartPersistStoreJob(const PersistRecoveryInfo& info, HilogBuffer& hilogBuffer, bool restore)
@@ -671,9 +677,13 @@ void ServiceController::HandlePersistQueryRqst(const PersistQueryRqst& rqst)
         task.fileNum = it->fileNum;
         task.fileSize = it->fileSize;
         task.outputFilter.types = it->logType;
-        (void)strncpy_s(task.fileName, MAX_FILE_NAME_LEN, it->filePath, MAX_FILE_NAME_LEN - 1);
-        (void)strncpy_s(task.stream, MAX_STREAM_NAME_LEN,
-                        LogCompress::CompressType2Str(it->compressAlg).c_str(), MAX_STREAM_NAME_LEN - 1);
+        if (strncpy_s(task.fileName, MAX_FILE_NAME_LEN, it->filePath, MAX_FILE_NAME_LEN - 1) != EOK) {
+            return;
+        }
+        if (strncpy_s(task.stream, MAX_STREAM_NAME_LEN,
+            LogCompress::CompressType2Str(it->compressAlg).c_str(), MAX_STREAM_NAME_LEN - 1) != EOK) {
+            return;
+        }
         rsp.jobNum++;
     }
     WriteRspHeader(IoctlCmd::PERSIST_QUERY_RSP, sizeof(rsp));

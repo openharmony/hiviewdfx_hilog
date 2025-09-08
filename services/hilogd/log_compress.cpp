@@ -160,7 +160,7 @@ int ZstdCompress::Compress(const LogPersisterBuffer &inBuffer, LogPersisterBuffe
         do {
             ZSTD_outBuffer output = {buffOut, CHUNK, 0};
             size_t const remaining = ZSTD_compressStream2(cctx, &output, &input, mode);
-            if (memmove_s(zdata + dst_pos, zdlen, reinterpret_cast<Bytef*>(buffOut), output.pos) != 0) {
+            if (memmove_s(zdata + dst_pos, zdlen - dst_pos, reinterpret_cast<Bytef*>(buffOut), output.pos) != 0) {
                 return -1;
             }
             dst_pos += output.pos;

@@ -349,14 +349,18 @@ struct HilogArgs {
         rqst.blackTag = blackTag;
         rqst.tagCount = tagCount;
         for (i = 0; i < tagCount; i++) {
-            (void)strncpy_s(rqst.tags[i], MAX_TAG_LEN, tags[i].c_str(), tags[i].length());
+            if (strncpy_s(rqst.tags[i], MAX_TAG_LEN, tags[i].c_str(), tags[i].length()) != EOK) {
+                return;
+            }
         }
         rqst.blackPid = blackPid;
         rqst.pidCount = pidCount;
         for (i = 0; i < pidCount; i++) {
             rqst.pids[i] = pids[i];
         }
-        (void)strncpy_s(rqst.regex, MAX_REGEX_STR_LEN, regex.c_str(), regex.length());
+        if (strncpy_s(rqst.regex, MAX_REGEX_STR_LEN, regex.c_str(), regex.length()) != EOK) {
+            return;
+        }
         rqst.noBlock = noBlock;
         rqst.tailLines = tailLines;
     }
@@ -367,8 +371,12 @@ struct HilogArgs {
         rqst.jobId = jobId;
         rqst.fileNum = fileNum;
         rqst.fileSize = fileSize;
-        (void)strncpy_s(rqst.fileName, MAX_FILE_NAME_LEN, fileName.c_str(), fileName.length());
-        (void)strncpy_s(rqst.stream, MAX_STREAM_NAME_LEN, stream.c_str(), stream.length());
+        if (strncpy_s(rqst.fileName, MAX_FILE_NAME_LEN, fileName.c_str(), fileName.length()) != EOK) {
+            return;
+        }
+        if (strncpy_s(rqst.stream, MAX_STREAM_NAME_LEN, stream.c_str(), stream.length()) != EOK) {
+            return;
+        }
     }
 
     void ToPersistStopRqst(PersistStopRqst& rqst)

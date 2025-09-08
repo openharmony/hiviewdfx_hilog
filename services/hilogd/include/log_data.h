@@ -53,10 +53,10 @@ struct HilogData {
         }
         tag = tmp;
         content = tmp + mtagLen;
-        if (strncpy_s(tag, mtagLen + 1, mtag, mtagLen - 1)) {
+        if (strncpy_s(tag, MAX_TAG_LEN, mtag, mtagLen - 1)) {
             return;
         }
-        if (strncpy_s(content, mfmtLen + 1, mfmt, mfmtLen - 1)) {
+        if (strncpy_s(content, MAX_LOG_LEN, mfmt, mfmtLen - 1)) {
             return;
         }
     }

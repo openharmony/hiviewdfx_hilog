@@ -19,10 +19,12 @@
  *          And sufficient input validation is performed before calling
  */
 
-#include "vsprintf_p.h"
+#include <securec.h>
 
 #ifndef OUTPUT_P_INL_2B263E9C_43D8_44BB_B17A_6D2033DECEE5
 #define OUTPUT_P_INL_2B263E9C_43D8_44BB_B17A_6D2033DECEE5
+
+#undef SECUREC_COMPATIBLE_LINUX_FORMAT
 
 #define SECUREC_FLOAT_BUFSIZE (309+40)  /* max float point value */
 #define SECUREC_FLOAT_BUFSIZE_LB (4932+40)  /* max long double value */
@@ -67,7 +69,7 @@ static int SecIndirectSprintf(char *strDest, size_t destMax, const char *format,
 
     va_start(arglist, format);
     SECUREC_MASK_MSVC_CRT_WARNING
-    ret = VsprintfP(strDest, destMax, format, arglist);
+    ret = vsprintf_s(strDest, destMax, format, arglist);
     SECUREC_END_MASK_MSVC_CRT_WARNING
     va_end(arglist);
     (void)arglist;              /* to clear e438 last value assigned not used , the compiler will optimize this code */
@@ -107,7 +109,7 @@ static int SecIsSameSize(size_t sizeA, size_t sizeB)
                     ++(src); \
                 } \
             } else { \
-                (void)memcpy(_stream->cur, src, ((size_t)(unsigned int)txtLen * (sizeof(SecChar)))); \
+                (void)memcpy_s(_stream->cur, _stream->count, src, ((size_t)(unsigned int)txtLen * (sizeof(SecChar)))); \
                 _stream->cur += (size_t)(unsigned int)txtLen * (sizeof(SecChar)); \
             } \
             _stream->count -= txtLen * (int)(sizeof(SecChar)); \
