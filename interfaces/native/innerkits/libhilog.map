@@ -14,6 +14,8 @@
         LOG_SetCallback;
         HiLogSetAppMinLogLevel;
         HiLogSetAppLogLevel;
+        HiLogPrintDictNew;
+        HiLogPrintComm;
     };
     extern "C++" {
         "OHOS::HiviewDFX::HiLog::Info(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";

@@ -24,6 +24,10 @@ extern "C" {
 
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap);
+int HiLogPrintDictNew(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
+    const unsigned int, const unsigned int, const char *fmt, ...);
+int HiLogPrintComm(const LogLevel level, const unsigned int domain, const char *tag,
+    const unsigned int, const unsigned int, const char *fmt, ...);
 
 #ifdef __cplusplus
 }
