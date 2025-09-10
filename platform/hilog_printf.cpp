@@ -17,6 +17,7 @@
 #include "interface/native/log.h"
 
 static int g_logLevel = LOG_LEVEL_MIN;
+static int g_preferStrategy = UNSET_LOGLEVEL;
 
 static OHOS::Ace::LogLevel ConvertLogLevel(LogLevel level)
 {
@@ -39,7 +40,9 @@ static OHOS::Ace::LogLevel ConvertLogLevel(LogLevel level)
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
-    OHOS::HiviewDFX::Hilog::Platform::LogPrint(ConvertLogLevel(level), fmt, ap);
+    if (HiLogIsLoggable(domain, tag, level)) {
+        OHOS::HiviewDFX::Hilog::Platform::LogPrint(ConvertLogLevel(level), fmt, ap);
+    }
     return 0;
 }
 
@@ -55,12 +58,25 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
 
 void HiLogSetAppMinLogLevel(LogLevel level)
 {
+    HiLogSetAppLogLevel(level, PREFER_CLOSE_LOG);
+}
+
+void HiLogSetAppLogLevel(LogLevel level, PreferStrategy prefer)
+{
     g_logLevel = level;
+    g_preferStrategy = prefer;
 }
 
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
 {
-    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || (level < g_logLevel) || tag == nullptr) {
+    if (g_preferStrategy != UNSET_LOGLEVEL) {
+        if (g_preferStrategy == PREFER_CLOSE_LOG && level < g_logLevel) {
+            return false;
+        } else if (g_preferStrategy == PREFER_OPEN_LOG && level >= g_logLevel) {
+            return true;
+        }
+    }
+    if ((level <= LOG_LEVEL_MIN) || (level >= LOG_LEVEL_MAX) || tag == nullptr) {
         return false;
     }
 
