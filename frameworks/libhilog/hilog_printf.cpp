@@ -242,6 +242,28 @@ bool HiLogIsPrivacyOn()
     return priv;
 }
 
+int HiLogPrintDictNew(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
+    const unsigned int, const unsigned int, const char *fmt, ...)
+{
+    int ret;
+    va_list ap;
+    va_start(ap, fmt);
+    ret = HiLogPrintArgs(type, level, domain, tag, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
+int HiLogPrintComm(const LogLevel level, const unsigned int domain, const char *tag,
+    const unsigned int, const unsigned int, const char *fmt, ...)
+{
+    int ret;
+    va_list ap;
+    va_start(ap, fmt);
+    ret = HiLogPrintArgs(LOG_CORE, level, domain, tag, fmt, ap);
+    va_end(ap);
+    return ret;
+}
+
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
