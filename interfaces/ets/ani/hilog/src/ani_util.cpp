@@ -54,9 +54,9 @@ bool AniUtil::IsRefUndefined(ani_env *env, ani_ref ref)
 
 bool AniUtil::IsRefNull(ani_env *env, ani_ref ref)
 {
-    ani_boolean isUull = ANI_FALSE;
-    env->Reference_IsNull(ref, &isUull);
-    return isUull;
+    ani_boolean isNull = ANI_FALSE;
+    env->Reference_IsNull(ref, &isNull);
+    return isNull;
 }
 
 AniArgsType AniUtil::AniArgGetType(ani_env *env, ani_object element)
@@ -104,7 +104,6 @@ std::string AniUtil::AniStringToStdString(ani_env *env, ani_string aniStr)
     char* utf8Buffer = buffer.data();
     ani_size bytesWritten = 0;
     env->String_GetUTF8(aniStr, utf8Buffer, strSize + 1, &bytesWritten);
-    utf8Buffer[bytesWritten] = '\0';
     return std::string(utf8Buffer);
 }
 
