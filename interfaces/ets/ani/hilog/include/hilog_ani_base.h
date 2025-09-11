@@ -26,10 +26,10 @@ using AniParam = struct {
     std::string val;
 };
 
-typedef struct LogContentPosition {
+struct LogContentPosition {
     uint32_t pos = 0;
     uint32_t count = 0;
-} LogContentPosition;
+};
 
 class HilogAniBase {
 public:

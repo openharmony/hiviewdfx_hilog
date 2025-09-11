@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-type RecordData = undefined | null | Object | Record<string, RecordData> | Array<RecordData>;
+import { RecordData } from '@ohos.base';
 
 export default namespace hilog {
     loadLibrary("hilog_ani");

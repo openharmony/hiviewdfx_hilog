@@ -232,7 +232,7 @@ napi_value HilogNapiBase::SysLogFatal(napi_env env, napi_callback_info info)
     return HilogImpl(env, info, LOG_FATAL, false);
 }
 
-napi_value HilogNapiBase::parseNapiValue(napi_env env, napi_callback_info info,
+napi_value HilogNapiBase::ParseNapiValue(napi_env env, napi_callback_info info,
     napi_value element, vector<napiParam>& params)
 {
     bool succ = false;
@@ -304,7 +304,7 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
     if (!res) {
         for (size_t i = MIN_NUMBER; i < funcArg.GetArgc(); i++) {
             napi_value argsVal = funcArg[i];
-            (void)parseNapiValue(env, info, argsVal, params);
+            (void)ParseNapiValue(env, info, argsVal, params);
         }
     } else {
         if (funcArg.GetArgc() != MIN_NUMBER + 1) {
@@ -324,7 +324,7 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
             if (eleStatus != napi_ok) {
                 return nullptr;
             }
-            (void)parseNapiValue(env, info, element, params);
+            (void)ParseNapiValue(env, info, element, params);
         }
     }
     ParseLogContent(fmtString, params, logContent);
