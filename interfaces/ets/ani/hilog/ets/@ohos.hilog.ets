@@ -16,7 +16,7 @@
 import { RecordData } from '@ohos.base';
 
 export default namespace hilog {
-    loadLibrary("hilog_ani");
+    loadLibraryWithPermissionCheck("hilog_ani", "@ohos.hilog");
 
     export native function debug(domain: number, tag: string, format: string,
         ...args: RecordData[]): void;
