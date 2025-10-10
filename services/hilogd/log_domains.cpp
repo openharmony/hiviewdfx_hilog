@@ -71,6 +71,7 @@ static const KVMap<uint32_t, string> g_DomainList({
     {0xD004700, "Cloud"},
     {0xD004800, "Manufacture"},
     {0xD004900, "HealthSport"},
+    {0xD005000, "IOT"},
     {0xD005100, "PcService"},
     {0xD005200, "WpaSupplicant"},
     {0xD005300, "Push"},
