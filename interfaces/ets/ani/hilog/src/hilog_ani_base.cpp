@@ -124,7 +124,7 @@ void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std:
     }
 }
 
-void HilogAniBase::HilogImpl(ani_env *env, ani_double domain, ani_string tag,
+void HilogAniBase::HilogImpl(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args, int level, bool isAppLog)
 {
     ani_size length = 0;
@@ -171,37 +171,37 @@ void HilogAniBase::ParseAniValue(ani_env *env, ani_ref element, std::vector<AniP
     params.emplace_back(res);
 }
 
-void HilogAniBase::Debug(ani_env *env, ani_double domain, ani_string tag,
+void HilogAniBase::Debug(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args)
 {
     return HilogImpl(env, domain, tag, format, args, LOG_DEBUG, true);
 }
 
-void HilogAniBase::Info(ani_env *env, ani_double domain, ani_string tag,
+void HilogAniBase::Info(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args)
 {
     return HilogImpl(env, domain, tag, format, args, LOG_INFO, true);
 }
 
-void HilogAniBase::Warn(ani_env *env, ani_double domain, ani_string tag,
+void HilogAniBase::Warn(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args)
 {
     return HilogImpl(env, domain, tag, format, args, LOG_WARN, true);
 }
 
-void HilogAniBase::Error(ani_env *env, ani_double domain, ani_string tag,
+void HilogAniBase::Error(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args)
 {
     return HilogImpl(env, domain, tag, format, args, LOG_ERROR, true);
 }
 
-void HilogAniBase::Fatal(ani_env *env, ani_double domain, ani_string tag,
+void HilogAniBase::Fatal(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args)
 {
     return HilogImpl(env, domain, tag, format, args, LOG_FATAL, true);
 }
 
-ani_boolean HilogAniBase::IsLoggable(ani_env *env, ani_double domain, ani_string tag,
+ani_boolean HilogAniBase::IsLoggable(ani_env *env, ani_int domain, ani_string tag,
     ani_enum_item level)
 {
     int32_t domainVal = static_cast<int32_t>(domain);
