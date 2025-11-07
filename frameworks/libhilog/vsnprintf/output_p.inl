@@ -314,8 +314,7 @@ static int SecDecodeTypeC(SecFormatAttr *attr, unsigned int cValue, SecFormatBuf
         }
     } else {
         /* get  multibyte character from argument */
-        unsigned short temp;
-        temp = (unsigned short)cValue;
+        unsigned short temp = (unsigned short)cValue;
         buffer->str[0] = (char)temp;
         textLen = 1;
     }

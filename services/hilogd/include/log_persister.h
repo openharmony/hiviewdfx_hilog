@@ -49,7 +49,7 @@ using LogPersistQueryResult = struct {
 class LogPersister : public std::enable_shared_from_this<LogPersister> {
 public:
     [[nodiscard]] static std::shared_ptr<LogPersister> CreateLogPersister(HilogBuffer &buffer);
-
+    explicit LogPersister(HilogBuffer &buffer);
     ~LogPersister();
 
     static int Kill(uint32_t id);
@@ -66,8 +66,6 @@ public:
     void FillInfo(LogPersistQueryResult &response);
 
 private:
-    explicit LogPersister(HilogBuffer &buffer);
-
     static bool CheckRegistered(uint32_t id, const std::string& logPath);
     static std::shared_ptr<LogPersister> GetLogPersisterById(uint32_t id);
     static void RegisterLogPersister(const std::shared_ptr<LogPersister>& obj);

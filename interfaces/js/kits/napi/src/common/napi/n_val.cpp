@@ -221,10 +221,11 @@ tuple<bool, string> NVal::GetValObjectAsStr() const
 
 bool NVal::HasProp(string propName) const
 {
-    bool res = false;
-
-    if (!env_ || !val_ || !TypeIs(napi_object))
+    if (!env_ || !val_ || !TypeIs(napi_object)) {
         return false;
+    }
+
+    bool res = false;
     napi_status status = napi_has_named_property(env_, val_, propName.c_str(), &res);
     return (status == napi_ok) && res;
 }
