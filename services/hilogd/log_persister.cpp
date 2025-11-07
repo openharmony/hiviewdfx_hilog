@@ -61,7 +61,7 @@ std::list<std::shared_ptr<LogPersister>> LogPersister::s_logPersisters;
 
 std::shared_ptr<LogPersister> LogPersister::CreateLogPersister(HilogBuffer &buffer)
 {
-    return std::shared_ptr<LogPersister>(new LogPersister(buffer));
+    return std::make_shared<LogPersister>(buffer);
 }
 
 LogPersister::LogPersister(HilogBuffer &buffer) : m_hilogBuffer(buffer)

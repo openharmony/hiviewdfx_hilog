@@ -31,6 +31,8 @@ public:
 
     NVal &operator=(const NVal &) = default;
 
+    NVal(const NVal &) = default;
+
     virtual ~NVal() = default;
 
     // NOTE! env_ and val_ is LIKELY to be null
