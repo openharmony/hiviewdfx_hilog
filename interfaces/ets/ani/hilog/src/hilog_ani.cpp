@@ -32,6 +32,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_ERROR;
     }
 
+    HilogAniBase::Init(env);
+    
     std::array methods = {
         ani_native_function {"debug", nullptr, reinterpret_cast<void *>(HilogAniBase::Debug)},
         ani_native_function {"info", nullptr, reinterpret_cast<void *>(HilogAniBase::Info)},

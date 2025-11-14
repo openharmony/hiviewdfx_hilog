@@ -33,6 +33,7 @@ typedef struct {
 
 class HilogAniBase {
 public:
+    static void Init(ani_env *env);
     static void Debug(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args);
     static void HilogImpl(ani_env *env, ani_int domain, ani_string tag, ani_string format, ani_array args,
                           int level, bool isAppLog);

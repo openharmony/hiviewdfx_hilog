@@ -33,14 +33,22 @@ enum AniArgsType {
     ANI_NULL = 7,
 };
 
+struct AniArg {
+    AniArgsType type;
+    ani_class cls;
+};
+
 class AniUtil {
 public:
     static bool IsRefUndefined(ani_env *env, ani_ref ref);
     static bool IsRefNull(ani_env *env, ani_ref ref);
+    static void InitObjectClasses(ani_env *env);
+    static void LoadFunc(ani_env *env);
     static AniArgsType AniArgGetType(ani_env *env, ani_object element);
     static bool AniEnumToInt32(ani_env *env, ani_enum_item enumItem, int32_t &value);
     static std::string AniStringToStdString(ani_env *env, ani_string aniStr);
     static std::string AniArgToString(ani_env *env, ani_object arg);
+    static void LoadToString(ani_env *env);
 };
 }  // namespace HiviewDFX
 }  // namespace OHOS
