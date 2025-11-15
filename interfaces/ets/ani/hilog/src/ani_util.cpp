@@ -34,13 +34,14 @@ constexpr char CLASS_NAME_BIGINT[] = "std.core.BigInt";
 constexpr char CLASS_NAME_OBJECT[] = "std.core.Object";
 constexpr char FUNCTION_TOSTRING[] = "toString";
 constexpr char MANGLING_TOSTRING[] = ":C{std.core.String}";
-const std::pair<const char*, AniArgsType> OBJECT_TYPE[] = {
-    {CLASS_NAME_INT, AniArgsType::ANI_INT},
-    {CLASS_NAME_BOOLEAN, AniArgsType::ANI_BOOLEAN},
-    {CLASS_NAME_DOUBLE, AniArgsType::ANI_NUMBER},
-    {CLASS_NAME_STRING, AniArgsType::ANI_STRING},
-    {CLASS_NAME_BIGINT, AniArgsType::ANI_BIGINT},
-    {CLASS_NAME_OBJECT, AniArgsType::ANI_OBJECT},
+ani_method g_toString = nullptr;
+std::pair<const char*, AniArg> OBJECT_TYPE[] = {
+    {CLASS_NAME_INT, {AniArgsType::ANI_INT, nullptr}},
+    {CLASS_NAME_BOOLEAN, {AniArgsType::ANI_BOOLEAN, nullptr}},
+    {CLASS_NAME_DOUBLE, {AniArgsType::ANI_NUMBER, nullptr}},
+    {CLASS_NAME_STRING, {AniArgsType::ANI_STRING, nullptr}},
+    {CLASS_NAME_BIGINT, {AniArgsType::ANI_BIGINT, nullptr}},
+    {CLASS_NAME_OBJECT, {AniArgsType::ANI_OBJECT, nullptr}},
 };
 
 bool AniUtil::IsRefUndefined(ani_env *env, ani_ref ref)
@@ -57,6 +58,17 @@ bool AniUtil::IsRefNull(ani_env *env, ani_ref ref)
     return isUull;
 }
 
+void AniUtil::InitObjectClasses(ani_env *env)
+{
+    size_t numOfClasses = sizeof(OBJECT_TYPE)/sizeof(OBJECT_TYPE[0]);
+    for (size_t i = 0; i < numOfClasses; ++i) {
+        if (ANI_OK != env->FindClass(OBJECT_TYPE[i].first, &OBJECT_TYPE[i].second.cls)) {
+            HiLog::Error(LABEL, "Not found %{public}s", OBJECT_TYPE[i].first);
+            continue;
+        }
+    }
+}
+
 AniArgsType AniUtil::AniArgGetType(ani_env *env, ani_object element)
 {
     if (IsRefUndefined(env, static_cast<ani_ref>(element))) {
@@ -67,19 +79,20 @@ AniArgsType AniUtil::AniArgGetType(ani_env *env, ani_object element)
         return AniArgsType::ANI_NULL;
     }
 
-    for (const auto &objType : OBJECT_TYPE) {
-        ani_class cls {};
-        if (ANI_OK != env->FindClass(objType.first, &cls)) {
+    size_t numOfClasses = sizeof(OBJECT_TYPE)/sizeof(OBJECT_TYPE[0]);
+    for (size_t i = 0; i < numOfClasses; ++i) {
+        if (OBJECT_TYPE[i].second.cls == nullptr) {
             continue;
         }
         ani_boolean isInstance = false;
-        if (ANI_OK != env->Object_InstanceOf(element, cls, &isInstance)) {
+        if (ANI_OK != env->Object_InstanceOf(element, OBJECT_TYPE[i].second.cls, &isInstance)) {
             continue;
         }
         if (static_cast<bool>(isInstance)) {
-            return objType.second;
+            return OBJECT_TYPE[i].second.type;
         }
     }
+
     return AniArgsType::ANI_UNKNOWN;
 }
 
@@ -106,10 +119,31 @@ std::string AniUtil::AniStringToStdString(ani_env *env, ani_string aniStr)
     return std::string(utf8Buffer);
 }
 
+void AniUtil::LoadFunc(ani_env *env)
+{
+    LoadToString(env);
+}
+
+void AniUtil::LoadToString(ani_env *env)
+{
+    ani_class cls;
+    if (ANI_OK != env->FindClass(CLASS_NAME_STRING, &cls)) {
+        HiLog::Error(LABEL, "Not found %{public}s", CLASS_NAME_STRING);
+        return;
+    }
+
+    ani_status status = env->Class_FindMethod(cls, FUNCTION_TOSTRING, MANGLING_TOSTRING, &g_toString);
+    if (ANI_OK != status) {
+        HiLog::Error(LABEL, "Get method toString Failed, status is %{public}d", static_cast<int>(status));
+    }
+}
 std::string AniUtil::AniArgToString(ani_env *env, ani_object arg)
 {
+    if (g_toString == nullptr) {
+        return "";
+    }
     ani_ref argStrRef {};
-    if (ANI_OK != env->Object_CallMethodByName_Ref(arg, FUNCTION_TOSTRING, MANGLING_TOSTRING, &argStrRef)) {
+    if (ANI_OK != env->Object_CallMethod_Ref(arg, g_toString, &argStrRef)) {
         HiLog::Info(LABEL, "Call ets method toString() failed.");
         return "";
     }

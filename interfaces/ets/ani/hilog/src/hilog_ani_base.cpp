@@ -180,6 +180,12 @@ void HilogAniBase::parseAniValue(ani_env *env, ani_ref element, std::vector<AniP
     return;
 }
 
+void HilogAniBase::Init(ani_env *env)
+{
+    AniUtil::InitObjectClasses(env);
+    AniUtil::LoadFunc(env);
+}
+
 void HilogAniBase::Debug(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args)
 {
