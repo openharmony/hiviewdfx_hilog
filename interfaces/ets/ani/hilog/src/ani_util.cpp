@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include "ani_util.h"
+
 #include <ani.h>
 #include <array>
 #include "hilog/log.h"
@@ -22,7 +24,6 @@
 #include "properties.h"
 #include "securec.h"
 
-#include "ani_util.h"
 namespace OHOS {
 namespace HiviewDFX {
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOG_ANI_UTIL" };
@@ -32,9 +33,14 @@ constexpr char CLASS_NAME_DOUBLE[] = "std.core.Double";
 constexpr char CLASS_NAME_STRING[] = "std.core.String";
 constexpr char CLASS_NAME_BIGINT[] = "std.core.BigInt";
 constexpr char CLASS_NAME_OBJECT[] = "std.core.Object";
+constexpr char CLASS_NAME_JSON[] = "std.core.JSON";
+constexpr char FUNCTION_STRINGIFY[] = "stringify";
+constexpr char MANGLING_STRINGIFY[] = "C{std.core.Object}:C{std.core.String}";
 constexpr char FUNCTION_TOSTRING[] = "toString";
 constexpr char MANGLING_TOSTRING[] = ":C{std.core.String}";
 ani_method g_toString = nullptr;
+ani_class g_classJSON = nullptr;
+ani_static_method g_stringify = nullptr;
 std::pair<const char*, AniArg> OBJECT_TYPE[] = {
     {CLASS_NAME_INT, {AniArgsType::ANI_INT, nullptr}},
     {CLASS_NAME_BOOLEAN, {AniArgsType::ANI_BOOLEAN, nullptr}},
@@ -122,6 +128,7 @@ std::string AniUtil::AniStringToStdString(ani_env *env, ani_string aniStr)
 void AniUtil::LoadFunc(ani_env *env)
 {
     LoadToString(env);
+    LoadStringify(env);
 }
 
 void AniUtil::LoadToString(ani_env *env)
@@ -137,6 +144,33 @@ void AniUtil::LoadToString(ani_env *env)
         HiLog::Error(LABEL, "Get method toString Failed, status is %{public}d", static_cast<int>(status));
     }
 }
+
+void AniUtil::LoadStringify(ani_env *env)
+{
+    if (ANI_OK != env->FindClass(CLASS_NAME_JSON, &g_classJSON)) {
+        HiLog::Error(LABEL, "Not found %{public}s", CLASS_NAME_JSON);
+        return;
+    }
+
+    ani_status status = env->Class_FindStaticMethod(g_classJSON, FUNCTION_STRINGIFY, MANGLING_STRINGIFY, &g_stringify);
+    if (ANI_OK != status) {
+        HiLog::Error(LABEL, "Get method stringify Failed, status is %{public}d", static_cast<int>(status));
+    }
+}
+
+std::string AniUtil::AniObjectToString(ani_env *env, ani_object arg)
+{
+    if (g_classJSON == nullptr || g_stringify == nullptr) {
+        return "";
+    }
+    ani_ref argStrRef {};
+    if (ANI_OK != env->Class_CallStaticMethod_Ref(g_classJSON, g_stringify, &argStrRef, arg)) {
+        HiLog::Error(LABEL, "Call ets method stringify() failed.");
+        return "";
+    }
+    return AniStringToStdString(env, static_cast<ani_string>(argStrRef));
+}
+
 std::string AniUtil::AniArgToString(ani_env *env, ani_object arg)
 {
     if (g_toString == nullptr) {

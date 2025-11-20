@@ -171,6 +171,8 @@ void HilogAniBase::parseAniValue(ani_env *env, ani_ref element, std::vector<AniP
         res.val = "undefined";
     } else if (type == AniArgsType::ANI_NULL) {
         res.val = "null";
+    } else if (type == AniArgsType::ANI_OBJECT) {
+        res.val = AniUtil::AniObjectToString(env, static_cast<ani_object>(element));
     } else if (type != AniArgsType::ANI_UNKNOWN) {
         res.val = AniUtil::AniArgToString(env, static_cast<ani_object>(element));
     } else {
