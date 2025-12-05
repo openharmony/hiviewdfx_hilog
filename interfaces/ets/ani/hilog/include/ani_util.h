@@ -47,7 +47,9 @@ public:
     static AniArgsType AniArgGetType(ani_env *env, ani_object element);
     static bool AniEnumToInt32(ani_env *env, ani_enum_item enumItem, int32_t &value);
     static std::string AniStringToStdString(ani_env *env, ani_string aniStr);
+    static std::string AniObjectToString(ani_env *env, ani_object arg);
     static std::string AniArgToString(ani_env *env, ani_object arg);
+    static void LoadStringify(ani_env *env);
     static void LoadToString(ani_env *env);
 };
 }  // namespace HiviewDFX
