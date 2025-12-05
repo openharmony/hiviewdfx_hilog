@@ -127,31 +127,33 @@ void ParseLogContent(std::string& formatStr, std::vector<AniParam>& params, std:
 void HilogAniBase::HilogImpl(ani_env *env, ani_int domain, ani_string tag,
     ani_string format, ani_array args, int level, bool isAppLog)
 {
+    int32_t domainVal = static_cast<int32_t>(domain);
+    std::string tagString = AniUtil::AniStringToStdString(env, tag);
+    std::string fmtString = AniUtil::AniStringToStdString(env, format);
+
     ani_size length = 0;
     if (ANI_OK != env->Array_GetLength(args, &length)) {
-        HiLog::Warn(LABEL, "Get array length failed");
+        HiLog::Info(LABEL, "Get array length failed");
         return;
     }
     if (MIN_NUMBER > length || MAX_NUMBER < length) {
-        HiLog::Warn(LABEL, "Argc mismatch, length:%{public}zu", length);
+        HiLog::Info(LABEL, "%{public}s", "Argc mismatch");
         return;
     }
     std::string logContent;
     std::vector<AniParam> params;
     for (ani_size i = 0; i < length; i++) {
         ani_ref element;
-        if (ANI_OK != env->Array_Get_Ref(static_cast<ani_array_ref>(args), i, &element)) {
-            HiLog::Warn(LABEL, "Get element at index %{public}zu from array failed", i);
+        if (ANI_OK != env->Array_Get(args, i, &element)) {
+            HiLog::Info(LABEL, "Get element at index %{public}zu from array failed", i);
             return;
         }
         ParseAniValue(env, element, params);
     }
-    std::string fmtString = AniUtil::AniStringToStdString(env, format);
     ParseLogContent(fmtString, params, logContent);
-    int32_t domainVal = static_cast<int32_t>(domain);
-    std::string tagString = AniUtil::AniStringToStdString(env, tag);
     HiLogPrint((isAppLog ? LOG_APP : LOG_CORE),
                static_cast<LogLevel>(level), domainVal, tagString.c_str(), "%{public}s", logContent.c_str());
+    return;
 }
 
 void HilogAniBase::ParseAniValue(ani_env *env, ani_ref element, std::vector<AniParam>& params)
