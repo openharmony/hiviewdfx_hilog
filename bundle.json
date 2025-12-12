@@ -41,6 +41,7 @@
         "//base/hiviewdfx/hilog/interfaces/js:hilog_napi",
         "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
+        "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_snapshot",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_host",
         "//base/hiviewdfx/hilog/interfaces/rust:hilog_rust",
@@ -64,6 +65,15 @@
           "header": {
             "header_files": [
               "hilog_base/log_base.h"
+            ],
+            "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
+          }
+        },
+        {
+          "name": "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_snapshot",
+          "header": {
+            "header_files": [
+              "hilog_snapshot/log_snapshot.h"
             ],
             "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
           }
