@@ -17,6 +17,7 @@ import("//build/ohos.gni")
 framework_root = "//base/hiviewdfx/hilog/frameworks"
 libhilog_root = "$framework_root/libhilog"
 libhilog_base_root = "$libhilog_root/base"
+libhilog_snapshot_root = "$libhilog_root/snapshot"
 vsnprintf_root = "$libhilog_root/vsnprintf"
 
 config("libhilog_pub_config") {
@@ -183,6 +184,37 @@ ohos_static_library("libhilog_base") {
   ]
   configs = [ ":libhilog_base_config" ]
   external_deps = [ "bounds_checking_function:libsec_static" ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
+}
+
+config("libhilog_snapshot_cfg") {
+  visibility = [ "*:*" ]
+  include_dirs = [
+    "include",
+    "../../../frameworks/libhilog/include",
+  ]
+}
+
+ohos_static_library("libhilog_snapshot") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  public_configs = [ ":libhilog_snapshot_cfg" ]
+  include_dirs = [
+    "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
+  ]
+
+  sources = [ "$libhilog_snapshot_root/hilog_snapshot.c" ]
+  defines = [
+    "__RECV_MSG_WITH_UCRED_",
+    "HILOG_PROHIBIT_ALLOCATION",
+  ]
+  configs = [ ":libhilog_snapshot_cfg" ]
 
   subsystem_name = "hiviewdfx"
   part_name = "hilog"
