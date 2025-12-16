@@ -198,23 +198,20 @@ config("libhilog_snapshot_cfg") {
 }
 
 ohos_static_library("libhilog_snapshot") {
+  branch_protector_ret = "pac_ret"
   sanitize = {
     cfi = true
     cfi_cross_dso = true
     debug = false
   }
-
   public_configs = [ ":libhilog_snapshot_cfg" ]
+  configs = [ ":libhilog_snapshot_cfg" ]
+
   include_dirs = [
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
   ]
 
   sources = [ "$libhilog_snapshot_root/hilog_snapshot.c" ]
-  defines = [
-    "__RECV_MSG_WITH_UCRED_",
-    "HILOG_PROHIBIT_ALLOCATION",
-  ]
-  configs = [ ":libhilog_snapshot_cfg" ]
 
   subsystem_name = "hiviewdfx"
   part_name = "hilog"
