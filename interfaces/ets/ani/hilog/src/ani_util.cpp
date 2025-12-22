@@ -28,14 +28,14 @@
 namespace OHOS {
 namespace HiviewDFX {
 const HiLogLabel LABEL = { LOG_CORE, 0xD002D00, "HILOG_ANI_UTIL" };
-constexpr char CLASS_NAME_INT[] = "Lstd/core/Int;";
-constexpr char CLASS_NAME_BOOLEAN[] = "Lstd/core/Boolean;";
-constexpr char CLASS_NAME_DOUBLE[] = "Lstd/core/Double;";
-constexpr char CLASS_NAME_STRING[] = "Lstd/core/String;";
-constexpr char CLASS_NAME_BIGINT[] = "Lescompat/BigInt;";
-constexpr char CLASS_NAME_OBJECT[] = "Lstd/core/Object;";
+constexpr char CLASS_NAME_INT[] = "std.core.Int";
+constexpr char CLASS_NAME_BOOLEAN[] = "std.core.Boolean";
+constexpr char CLASS_NAME_DOUBLE[] = "std.core.Double";
+constexpr char CLASS_NAME_STRING[] = "std.core.String";
+constexpr char CLASS_NAME_BIGINT[] = "std.core.BigInt";
+constexpr char CLASS_NAME_OBJECT[] = "std.core.Object";
 constexpr char FUNCTION_TOSTRING[] = "toString";
-constexpr char MANGLING_TOSTRING[] = ":Lstd/core/String;";
+constexpr char MANGLING_TOSTRING[] = ":C{std.core.String}";
 const std::pair<const char*, AniArgsType> OBJECT_TYPE[] = {
     {CLASS_NAME_INT, AniArgsType::ANI_INT},
     {CLASS_NAME_BOOLEAN, AniArgsType::ANI_BOOLEAN},
