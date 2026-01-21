@@ -32,7 +32,8 @@
       ]
     },
     "features": [
-      "hilog_native_feature_ohcore"
+      "hilog_native_feature_ohcore",
+      "hilog_feature_support_usr_symlink"
     ],
     "build": {
       "sub_component": [

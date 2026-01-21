@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 config("hilog_config") {
@@ -47,6 +48,11 @@ ohos_executable("hilog") {
     "system",
     "updater",
   ]
+  if (hilog_feature_support_usr_symlink) {
+    symlink_target_name = [
+      "../usr/bin/hilog",
+    ]
+  }
   install_enable = true
   part_name = "hilog"
   subsystem_name = "hiviewdfx"

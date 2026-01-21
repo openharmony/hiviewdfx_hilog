@@ -22,4 +22,5 @@ platforms = [
 
 declare_args() {
   hilog_native_feature_ohcore = false
+  hilog_feature_support_usr_symlink = false
 }
