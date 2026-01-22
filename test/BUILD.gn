@@ -79,6 +79,7 @@ group("hilog_moduletest") {
     ":HiLogAdapterTest",
     ":HiLogNDKTest",
     ":HiLogNDKZTest",
+    "moduletest:HilogCommandTest",
   ]
 }
 
