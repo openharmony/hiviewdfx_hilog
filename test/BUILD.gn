@@ -40,6 +40,9 @@ ohos_moduletest("HiLogNDKTest") {
     "//base/hiviewdfx/hilog/interfaces/native/innerkits/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/include",
   ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
 }
 
 ohos_moduletest("HiLogNDKZTest") {
@@ -55,6 +58,9 @@ ohos_moduletest("HiLogNDKZTest") {
   ]
 
   include_dirs = [ "//base/hiviewdfx/hilog/interfaces/native/kits/include" ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
 }
 
 ohos_moduletest("HiLogAdapterTest") {
@@ -71,6 +77,9 @@ ohos_moduletest("HiLogAdapterTest") {
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/utils/include/",
   ]
+
+  subsystem_name = "hiviewdfx"
+  part_name = "hilog"
 }
 
 group("hilog_moduletest") {
@@ -85,9 +94,12 @@ group("hilog_moduletest") {
 
 group("hilog_unittest") {
   testonly = true
-  deps = []
-
-  deps += [ "unittest/common:unittest" ]
+  deps = [
+    "unittest/common:HilogPrintTest",
+    "unittest/common:HilogToolTest",
+    "unittest/common:HilogUtilsTest",
+    "unittest/sandboxLog:SandboxLoggerTest",
+  ]
 }
 
 group("fuzztest") {

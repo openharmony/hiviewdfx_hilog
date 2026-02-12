@@ -66,12 +66,3 @@ ohos_unittest("HilogPrintTest") {
     "hilog:libhilog",
   ]
 }
-
-group("unittest") {
-  testonly = true
-  deps = [
-    ":HilogPrintTest",
-    ":HilogToolTest",
-    ":HilogUtilsTest",
-  ]
-}
