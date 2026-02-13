@@ -95,8 +95,7 @@ void LogMmapManager::Write(const std::string& log)
 {
     uint32_t logSize = static_cast<uint32_t>(log.length());
     if (mmapPtr_ == nullptr || logSize > mmapSize_ - currentOffset_) {
-        HILOG_WARN(LOG_CORE, "Mmap buffer overflow, log size: %{public}u, available: %{public}u",
-            logSize, mmapSize_ - currentOffset_);
+        HILOG_WARN(LOG_CORE, "Mmap buffer failure");
         return;
     }
 
