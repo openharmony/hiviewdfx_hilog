@@ -17,7 +17,6 @@
 #define HIVIEWDFX_LOG_FILE_MANAGER_H
 
 #include <fstream>
-#include <memory>
 #include <mutex>
 #include <string>
 
@@ -34,6 +33,7 @@ struct LogFileConfig {
     std::string snapshotLogPrefix;
     std::string snapshotLogSuffix;
     int maxLogNum = 0;
+    int maxSnapshotNum = 0;
     size_t maxLogFileSize = 0;
     size_t mmapSize = 0;
 };
@@ -53,11 +53,14 @@ private:
     bool CreateDirectory();
     bool CreateCurrentLogFile();
     std::string GetLogFilePath(uint8_t index);
+    std::string GetTimestamp();
+    std::string BuildSnapshotJson(const std::vector<std::string>& files);
+    void RotateSnapshots();
     int GetCurrentFileIndex();
 
     std::mutex mutex_;
     LogFileConfig config_;
-    std::unique_ptr<LogMmapManager> mmapManager_;
+    LogMmapManager mmapManager_;
     uint8_t currentFileIndex_ = 1;  // Start from 1
     std::ofstream currentFileStream_;  // Current log file stream
 };

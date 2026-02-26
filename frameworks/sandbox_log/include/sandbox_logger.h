@@ -17,7 +17,6 @@
 #define HIVIEWDFX_SANDBOX_LOGGER_H
 
 #include <atomic>
-#include <memory>
 #include <mutex>
 #include <singleton.h>
 #include <vector>
@@ -41,14 +40,18 @@ public:
     int CreateSnapshot(std::string& snapshots);
     bool FlushLog();
 private:
+    int DoWriteLog(const char* msg, size_t msgLen);
     void NotifyStatusChanged(bool status);
-    void WriteLogToBuffer(std::string str);
+    void WriteLogToBuffer(const std::string& str);
+    bool IsHap();
 
     std::atomic<bool> loggable_{false};
+    bool isHap_{false};
+    bool initialized_{false};
     std::mutex callbackMutex_;
     std::vector<OnPageSwitchLogStatusChanged> callbacks_;
     std::shared_ptr<ffrt::queue> queue_;
-    std::unique_ptr<LogFileManager> logFileManager_;
+    LogFileManager logFileManager_;
 };
 
 } // namespace HiviewDFX

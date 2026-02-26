@@ -24,6 +24,7 @@
       "components": [
         "bounds_checking_function",
         "c_utils",
+        "cJSON",
         "ffrt",
         "init",
         "napi",
