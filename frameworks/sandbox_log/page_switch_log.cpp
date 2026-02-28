@@ -29,12 +29,10 @@ int WritePageSwitch(const char* fmt, ...)
     if (fmt == nullptr) {
         return -1;
     }
-
     va_list args;
     va_start(args, fmt);
     int ret = SandboxLogger::GetInstance().WriteLog(fmt, args);
     va_end(args);
-
     return ret;
 }
 

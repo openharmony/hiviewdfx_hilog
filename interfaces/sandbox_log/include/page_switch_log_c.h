@@ -33,6 +33,9 @@ typedef void (*OnPageSwitchLogStatusChanged)(bool status);
  * @param fmt Format string
  * @param ... Variable arguments
  * @return Returns 0 on success, negative error code on failure
+ *         -1: Log is disabled
+ *         -2: Internal error
+ *         -3: Invalid parameter
  */
 int WritePageSwitch(const char* fmt, ...);
 

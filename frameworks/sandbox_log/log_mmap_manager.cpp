@@ -27,7 +27,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-
 namespace fs = std::filesystem;
 
 LogMmapManager::LogMmapManager() {}
@@ -42,9 +41,8 @@ LogMmapManager::~LogMmapManager()
     }
 }
 
-bool LogMmapManager::Initialize(const std::string& path, size_t size)
+bool LogMmapManager::IsParentDirExists(const std::string& path)
 {
-    mmapSize_ = size;
     fs::path filePath(path);
     fs::path parentDir = filePath.parent_path();
     // The parent directory should already be created in the LogFileManager class
@@ -56,27 +54,36 @@ bool LogMmapManager::Initialize(const std::string& path, size_t size)
             return false;
         }
     }
-    mmapFp_ = fopen(path.c_str(), "wb+");
+    return true;
+}
+
+bool LogMmapManager::Initialize(const std::string& path, size_t size)
+{
+    if (!IsParentDirExists(path)) {
+        return false;
+    }
+    bool fileExists = fs::exists(path);
+    mmapFp_ = fopen(path.c_str(), fileExists ? "r+b" : "wb+");
     if (mmapFp_ == nullptr) {
         HILOG_ERROR(LOG_CORE, "Failed to open mmap file");
         return false;
     }
-    // Check and resize file if necessary using std::filesystem
+    // Get current file size
     std::error_code ec;
     auto fileSize = fs::file_size(path, ec);
     if (ec) {
         HILOG_ERROR(LOG_CORE, "Failed to get file size");
+        fclose(mmapFp_);
+        mmapFp_ = nullptr;
         return false;
     }
-    if (fileSize < mmapSize_) {
-        if (ftruncate(fileno(mmapFp_), mmapSize_) != 0) {
-            HILOG_ERROR(LOG_CORE, "Failed to resize mmap file");
-            fclose(mmapFp_);
-            mmapFp_ = nullptr;
-            return false;
-        }
+    mmapSize_ = size + METADATA_SIZE;  // Include metadata size
+    if ((fileSize < mmapSize_) && (ftruncate(fileno(mmapFp_), mmapSize_) != 0)) {
+        HILOG_ERROR(LOG_CORE, "Failed to resize mmap file");
+        fclose(mmapFp_);
+        mmapFp_ = nullptr;
+        return false;
     }
-
     // Create memory mapping
     mmapPtr_ = static_cast<char*>(mmap(nullptr, mmapSize_, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(mmapFp_), 0));
     if (mmapPtr_ == MAP_FAILED) {
@@ -86,28 +93,38 @@ bool LogMmapManager::Initialize(const std::string& path, size_t size)
         mmapPtr_ = nullptr;
         return false;
     }
-
+    // Read currentOffset_ from metadata (first METADATA_SIZE bytes)
+    if (fileExists && fileSize >= METADATA_SIZE) {
+        size_t storedOffset = 0;
+        if (memcpy_s(&storedOffset, sizeof(storedOffset), mmapPtr_, METADATA_SIZE) == EOK) {
+            currentOffset_ = (storedOffset <= size) ? storedOffset : 0;
+            return true;
+        }
+    }
     currentOffset_ = 0;
+    UpdateMetadata();
     return true;
 }
 
 void LogMmapManager::Write(const std::string& log)
 {
     uint32_t logSize = static_cast<uint32_t>(log.length());
-    if (mmapPtr_ == nullptr || logSize > mmapSize_ - currentOffset_) {
+    size_t dataSize = mmapSize_ - METADATA_SIZE;
+    if (mmapPtr_ == nullptr || logSize > dataSize - currentOffset_) {
         HILOG_WARN(LOG_CORE, "Mmap buffer failure");
         return;
     }
 
-    if (memcpy_s(mmapPtr_ + currentOffset_, mmapSize_ - currentOffset_, log.data(), logSize) != EOK) {
+    // Write log data after metadata
+    if (memcpy_s(mmapPtr_ + METADATA_SIZE + currentOffset_, dataSize - currentOffset_, log.data(), logSize) != EOK) {
         HILOG_ERROR(LOG_CORE, "Failed to copy log data to mmap buffer");
         return;
     }
+    currentOffset_ += logSize;
+    UpdateMetadata();
     if (msync(mmapPtr_, mmapSize_, MS_ASYNC) != 0) {
         HILOG_ERROR(LOG_CORE, "Failed to sync mmap to disk");
-        return;
     }
-    currentOffset_ += logSize;
 }
 
 void LogMmapManager::Reset()
@@ -115,15 +132,28 @@ void LogMmapManager::Reset()
     if (mmapPtr_ == nullptr) {
         return;
     }
-    if (memset_s(mmapPtr_, mmapSize_, 0, mmapSize_) != EOK) {
+    size_t dataSize = mmapSize_ - METADATA_SIZE;
+    // Only clear data area, keep metadata
+    if (memset_s(mmapPtr_ + METADATA_SIZE, dataSize, 0, dataSize) != EOK) {
         HILOG_ERROR(LOG_CORE, "Failed to reset mmap buffer");
         return;
     }
     currentOffset_ = 0;
+    UpdateMetadata();
     if (msync(mmapPtr_, mmapSize_, MS_ASYNC) != 0) {
         HILOG_ERROR(LOG_CORE, "Failed to sync mmap after reset");
     }
 }
 
+void LogMmapManager::UpdateMetadata()
+{
+    if (mmapPtr_ == nullptr) {
+        return;
+    }
+    // Write currentOffset_ to metadata area (first 8 bytes)
+    if (memcpy_s(mmapPtr_, METADATA_SIZE, &currentOffset_, sizeof(currentOffset_)) != EOK) {
+        HILOG_ERROR(LOG_CORE, "Failed to update metadata");
+    }
+}
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -28,6 +28,8 @@ namespace HiviewDFX {
  * @brief Record page switch log
  * @param str Log content
  * @return Returns 0 on success, negative error code on failure
+ *         -1: Log is disabled
+ *         -2: Internal error
  */
 int WritePageSwitchStr(const std::string& str);
 

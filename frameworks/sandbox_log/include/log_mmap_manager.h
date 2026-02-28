@@ -28,11 +28,15 @@ public:
     ~LogMmapManager();
     bool Initialize(const std::string& path, size_t size);
     void Write(const std::string& log);
-    char* GetPtr() const { return mmapPtr_; }
-    size_t GetSize() const { return mmapSize_; }
+    char* GetPtr() const { return mmapPtr_ ? mmapPtr_ + METADATA_SIZE : nullptr; } // Skip metadata
+    // Return available data size
+    size_t GetSize() const { return (mmapSize_ > METADATA_SIZE) ? mmapSize_ - METADATA_SIZE : 0; }
     size_t GetOffset() const { return currentOffset_; }
     void Reset();
 private:
+    void UpdateMetadata();
+    bool IsParentDirExists(const std::string& path);
+    static constexpr size_t METADATA_SIZE = sizeof(size_t); // Reserve for currentOffset_
     char* mmapPtr_ = nullptr;
     FILE* mmapFp_ = nullptr;
     size_t mmapSize_ = 0;

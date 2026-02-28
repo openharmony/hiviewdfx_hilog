@@ -15,7 +15,11 @@
 
 #include "log_file_manager.h"
 
+#include <algorithm>
+#include <cJSON.h>
+#include <chrono>
 #include <cstring>
+#include <ctime>
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
@@ -28,17 +32,14 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-
 namespace fs = std::filesystem;
 
-LogFileManager::LogFileManager()
-{
-    mmapManager_ = std::make_unique<LogMmapManager>();
-}
+LogFileManager::LogFileManager() {}
 
 LogFileManager::~LogFileManager()
 {
     Flush();
+    currentFileStream_.close();
 }
 
 bool LogFileManager::Initialize(const LogFileConfig& config)
@@ -47,7 +48,7 @@ bool LogFileManager::Initialize(const LogFileConfig& config)
     if (!CreateDirectory() || !InitLogFile()) {
         return false;
     }
-    return mmapManager_->Initialize(config_.persistFile, config_.mmapSize);
+    return mmapManager_.Initialize(config_.persistFile, config_.mmapSize);
 }
 
 bool LogFileManager::CreateDirectory()
@@ -62,9 +63,7 @@ bool LogFileManager::CreateDirectory()
 
 bool LogFileManager::CreateCurrentLogFile()
 {
-    if (currentFileStream_.is_open()) {
-        currentFileStream_.close();
-    }
+    currentFileStream_.close();
     std::string currentFile = GetLogFilePath(currentFileIndex_);
     currentFileStream_.open(currentFile, std::ios::out | std::ios::app | std::ios::binary);
     if (!currentFileStream_.is_open()) {
@@ -98,10 +97,10 @@ bool LogFileManager::InitLogFile()
 void LogFileManager::WriteLog(const std::string& log)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (mmapManager_->GetOffset() + log.length() > mmapManager_->GetSize()) {
+    if (mmapManager_.GetOffset() + log.length() > mmapManager_.GetSize()) {
         FlushMmapToFile();
     }
-    mmapManager_->Write(log);
+    mmapManager_.Write(log);
 }
 
 bool LogFileManager::FlushMmapToFile()
@@ -112,7 +111,7 @@ bool LogFileManager::FlushMmapToFile()
     }
     bool result = false;
     do {
-        currentFileStream_.write(static_cast<const char*>(mmapManager_->GetPtr()), mmapManager_->GetOffset());
+        currentFileStream_.write(static_cast<const char*>(mmapManager_.GetPtr()), mmapManager_.GetOffset());
         if (!currentFileStream_.good()) {
             HILOG_ERROR(LOG_CORE, "Failed to write log to file");
             break;
@@ -124,7 +123,7 @@ bool LogFileManager::FlushMmapToFile()
         }
         result = true;
     } while (false);
-    mmapManager_->Reset();
+    mmapManager_.Reset();
     return result;
 }
 
@@ -165,10 +164,84 @@ bool LogFileManager::RotateFiles()
 bool LogFileManager::Flush()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (mmapManager_->GetOffset() == 0) {
+    if (mmapManager_.GetOffset() == 0) {
         return true;
     }
     return FlushMmapToFile();
+}
+
+std::string LogFileManager::GetTimestamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_now;
+    if (localtime_r(&t, &tm_now) == nullptr) {
+        return "";
+    }
+    char timestamp[40] = {0};
+    if (snprintf_s(timestamp, sizeof(timestamp), sizeof(timestamp) - 1,
+        "%04d%02d%02d-%02d%02d%02d-%03d",
+        tm_now.tm_year + 1900, tm_now.tm_mon + 1, tm_now.tm_mday,
+        tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec,
+        static_cast<int>(ms.count())) < 0) { // 1900 is year offset
+        return "";
+    }
+    return std::string(timestamp);
+}
+
+std::string LogFileManager::BuildSnapshotJson(const std::vector<std::string>& files)
+{
+    cJSON* root = cJSON_CreateArray();
+    if (root == nullptr) {
+        return "[]";
+    }
+    for (const auto& file : files) {
+        cJSON* item = cJSON_CreateString(file.c_str());
+        if (item == nullptr) {
+            cJSON_Delete(root);
+            continue;
+        }
+        cJSON_AddItemToArray(root, item);
+    }
+    char* jsonStr = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    if (jsonStr == nullptr) {
+        return "[]";
+    }
+    std::string result(jsonStr);
+    cJSON_free(jsonStr);
+    return result;
+}
+
+void LogFileManager::RotateSnapshots()
+{
+    std::error_code ec;
+    fs::path snapshotDir(config_.snapshotLogDir);
+    std::vector<fs::path> existingSnapshots;
+    for (const auto& entry : fs::directory_iterator(snapshotDir, ec)) {
+        if (ec) {
+            HILOG_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
+            break;
+        }
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+        if (entry.path().extension() == config_.snapshotLogSuffix) {
+            existingSnapshots.push_back(entry.path());
+        }
+    }
+    // Sort by filename (timestamp embedded in filename, oldest first)
+    std::sort(existingSnapshots.begin(), existingSnapshots.end());
+    // Delete oldest files if needed
+    int toDelete = static_cast<int>(existingSnapshots.size()) + config_.maxLogNum - config_.maxSnapshotNum;
+    for (int i = 0; i < toDelete && i < static_cast<int>(existingSnapshots.size()); ++i) {
+        std::error_code removeEc;
+        fs::remove(existingSnapshots[i], removeEc);
+        if (removeEc) {
+            HILOG_WARN(LOG_CORE, "Failed to remove old snapshot");
+        }
+    }
 }
 
 int LogFileManager::CreateSnapshot(std::string& snapshots)
@@ -183,6 +256,12 @@ int LogFileManager::CreateSnapshot(std::string& snapshots)
             return -1;
         }
     }
+    RotateSnapshots();
+    std::string timestamp = GetTimestamp();
+    if (timestamp.empty()) {
+        HILOG_ERROR(LOG_CORE, "Failed to get timestamp for snapshot");
+        return -1;
+    }
     std::vector<std::string> snapshotFiles;
     // Copy each existing log file to snapshot directory
     for (int i = 1; i <= config_.maxLogNum; ++i) {
@@ -191,9 +270,9 @@ int LogFileManager::CreateSnapshot(std::string& snapshots)
         if (!fs::exists(sourceFile, existsEc) || existsEc) {
             continue;
         }
-        // Generate snapshot file name: snapshotLogPrefix.index.snapshotLogSuffix
+        // Generate snapshot file name: snapshotLogPrefix.timestamp.index.snapshotLogSuffix
         fs::path snapshotPath = fs::path(config_.snapshotLogDir) /
-            (config_.snapshotLogPrefix + "." + std::to_string(i) + config_.snapshotLogSuffix);
+            (config_.snapshotLogPrefix + "." + timestamp + "." + std::to_string(i) + config_.snapshotLogSuffix);
 
         std::error_code copyEc;
         fs::copy_file(sourceFile, snapshotPath, fs::copy_options::overwrite_existing, copyEc);
@@ -204,19 +283,7 @@ int LogFileManager::CreateSnapshot(std::string& snapshots)
         }
         snapshotFiles.push_back(snapshotPath.string());
     }
-    // Build JSON response
-    if (snapshotFiles.empty()) {
-        snapshots = "{\"snapshots\": []}";
-        return 0;
-    }
-    snapshots = "{\"snapshots\": [";
-    for (size_t i = 0; i < snapshotFiles.size(); ++i) {
-        snapshots += "\"" + snapshotFiles[i] + "\"";
-        if (i < snapshotFiles.size() - 1) {
-            snapshots += ", ";
-        }
-    }
-    snapshots += "]}";
+    snapshots = BuildSnapshotJson(snapshotFiles);
     return 0;
 }
 } // namespace HiviewDFX
