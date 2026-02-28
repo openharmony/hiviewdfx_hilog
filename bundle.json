@@ -41,6 +41,7 @@
         "//base/hiviewdfx/hilog/services/hilogtool:hilog",
         "//base/hiviewdfx/hilog/services/hilogd:hilogd",
         "//base/hiviewdfx/hilog/interfaces/js:hilog_napi",
+        "//base/hiviewdfx/hilog/interfaces/cj:cj_hilog_ffi",
         "//base/hiviewdfx/hilog/frameworks/hilog_ndk:hilog_ndk",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base",
         "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_snapshot",
@@ -61,6 +62,13 @@
               "hilog_trace.h"
             ],
             "header_base": "//base/hiviewdfx/hilog/interfaces/native/innerkits/include"
+          }
+        },
+        {
+          "name": "//base/hiviewdfx/hilog/interfaces/cj:cj_hilog_ffi",
+          "header": {
+            "header_files": [],
+            "header_base": []
           }
         },
         {
