@@ -205,6 +205,16 @@ void HiLogSetAppMinLogLevel(LogLevel level);
  */
 void HiLogSetAppLogLevel(LogLevel level, PreferStrategy prefer);
 
+/**
+ * @brief Get hilog socket fd
+ */
+int HilogGetSocketFd(void);
+
+ /**
+ * @brief Close hilog socket fd
+ */
+void HilogCloseSocketFd(void);
+
 #ifdef __cplusplus
 }
 #endif

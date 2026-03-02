@@ -19,6 +19,20 @@
 
 namespace OHOS {
 namespace HiviewDFX {
+void DgramSocketClient::CloseFd()
+{
+    int socketFd = atomic_load(&fdHandler);
+    if (socketFd >= 0) {
+        close(socketFd);
+        atomic_store(&fdHandler, -1);
+    }
+}
+
+int DgramSocketClient::GetFd()
+{
+    return fdHandler.load();
+}
+
 int DgramSocketClient::CheckSocket()
 {
     if (fdHandler >= 0) {
