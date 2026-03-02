@@ -16,6 +16,8 @@
         HiLogSetAppLogLevel;
         HiLogPrintDictNew;
         HiLogPrintComm;
+        HilogGetSocketFd;
+        HilogCloseSocketFd;
     };
     extern "C++" {
         "OHOS::HiviewDFX::HiLog::Info(OHOS::HiviewDFX::HiLogLabel const&, char const*, ...)";

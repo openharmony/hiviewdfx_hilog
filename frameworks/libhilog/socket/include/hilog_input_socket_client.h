@@ -25,6 +25,8 @@ class HilogInputSocketClient : DgramSocketClient {
 public:
     HilogInputSocketClient() : DgramSocketClient(INPUT_SOCKET_NAME, SOCK_NONBLOCK | SOCK_CLOEXEC) {}
     int WriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt, uint16_t fmtLen);
+    int GetSocketFd();
+    void CloseSocketFd();
     ~HilogInputSocketClient() = default;
 };
 } // namespace HiviewDFX
@@ -32,4 +34,6 @@ public:
 
 extern "C" int HilogWriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt,
     uint16_t fmtLen);
+extern "C" int GetHilogSocketFd();
+extern "C" void CloseHilogSocketFd();
 #endif /* HILOG_INPUT_SOCKET_CLIENT_H */
