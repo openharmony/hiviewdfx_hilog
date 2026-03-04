@@ -28,6 +28,16 @@ extern "C" int HilogWriteLogMessage(HilogMsg *header, const char *tag, uint16_t 
     return g_hilogInputSocketClient.WriteLogMessage(header, tag, tagLen, fmt, fmtLen);
 }
 
+extern "C" int GetHilogSocketFd()
+{
+    return g_hilogInputSocketClient.GetSocketFd();
+}
+
+extern "C" void CloseHilogSocketFd()
+{
+    g_hilogInputSocketClient.CloseSocketFd();
+}
+
 int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const char *fmt,
     uint16_t fmtLen)
 {
@@ -54,5 +64,16 @@ int HilogInputSocketClient::WriteLogMessage(HilogMsg *header, const char *tag, u
 
     return ret;
 }
+
+int HilogInputSocketClient::GetSocketFd()
+{
+    return GetFd();
+}
+
+void HilogInputSocketClient::CloseSocketFd()
+{
+    CloseFd();
+}
+
 } // namespace HiviewDFX
 } // namespace OHOS

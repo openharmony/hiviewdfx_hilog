@@ -107,6 +107,22 @@ void HiLogSetAppLogLevel(LogLevel level, PreferStrategy prefer)
     g_preferStrategy = prefer;
 }
 
+int HilogGetSocketFd(void)
+{
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
+    return GetHilogSocketFd();
+#else
+    return -1;
+#endif
+}
+
+void HilogCloseSocketFd(void)
+{
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
+    CloseHilogSocketFd();
+#endif
+}
+
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 {
     // Priority: TagLevel > DomainLevel > GlobalLevel

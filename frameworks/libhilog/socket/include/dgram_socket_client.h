@@ -34,6 +34,8 @@ public:
         socketType = (socketOption & allowOption);
         SetType(SOCK_DGRAM | socketType);
     }
+    void CloseFd();
+    int GetFd();
     ~DgramSocketClient() = default;
     int CheckSocket();
 private:
