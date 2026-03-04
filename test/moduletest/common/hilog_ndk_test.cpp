@@ -438,6 +438,26 @@ HWTEST_F(HiLogNDKTest, domainFlowCtrlTest, TestSize.Level1)
     FlowCtlTest(LABEL, domainCtrlLog);
     (void)PopenToString("hilog -Q domainoff");
 }
+
+/**
+ * @tc.name: Dfx_HiLogNDKTest_GetSocketFd
+ * @tc.desc: hilog get socket fd
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiLogNDKTest, HilogGetSocketFd, TestSize.Level1)
+{
+    const std::string logMsg = "HILOGTEST_C";
+    HILOG_INFO(LOG_CORE, "%{public}s", logMsg.c_str());
+    int fd = HilogGetSocketFd();
+#if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
+    EXPECT_GE(fd, -1);
+#endif
+    std::cout << "get socket fd" << fd << std::endl;
+    HilogCloseSocketFd();
+    fd = HilogGetSocketFd();
+    std::cout << "close socket fd" << fd << std::endl;
+    EXPECT_EQ(fd, -1);
+}
 } // namespace HiLogTest
 } // namespace HiviewDFX
 } // namespace OHOS

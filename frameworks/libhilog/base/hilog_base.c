@@ -18,6 +18,7 @@
 #include <vsnprintf_s_p.h>
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,9 +39,27 @@ static const int CAS_INVALID_PARAM = -2;
 static const int CAS_SUCCESS = 0;
 static const int INVALID_RESULT = -1;
 static atomic_int g_socketFd = INVALID_FD;
- 
-static void CleanSocket(void) __attribute__((destructor));
- 
+
+static void CloseSocket(void)
+{
+    int socketFd = atomic_load(&g_socketFd);
+    if (socketFd >= 0) {
+        close(socketFd);
+        atomic_store(&g_socketFd, INVALID_FD);
+    }
+}
+
+__attribute__((constructor)) static void CleanSocketInit(void)
+{
+    pthread_atfork(NULL, NULL, CloseSocket);
+}
+
+
+__attribute__((destructor)) static void CleanSocket(void)
+{
+    CloseSocket();
+}
+
 static int GenerateSocketFd(void)
 {
     int socketFd = TEMP_FAILURE_RETRY(socket(AF_UNIX, SOCKET_TYPE, 0));
@@ -111,15 +130,6 @@ static int SendMessage(HilogMsg *header, const char *tag, uint16_t tagLen, const
         close(socketFd);
     }
     return ret;
-}
-
-static void CleanSocket(void)
-{
-    int socketFd = atomic_load(&g_socketFd);
-    if (socketFd >= 0) {
-        close(socketFd);
-        atomic_store(&g_socketFd, INVALID_FD);
-    }
 }
 
 void HiLogRecordSnapshot(int lines, int64_t time)
