@@ -21,7 +21,6 @@ ohos_shared_library("cj_hilog_ffi") {
     debug = false
   }
 
-  defines = []
   include_dirs = [
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
     "//base/hiviewdfx/hilog/frameworks/libhilog/include",
@@ -35,7 +34,14 @@ ohos_shared_library("cj_hilog_ffi") {
     "../native/innerkits:libhilog"
   ]
 
-  external_deps = []
+  if (is_mingw) {
+    defines += [ "__WINDOWS__" ]
+    cflags_cc += [ "-std=c++17" ]
+  } else if (is_mac) {
+    defines += [ "__MAC__" ]
+  } else if (is_linux) {
+    defines += [ "__LINUX__" ]
+  }
 
   innerapi_tags = [ "platformsdk" ]
 
