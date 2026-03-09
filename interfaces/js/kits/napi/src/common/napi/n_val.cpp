@@ -340,7 +340,7 @@ napi_property_descriptor NVal::DeclareNapiStaticProperty(const char *name, napi_
 
 napi_property_descriptor NVal::DeclareNapiFunction(const char *name, napi_callback func)
 {
-    return {(name), nullptr, (func), nullptr, nullptr, nullptr, napi_default, nullptr};
+    return {(name), nullptr, (func), nullptr, nullptr, nullptr, napi_writable, nullptr};
 }
 
 napi_property_descriptor NVal::DeclareNapiStaticFunction(const char *name, napi_callback func)
