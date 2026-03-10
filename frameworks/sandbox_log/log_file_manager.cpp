@@ -109,6 +109,13 @@ bool LogFileManager::FlushMmapToFile()
         HILOG_ERROR(LOG_CORE, "Failed to rotate log files");
         return false;
     }
+    if (mmapManager_.GetPtr() == nullptr) {
+        HILOG_ERROR(LOG_CORE, "Mmap pointer is null");
+        return false;
+    }
+    if (mmapManager_.GetOffset() == 0) {
+        return true;
+    }
     bool result = false;
     do {
         currentFileStream_.write(static_cast<const char*>(mmapManager_.GetPtr()), mmapManager_.GetOffset());
@@ -199,7 +206,6 @@ std::string LogFileManager::BuildSnapshotJson(const std::vector<std::string>& fi
     for (const auto& file : files) {
         cJSON* item = cJSON_CreateString(file.c_str());
         if (item == nullptr) {
-            cJSON_Delete(root);
             continue;
         }
         cJSON_AddItemToArray(root, item);
