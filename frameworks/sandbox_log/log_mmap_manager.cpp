@@ -35,9 +35,11 @@ LogMmapManager::~LogMmapManager()
 {
     if (mmapPtr_ != nullptr && mmapPtr_ != MAP_FAILED) {
         munmap(mmapPtr_, mmapSize_);
+        mmapPtr_ = nullptr;
     }
     if (mmapFp_ != nullptr) {
         fclose(mmapFp_);
+        mmapFp_ = nullptr;
     }
 }
 
