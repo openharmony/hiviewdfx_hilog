@@ -15,6 +15,7 @@ import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 ohos_shared_library("cj_hilog_ffi") {
+  defines = []
   sanitize = {
     cfi = true
     cfi_cross_dso = true
@@ -34,6 +35,7 @@ ohos_shared_library("cj_hilog_ffi") {
     "../native/innerkits:libhilog"
   ]
 
+  cflags_cc = []
   if (is_mingw) {
     defines += [ "__WINDOWS__" ]
     cflags_cc += [ "-std=c++17" ]
