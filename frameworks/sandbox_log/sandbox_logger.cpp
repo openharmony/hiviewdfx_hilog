@@ -41,7 +41,7 @@ constexpr int MAX_SANDBOX_LOG_NUM = 2;
 constexpr int MAX_SNAPSHOT_NUM = 20;
 constexpr size_t MAX_SANDBOX_LOG_FILE_SIZE = 128 * 1024; // 128K
 constexpr size_t SANDBOX_LOG_MMAP_SIZE = 8 * 1024; // 8KB
-constexpr int MAX_LOG_SIZE = 1024;
+constexpr size_t MAX_LOG_LEN = 1024;
 constexpr int MIN_HAP_UID = 10000;
 constexpr int SUCCESS = 0;
 constexpr int ERROR_DISABLED = -1; // Log is disabled
@@ -85,12 +85,14 @@ int SandboxLogger::WriteLog(const char* fmt, va_list args)
     if (fmt == nullptr) {
         return ERROR_INVALID_PARAM;
     }
-    char buffer[MAX_LOG_SIZE] = {0};
-    int ret = vsnprintf_s(buffer, sizeof(buffer), MAX_LOG_SIZE - 1, fmt, args);
-    if (ret < 0) {
+    char buffer[MAX_LOG_LEN + 1] = {0};
+    int ret = vsnprintf_s(buffer, MAX_LOG_LEN + 1, MAX_LOG_LEN, fmt, args);
+    size_t len = strlen(buffer);
+    if (ret == -1 && len != MAX_LOG_LEN) {
+        HILOG_ERROR(LOG_CORE, "Failed to format log message");
         return ERROR_INVALID_PARAM;
     }
-    return DoWriteLog(buffer, static_cast<size_t>(ret));
+    return DoWriteLog(buffer, len);
 }
 
 int SandboxLogger::WriteLog(const std::string& str)
@@ -98,7 +100,8 @@ int SandboxLogger::WriteLog(const std::string& str)
     if (!loggable_.load()) {
         return ERROR_DISABLED;
     }
-    return DoWriteLog(str.c_str(), str.length());
+    size_t writeLen = std::min(str.length(), MAX_LOG_LEN);
+    return DoWriteLog(str.c_str(), writeLen);
 }
 
 int SandboxLogger::DoWriteLog(const char* msg, size_t msgLen)
