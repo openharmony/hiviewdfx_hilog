@@ -32,11 +32,47 @@ struct LogFileConfig {
     std::string snapshotLogDir;
     std::string snapshotLogPrefix;
     std::string snapshotLogSuffix;
-    int maxLogNum = 0;
+    uint16_t maxLogNum = 0;
     int maxSnapshotNum = 0;
     size_t maxLogFileSize = 0;
     size_t mmapSize = 0;
 };
+
+struct LogFile {
+    std::string path;
+    std::string processName;
+    int instanceID = 0;
+    uint64_t modifyTime = 0;
+    LogFile(const std::string& path, const std::string& processName, int instanceID, uint64_t modifyTime)
+        : path(path), processName(processName), instanceID(instanceID), modifyTime(modifyTime) {}
+    // For sorting: from latest to earliest (time in descending order).
+    bool operator<(const LogFile& other) const
+    {
+        return modifyTime > other.modifyTime;
+    }
+};
+
+struct SnapshotFile {
+    std::string path;
+    std::string processName;
+    int instanceID = 0;
+    int fileID = 0;
+    uint64_t timestamp = 0;
+    SnapshotFile(const std::string& path, const std::string& processName,
+                 int instanceID, int fileID, uint64_t timestamp)
+        : path(path), processName(processName), instanceID(instanceID),
+          fileID(fileID), timestamp(timestamp) {}
+    // For sorting: from earliest to latest (time in ascending order).
+    bool operator<(const SnapshotFile& other) const
+    {
+        if (timestamp == other.timestamp) {
+            return fileID < other.fileID;
+        }
+        return timestamp < other.timestamp;
+    }
+};
+
+namespace fs = std::filesystem;
 
 class LogFileManager {
 public:
@@ -45,24 +81,41 @@ public:
     bool Initialize(const LogFileConfig& config);
     void WriteLog(const std::string& log);
     bool Flush();
-    int CreateSnapshot(std::string& snapshots);
+    int CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots);
 private:
+    void AgedOutLogFiles();
+    void AgedOutSnapshots();
+    void AppendSelfLogNames(std::vector<std::string>& logNames);
     bool InitLogFile();
+    bool CanCreateLogFile();
+    void CloseCurrentFile();
     bool FlushMmapToFile();
     bool RotateFiles();
     bool CreateDirectory();
-    bool CreateCurrentLogFile();
-    std::string GetLogFilePath(uint8_t index);
-    std::string GetTimestamp();
+    bool OpenCurrentLogFile();
+    std::string GetLogFilePath(uint16_t instanceIndex, uint16_t fileIndex);
     std::string BuildSnapshotJson(const std::vector<std::string>& files);
-    void RotateSnapshots();
+    bool RemoveFileGroups(std::vector<LogFile> files);
+    bool SeekFileIndexes();
     int GetCurrentFileIndex();
+    bool GetFileModifyTime(fs::path path, uint64_t& modifyTime);
+    std::vector<LogFile> GetLogFiles();
+    std::vector<std::string> GetLogPrefixes(std::vector<std::string>& pageSwitchLogs);
+    std::vector<std::string> GetPageSwitchLogNames(bool isUnlockedOnly);
+    std::vector<std::string> GetSelfSnapshotPaths(std::vector<SnapshotFile>& snapshotFiles);
+    std::vector<SnapshotFile> GetSnapshotFiles();
+    std::vector<std::string> GetSnapshotPaths(bool isUnlockedOnly);
+    std::vector<std::string> GetUnlockedPageSwitchLogNames(std::vector<LogFile>& logFiles);
+    std::vector<std::string> GetUnlockedSnapshotPaths(std::vector<SnapshotFile>& snapshotFiles);
+    std::string GetFormatedProcessName();
 
     std::mutex mutex_;
     LogFileConfig config_;
     LogMmapManager mmapManager_;
-    uint8_t currentFileIndex_ = 1;  // Start from 1
-    std::ofstream currentFileStream_;  // Current log file stream
+    uint16_t currentFileIndex_ = 1; // Start from 1
+    uint16_t currentInstanceIndex_ = 1; // Start from 1
+    int currentFd_ = -1; // Current log file fd
+    std::string processName_; // Ex. 1: com.ohos.sceneboard 2: com.ohos.sceneboard_EngineServiceAbility
 };
 } // namespace HiviewDFX
 } // namespace OHOS
