@@ -37,18 +37,20 @@ public:
     void SetStatus(bool status);
     bool RegisterCallback(OnPageSwitchLogStatusChanged callback);
     void UnregisterCallback(OnPageSwitchLogStatusChanged callback);
-    int CreateSnapshot(std::string& snapshots);
+    int CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots);
     bool FlushLog();
 private:
     int DoWriteLog(const char* msg, size_t msgLen);
     void NotifyStatusChanged(bool status);
     void WriteLogToBuffer(const std::string& str);
+    bool InitFileManager();
     bool IsHap();
 
     std::atomic<bool> loggable_{false};
     bool isHap_{false};
     bool initialized_{false};
     std::mutex callbackMutex_;
+    std::mutex initMutex_;
     std::vector<OnPageSwitchLogStatusChanged> callbacks_;
     std::shared_ptr<ffrt::queue> queue_;
     LogFileManager logFileManager_;
