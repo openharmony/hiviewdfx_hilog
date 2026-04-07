@@ -123,6 +123,12 @@ void HilogCloseSocketFd(void)
 #endif
 }
 
+static bool IsAppDomain(unsigned int domain)
+{
+    // domain within the range of [DOMAIN_APP_MIN, DOMAIN_APP_MAX] is a js log
+    return (domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX);
+}
+
 static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
 {
     // Priority: TagLevel > DomainLevel > GlobalLevel
@@ -144,13 +150,10 @@ static uint16_t GetFinalLevel(unsigned int domain, const std::string& tag)
     if (persistDomainLevel != LOG_LEVEL_MIN) {
         return persistDomainLevel;
     }
-    // domain within the range of [DOMAIN_APP_MIN, DOMAIN_APP_MAX] is a js log,
+
     // if this js log comes from debuggable hap, set the default level.
-    if ((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX)) {
-        static bool isDebuggableHap = IsDebuggableHap();
-        if (isDebuggableHap) {
-            return LOG_LEVEL_MIN;
-        }
+    if (IsAppDomain(domain) && IsDebuggableHap()) {
+        return LOG_LEVEL_MIN;
     }
     return GetGlobalLogLevel();
 #else
@@ -197,8 +200,7 @@ static bool IsNeedProcFlowCtr(const LogType type)
         return false;
     }
     //debuggable hap don't perform process flow control
-    static bool isDebuggableHap = IsDebuggableHap();
-    if (IsProcessSwitchOn() && !isDebuggableHap) {
+    if (IsProcessSwitchOn() && !IsDebuggableHap()) {
         return true;
     }
     return false;
@@ -426,11 +428,6 @@ int HiLogPrint(LogType type, LogLevel level, unsigned int domain, const char *ta
     ret = HiLogPrintArgs(type, level, domain, tag, fmt, ap);
     va_end(ap);
     return ret;
-}
-
-static bool IsAppDomain(const unsigned int domain)
-{
-    return ((domain >= DOMAIN_APP_MIN) && (domain <= DOMAIN_APP_MAX));
 }
 
 bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
