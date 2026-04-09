@@ -333,11 +333,18 @@ bool IsDebugOn()
 
 bool IsDebuggableHap()
 {
-    const char *path = getenv(HAP_DEBUGGABLE);
-    if ((path == nullptr) || (strcmp(path, "true") != 0)) {
+    static bool isInit = false;
+    static bool ret = false;
+    if (isInit) {
+        return ret;
+    }
+    const char *res = getenv(HAP_DEBUGGABLE);
+    if (res == nullptr) {
         return false;
     }
-    return true;
+    isInit = true;
+    ret = (strcmp(res, "true") == 0);
+    return ret;
 }
 
 bool IsPrivateModeEnable()
