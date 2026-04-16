@@ -64,9 +64,9 @@ void SetPageSwitchStatus(bool status)
     SandboxLogger::GetInstance().SetStatus(status);
 }
 
-int CreatePageSwitchSnapshot(std::string& snapshots)
+int CreatePageSwitchSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots)
 {
-    return SandboxLogger::GetInstance().CreateSnapshot(snapshots);
+    return SandboxLogger::GetInstance().CreateSnapshot(eventTime, enablePackAll, snapshots);
 }
 
 bool FlushPageSwitchLog()
