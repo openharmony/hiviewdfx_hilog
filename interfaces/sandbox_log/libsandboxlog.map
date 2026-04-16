@@ -22,7 +22,8 @@
         "OHOS::HiviewDFX::WritePageSwitchStr(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::HiviewDFX::IsPageSwitchLoggable()";
         "OHOS::HiviewDFX::SetPageSwitchStatus(bool)";
-        "OHOS::HiviewDFX::CreatePageSwitchSnapshot(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
+        "OHOS::HiviewDFX::CreatePageSwitchSnapshot(unsigned long long, bool, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
+        "OHOS::HiviewDFX::CreatePageSwitchSnapshot(unsigned long, bool, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
         "OHOS::HiviewDFX::FlushPageSwitchLog()";
     };
 

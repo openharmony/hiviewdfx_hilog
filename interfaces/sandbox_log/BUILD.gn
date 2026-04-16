@@ -38,11 +38,13 @@ ohos_shared_library("libsandboxlog") {
     "$sandbox_log_root/sandbox_logger.cpp",
     "$sandbox_log_root/log_file_manager.cpp",
     "$sandbox_log_root/log_mmap_manager.cpp",
+    "$sandbox_log_root/sandbox_utils.cpp",
   ]
 
   defines = [
     "LOG_DOMAIN=0xD002D00",
     "LOG_TAG=\"SandboxLog\"",
+    "HILOG_USE_MUSL",
   ]
 
   # 依赖同模块下的libhilog

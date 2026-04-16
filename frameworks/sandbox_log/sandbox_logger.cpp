@@ -53,6 +53,14 @@ SandboxLogger::SandboxLogger()
 {
     queue_ = std::make_shared<ffrt::queue>("SandboxLoggerQueue");
     isHap_ = IsHap();
+}
+
+SandboxLogger::~SandboxLogger()
+{
+}
+
+bool SandboxLogger::InitFileManager()
+{
     LogFileConfig config = {
         .logDir = LOG_DIR,
         .persistFile = PERSIST_FILE,
@@ -68,13 +76,9 @@ SandboxLogger::SandboxLogger()
     };
     if (!logFileManager_.Initialize(config)) {
         HILOG_ERROR(LOG_CORE, "Failed to initialize log file manager");
-        return;
+        return false;
     }
-    initialized_ = true;
-}
-
-SandboxLogger::~SandboxLogger()
-{
+    return true;
 }
 
 int SandboxLogger::WriteLog(const char* fmt, va_list args)
@@ -150,7 +154,14 @@ bool SandboxLogger::IsLoggable() const
 
 void SandboxLogger::SetStatus(bool status)
 {
-    if (!isHap_ || !initialized_) {
+    if (!isHap_) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(initMutex_);
+    if (!initialized_ && status == true) {
+        initialized_ = InitFileManager();
+    }
+    if (!initialized_) {
         return;
     }
     bool oldStatus = loggable_.exchange(status);
@@ -187,10 +198,10 @@ void SandboxLogger::UnregisterCallback(OnPageSwitchLogStatusChanged callback)
     }
 }
 
-int SandboxLogger::CreateSnapshot(std::string& snapshots)
+int SandboxLogger::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots)
 {
     (void)logFileManager_.Flush();
-    return logFileManager_.CreateSnapshot(snapshots);
+    return logFileManager_.CreateSnapshot(eventTime, enablePackAll, snapshots);
 }
 
 bool SandboxLogger::FlushLog()

@@ -51,7 +51,7 @@ void SetPageSwitchStatus(bool status);
  *                  After successful creation, it returns the snapshot path in JSON array format.
  * @return Returns 0 on success, negative error code on failure
  */
-int CreatePageSwitchSnapshot(std::string& snapshots);
+int CreatePageSwitchSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots);
 
 /**
  * @brief Flush page switch log to disk
