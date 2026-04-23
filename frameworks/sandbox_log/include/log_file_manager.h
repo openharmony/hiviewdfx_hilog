@@ -94,6 +94,7 @@ private:
     bool CreateDirectory();
     bool OpenCurrentLogFile();
     std::string GetLogFilePath(uint16_t instanceIndex, uint16_t fileIndex);
+    std::string GetPersistFilePath(const std::string& processName, uint16_t instanceIndex);
     std::string BuildSnapshotJson(const std::vector<std::string>& files);
     bool RemoveFileGroups(std::vector<LogFile> files);
     bool SeekFileIndexes();
