@@ -77,7 +77,7 @@ bool LogFileManager::Initialize(const LogFileConfig& config)
     if (!CreateDirectory() || !InitLogFile()) {
         return false;
     }
-    return mmapManager_.Initialize(config_.persistFile, config_.mmapSize);
+    return mmapManager_.Initialize(GetPersistFilePath(processName_, currentInstanceIndex_), config_.mmapSize);
 }
 
 bool LogFileManager::CreateDirectory()
@@ -105,6 +105,11 @@ std::string LogFileManager::GetLogFilePath(uint16_t instanceIndex, uint16_t file
     fs::path logPath = fs::path(config_.logDir) / (config_.filePrefix + "-" + processName_ + "-" +
                        std::to_string(instanceIndex) + "-" + std::to_string(fileIndex) + config_.fileSuffix);
     return logPath.string();
+}
+
+std::string LogFileManager::GetPersistFilePath(const std::string& processName, uint16_t instanceIndex)
+{
+    return config_.persistFile + "_" + processName + "_" + std::to_string(instanceIndex);
 }
 
 bool LogFileManager::SeekFileIndexes()
@@ -139,7 +144,7 @@ bool LogFileManager::GetFileModifyTime(fs::path path, uint64_t& modifyTime)
         HILOG_ERROR(LOG_CORE, "Error getting file status of %{public}s", path.string().c_str());
         return false;
     }
-    modifyTime = fileStat.st_mtime * 1000LL; // 1000 : 1000 ms = 1 s
+    modifyTime = static_cast<uint64_t>(fileStat.st_mtime) * 1000ULL; // 1000 : 1000 ms = 1 s
     return true;
 }
 
@@ -179,6 +184,7 @@ std::vector<LogFile> LogFileManager::GetLogFiles()
 bool LogFileManager::RemoveFileGroups(std::vector<LogFile> files)
 {
     bool allLocked = true;
+    std::set<std::string> persistFiles;
     std::vector<int> fds;
     for (auto& file : files) {
         int fd = -1;
@@ -187,6 +193,7 @@ bool LogFileManager::RemoveFileGroups(std::vector<LogFile> files)
             break;
         }
         fds.push_back(fd);
+        persistFiles.insert(GetPersistFilePath(file.processName, static_cast<uint16_t>(file.instanceID)));
     }
     if (allLocked) {
         std::error_code ec;
@@ -194,6 +201,13 @@ bool LogFileManager::RemoveFileGroups(std::vector<LogFile> files)
             fs::remove(file.path, ec);
             if (ec) {
                 HILOG_WARN(LOG_CORE, "Failed to delete: %{public}s", file.path.c_str());
+                ec.clear();
+            }
+        }
+        for (auto& persistFile : persistFiles) {
+            fs::remove(persistFile, ec);
+            if (ec) {
+                HILOG_WARN(LOG_CORE, "Failed to delete: %{public}s", persistFile.c_str());
                 ec.clear();
             }
         }
@@ -233,11 +247,11 @@ void LogFileManager::AgedOutLogFiles()
         }
         if (!locked) {
             logFileGroups[files[0].modifyTime] = files;
-            count += files.size();
+            count += static_cast<int>(files.size());
         }
     }
 
-    int rmCount = logFiles.size() - MAX_RESERVED_LOG_FILE_NUM + config_.maxLogNum;
+    int rmCount = static_cast<int>(logFiles.size()) - MAX_RESERVED_LOG_FILE_NUM + static_cast<int>(config_.maxLogNum);
     rmCount = rmCount > count ? count : rmCount;
     count = 0;
     for (auto& [key, files] : logFileGroups) {
@@ -245,7 +259,7 @@ void LogFileManager::AgedOutLogFiles()
             break;
         }
         if (RemoveFileGroups(files)) {
-            count += files.size();
+            count += static_cast<int>(files.size());
         }
     }
 }
@@ -626,7 +640,8 @@ int LogFileManager::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::
         if (!GetFileModifyTime(logPath, modifyTime)) {
             continue;
         }
-        uint64_t diff = std::abs(static_cast<int64_t>(eventTime) - static_cast<int64_t>(modifyTime));
+        uint64_t diff =
+            static_cast<uint64_t>(std::abs(static_cast<int64_t>(eventTime) - static_cast<int64_t>(modifyTime)));
         if (diff > MAX_DIFF_MS) {
             continue;
         }
