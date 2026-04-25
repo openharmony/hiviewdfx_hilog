@@ -539,7 +539,7 @@ void LogFileManager::AgedOutSnapshots()
         fs::remove(snapshotFiles[i].path, removeEc);
         if (removeEc) {
             HILOG_BASE_WARN(LOG_CORE, "Failed to remove %{public}s: %{public}s",
-                       snapshotFiles[i].path.c_str(), removeEc.message().c_str());
+                snapshotFiles[i].path.c_str(), removeEc.message().c_str());
         }
     }
 }

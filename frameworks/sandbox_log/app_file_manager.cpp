@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 
-#include "hilog/log.h"
+#include "hilog_base/log_base.h"
 #include "sandbox_utils.h"
 #include "securec.h"
 
@@ -38,6 +38,8 @@ namespace OHOS {
 namespace HiviewDFX {
 namespace {
     constexpr int MAX_RESERVED_LOG_FILE_NUM = 50;
+    constexpr unsigned int INDEX_BUFFER_SIZE = 16;
+    constexpr unsigned int TIME_BUFFER_SIZE = 32;
 }
 
 AppFileManager::AppFileManager()
@@ -82,15 +84,15 @@ bool AppFileManager::OpenCurrentLogFile()
 }
 std::string AppFileManager::GetLogFilePath(uint16_t fileIndex)
 {
-    char buf[16];
-    if (snprintf_s(buf, 16, 16 - 1, "03d", fileIndex) <= 0) {
+    char buf[INDEX_BUFFER_SIZE];
+    if (snprintf_s(buf, INDEX_BUFFER_SIZE, INDEX_BUFFER_SIZE - 1, "03d", fileIndex) <= 0) {
         return "";
     }
     std::string indexStr(buf);
-    char timeBuf[32];
+    char timeBuf[TIME_BUFFER_SIZE];
     time_t now = time(nullptr);
-    struct tm* tm localtime(&now);
-    std::strftime(timeBuf, 32, "%Y%m%d-%H%M%S", tm);
+    struct tm* tm = localtime(&now);
+    std::strftime(timeBuf, TIME_BUFFER_SIZE, "%Y%m%d-%H%M%S", tm);
     std::string timeStr(timeBuf);
     fs::path logPath = fs::path(config_.logDir) / (config_.filePrefix + "." + std::to_string(pid_) + "." +
         indexStr + "." + timeStr + config_.fileSuffix);
@@ -139,20 +141,20 @@ bool AppFileManager::FlushMmapToFile()
             HILOG_BASE_ERROR(LOG_CORE, "Failed to fsync log to file: errno=%{public}d", errno);
             break;
         }
-        result = ture;
+        result = true;
     } while (false);
     mmapManager_.Reset();
     return result;
 }
 
 
-bool LogFileManager::RotateFiles()
+bool AppFileManager::RotateFiles()
 {
     std::string currentFile = currentFileName_;
     std::error_code ec;
     auto fileSize = fs::file_size(currentFile, ec);
     if (ec) {
-        HILOG_ERROR(LOG_CORE, "Failed to get file size, index: %{public}d", currentFileIndex_);
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to get file size, index: %{public}d", currentFileIndex_);
         return false;
     }
     if (fileSize + config_.mmapSize < config_.maxLogFileSize) {
@@ -166,7 +168,7 @@ bool LogFileManager::RotateFiles()
     return OpenCurrentLogFile();
 }
 
-bool LogFileManager::Flush()
+bool AppFileManager::Flush()
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (mmapManager_.GetOffset() == 0) {
@@ -174,6 +176,7 @@ bool LogFileManager::Flush()
     }
     return FlushMmapToFile();
 }
+
 std::vector<FileInfo> AppFileManager::GetFilesInDirectory(const fs::path& dirPath)
 {
     std::vector<FileInfo> files;
@@ -195,6 +198,7 @@ std::vector<FileInfo> AppFileManager::GetFilesInDirectory(const fs::path& dirPat
             }
         }
     }
+    return files;
 }
 
 int AppFileManager::DeleteOldestFiles(const fs::path& dirPath, size_t keepCount)
@@ -251,6 +255,7 @@ bool AppFileManager::ClearLogFiles()
         return false;
     }
     HILOG_BASE_INFO(LOG_CORE, "Log files cleared successfully");
+    return true;
 }
 
 int AppFileManager::GetLogFilesByTime(int seconds, std::vector<std::string>& files)
@@ -262,7 +267,7 @@ int AppFileManager::GetLogFilesByTime(int seconds, std::vector<std::string>& fil
     }
     files.clear();
 
-    auto now == fs::file_time_type::clock::now();
+    auto now = fs::file_time_type::clock::now();
     auto timeThshold = now - std::chrono::seconds(seconds);
     auto fileList = GetFilesInDirectory(config_.logDir);
     std::error_code ec;

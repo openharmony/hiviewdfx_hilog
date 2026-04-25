@@ -291,7 +291,7 @@ int HiLogPrintComm(const LogLevel level, const unsigned int domain, const char *
     return ret;
 }
 
-static bool isValidDomain(int domain)
+static bool IsValidDomain(int domain)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
     if (g_sandboxStatus == OutputType::SANDBOXLOG_DEFAULT) {
@@ -325,7 +325,9 @@ static int HiLogSandboxLogEncode(const LogLevel level, const unsigned int domain
     char bufferTime[64];
     clock_gettime(CLOCK_REALTIME, &ts);
     localtime_r(&ts.tv_sec, &tmInfo);
-    strftime(bufferTime, sizeof(bufferTime), "%m-%d %H:%M:%S", &tmInfo);
+    if (strftime(bufferTime, sizeof(bufferTime), "%m-%d %H:%M:%S", &tmInfo) == 0) {
+        return -1;
+    }
     long ms = ts.tv_nsec / 1000 / 1000;
     char buf[MAX_LOG_LEN] = {0};
     if (snprintf_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "%s.%03d %5u %5u %c %X/%s:%s",
@@ -339,7 +341,7 @@ static int HiLogSandboxLogEncode(const LogLevel level, const unsigned int domain
 static bool HiLogPrintSandboxLog(const LogLevel level, const unsigned int domain, const char* tag,
     const char* fmt, va_list ap)
 {
-    if (g_sandboxStatus != OutputType::SANDBOXLOG_DEFAULT && isValidDomain(domain)) {
+    if (g_sandboxStatus != OutputType::SANDBOXLOG_DEFAULT && IsValidDomain(domain)) {
         if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY) {
             char buf[MAX_LOG_LEN] = {0};
             vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, ap);
