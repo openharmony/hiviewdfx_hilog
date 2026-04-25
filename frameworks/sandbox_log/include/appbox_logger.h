@@ -31,7 +31,7 @@ namespace HiviewDFX {
 enum AppboxLoggerType {
     PRIVATE_SANDBOX,
     PUBLIC_SANDBOX
-}
+};
 
 class AppboxLogger {
 public:
@@ -63,6 +63,8 @@ private:
     std::thread worker_;
     bool stop_ = false;
     AppboxLoggerType type_;
+};
 }
 }
-}
+
+#endif // HIVIEWDFX_APPBOX_LOGGER_H

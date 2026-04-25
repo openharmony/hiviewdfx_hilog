@@ -88,9 +88,9 @@ void AppboxLogger::ProcessQueue(void* arg)
     while (true) {
         std::string log;
         {
-            std::lock_guard<std::mutex> lock(self->initMutex_);
+            std::unique_lock<std::mutex> lock(self->initMutex_);
             self->cv_.wait(lock, [self] {
-                return !self->tasks_.empty() || self->stop;
+                return !self->tasks_.empty() || self->stop_;
             });
             if (self->stop_ && self->tasks_.empty()) {
                 break;
@@ -178,7 +178,7 @@ bool AppboxLogger::CleanLog()
     return appFileManager_.ClearLogFiles();
 }
 
-std::vector<std::string> AppboxLogger::GetLogFile(int second)
+std::vector<std::string> AppboxLogger::GetLogFile(int seconds)
 {
     std::vector<std::string> files;
     appFileManager_.GetLogFilesByTime(seconds, files);

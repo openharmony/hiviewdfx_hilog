@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 struct FileInfo {
     fs::path path;
     fs::file_time_type last_write_time;
-}
+};
 struct AppFileConfig {
     std::string logDir;
     std::string persistFile;
@@ -38,7 +38,7 @@ struct AppFileConfig {
     uint16_t maxLogNum = 0;
     size_t maxLogFileSize = 0;
     size_t mmapSize = 0;
-}
+};
 
 class AppFileManager {
 public:
@@ -58,6 +58,7 @@ private:
     bool CreateDirectory();
     bool OpenCurrentLogFile();
     std::string GetLogFilePath(uint16_t fileIndex);
+    std::vector<FileInfo> GetFilesInDirectory(const fs::path& dirPath);
     int DeleteOldestFiles(const fs::path& dirPath, size_t keepCount);
 
     std::mutex mutex_;
@@ -67,6 +68,8 @@ private:
     int currentFd_ = -1;
     int pid_ = 0;
     std::string currentFileName_ = "";
+};
 }
 }
-}
+
+#endif // HIVIEWDFX_LOG_FILE_MANAGER_H
