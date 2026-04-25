@@ -41,6 +41,14 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"isLoggable", nullptr, reinterpret_cast<void *>(HilogAniBase::IsLoggable)},
         ani_native_function {"setMinLogLevel", nullptr, reinterpret_cast<void *>(HilogAniBase::SetMinLogLevel)},
         ani_native_function {"setLogLevel", nullptr, reinterpret_cast<void *>(HilogAniBase::SetLogLevel)},
+        ani_native_function {"setOutputType", nullptr, reinterpret_cast<void *>(HilogAniBase::SetOutputType)},
+        ani_native_function {"setOutputTypeByDomainId", nullptr,
+            reinterpret_cast<void *>(HilogAniBase::SetOutputTypeByDomainID)},
+        ani_native_function {"getOutputType", nullptr, reinterpret_cast<void *>(HilogAniBase::GetOutputType)},
+        ani_native_function {"clean", nullptr, reinterpret_cast<void *>(HilogAniBase::Clean)},
+        ani_native_function {"flush", nullptr, reinterpret_cast<void *>(HilogAniBase::Flush)},
+        ani_native_function {"getLogFile", nullptr, reinterpret_cast<void *>(HilogAniBase::GetLogFile)},
+        ani_native_function {"getOutputDir", nullptr, reinterpret_cast<void *>(HilogAniBase::GetOutputDir)},
     };
 
     if (ANI_OK != env->Namespace_BindNativeFunctions(ns, methods.data(), methods.size())) {

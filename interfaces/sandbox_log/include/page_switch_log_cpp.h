@@ -59,6 +59,12 @@ int CreatePageSwitchSnapshot(uint64_t eventTime, bool enablePackAll, std::string
  */
 bool FlushPageSwitchLog();
 
+int WriteAppStr(const std::string& str, bool isPrivate);
+bool FlushAppLog(bool isPrivate);
+bool CleanAppLog(bool isPrivate);
+std::vector<std::string> GetAppLogFile(int seconds, bool isPrivate);
+void SetPrivateSandboxStatus(bool status);
+void SetPublicSandboxStatus(bool status);
 } // namespace HiviewDFX
 } // namespace OHOS
 

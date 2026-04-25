@@ -22,7 +22,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "hilog/log.h"
+#include "hilog_base/log_base.h"
 #include "securec.h"
 
 namespace OHOS {
@@ -52,7 +52,7 @@ bool LogMmapManager::IsParentDirExists(const std::string& path)
     if (!parentDir.empty()) {
         std::error_code ec;
         if (!fs::exists(parentDir, ec) || ec) {
-            HILOG_ERROR(LOG_CORE, "Mmap parent directory does not exist");
+            HILOG_BASE_ERROR(LOG_CORE, "Mmap parent directory does not exist");
             return false;
         }
     }
@@ -67,21 +67,21 @@ bool LogMmapManager::Initialize(const std::string& path, size_t size)
     bool fileExists = fs::exists(path);
     mmapFp_ = fopen(path.c_str(), fileExists ? "r+b" : "wb+");
     if (mmapFp_ == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Failed to open mmap file");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to open mmap file");
         return false;
     }
     // Get current file size
     std::error_code ec;
     auto fileSize = fs::file_size(path, ec);
     if (ec) {
-        HILOG_ERROR(LOG_CORE, "Failed to get file size");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to get file size");
         fclose(mmapFp_);
         mmapFp_ = nullptr;
         return false;
     }
     mmapSize_ = size + METADATA_SIZE;  // Include metadata size
     if ((fileSize < mmapSize_) && (ftruncate(fileno(mmapFp_), mmapSize_) != 0)) {
-        HILOG_ERROR(LOG_CORE, "Failed to resize mmap file");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to resize mmap file");
         fclose(mmapFp_);
         mmapFp_ = nullptr;
         return false;
@@ -89,7 +89,7 @@ bool LogMmapManager::Initialize(const std::string& path, size_t size)
     // Create memory mapping
     mmapPtr_ = static_cast<char*>(mmap(nullptr, mmapSize_, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(mmapFp_), 0));
     if (mmapPtr_ == MAP_FAILED) {
-        HILOG_ERROR(LOG_CORE, "Failed to create mmap for file: %{public}s", path.c_str());
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to create mmap for file: %{public}s", path.c_str());
         fclose(mmapFp_);
         mmapFp_ = nullptr;
         mmapPtr_ = nullptr;
@@ -113,19 +113,19 @@ void LogMmapManager::Write(const std::string& log)
     uint32_t logSize = static_cast<uint32_t>(log.length());
     size_t dataSize = mmapSize_ - METADATA_SIZE;
     if (mmapPtr_ == nullptr || logSize > dataSize - currentOffset_) {
-        HILOG_WARN(LOG_CORE, "Mmap buffer failure");
+        HILOG_BASE_WARN(LOG_CORE, "Mmap buffer failure");
         return;
     }
 
     // Write log data after metadata
     if (memcpy_s(mmapPtr_ + METADATA_SIZE + currentOffset_, dataSize - currentOffset_, log.data(), logSize) != EOK) {
-        HILOG_ERROR(LOG_CORE, "Failed to copy log data to mmap buffer");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to copy log data to mmap buffer");
         return;
     }
     currentOffset_ += logSize;
     UpdateMetadata();
     if (msync(mmapPtr_, mmapSize_, MS_ASYNC) != 0) {
-        HILOG_ERROR(LOG_CORE, "Failed to sync mmap to disk");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to sync mmap to disk");
     }
 }
 
@@ -137,13 +137,13 @@ void LogMmapManager::Reset()
     size_t dataSize = mmapSize_ - METADATA_SIZE;
     // Only clear data area, keep metadata
     if (memset_s(mmapPtr_ + METADATA_SIZE, dataSize, 0, dataSize) != EOK) {
-        HILOG_ERROR(LOG_CORE, "Failed to reset mmap buffer");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to reset mmap buffer");
         return;
     }
     currentOffset_ = 0;
     UpdateMetadata();
     if (msync(mmapPtr_, mmapSize_, MS_ASYNC) != 0) {
-        HILOG_ERROR(LOG_CORE, "Failed to sync mmap after reset");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to sync mmap after reset");
     }
 }
 
@@ -154,7 +154,7 @@ void LogMmapManager::UpdateMetadata()
     }
     // Write currentOffset_ to metadata area (first 8 bytes)
     if (memcpy_s(mmapPtr_, METADATA_SIZE, &currentOffset_, sizeof(currentOffset_)) != EOK) {
-        HILOG_ERROR(LOG_CORE, "Failed to update metadata");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to update metadata");
     }
 }
 } // namespace HiviewDFX

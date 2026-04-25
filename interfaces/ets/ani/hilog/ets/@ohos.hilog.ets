@@ -39,6 +39,20 @@ export default namespace hilog {
 
     export native function setLogLevel(level: LogLevel, prefer: PreferStrategy): void;
 
+    export native function SetOutputType(type: OutputType): OutputType;
+
+    export native function SetOutputType(type: OutputType): OutputType;
+
+    export native function SetOutputType(type: OutputType): OutputType;
+
+    export native function SetOutputType(type: OutputType): OutputType;
+
+    export native function SetOutputType(type: OutputType): OutputType;
+
+    export native function SetOutputType(type: OutputType): OutputType;
+
+    export native function SetOutputType(type: OutputType): OutputType;
+
     export enum LogLevel {
         DEBUG = 3,
         INFO = 4,
@@ -51,5 +65,14 @@ export default namespace hilog {
         UNSET_LOGLEVEL = 0,
         PREFER_CLOSE_LOG = 1,
         PREFER_OPEN_LOG = 2
+    }
+
+    export enum OutputType {
+        DEFAULT = 0,
+        CONSOLE_ONLY = 0,
+        PRIVATE_SANDBOX_OMLY = 1,
+        SHARE_SANDBOX_ONLY = 2,
+        PRIVATE_SANDBOX_WITH_CONSOLE = 3,
+        SHARE_SANDBOX_WITH_CONSOLE = 4,
     }
 }

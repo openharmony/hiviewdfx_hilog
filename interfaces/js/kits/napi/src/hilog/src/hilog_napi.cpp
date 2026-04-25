@@ -90,10 +90,42 @@ static void PreferStrategyTypeEnumInit(napi_env env, napi_value exports)
     napi_set_named_property(env, exports, "PreferStrategy", result);
 }
 
+static void OutputTypeTypeEnumInit(napi_env env, napi_value exports)
+{
+    napi_value DEFAULT = nullptr;
+    napi_value CONSOLE_ONLY = nullptr;
+    napi_value PRIVATE_SANDBOX_ONLY = nullptr;
+    napi_value SHARE_SANDBOX_ONLY = nullptr;
+    napi_value PRIVATE_SANDBOX_WITH_CONSOLE = nullptr;
+    napi_value SHARE_SANDBOX_WITH_CONSOLE = nullptr;
+    napi_create_int32(env, OutputType::SANDBOXLOG_DEFAULT, &DEFAULT);
+    napi_create_int32(env, OutputType::SANDBOXLOG_CONSOLE_ONLY, &CONSOLE_ONLY);
+    napi_create_int32(env, OutputType::PRIVATE_SANDBOX_ONLY, &PRIVATE_SANDBOX_ONLY);
+    napi_create_int32(env, OutputType::SHARE_SANDBOX_ONLY, &SHARE_SANDBOX_ONLY);
+    napi_create_int32(env, OutputType::PRIVATE_SANDBOX_WITH_CONSOLE, &PRIVATE_SANDBOX_WITH_CONSOLE);
+    napi_create_int32(env, OutputType::SHARE_SANDBOX_WITH_CONSOLE, &SHARE_SANDBOX_WITH_CONSOLE);
+
+    napi_property_descriptor descriptors[] = {
+        NVal::DeclareNapiStaticProperty("DEFAULT", DEFAULT),
+        NVal::DeclareNapiStaticProperty("CONSOLE_ONLY", CONSOLE_ONLY),
+        NVal::DeclareNapiStaticProperty("PRIVATE_SANDBOX_ONLY", PRIVATE_SANDBOX_ONLY),
+        NVal::DeclareNapiStaticProperty("SHARE_SANDBOX_ONLY", SHARE_SANDBOX_ONLY),
+        NVal::DeclareNapiStaticProperty("PRIVATE_SANDBOX_WITH_CONSOLE", PRIVATE_SANDBOX_WITH_CONSOLE),
+        NVal::DeclareNapiStaticProperty("SHARE_SANDBOX_WITH_CONSOLE", SHARE_SANDBOX_WITH_CONSOLE),
+    };
+
+    napi_value result = nullptr;
+    napi_define_class(env, "OutputType", NAPI_AUTO_LENGTH, TypeConstructor, nullptr,
+                      sizeof(descriptors) / sizeof(*descriptors), descriptors, &result);
+
+    napi_set_named_property(env, exports, "OutputType", result);
+}
+
 bool HilogNapi::Export(napi_env env, napi_value exports)
 {
     LogLevelTypeEnumInit(env, exports);
     PreferStrategyTypeEnumInit(env, exports);
+    OutputTypeTypeEnumInit(env, exports);
     return exports_.AddProp({
         NVal::DeclareNapiFunction("debug", HilogNapiBase::Debug),
         NVal::DeclareNapiFunction("info", HilogNapiBase::Info),
@@ -108,6 +140,13 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
         NVal::DeclareNapiFunction("isLoggable", HilogNapiBase::IsLoggable),
         NVal::DeclareNapiFunction("setMinLogLevel", HilogNapiBase::SetMinLogLevel),
         NVal::DeclareNapiFunction("setLogLevel", HilogNapiBase::SetLogLevel),
+        NVal::DeclareNapiFunction("setOutputType", HilogNapiBase::SetOutputType),
+        NVal::DeclareNapiFunction("setOutputTypeByDomainId", HilogNapiBase::SetOutputTypeByDomainId),
+        NVal::DeclareNapiFunction("getOutputType", HilogNapiBase::GetOutputType),
+        NVal::DeclareNapiFunction("clean", HilogNapiBase::Clean),
+        NVal::DeclareNapiFunction("flush", HilogNapiBase::Flush),
+        NVal::DeclareNapiFunction("getLogFile", HilogNapiBase::GetLogFile),
+        NVal::DeclareNapiFunction("getOutputDir", HilogNapiBase::GetOutputDir),
     });
 }
 

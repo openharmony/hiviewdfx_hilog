@@ -39,6 +39,8 @@ ohos_shared_library("libsandboxlog") {
     "$sandbox_log_root/log_file_manager.cpp",
     "$sandbox_log_root/log_mmap_manager.cpp",
     "$sandbox_log_root/sandbox_utils.cpp",
+    "$sandbox_log_root/app_file_manager.cpp",
+    "$sandbox_log_root/appbox_logger.cpp",
   ]
 
   defines = [
@@ -48,14 +50,13 @@ ohos_shared_library("libsandboxlog") {
   ]
 
   # 依赖同模块下的libhilog
-  deps = [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog" ]
+  deps = [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base" ]
 
   # 外部依赖
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "cJSON:cjson",
-    "ffrt:libffrt",
   ]
 
   # 共享库配置
@@ -64,7 +65,10 @@ ohos_shared_library("libsandboxlog") {
 
   # 安装配置
   install_enable = true
-  install_images = [ "system" ]
+  install_images = [
+    "system",
+    "updater",
+  ]
 
   # 安全配置
   branch_protector_ret = "pac_ret"
