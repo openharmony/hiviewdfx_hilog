@@ -18,6 +18,15 @@
 
 #include "hilog/log_c.h"
 
+typedef enum {
+    SANDBOXLOG_DEFAULT = 0,
+    SANDBOXLOG_CONSOLE_ONLY = 0,
+    PRIVATE_SANDBOX_ONLY = 1,
+    SHARE_SANDBOX_ONLY = 2,
+    PRIVATE_SANDBOX_WITH_CONSOLE = 3,
+    SHARE_SANDBOX_WITH_CONSOLE = 4,
+} OutputType;
+
 #ifdef __cplusplus
 namespace OHOS {
 namespace HiviewDFX {
@@ -54,6 +63,15 @@ public:
     static int Error(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
     static int Fatal(const HiLogLabel &label, const char *fmt, ...) __attribute__((__format__(os_log, 2, 3)));
 };
+
+bool HiLogIsAppLogLoggable();
+bool HiLogFlushAppLog();
+bool HiLogCleanAppLog();
+int HiLogGetAppLogFile(int seconds, char* buffer);
+OutputType HiLogSetOutputType(OutputType type);
+OutputType HiLogSetOutputTypeByDomainId(OutputType type, int* domains, int length, bool isExclude);
+OutputType HiLogGetOutputType();
+int HiLogGetOutputDir(char* buffer);
 } // namespace HiviewDFX
 } // namespace OHOS
 
@@ -73,6 +91,7 @@ public:
 #define HiLogWarn(label, fmt, ...) HILOG_IMPL(label.type, LOG_WARN, label.domain, label.tag, fmt, ##__VA_ARGS__)
 #define HiLogError(label, fmt, ...) HILOG_IMPL(label.type, LOG_ERROR, label.domain, label.tag, fmt, ##__VA_ARGS__)
 #define HiLogFatal(label, fmt, ...) HILOG_IMPL(label.type, LOG_FATAL, label.domain, label.tag, fmt, ##__VA_ARGS__)
+
 
 #endif // __cplusplus
 #endif // HIVIEWDFX_HILOG_CPP_H

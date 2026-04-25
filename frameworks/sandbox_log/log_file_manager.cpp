@@ -30,7 +30,7 @@
 #include <vector>
 #include <map>
 
-#include "hilog/log.h"
+#include "hilog_base/log_base.h"
 #include "sandbox_utils.h"
 #include "securec.h"
 
@@ -141,7 +141,7 @@ bool LogFileManager::GetFileModifyTime(fs::path path, uint64_t& modifyTime)
 {
     struct stat fileStat;
     if (stat(path.string().c_str(), &fileStat) == -1) {
-        HILOG_ERROR(LOG_CORE, "Error getting file status of %{public}s", path.string().c_str());
+        HILOG_BASE_ERROR(LOG_CORE, "Error getting file status of %{public}s", path.string().c_str());
         return false;
     }
     modifyTime = static_cast<uint64_t>(fileStat.st_mtime) * 1000ULL; // 1000 : 1000 ms = 1 s
@@ -154,7 +154,7 @@ std::vector<LogFile> LogFileManager::GetLogFiles()
     std::error_code ec;
     for (const auto& entry : fs::directory_iterator(config_.logDir, ec)) {
         if (ec) {
-            HILOG_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
             ec.clear();
             break;
         }
@@ -200,21 +200,21 @@ bool LogFileManager::RemoveFileGroups(std::vector<LogFile> files)
         for (auto& file : files) {
             fs::remove(file.path, ec);
             if (ec) {
-                HILOG_WARN(LOG_CORE, "Failed to delete: %{public}s", file.path.c_str());
+                HILOG_BASE_WARN(LOG_CORE, "Failed to delete: %{public}s", file.path.c_str());
                 ec.clear();
             }
         }
         for (auto& persistFile : persistFiles) {
             fs::remove(persistFile, ec);
             if (ec) {
-                HILOG_WARN(LOG_CORE, "Failed to delete: %{public}s", persistFile.c_str());
+                HILOG_BASE_WARN(LOG_CORE, "Failed to delete: %{public}s", persistFile.c_str());
                 ec.clear();
             }
         }
     }
     for (auto& fd : fds) {
         if (!UnlockAndCloseFd(fd)) {
-            HILOG_WARN(LOG_CORE, "Unlock fd failed");
+            HILOG_BASE_WARN(LOG_CORE, "Unlock fd failed");
         }
     }
     return allLocked;
@@ -270,7 +270,7 @@ bool LogFileManager::CanCreateLogFile()
     std::error_code ec;
     for (const auto& entry : fs::directory_iterator(config_.logDir, ec)) {
         if (ec) {
-            HILOG_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
             ec.clear();
             break;
         }
@@ -293,7 +293,7 @@ bool LogFileManager::InitLogFile()
 {
     AgedOutLogFiles();
     if (!CanCreateLogFile()) {
-        HILOG_ERROR(LOG_CORE, "Failed to create log file");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to create log file");
         return false;
     }
     bool success = false;
@@ -314,7 +314,7 @@ void LogFileManager::CloseCurrentFile()
         return;
     }
     if (!UnlockAndCloseFd(currentFd_)) {
-        HILOG_ERROR(LOG_CORE, "Unlock fd failed");
+        HILOG_BASE_ERROR(LOG_CORE, "Unlock fd failed");
     }
     currentFd_ = -1;
 }
@@ -331,11 +331,11 @@ void LogFileManager::WriteLog(const std::string& log)
 bool LogFileManager::FlushMmapToFile()
 {
     if (!RotateFiles()) {
-        HILOG_ERROR(LOG_CORE, "Failed to rotate log files");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to rotate log files");
         return false;
     }
     if (mmapManager_.GetPtr() == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Mmap pointer is null");
+        HILOG_BASE_ERROR(LOG_CORE, "Mmap pointer is null");
         return false;
     }
     if (mmapManager_.GetOffset() == 0) {
@@ -345,11 +345,11 @@ bool LogFileManager::FlushMmapToFile()
     do {
         ssize_t written = write(currentFd_, mmapManager_.GetPtr(), mmapManager_.GetOffset());
         if (written == -1) {
-            HILOG_ERROR(LOG_CORE, "Failed to write log to file: errno=%{public}d", errno);
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to write log to file: errno=%{public}d", errno);
             break;
         }
         if (fsync(currentFd_) == -1) {
-            HILOG_ERROR(LOG_CORE, "Failed to fsync log file: errno=%{public}d", errno);
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to fsync log file: errno=%{public}d", errno);
             break;
         }
         result = true;
@@ -364,7 +364,7 @@ bool LogFileManager::RotateFiles()
     std::error_code ec;
     auto fileSize = fs::file_size(currentFile, ec);
     if (ec) {
-        HILOG_ERROR(LOG_CORE, "Failed to get file size, index: %{public}d", currentFileIndex_);
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to get file size, index: %{public}d", currentFileIndex_);
         return false;
     }
     if (fileSize + config_.mmapSize < config_.maxLogFileSize) {
@@ -384,7 +384,7 @@ bool LogFileManager::RotateFiles()
         std::error_code renameEc;
         fs::rename(oldFile, newFile, renameEc);
         if (renameEc && renameEc != std::errc::no_such_file_or_directory) {
-            HILOG_WARN(LOG_CORE, "Failed to rename %{public}s to %{public}s: %{public}s",
+            HILOG_BASE_WARN(LOG_CORE, "Failed to rename %{public}s to %{public}s: %{public}s",
                 oldFile.c_str(), newFile.c_str(), renameEc.message().c_str());
         }
     }
@@ -430,7 +430,7 @@ std::vector<SnapshotFile> LogFileManager::GetSnapshotFiles()
     fs::path snapshotDir(config_.snapshotLogDir);
     for (const auto& entry : fs::directory_iterator(snapshotDir, ec)) {
         if (ec) {
-            HILOG_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to iterate snapshot directory");
             ec.clear();
             break;
         }
@@ -538,7 +538,7 @@ void LogFileManager::AgedOutSnapshots()
         std::error_code removeEc;
         fs::remove(snapshotFiles[i].path, removeEc);
         if (removeEc) {
-            HILOG_WARN(LOG_CORE, "Failed to remove %{public}s: %{public}s",
+            HILOG_BASE_WARN(LOG_CORE, "Failed to remove %{public}s: %{public}s",
                        snapshotFiles[i].path.c_str(), removeEc.message().c_str());
         }
     }
@@ -622,13 +622,14 @@ int LogFileManager::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::
     fs::path snapshotDir(config_.snapshotLogDir);
     if (!fs::exists(snapshotDir, ec) || ec) {
         if (!fs::create_directory(snapshotDir, ec) || ec) {
-            HILOG_ERROR(LOG_CORE, "Failed to create snapshot directory: %{public}s", config_.snapshotLogDir.c_str());
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to create snapshot directory: %{public}s",
+                config_.snapshotLogDir.c_str());
             return -1;
         }
     }
     std::string formatedTime = GetTimeString(eventTime);
     if (formatedTime.empty()) {
-        HILOG_ERROR(LOG_CORE, "Failed to get formatedTime for snapshot");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to get formatedTime for snapshot");
         return -1;
     }
     bool isUnlockedOnly = !enablePackAll;
@@ -650,7 +651,7 @@ int LogFileManager::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::
         std::error_code copyEc;
         fs::copy_file(logPath.string(), snapshotPath.string(), fs::copy_options::skip_existing, copyEc);
         if (copyEc) {
-            HILOG_WARN(LOG_CORE, "Failed to copy %{public}s to %{public}s: %{public}s",
+            HILOG_BASE_WARN(LOG_CORE, "Failed to copy %{public}s to %{public}s: %{public}s",
                 logPath.string().c_str(), snapshotPath.string().c_str(), copyEc.message().c_str());
             continue;
         }

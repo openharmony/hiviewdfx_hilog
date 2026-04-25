@@ -39,7 +39,11 @@ public:
     static bool IsRefNull(ani_env *env, ani_ref ref);
     static AniArgsType AniArgGetType(ani_env *env, ani_object element);
     static bool AniEnumToInt32(ani_env *env, ani_enum_item enumItem, int32_t &value);
+    static bool AniInt32ToEnumOutputType(ani_env *env, int32_t value, ani_enum_item& enumItem);
+    static ani_enum_item EnumNativeToETSByIndex(ani_env *env, const char* enumClassName, const size_t index);
     static std::string AniStringToStdString(ani_env *env, ani_string aniStr);
+    static bool AniArgToInt(ani_env *env, ani_object arg, int& result);
+    static ani_string StdStringToAniString(ani_env *env, std::string& str);
     static std::string AniArgToString(ani_env *env, ani_object arg);
 };
 }  // namespace HiviewDFX

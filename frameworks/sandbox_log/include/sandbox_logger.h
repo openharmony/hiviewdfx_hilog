@@ -20,8 +20,10 @@
 #include <mutex>
 #include <singleton.h>
 #include <vector>
+#include <queue>
+#include <thread>
+#include <condition_variable>
 
-#include "ffrt.h"
 #include "log_file_manager.h"
 #include "page_switch_log.h"
 
@@ -39,6 +41,8 @@ public:
     void UnregisterCallback(OnPageSwitchLogStatusChanged callback);
     int CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots);
     bool FlushLog();
+    void AsyncWriteLog(std::string log);
+    static void ProcessQueue(void* arg);
 private:
     int DoWriteLog(const char* msg, size_t msgLen);
     void NotifyStatusChanged(bool status);
@@ -52,8 +56,11 @@ private:
     std::mutex callbackMutex_;
     std::mutex initMutex_;
     std::vector<OnPageSwitchLogStatusChanged> callbacks_;
-    std::shared_ptr<ffrt::queue> queue_;
     LogFileManager logFileManager_;
+    std::queue<std::string> tasks_;
+    std::condition_variable cv_;
+    std::thread worker_;
+    bool stop_ = false;
 };
 
 } // namespace HiviewDFX

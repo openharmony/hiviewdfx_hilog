@@ -111,6 +111,14 @@
         "OHOS::HiviewDFX::GetBitPos(unsigned long)";
         "OHOS::HiviewDFX::Uint2DecStr(unsigned int)";
         "OHOS::HiviewDFX::DecStr2Uint(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool&)";
+        "OHOS::HiviewDFX::HiLogIsAppLogLoggable()";
+        "OHOS::HiviewDFX::HiLogFlushAppLog()";
+        "OHOS::HiviewDFX::HiLogCleanAppLog()";
+        "OHOS::HiviewDFX::HiLogGetAppLogFile(int, char*)";
+        "OHOS::HiviewDFX::HiLogSetOutputType(OutputType)";
+        "OHOS::HiviewDFX::HiLogSetOutputTypeByDomainId(OutputType, int*, int, bool)";
+        "OHOS::HiviewDFX::HiLogGetOutputType()";
+        "OHOS::HiviewDFX::HiLogGetOutputDir(char*)";
     };
 
   local:

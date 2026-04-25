@@ -19,6 +19,7 @@
 #include <cstring>
 
 #include "sandbox_logger.h"
+#include "appbox_logger.h"
 
 namespace {
 using OHOS::HiviewDFX::SandboxLogger;
@@ -74,5 +75,50 @@ bool FlushPageSwitchLog()
     return SandboxLogger::GetInstance().FlushLog();
 }
 
+int WriteAppStr(const std::string& str, bool isPrivate)
+{
+    if (isPrivate) {
+        return AppboxLogger::GetInstancePrivateSandbox().WriteLog(str);
+    } else {
+        return AppboxLogger::GetInstancePublicSandbox().WriteLog(str);
+    }
+}
+
+bool FlushAppLog(bool isPrivate)
+{
+    if (isPrivate) {
+        return AppboxLogger::GetInstancePrivateSandbox().FlushLog();
+    } else {
+        return AppboxLogger::GetInstancePublicSandbox().FlushLog();
+    }
+}
+
+bool CleanAppLog(bool isPrivate)
+{
+    if (isPrivate) {
+        return AppboxLogger::GetInstancePrivateSandbox().CleanLog();
+    } else {
+        return AppboxLogger::GetInstancePublicSandbox().CleanLog();
+    }
+}
+
+std::vector<std::string> GetAppLogFile(int seconds, bool isPrivate)
+{
+    if (isPrivate) {
+        return AppboxLogger::GetInstancePrivateSandbox().GetLogFile(seconds);
+    } else {
+        return AppboxLogger::GetInstancePublicSandbox().GetLogFile(seconds);
+    }
+}
+
+void SetPrivateSandboxStatus(bool status)
+{
+    AppboxLogger::GetInstancePrivateSandbox().SetStatus(status);
+}
+
+void SetPublicSandboxStatus(bool status)
+{
+    AppboxLogger::GetInstancePublicSandbox().SetStatus(status);
+}
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -44,6 +44,13 @@ public:
     static napi_value IsLoggable(napi_env env, napi_callback_info info);
     static napi_value SetMinLogLevel(napi_env env, napi_callback_info info);
     static napi_value SetLogLevel(napi_env env, napi_callback_info info);
+    static napi_value SetOutputType(napi_env env, napi_callback_info info);
+    static napi_value SetOutputTypeByDomainId(napi_env env, napi_callback_info info);
+    static napi_value GetOutputType(napi_env env, napi_callback_info info);
+    static napi_value Clean(napi_env env, napi_callback_info info);
+    static napi_value Flush(napi_env env, napi_callback_info info);
+    static napi_value GetLogFile(napi_env env, napi_callback_info info);
+    static napi_value GetOutputDir(napi_env env, napi_callback_info info);
 private:
     static napi_value ParseNapiValue(napi_env env, napi_callback_info info,
         napi_value element, std::vector<napiParam>& params);

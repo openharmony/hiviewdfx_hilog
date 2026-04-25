@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "hilog/log.h"
+#include "hilog_base/log_base.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -51,12 +51,50 @@ constexpr int ERROR_INVALID_PARAM = -3; // Invalid parameter
 
 SandboxLogger::SandboxLogger()
 {
-    queue_ = std::make_shared<ffrt::queue>("SandboxLoggerQueue");
+    worker_ = std::thread(SandboxLogger::ProcessQueue, this);
     isHap_ = IsHap();
 }
 
 SandboxLogger::~SandboxLogger()
 {
+    {
+        std::lock_guard<std::mutex> lock(initMutex_);
+        stop_ = true;
+    }
+    cv_.notify_one();
+    if (worker_.joinable()) {
+        worker_.join();
+    }
+}
+
+void SandboxLogger::AsyncWriteLog(std::string log)
+{
+    {
+        std::lock_guard<std::mutex> lock(initMutex_);
+        tasks_.push(log);
+    }
+    cv_.notify_one();
+}
+
+void SandboxLogger::ProcessQueue(void* arg)
+{
+    pthread_setname_np(pthread_self(), "sandbox_thread");
+    SandboxLogger* self = static_cast<SandboxLogger*>(arg);
+    while (true) {
+        std::string log;
+        {
+            std::unique_lock<std::mutex> lock(self->initMutex_);
+            self->cv_.wait(lock, [self] {
+                return !self->tasks_.empty() || self->stop_;
+            });
+            if (self->stop_ && self->tasks_.empty()) {
+                break;
+            }
+            log = self->tasks_.front();
+            self->tasks_.pop();
+        }
+        self->WriteLogToBuffer(log);
+    }
 }
 
 bool SandboxLogger::InitFileManager()
@@ -75,7 +113,7 @@ bool SandboxLogger::InitFileManager()
         .mmapSize = SANDBOX_LOG_MMAP_SIZE
     };
     if (!logFileManager_.Initialize(config)) {
-        HILOG_ERROR(LOG_CORE, "Failed to initialize log file manager");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to initialize log file manager");
         return false;
     }
     return true;
@@ -93,7 +131,7 @@ int SandboxLogger::WriteLog(const char* fmt, va_list args)
     int ret = vsnprintf_s(buffer, MAX_LOG_LEN + 1, MAX_LOG_LEN, fmt, args);
     size_t len = strlen(buffer);
     if (ret == -1 && len != MAX_LOG_LEN) {
-        HILOG_ERROR(LOG_CORE, "Failed to format log message");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to format log message");
         return ERROR_INVALID_PARAM;
     }
     return DoWriteLog(buffer, len);
@@ -116,7 +154,7 @@ int SandboxLogger::DoWriteLog(const char* msg, size_t msgLen)
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm tm_now;
     if (localtime_r(&t, &tm_now) == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Failed to get local time");
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to get local time");
         return ERROR_INTERNAL;
     }
     char prefix[64] = {0}; // 64: the max len of prefix
@@ -138,7 +176,7 @@ int SandboxLogger::DoWriteLog(const char* msg, size_t msgLen)
     if (fullMsg.back() != '\n') {
         fullMsg += '\n';
     }
-    queue_->submit([this, msg = std::move(fullMsg)]() { WriteLogToBuffer(msg); });
+    AsyncWriteLog(fullMsg);
     return SUCCESS;
 }
 
@@ -167,7 +205,7 @@ void SandboxLogger::SetStatus(bool status)
     bool oldStatus = loggable_.exchange(status);
     if (oldStatus != status) {
         NotifyStatusChanged(status);
-        HILOG_INFO(LOG_CORE, "SandboxLogger status changed to %{public}d", status);
+        HILOG_BASE_INFO(LOG_CORE, "SandboxLogger status changed to %{public}d", status);
     }
 }
 

@@ -282,6 +282,13 @@ NVal NVal::CreateNull(napi_env env)
     return {env, res};
 }
 
+NVal NVal::CreateInt32(napi_env env, int32_t val)
+{
+    napi_value res = nullptr;
+    napi_create_int32(env, val, &res);
+    return {env, res};
+}
+
 NVal NVal::CreateInt64(napi_env env, int64_t val)
 {
     napi_value res = nullptr;
