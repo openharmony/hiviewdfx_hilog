@@ -85,7 +85,7 @@ bool AppFileManager::OpenCurrentLogFile()
 std::string AppFileManager::GetLogFilePath(uint16_t fileIndex)
 {
     char buf[INDEX_BUFFER_SIZE];
-    if (snprintf_s(buf, INDEX_BUFFER_SIZE, INDEX_BUFFER_SIZE - 1, "03d", fileIndex) <= 0) {
+    if (snprintf_s(buf, INDEX_BUFFER_SIZE, INDEX_BUFFER_SIZE - 1, "%03d", fileIndex) <= 0) {
         return "";
     }
     std::string indexStr(buf);
