@@ -70,14 +70,20 @@ std::string LogFileManager::GetFormatedProcessName()
     return processName;
 }
 
-bool LogFileManager::Initialize(const LogFileConfig& config)
+void LogFileManager::Setup(const LogFileConfig& config)
+{
+    config_ = config;
+}
+
+bool LogFileManager::Initialize()
 {
     processName_ = GetFormatedProcessName();
-    config_ = config;
     if (!CreateDirectory() || !InitLogFile()) {
+        initialized_ = false;
         return false;
     }
-    return mmapManager_.Initialize(GetPersistFilePath(processName_, currentInstanceIndex_), config_.mmapSize);
+    initialized_ = mmapManager_.Initialize(GetPersistFilePath(processName_, currentInstanceIndex_), config_.mmapSize);
+    return initialized_;
 }
 
 bool LogFileManager::CreateDirectory()
@@ -279,7 +285,7 @@ bool LogFileManager::CanCreateLogFile()
         }
         const std::string filename = entry.path().filename().string();
         std::vector<std::string> splits = SplitString(filename, '-');
-        if (splits.size() == 4) { // 4 : prefix + processName + instanceID + [fileID+suffix]
+        if (splits.size() != 4) { // 4 : prefix + processName + instanceID + [fileID+suffix]
             continue;
         }
         if (IsFileWriteLocked(entry.path().string())) {
@@ -500,33 +506,6 @@ std::vector<std::string> LogFileManager::GetUnlockedSnapshotPaths(std::vector<Sn
     return paths;
 }
 
-std::vector<std::string> LogFileManager::GetSelfSnapshotPaths(std::vector<SnapshotFile>& snapshotFiles)
-{
-    std::vector<std::string> paths;
-    for (const auto& file : snapshotFiles) {
-        if (file.instanceID == currentInstanceIndex_ && file.processName == processName_) {
-            paths.emplace_back(file.path);
-        }
-    }
-    return paths;
-}
-
-std::vector<std::string> LogFileManager::GetSnapshotPaths(bool isUnlockedOnly)
-{
-    std::vector<SnapshotFile> snapshotFiles = GetSnapshotFiles();
-    std::vector<std::string> paths;
-    if (isUnlockedOnly) {
-        paths = GetUnlockedSnapshotPaths(snapshotFiles);
-        std::vector<std::string> selfPaths = GetSelfSnapshotPaths(snapshotFiles);
-        paths.insert(paths.end(), selfPaths.begin(), selfPaths.end());
-    } else {
-        for (const auto& file : snapshotFiles) {
-            paths.emplace_back(file.path);
-        }
-    }
-    return paths;
-}
-
 void LogFileManager::AgedOutSnapshots()
 {
     std::vector<SnapshotFile> snapshotFiles = GetSnapshotFiles();
@@ -592,7 +571,9 @@ std::vector<std::string> LogFileManager::GetPageSwitchLogNames(bool isUnlockedOn
     std::vector<std::string> logNames;
     if (isUnlockedOnly) {
         logNames = GetUnlockedPageSwitchLogNames(logFiles);
-        AppendSelfLogNames(logNames);
+        if (initialized_) {
+            AppendSelfLogNames(logNames);
+        }
     } else {
         for (const auto& file : logFiles) {
             logNames.emplace_back(fs::path(file.path).filename().string());
@@ -612,6 +593,73 @@ std::vector<std::string> LogFileManager::GetLogPrefixes(std::vector<std::string>
         }
     }
     return logPrefixes;
+}
+
+bool LogFileManager::FlushTempMmapToFile(const std::string& mmapPath, const std::string& logPath)
+{
+    LogMmapManager mmapManager;
+    if (!mmapManager.Initialize(mmapPath, config_.mmapSize)) {
+        HILOG_ERROR(LOG_CORE, "Mmap init failed");
+        return false;
+    }
+    if (mmapManager.GetOffset() == 0) {
+        return true;
+    }
+    int logFd = -1;
+    if (!LockFile(logPath, logFd)) {
+        return false;
+    }
+    bool result = false;
+    do {
+        ssize_t written = write(logFd, mmapManager.GetPtr(), mmapManager.GetOffset());
+        if (written == -1) {
+            HILOG_ERROR(LOG_CORE, "Failed to write log to file: errno=%{public}d", errno);
+            break;
+        }
+        if (fsync(logFd) == -1) {
+            HILOG_ERROR(LOG_CORE, "Failed to fsync log file: errno=%{public}d", errno);
+            break;
+        }
+        result = true;
+    } while (false);
+    UnlockAndCloseFd(logFd);
+    mmapManager.Reset();
+    return result;
+}
+
+std::string LogFileManager::GetMmapFilePathFrom(const std::string& logPrefix)
+{
+    std::vector<std::string> splits = SplitString(logPrefix, '-');
+    if (splits.size() != 4) { // 4 : prefix + processname + instanceID + fileID
+        return "";
+    }
+    std::string processName = splits[1];
+    int instanceID = 1;
+    if (!TextToInt(splits[2], instanceID)) { // 2 : instanceID
+        return "";
+    }
+    return GetPersistFilePath(processName, static_cast<uint16_t>(instanceID));
+}
+
+bool LogFileManager::IsLatestLog(const std::string& logPrefix)
+{
+    size_t lastDashPos = logPrefix.rfind('-');
+    if (lastDashPos == std::string::npos) {
+        return false;
+    }
+    int fileID = 1;
+    if (!TextToInt(logPrefix.substr(lastDashPos + 1), fileID)) {
+        return false;
+    }
+
+    if (fileID == config_.maxLogNum) {
+        return true;
+    }
+    if (fileID <= 0 || fileID > config_.maxLogNum) {
+        return false;
+    }
+    std::string nextFileName = logPrefix.substr(0, lastDashPos + 1) + std::to_string(fileID + 1);
+    return !fs::exists(config_.logDir + "/" + nextFileName + config_.fileSuffix);
 }
 
 int LogFileManager::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots)
@@ -634,6 +682,7 @@ int LogFileManager::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::
     bool isUnlockedOnly = !enablePackAll;
     std::vector<std::string> pageSwitchLogs = GetPageSwitchLogNames(isUnlockedOnly);
     std::vector<std::string> logPrefixes = GetLogPrefixes(pageSwitchLogs);
+    std::vector<std::string> snapshotPaths;
     for (const auto& logPrefix : logPrefixes) {
         fs::path logPath = fs::path(config_.logDir) / (logPrefix + config_.fileSuffix);
         uint64_t modifyTime = 0;
@@ -648,15 +697,19 @@ int LogFileManager::CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::
         fs::path snapshotPath = fs::path(config_.snapshotLogDir) /
                                 (logPrefix + "-" + formatedTime + config_.snapshotLogSuffix);
         std::error_code copyEc;
+        if (IsLatestLog(logPrefix)) {
+            FlushTempMmapToFile(GetMmapFilePathFrom(logPrefix), logPath.string());
+        }
         fs::copy_file(logPath.string(), snapshotPath.string(), fs::copy_options::skip_existing, copyEc);
         if (copyEc) {
             HILOG_WARN(LOG_CORE, "Failed to copy %{public}s to %{public}s: %{public}s",
                 logPath.string().c_str(), snapshotPath.string().c_str(), copyEc.message().c_str());
             continue;
         }
+        snapshotPaths.emplace_back(snapshotPath.string());
     }
     AgedOutSnapshots();
-    snapshots = BuildSnapshotJson(GetSnapshotPaths(isUnlockedOnly));
+    snapshots = BuildSnapshotJson(snapshotPaths);
     return 0;
 }
 } // namespace HiviewDFX

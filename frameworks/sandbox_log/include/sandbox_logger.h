@@ -43,7 +43,7 @@ private:
     int DoWriteLog(const char* msg, size_t msgLen);
     void NotifyStatusChanged(bool status);
     void WriteLogToBuffer(const std::string& str);
-    bool InitFileManager();
+    void InitFileManager();
     bool IsHap();
 
     std::atomic<bool> loggable_{false};
