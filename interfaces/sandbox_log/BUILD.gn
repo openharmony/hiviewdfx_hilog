@@ -49,9 +49,6 @@ ohos_shared_library("libsandboxlog") {
     "HILOG_USE_MUSL",
   ]
 
-  # 依赖同模块下的libhilog
-  deps = [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_base" ]
-
   # 外部依赖
   external_deps = [
     "bounds_checking_function:libsec_shared",
