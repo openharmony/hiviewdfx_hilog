@@ -39,19 +39,19 @@ export default namespace hilog {
 
     export native function setLogLevel(level: LogLevel, prefer: PreferStrategy): void;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function setOutputType(type: OutputType): OutputType;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function setOutputTypeByDomainID(type: OutputType, domains: Array<int>, isExclude: boolean): OutputType;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function clean(): void;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function flush(): void;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function getOutputType(): OutputType;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function getOutputDir(): string;
 
-    export native function SetOutputType(type: OutputType): OutputType;
+    export native function getLogFile(latestSeconds: int): Array<string>;
 
     export enum LogLevel {
         DEBUG = 3,
