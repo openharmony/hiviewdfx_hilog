@@ -45,7 +45,9 @@
 #include "hilog_common.h"
 #include "vsnprintf_s_p.h"
 #include "log_utils.h"
+#ifdef __OHOS__ 
 #include "page_switch_log.h"
+#endif
 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
 #include "properties.h"
@@ -66,10 +68,12 @@ static int g_preferStrategy = UNSET_LOGLEVEL;
 static atomic_int g_hiLogGetIdCallCount = 0;
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
+#ifdef __OHOS__ 
 static OutputType g_sandboxStatus = OutputType::SANDBOXLOG_DEFAULT;
 static std::vector<int> g_domains;
 static bool g_isExclude = false;
 static std::mutex g_sandboxMutex;
+#endif
 
 HILOG_PUBLIC_API
 extern "C" const char* GetLastFatalMessage()
@@ -291,6 +295,7 @@ int HiLogPrintComm(const LogLevel level, const unsigned int domain, const char *
     return ret;
 }
 
+#ifdef __OHOS__ 
 static bool IsValidDomain(int domain)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
@@ -366,14 +371,16 @@ static bool HiLogPrintSandboxLog(const LogLevel level, const unsigned int domain
     }
     return false;
 }
-
+#endif
 int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
+#ifdef __OHOS__ 
     bool isPureSandboxLog = HiLogPrintSandboxLog(level, domain, tag, fmt, ap);
     if (isPureSandboxLog && type == LOG_APP) {
         return -1;
     }
+#endif
     if ((type != LOG_APP) && ((domain < DOMAIN_OS_MIN) || (domain > DOMAIN_OS_MAX))) {
         return -1;
     }
@@ -538,6 +545,7 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
     return true;
 }
 
+#ifdef __OHOS__ 
 namespace OHOS {
 namespace HiviewDFX {
 static bool InnerIsAppLogLoggable()
@@ -685,3 +693,4 @@ int HiLogGetOutputDir(char* buffer)
 }
 }
 }
+#endif
