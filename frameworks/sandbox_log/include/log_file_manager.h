@@ -78,7 +78,8 @@ class LogFileManager {
 public:
     LogFileManager();
     ~LogFileManager();
-    bool Initialize(const LogFileConfig& config);
+    void Setup(const LogFileConfig& config);
+    bool Initialize();
     void WriteLog(const std::string& log);
     bool Flush();
     int CreateSnapshot(uint64_t eventTime, bool enablePackAll, std::string& snapshots);
@@ -86,15 +87,18 @@ private:
     void AgedOutLogFiles();
     void AgedOutSnapshots();
     void AppendSelfLogNames(std::vector<std::string>& logNames);
+    bool IsLatestLog(const std::string& logPrefix);
     bool InitLogFile();
     bool CanCreateLogFile();
     void CloseCurrentFile();
     bool FlushMmapToFile();
+    bool FlushTempMmapToFile(const std::string& mmapPath, const std::string& logPath);
     bool RotateFiles();
     bool CreateDirectory();
     bool OpenCurrentLogFile();
     std::string GetLogFilePath(uint16_t instanceIndex, uint16_t fileIndex);
     std::string GetPersistFilePath(const std::string& processName, uint16_t instanceIndex);
+    std::string GetMmapFilePathFrom(const std::string& logPrefix);
     std::string BuildSnapshotJson(const std::vector<std::string>& files);
     bool RemoveFileGroups(std::vector<LogFile> files);
     bool SeekFileIndexes();
@@ -103,13 +107,12 @@ private:
     std::vector<LogFile> GetLogFiles();
     std::vector<std::string> GetLogPrefixes(std::vector<std::string>& pageSwitchLogs);
     std::vector<std::string> GetPageSwitchLogNames(bool isUnlockedOnly);
-    std::vector<std::string> GetSelfSnapshotPaths(std::vector<SnapshotFile>& snapshotFiles);
     std::vector<SnapshotFile> GetSnapshotFiles();
-    std::vector<std::string> GetSnapshotPaths(bool isUnlockedOnly);
     std::vector<std::string> GetUnlockedPageSwitchLogNames(std::vector<LogFile>& logFiles);
     std::vector<std::string> GetUnlockedSnapshotPaths(std::vector<SnapshotFile>& snapshotFiles);
     std::string GetFormatedProcessName();
 
+    bool initialized_ = false;
     std::mutex mutex_;
     LogFileConfig config_;
     LogMmapManager mmapManager_;
