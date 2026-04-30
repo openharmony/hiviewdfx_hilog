@@ -53,13 +53,14 @@ SandboxLogger::SandboxLogger()
 {
     queue_ = std::make_shared<ffrt::queue>("SandboxLoggerQueue");
     isHap_ = IsHap();
+    InitFileManager();
 }
 
 SandboxLogger::~SandboxLogger()
 {
 }
 
-bool SandboxLogger::InitFileManager()
+void SandboxLogger::InitFileManager()
 {
     LogFileConfig config = {
         .logDir = LOG_DIR,
@@ -74,11 +75,7 @@ bool SandboxLogger::InitFileManager()
         .maxLogFileSize = MAX_SANDBOX_LOG_FILE_SIZE,
         .mmapSize = SANDBOX_LOG_MMAP_SIZE
     };
-    if (!logFileManager_.Initialize(config)) {
-        HILOG_ERROR(LOG_CORE, "Failed to initialize log file manager");
-        return false;
-    }
-    return true;
+    logFileManager_.Setup(config);
 }
 
 int SandboxLogger::WriteLog(const char* fmt, va_list args)
@@ -159,7 +156,7 @@ void SandboxLogger::SetStatus(bool status)
     }
     std::lock_guard<std::mutex> lock(initMutex_);
     if (!initialized_ && status == true) {
-        initialized_ = InitFileManager();
+        initialized_ = logFileManager_.Initialize();
     }
     if (!initialized_) {
         return;
