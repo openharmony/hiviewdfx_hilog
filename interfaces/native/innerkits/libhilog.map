@@ -114,11 +114,11 @@
         "OHOS::HiviewDFX::HiLogIsAppLogLoggable()";
         "OHOS::HiviewDFX::HiLogFlushAppLog()";
         "OHOS::HiviewDFX::HiLogCleanAppLog()";
-        "OHOS::HiviewDFX::HiLogGetAppLogFile(int, char*)";
+        "OHOS::HiviewDFX::HiLogGetAppLogFile(int, char*, unsigned int)";
         "OHOS::HiviewDFX::HiLogSetOutputType(OutputType)";
         "OHOS::HiviewDFX::HiLogSetOutputTypeByDomainId(OutputType, int*, int, bool)";
         "OHOS::HiviewDFX::HiLogGetOutputType()";
-        "OHOS::HiviewDFX::HiLogGetOutputDir(char*)";
+        "OHOS::HiviewDFX::HiLogGetOutputDir(char*, unsigned int)";
     };
 
   local:

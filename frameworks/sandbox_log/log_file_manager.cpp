@@ -599,7 +599,7 @@ bool LogFileManager::FlushTempMmapToFile(const std::string& mmapPath, const std:
 {
     LogMmapManager mmapManager;
     if (!mmapManager.Initialize(mmapPath, config_.mmapSize)) {
-        HILOG_ERROR(LOG_CORE, "Mmap init failed");
+        HILOG_BASE_ERROR(LOG_CORE, "Mmap init failed");
         return false;
     }
     if (mmapManager.GetOffset() == 0) {
@@ -613,11 +613,11 @@ bool LogFileManager::FlushTempMmapToFile(const std::string& mmapPath, const std:
     do {
         ssize_t written = write(logFd, mmapManager.GetPtr(), mmapManager.GetOffset());
         if (written == -1) {
-            HILOG_ERROR(LOG_CORE, "Failed to write log to file: errno=%{public}d", errno);
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to write log to file: errno=%{public}d", errno);
             break;
         }
         if (fsync(logFd) == -1) {
-            HILOG_ERROR(LOG_CORE, "Failed to fsync log file: errno=%{public}d", errno);
+            HILOG_BASE_ERROR(LOG_CORE, "Failed to fsync log file: errno=%{public}d", errno);
             break;
         }
         result = true;

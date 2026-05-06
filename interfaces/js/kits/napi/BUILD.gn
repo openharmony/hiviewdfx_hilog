@@ -54,6 +54,8 @@ ohos_source_set("libhilognapi_src") {
     deps +=
         [ "//base/hiviewdfx/hilog/interfaces/native/innerkits:libhilog_linux" ]
     defines += [ "__LINUX__" ]
+  } else {
+    defines += [ "__OHOS__" ]
   }
   subsystem_name = "hiviewdfx"
   part_name = "hilog"

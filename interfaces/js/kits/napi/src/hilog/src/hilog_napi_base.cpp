@@ -38,6 +38,8 @@ static constexpr int PUBLIC_LEN = 6;
 static constexpr int PRIVATE_LEN = 7;
 static constexpr int PROPERTY_POS = 2;
 static const string PRIV_STR = "<private>";
+static constexpr unsigned SANDBOX_NAPI_OUTPUT_DIR_SIZE = 128;
+static constexpr unsigned SANDBOX_NAPI_LOG_FILE_SIZE = 4096;
 
 void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logContent)
 {
@@ -346,7 +348,11 @@ napi_value HilogNapiBase::SetOutputType(napi_env env, napi_callback_info info)
     if (!succ) {
         return nullptr;
     }
+#ifdef __OHOS__
     OutputType lastType = HiLogSetOutputType(static_cast<OutputType>(type));
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
     return NVal::CreateInt32(env, static_cast<int32_t>(lastType)).val_;
 }
 
@@ -369,8 +375,7 @@ napi_value HilogNapiBase::SetOutputTypeByDomainId(napi_env env, napi_callback_in
     if (lengthStatus != napi_ok) {
         return nullptr;
     }
-    uint32_t i;
-    for (i= 0; i < length; i++) {
+    for (uint32_t i = 0; i < length; ++i) {
         napi_value element;
         napi_status eleStatus = napi_get_element(env, array, i, &element);
         if (eleStatus != napi_ok) {
@@ -393,32 +398,46 @@ napi_value HilogNapiBase::SetOutputTypeByDomainId(napi_env env, napi_callback_in
     for (int i = 0; i < domains.size(); ++i) {
         domainBuffer[i] = domains[i];
     }
+#ifdef __OHOS__
     OutputType lastType = HiLogSetOutputTypeByDomainId(static_cast<OutputType>(type),
         domainBuffer, domains.size(), isExclude);
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
     delete[] domainBuffer;
     return NVal::CreateInt32(env, lastType).val_;
 }
 
 napi_value HilogNapiBase::GetOutputType(napi_env env, napi_callback_info info)
 {
+#ifdef __OHOS__
     OutputType type = HiLogGetOutputType();
+#else
+    OutputType type = OutputType::SANDBOXLOG_DEFAULT;
+#endif
     return NVal::CreateInt32(env, static_cast<int32_t>(type)).val_;
 }
 napi_value HilogNapiBase::GetOutputDir(napi_env env, napi_callback_info info)
 {
-    char buffer[128];
-    HiLogGetOutputDir(buffer);
+    char buffer[SANDBOX_NAPI_OUTPUT_DIR_SIZE];
+#ifdef __OHOS__
+    HiLogGetOutputDir(buffer, SANDBOX_NAPI_OUTPUT_DIR_SIZE);
+#endif
     std::string dir(buffer);
     return NVal::CreateUTF8String(env, dir).val_;
 }
 napi_value HilogNapiBase::Clean(napi_env env, napi_callback_info info)
 {
+#ifdef __OHOS__
     HiLogCleanAppLog();
+#endif
     return nullptr;
 }
 napi_value HilogNapiBase::Flush(napi_env env, napi_callback_info info)
 {
+#ifdef __OHOS__
     HiLogFlushAppLog();
+#endif
     return nullptr;
 }
 
@@ -450,8 +469,10 @@ napi_value HilogNapiBase::GetLogFile(napi_env env, napi_callback_info info)
     if (!succ) {
         return nullptr;
     }
-    char fileStr[4096];
-    HiLogGetAppLogFile(seconds, fileStr);
+    char fileStr[SANDBOX_NAPI_LOG_FILE_SIZE];
+#ifdef __OHOS__
+    HiLogGetAppLogFile(seconds, fileStr, SANDBOX_NAPI_LOG_FILE_SIZE);
+#endif
     std::string files(fileStr);
     std::vector<std::string> fileList = SpiltString(files, ',');
     napi_value arrayResult;

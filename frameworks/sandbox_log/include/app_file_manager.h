@@ -28,7 +28,7 @@ namespace HiviewDFX {
 namespace fs = std::filesystem;
 struct FileInfo {
     fs::path path;
-    fs::file_time_type last_write_time;
+    fs::file_time_type lastWriteTime;
 };
 struct AppFileConfig {
     std::string logDir;
@@ -60,6 +60,11 @@ private:
     std::string GetLogFilePath(uint16_t fileIndex);
     std::vector<FileInfo> GetFilesInDirectory(const fs::path& dirPath);
     int DeleteOldestFiles(const fs::path& dirPath, size_t keepCount);
+    void DoWriteFlushPersistFile(const std::string& logFile, char* mmapData, size_t actualDataSize);
+    void DoFlushPersistFile(const std::string& persistFilePath, const std::string& logFilePath);
+    std::string GetNewestLogFileByPid(const fs::path& dirPath, int pid);
+    void FlushPersistFile(const std::string& filePath, int pid);
+    void FlushAbondonedPersistFiles(const fs::path& dirPath);
 
     std::mutex mutex_;
     AppFileConfig config_;
@@ -68,6 +73,7 @@ private:
     int currentFd_ = -1;
     int pid_ = 0;
     std::string currentFileName_ = "";
+    int persistFd_ = -1;
 };
 }
 }

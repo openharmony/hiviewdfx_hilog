@@ -45,7 +45,7 @@ public:
     bool FlushLog();
     bool CleanLog();
     std::vector<std::string> GetLogFile(int seconds);
-    void AsyncWriteLog(std::string log);
+    void AsyncWriteLog(std::string& log);
     static void ProcessQueue(void* arg);
 private:
     AppboxLogger(AppboxLoggerType type);
