@@ -125,16 +125,16 @@ bool AniUtil::AniInt32ToEnumOutputType(ani_env *env, int32_t value, ani_enum_ite
     if (value < 0) {
         return false;
     }
-    enumItem = EnumNativeToETSByIndex(env, OUTPUTTYPE_STRING, static_cast<size_t>(value));
+    enumItem = EnumNativeToETSByValue(env, OUTPUTTYPE_STRING, static_cast<size_t>(value));
     return true;
 }
 
 static size_t TransformOutputTypeIndex(const size_t index)
 {
-    return index + 1;
+    return index + 1; // 0->CONSOLE_ONLY, 1->PRIVATE_SANDBOX_ONLY
 }
 
-ani_enum_item AniUtil::EnumNativeToETSByIndex(ani_env *env, const char* enumClassName, const size_t index)
+ani_enum_item AniUtil::EnumNativeToETSByValue(ani_env *env, const char* enumClassName, const size_t value)
 {
     if (env == nullptr) {
         HiLog::Info(LABEL, "null env");
@@ -147,9 +147,9 @@ ani_enum_item AniUtil::EnumNativeToETSByIndex(ani_env *env, const char* enumClas
         return nullptr;
     }
 
-    size_t newIndex = TransformOutputTypeIndex(index);
+    size_t index = TransformOutputTypeIndex(value);
     ani_enum_item enumItem = nullptr;
-    status = env->Enum_GetEnumItemByIndex(aniEnum, newIndex, &enumItem);
+    status = env->Enum_GetEnumItemByIndex(aniEnum, index, &enumItem);
     if (status != ANI_OK) {
         HiLog::Info(LABEL, "Enum_GetEnumItemByIndex failed %{public}d", status);
         return nullptr;

@@ -75,40 +75,45 @@ bool FlushPageSwitchLog()
     return SandboxLogger::GetInstance().FlushLog();
 }
 
-int WriteAppStr(const std::string& str, bool isPrivate)
+// sandbox log
+int WritePrivateSandboxStr(const std::string& str)
 {
-    if (isPrivate) {
-        return AppboxLogger::GetInstancePrivateSandbox().WriteLog(str);
-    } else {
-        return AppboxLogger::GetInstancePublicSandbox().WriteLog(str);
-    }
+    return AppboxLogger::GetInstancePrivateSandbox().WriteLog(str);
 }
 
-bool FlushAppLog(bool isPrivate)
+int WriteShareSandboxStr(const std::string& str)
 {
-    if (isPrivate) {
-        return AppboxLogger::GetInstancePrivateSandbox().FlushLog();
-    } else {
-        return AppboxLogger::GetInstancePublicSandbox().FlushLog();
-    }
+    return AppboxLogger::GetInstancePublicSandbox().WriteLog(str);
 }
 
-bool CleanAppLog(bool isPrivate)
+bool FlushPrivateSandboxLog()
 {
-    if (isPrivate) {
-        return AppboxLogger::GetInstancePrivateSandbox().CleanLog();
-    } else {
-        return AppboxLogger::GetInstancePublicSandbox().CleanLog();
-    }
+    return AppboxLogger::GetInstancePrivateSandbox().FlushLog();
 }
 
-std::vector<std::string> GetAppLogFile(int seconds, bool isPrivate)
+bool FlushShareSandboxLog()
 {
-    if (isPrivate) {
-        return AppboxLogger::GetInstancePrivateSandbox().GetLogFile(seconds);
-    } else {
-        return AppboxLogger::GetInstancePublicSandbox().GetLogFile(seconds);
-    }
+    return AppboxLogger::GetInstancePublicSandbox().FlushLog();
+}
+
+bool CleanPrivateSandboxLog()
+{
+    return AppboxLogger::GetInstancePrivateSandbox().CleanLog();
+}
+
+bool CleanShareSandboxLog()
+{
+    return AppboxLogger::GetInstancePublicSandbox().CleanLog();
+}
+
+std::vector<std::string> GetPrivateSandboxLogFile(int seconds)
+{
+    return AppboxLogger::GetInstancePrivateSandbox().GetLogFile(seconds);
+}
+
+std::vector<std::string> GetShareSandboxLogFile(int seconds)
+{
+    return AppboxLogger::GetInstancePublicSandbox().GetLogFile(seconds);
 }
 
 void SetPrivateSandboxStatus(bool status)

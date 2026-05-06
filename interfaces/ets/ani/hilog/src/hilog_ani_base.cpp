@@ -34,6 +34,8 @@ static constexpr int PUBLIC_LEN = 6;
 static constexpr int PRIVATE_LEN = 7;
 static constexpr int PROPERTY_POS = 2;
 static const std::string PRIV_STR = "<private>";
+static constexpr unsigned SANDBOX_ANI_OUTPUT_DIR_SIZE = 128;
+static constexpr unsigned SANDBOX_ANI_LOG_FILE_SIZE = 4096;
 
 static void HandleFormatFlags(const std::string& formatStr, uint32_t& pos, bool& showPriv)
 {
@@ -248,7 +250,11 @@ ani_enum_item HilogAniBase::SetOutputType(ani_env *env, ani_enum_item type)
     if (!AniUtil::AniEnumToInt32(env, type, typeVal)) {
         return nullptr;
     }
+#ifdef __OHOS__
     OutputType lastType = HiLogSetOutputType(static_cast<OutputType>(typeVal));
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
     ani_enum_item item;
     if (!AniUtil::AniInt32ToEnumOutputType(env, static_cast<int32_t>(lastType), item)) {
         HiLog::Warn(LABEL, "Int32 To Enum OutputType failed");
@@ -287,8 +293,12 @@ ani_enum_item HilogAniBase::SetOutputTypeByDomainID(ani_env *env, ani_enum_item 
     for (int i = 0; i < domains.size(); ++i) {
         domainBuffer[i] = domains[i];
     }
+#ifdef __OHOS__
     OutputType lastType = HiLogSetOutputTypeByDomainId(static_cast<OutputType>(typeVal),
                                                        domainBuffer, domains.size(), static_cast<bool>(isExclude));
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
     delete[] domainBuffer;
     ani_enum_item item;
     if (!AniUtil::AniInt32ToEnumOutputType(env, static_cast<int32_t>(lastType), item)) {
@@ -300,17 +310,25 @@ ani_enum_item HilogAniBase::SetOutputTypeByDomainID(ani_env *env, ani_enum_item 
 
 void HilogAniBase::Clean(ani_env *env)
 {
+#ifdef __OHOS__
     HiLogCleanAppLog();
+#endif
 }
 
 void HilogAniBase::Flush(ani_env *env)
 {
+#ifdef __OHOS__
     HiLogFlushAppLog();
+#endif
 }
 
 ani_enum_item HilogAniBase::GetOutputType(ani_env *env)
 {
+#ifdef __OHOS__
     OutputType type = HiLogGetOutputType();
+#else
+    OutputType type = OutputType::SANDBOXLOG_DEFAULT;
+#endif
     ani_enum_item item;
     if (!AniUtil::AniInt32ToEnumOutputType(env, static_cast<int32_t>(type), item)) {
         HiLog::Warn(LABEL, "Int32 To Enum OutputType failed");
@@ -321,8 +339,10 @@ ani_enum_item HilogAniBase::GetOutputType(ani_env *env)
 
 ani_string HilogAniBase::GetOutputDir(ani_env *env)
 {
-    char buffer[128];
-    HiLogGetOutputDir(buffer);
+    char buffer[SANDBOX_ANI_OUTPUT_DIR_SIZE];
+#ifdef __OHOS__
+    HiLogGetOutputDir(buffer, SANDBOX_ANI_OUTPUT_DIR_SIZE);
+#endif
     std::string dir(buffer);
     return AniUtil::StdStringToAniString(env, dir);
 }
@@ -345,8 +365,10 @@ static std::vector<std::string> SpiltString(const std::string& str, char delimit
 
 ani_array HilogAniBase::GetLogFile(ani_env *env, ani_int latestSeconds)
 {
-    char fileBuf[4096];
-    HiLogGetAppLogFile(static_cast<int32_t>(latestSeconds), fileBuf);
+    char fileBuf[SANDBOX_ANI_LOG_FILE_SIZE];
+#ifdef __OHOS__
+    HiLogGetAppLogFile(static_cast<int32_t>(latestSeconds), fileBuf, SANDBOX_ANI_LOG_FILE_SIZE);
+#endif
     std::string fileGroup(fileBuf);
     std::vector<std::string> files = SpiltString(fileGroup, ',');
     ani_ref undefinedRef{};

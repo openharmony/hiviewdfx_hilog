@@ -23,12 +23,12 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <set>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
-#include <map>
 
 #include "hilog_base/log_base.h"
 #include "sandbox_utils.h"
@@ -50,6 +50,9 @@ AppFileManager::~AppFileManager()
 {
     Flush();
     CloseCurrentFile();
+    if (!UnlockAndCloseFd(persistFd_)) {
+        HILOG_BASE_ERROR(LOG_CORE, "Unlock persist fd failed");
+    }
 }
 bool AppFileManager::Initialize(const AppFileConfig& config)
 {
@@ -60,7 +63,10 @@ bool AppFileManager::Initialize(const AppFileConfig& config)
     if (currentFileName_.empty()) {
         OpenCurrentLogFile();
     }
-    return mmapManager_.Initialize(config_.persistFile, config_.mmapSize);
+    if (!mmapManager_.Initialize(config_.persistFile, config_.mmapSize)) {
+        return false;
+    }
+    return LockFile(config_.persistFile, persistFd_);
 }
 bool AppFileManager::CreateDirectory()
 {
@@ -74,6 +80,7 @@ bool AppFileManager::CreateDirectory()
 bool AppFileManager::OpenCurrentLogFile()
 {
     CloseCurrentFile();
+    FlushAbondonedPersistFiles(config_.logDir);
     DeleteOldestFiles(config_.logDir, MAX_RESERVED_LOG_FILE_NUM);
     std::string currentFile = GetLogFilePath(currentFileIndex_);
     if (!LockFile(currentFile, currentFd_)) {
@@ -101,7 +108,7 @@ std::string AppFileManager::GetLogFilePath(uint16_t fileIndex)
 
 void AppFileManager::CloseCurrentFile()
 {
-    if (currentFd_) {
+    if (currentFd_ == -1) {
         return;
     }
     if (!UnlockAndCloseFd(currentFd_)) {
@@ -109,6 +116,7 @@ void AppFileManager::CloseCurrentFile()
     }
     currentFd_ = -1;
 }
+
 void AppFileManager::WriteLog(const std::string& log)
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -117,9 +125,10 @@ void AppFileManager::WriteLog(const std::string& log)
     }
     mmapManager_.Write(log);
 }
+
 bool AppFileManager::FlushMmapToFile()
 {
-    if (RotateFiles()) {
+    if (!RotateFiles()) {
         HILOG_BASE_ERROR(LOG_CORE, "Failed to rotate log files");
         return false;
     }
@@ -146,7 +155,6 @@ bool AppFileManager::FlushMmapToFile()
     mmapManager_.Reset();
     return result;
 }
-
 
 bool AppFileManager::RotateFiles()
 {
@@ -177,14 +185,167 @@ bool AppFileManager::Flush()
     return FlushMmapToFile();
 }
 
+std::string AppFileManager::GetNewestLogFileByPid(const fs::path& dirPath, int pid)
+{
+    std::error_code ecTemp; // no exception
+    if (!fs::exists(dirPath) || !fs::is_directory(dirPath)) {
+        return "";
+    }
+    fs::path newestLogFile;
+    fs::file_time_type minTime;
+    bool isFirst = true;
+    for (const auto& entry : fs::directory_iterator(dirPath, ecTemp)) {
+        if (fs::is_regular_file(entry.path(), ecTemp)) {
+            continue;
+        }
+        std::string fileName = entry.path().filename().string();
+        if (fileName.find(config_.filePrefix) == std::string::npos) {
+            continue;
+        }
+        if (fileName.find(std::to_string(pid)) == std::string::npos) {
+            continue;
+        }
+        std::error_code ec;
+        auto writeTime = fs::last_write_time(entry.path(), ec);
+        if (!ec) {
+            if (isFirst) {
+                isFirst = false;
+                minTime = writeTime;
+                newestLogFile = entry.path();
+                continue;
+            }
+            if (writeTime > minTime) {
+                minTime = writeTime;
+                newestLogFile = entry.path();
+            }
+        }
+    }
+    return newestLogFile.string();
+}
+
+void AppFileManager::DoWriteFlushPersistFile(const std::string& logFile, char* mmapData, size_t actualDataSize)
+{
+    FILE* target = fopen(logFile.c_str(), "a");
+    if (!target) {
+        HILOG_BASE_ERROR(LOG_CORE, "Open log file failed, %{public}s, errno=%{public}d", logFile.c_str(), errno);
+        return;
+    }
+    char* actualData = mmapData + LogMmapManager::METADATA_SIZE;
+    size_t bytesWritten = fwrite(actualData, 1, actualDataSize, target);
+    if (fflush(target) != 0) {
+        HILOG_BASE_ERROR(LOG_CORE, " flush file, error code: %{public}d", errno);
+    }
+    if (bytesWritten != actualDataSize) {
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to write all data to log file, written=%{public}zu, expected=%{public}zu",
+            bytesWritten, actualDataSize);
+    }
+    if (fclose(target) != 0) {
+        HILOG_BASE_ERROR(LOG_CORE, " close file, error code: %{public}d", errno);
+    }
+}
+
+void AppFileManager::DoFlushPersistFile(const std::string& persistFile, const std::string& logFile)
+{
+    FILE* mmapTarget = fopen(persistFile.c_str(), "r");
+    if (!mmapTarget) {
+        HILOG_BASE_ERROR(LOG_CORE, "Open persist file failed, errno=%{public}d", errno);
+        return;
+    }
+
+    size_t totalSize = config_.mmapSize + LogMmapManager::METADATA_SIZE;
+    char* mmapData = static_cast<char*>(mmap(nullptr, totalSize, PROT_READ, MAP_SHARED, fileno(mmapTarget), 0));
+    if (mmapData == MAP_FAILED) {
+        HILOG_BASE_ERROR(LOG_CORE, "persist file mmap failed, errno=%{public}d", errno);
+    }
+    if (fclose(mmapTarget) != 0) {
+        HILOG_BASE_ERROR(LOG_CORE, " close mmap file, error code: %{public}d", errno);
+    }
+
+    if (mmapData == MAP_FAILED) {
+        HILOG_BASE_ERROR(LOG_CORE, "Mmap persist file failed, errno=%{public}d", errno);
+        return;
+    }
+    size_t actualDataSize = 0;
+    if (memcpy_s(&actualDataSize, sizeof(actualDataSize), mmapData, LogMmapManager::METADATA_SIZE) != EOK) {
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to read metadata from persist file");
+        munmap(mmapData, totalSize);
+        return;
+    }
+    if (actualDataSize == 0 || actualDataSize > config_.mmapSize) {
+        HILOG_BASE_ERROR(LOG_CORE, "Invalid data size in persist file: %{public}zu", actualDataSize);
+        munmap(mmapData, totalSize);
+        return;
+    }
+    DoWriteFlushPersistFile(logFile, mmapData, actualDataSize);
+    munmap(mmapData, totalSize);
+    return;
+}
+
+void AppFileManager::FlushPersistFile(const std::string& filePath, int pid)
+{
+    int fdPersist = -1;
+    if (!LockFile(filePath, fdPersist)) {
+        HILOG_BASE_ERROR(LOG_CORE, "Lock persist file failed");
+        return;
+    }
+
+    std::string logFile = GetNewestLogFileByPid(config_.logDir, pid);
+    if (logFile.empty()) {
+        HILOG_BASE_ERROR(LOG_CORE, "No log file found for pid: %{public}d", pid);
+        UnlockAndCloseFd(fdPersist);
+        return;
+    }
+    DoFlushPersistFile(filePath, logFile);
+    if (!UnlockAndCloseFd(fdPersist)) {
+        HILOG_BASE_ERROR(LOG_CORE, "Unlock persist file failed");
+    }
+}
+
+void AppFileManager::FlushAbondonedPersistFiles(const fs::path& dirPath)
+{
+    std::error_code ecTemp; // no exception
+    const char persistFilePrefix[] = ".persist_sandbox_log";
+    if (!fs::exists(dirPath, ecTemp) || !fs::is_directory(dirPath, ecTemp)) {
+        return;
+    }
+
+    for (const auto& entry : fs::directory_iterator(dirPath, ecTemp)) {
+        if (fs::is_regular_file(entry.path(), ecTemp)) {
+            std::string fileName = entry.path().filename().string();
+            if (fileName.find(persistFilePrefix) == std::string::npos) {
+                continue;
+            }
+            if (IsFileWriteLocked(entry.path().string())) {
+                continue;
+            }
+            std::vector<std::string> spilts = SplitString(fileName, '_');
+            if (spilts.empty()) {
+                continue;
+            }
+            std::string pidStr = spilts[spilts.size() - 1];
+            int pid = 0;
+            if (!TextToInt(pidStr, pid)) {
+                continue;
+            }
+            FlushPersistFile(entry.path().string(), pid);
+            std::error_code removeEc;
+            fs::remove(entry.path(), removeEc);
+            if (removeEc) {
+                HILOG_BASE_ERROR(LOG_CORE, "Failed to remove persist file:%{public}s", entry.path().string().c_str());
+            }
+        }
+    }
+}
+
 std::vector<FileInfo> AppFileManager::GetFilesInDirectory(const fs::path& dirPath)
 {
     std::vector<FileInfo> files;
-    if (!fs::exists(dirPath) || !fs::is_directory(dirPath)) {
+    std::error_code ecTemp; // no exception
+    if (!fs::exists(dirPath, ecTemp) || !fs::is_directory(dirPath, ecTemp)) {
         return files;
     }
-    for (const auto& entry : fs::directory_iterator(dirPath)) {
-        if (fs::is_regular_file(entry.path())) {
+    for (const auto& entry : fs::directory_iterator(dirPath, ecTemp)) {
+        if (fs::is_regular_file(entry.path(), ecTemp)) {
             std::string fileName = entry.path().filename().string();
             if (fileName.find(config_.filePrefix) == std::string::npos) {
                 continue;
@@ -192,7 +353,7 @@ std::vector<FileInfo> AppFileManager::GetFilesInDirectory(const fs::path& dirPat
             FileInfo info;
             info.path = entry.path();
             std::error_code ec;
-            info.last_write_time = fs::last_write_time(entry.path(), ec);
+            info.lastWriteTime = fs::last_write_time(entry.path(), ec);
             if (!ec) {
                 files.push_back(info);
             }
@@ -210,7 +371,7 @@ int AppFileManager::DeleteOldestFiles(const fs::path& dirPath, size_t keepCount)
 
     std::sort(files.begin(), files.end(),
         [](const FileInfo& a, const FileInfo& b) {
-            return a.last_write_time > b.last_write_time;
+            return a.lastWriteTime > b.lastWriteTime;
         });
     int deleted = 0;
     for (size_t i = keepCount; i < files.size(); i++) {
@@ -234,6 +395,7 @@ bool AppFileManager::ClearLogFiles()
             return false;
         }
     }
+    mmapManager_.Reset();
 
     CloseCurrentFile();
     auto files = GetFilesInDirectory(config_.logDir);
@@ -249,7 +411,6 @@ bool AppFileManager::ClearLogFiles()
     }
 
     currentFileIndex_ = 1;
-    mmapManager_.Reset();
     if (!OpenCurrentLogFile()) {
         HILOG_BASE_ERROR(LOG_CORE, "Failed to create new log file after clearing");
         return false;

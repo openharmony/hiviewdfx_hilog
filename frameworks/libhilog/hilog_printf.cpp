@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <cerrno>
 #include <cstdarg>
 #include <cstdio>
@@ -23,7 +24,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <algorithm>
+#include <sstream>
 
 #ifdef __LINUX__
 #include <atomic>
@@ -45,15 +46,14 @@
 #include "hilog_common.h"
 #include "vsnprintf_s_p.h"
 #include "log_utils.h"
-#ifdef __OHOS__ 
+#include "log_print.h"
+#ifdef __OHOS__
 #include "page_switch_log.h"
 #endif
 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
 #include "properties.h"
 #include "hilog_input_socket_client.h"
-#else
-#include "log_print.h"
 #endif
 
 #define LOG_FILE_SIZE 4096
@@ -68,10 +68,10 @@ static int g_preferStrategy = UNSET_LOGLEVEL;
 static atomic_int g_hiLogGetIdCallCount = 0;
 // protected by static lock guard
 static char g_hiLogLastFatalMessage[MAX_LOG_LEN] = { 0 }; // MAX_lOG_LEN : 1024
-#ifdef __OHOS__ 
+#ifdef __OHOS__
 static OutputType g_sandboxStatus = OutputType::SANDBOXLOG_DEFAULT;
-static std::vector<int> g_domains;
-static bool g_isExclude = false;
+static std::vector<int> g_sandboxDomains;
+static bool g_sandboxIsExclude = false;
 static std::mutex g_sandboxMutex;
 #endif
 
@@ -295,96 +295,90 @@ int HiLogPrintComm(const LogLevel level, const unsigned int domain, const char *
     return ret;
 }
 
-#ifdef __OHOS__ 
-static bool IsValidDomain(int domain)
+#ifdef __OHOS__
+static bool IsPrivateSandboxEnable()
+{
+    return g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
+        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE;
+}
+static bool IsShareSandboxEnable()
+{
+    return g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
+        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE;
+}
+static bool IsSandboxValidDomain(int domain)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
-    if (g_sandboxStatus == OutputType::SANDBOXLOG_DEFAULT) {
+    if (g_sandboxDomains.empty()) {
         return true;
     }
-    if (g_domains.empty()) {
-        return true;
-    }
-    if (g_isExclude) {
-        if (std::find(g_domains.begin(), g_domains.end(), domain) == g_domains.end()) {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        if (std::find(g_domains.begin(), g_domains.end(), domain) == g_domains.end()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
+    bool contained = std::find(g_sandboxDomains.begin(), g_sandboxDomains.end(), domain) != g_sandboxDomains.end();
+    return g_sandboxIsExclude ? !contained : contained;
 }
 
-static int HiLogSandboxLogEncode(const LogLevel level, const unsigned int domain, const char* tag,
-    const char* content, bool isPrivateSandbox)
-{
-    uint32_t pid = static_cast<uint32_t>(getpid());
-    uint32_t tid = static_cast<uint32_t>(gettid());
-    struct timespec ts;
-    struct tm tmInfo;
-    char bufferTime[64];
-    clock_gettime(CLOCK_REALTIME, &ts);
-    localtime_r(&ts.tv_sec, &tmInfo);
-    if (strftime(bufferTime, sizeof(bufferTime), "%m-%d %H:%M:%S", &tmInfo) == 0) {
-        return -1;
-    }
-    long ms = ts.tv_nsec / 1000 / 1000;
-    char buf[MAX_LOG_LEN] = {0};
-    if (snprintf_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "%s.%03d %5u %5u %c %X/%s:%s",
-        bufferTime, ms, pid, tid, level, domain, tag, content) <= 0) {
-        return -1;
-    }
-    WriteAppStr(buf, isPrivateSandbox);
-    return 0;
-}
-
-static bool HiLogPrintSandboxLog(const LogLevel level, const unsigned int domain, const char* tag,
+static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const unsigned int domain, const char* tag,
     const char* fmt, va_list ap)
 {
-    if (g_sandboxStatus != OutputType::SANDBOXLOG_DEFAULT && IsValidDomain(domain)) {
-        if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY) {
-            char buf[MAX_LOG_LEN] = {0};
-            vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, ap);
-            HiLogSandboxLogEncode(level, domain, tag, buf, true);
-            return true;
-        } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY) {
-            char buf[MAX_LOG_LEN] = {0};
-            vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, ap);
-            HiLogSandboxLogEncode(level, domain, tag, buf, false);
-            return true;
-        } else if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
-            char buf[MAX_LOG_LEN] = {0};
-            vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, ap);
-            HiLogSandboxLogEncode(level, domain, tag, buf, true);
-            return false;
-        } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
-            char buf[MAX_LOG_LEN] = {0};
-            vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, false, fmt, ap);
-            HiLogSandboxLogEncode(level, domain, tag, buf, false);
-            return false;
-        }
+    if (g_sandboxStatus == OutputType::SANDBOXLOG_DEFAULT && IsSandboxValidDomain(domain)) {
+        return;
     }
-    return false;
+    char buf[MAX_LOG_LEN] = {0};
+    vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, HiLogIsPrivacyOn(), fmt, ap);
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    LogContent content = {
+        .level = level,
+        .type = type,
+        .pid = static_cast<uint32_t>(getpid()),
+        .tid = static_cast<uint32_t>(gettid()),
+        .domain = domain,
+        .tv_sec = ts.tv_sec,
+        .tv_nsec = ts.tv_nsec,
+        .mono_sec = ts.tv_sec,
+        .tag = tag,
+        .log = buf,
+    };
+    LogFormat format = {
+        .colorful = false,
+        .timeFormat = FormatTime::TIME,
+        .timeAccuFormat = FormatTimeAccu::MSEC,
+        .year = false,
+        .zone = false,
+    };
+    std::ostringstream oss;
+    LogPrintWithFormat(content, format, oss);
+    std::string fmtLog = oss.str();
+    if (IsPrivateSandboxEnable()) {
+        WritePrivateSandboxStr(fmtLog);
+    } else if (IsShareSandboxEnable()) {
+        WriteShareSandboxStr(fmtLog);
+    }
 }
 #endif
-int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
+
+int HiLogPrintVerify(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
     const char *fmt, va_list ap)
 {
-#ifdef __OHOS__ 
-    bool isPureSandboxLog = HiLogPrintSandboxLog(level, domain, tag, fmt, ap);
-    if (isPureSandboxLog && type == LOG_APP) {
-        return -1;
-    }
-#endif
     if ((type != LOG_APP) && ((domain < DOMAIN_OS_MIN) || (domain > DOMAIN_OS_MAX))) {
         return -1;
     }
     if (!HiLogIsLoggable(domain, tag, level)) {
+        return -1;
+    }
+#ifdef __OHOS__
+    HiLogPrintSandboxLog(type, level, domain, tag, fmt, ap);
+    if ((type == LOG_APP) &&
+        (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY || g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY)) {
+        return -1;
+    }
+#endif
+    return 1;
+}
+
+int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int domain, const char *tag,
+    const char *fmt, va_list ap)
+{
+    if (HiLogPrintVerify(type, level, domain, tag, fmt, ap) < 0) {
         return -1;
     }
     if (type == LOG_KMSG) {
@@ -545,57 +539,47 @@ bool HiLogIsLoggable(unsigned int domain, const char *tag, LogLevel level)
     return true;
 }
 
-#ifdef __OHOS__ 
+#ifdef __OHOS__
 namespace OHOS {
 namespace HiviewDFX {
-static bool InnerIsAppLogLoggable()
-{
-    return true;
-}
 static bool InnerFlushAppLog()
 {
-    if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
-        return FlushAppLog(true);
-    } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
-        return FlushAppLog(false);
+    if (IsPrivateSandboxEnable()) {
+        return FlushPrivateSandboxLog();
+    } else if (IsShareSandboxEnable()) {
+        return FlushShareSandboxLog();
     }
     return false;
 }
 static bool InnerCleanAppLog()
 {
-    if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
-        return CleanAppLog(true);
-    } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
-        return CleanAppLog(false);
+    if (IsPrivateSandboxEnable()) {
+        return CleanPrivateSandboxLog();
+    } else if (IsShareSandboxEnable()) {
+        return CleanShareSandboxLog();
     }
     return false;
 }
 static std::vector<std::string> InnerGetAppLogFile(int seconds)
 {
-    if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
-        return GetAppLogFile(seconds, true);
-    } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
-        return GetAppLogFile(seconds, false);
+    if (IsPrivateSandboxEnable()) {
+        return GetPrivateSandboxLogFile(seconds);
+    } else if (IsShareSandboxEnable()) {
+        return GetShareSandboxLogFile(seconds);
     }
     return std::vector<std::string>();
 }
 static OutputType InnerSetOutputType(OutputType type)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
-    g_domains.clear();
+    g_sandboxDomains.clear();
     OutputType temp = g_sandboxStatus;
     g_sandboxStatus = type;
-    if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
+    if (type == OutputType::PRIVATE_SANDBOX_ONLY ||
+        type == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
         SetPrivateSandboxStatus(true);
-    } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
+    } else if (type == OutputType::SHARE_SANDBOX_ONLY ||
+        type == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
         SetPublicSandboxStatus(true);
     } else {
         SetPrivateSandboxStatus(false);
@@ -603,18 +587,18 @@ static OutputType InnerSetOutputType(OutputType type)
     }
     return temp;
 }
-static OutputType InnerSetOutputTypeByDomainId(OutputType type, std::vector<int> domains, bool isExclude)
+static OutputType InnerSetOutputTypeByDomainId(OutputType type, std::vector<int>& domains, bool isExclude)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
     OutputType temp = g_sandboxStatus;
     g_sandboxStatus = type;
-    g_domains = domains;
-    g_isExclude = isExclude;
-    if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
+    g_sandboxDomains = domains;
+    g_sandboxIsExclude = isExclude;
+    if (type == OutputType::PRIVATE_SANDBOX_ONLY ||
+        type == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
         SetPrivateSandboxStatus(true);
-    } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
+    } else if (type == OutputType::SHARE_SANDBOX_ONLY ||
+        type == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
         SetPublicSandboxStatus(true);
     } else {
         SetPrivateSandboxStatus(false);
@@ -629,29 +613,25 @@ static OutputType InnerGetOutputType()
 }
 static std::string InnerGetOutputDir()
 {
-    if (g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
+    if (IsPrivateSandboxEnable()) {
         return "/data/storage/el2/base/hiapplog";
-    } else if (g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
+    } else if (IsShareSandboxEnable()) {
         return "/data/storage/el2/log/hiapplog";
     }
     return "";
 }
 
-bool HiLogIsAppLogLoggable()
-{
-    return InnerIsAppLogLoggable();
-}
 bool HiLogFlushAppLog()
 {
     return InnerFlushAppLog();
 }
+
 bool HiLogCleanAppLog()
 {
     return InnerCleanAppLog();
 }
-int HiLogGetAppLogFile(int seconds, char* buffer)
+
+int HiLogGetAppLogFile(int seconds, char* buffer, unsigned length)
 {
     std::vector<std::string> files = InnerGetAppLogFile(seconds);
     std::string result;
@@ -662,15 +642,17 @@ int HiLogGetAppLogFile(int seconds, char* buffer)
     if (!result.empty()) {
         result.pop_back();
     }
-    if (snprintf_s(buffer, LOG_FILE_SIZE, LOG_FILE_SIZE - 1, "%s", result.c_str()) <= 0) {
+    if (snprintf_s(buffer, length, length - 1, "%s", result.c_str()) <= 0) {
         return -1;
     }
     return 0;
 }
+
 OutputType HiLogSetOutputType(OutputType type)
 {
     return InnerSetOutputType(type);
 }
+
 OutputType HiLogSetOutputTypeByDomainId(OutputType type, int* domains, int length, bool isExclude)
 {
     std::vector<int> domainVec;
@@ -679,14 +661,16 @@ OutputType HiLogSetOutputTypeByDomainId(OutputType type, int* domains, int lengt
     }
     return InnerSetOutputTypeByDomainId(type, domainVec, isExclude);
 }
+
 OutputType HiLogGetOutputType()
 {
     return InnerGetOutputType();
 }
-int HiLogGetOutputDir(char* buffer)
+
+int HiLogGetOutputDir(char* buffer, unsigned length)
 {
     std::string dir = InnerGetOutputDir();
-    if (snprintf_s(buffer, OUTPUT_DIR_SIZE, OUTPUT_DIR_SIZE - 1, "%s", dir.c_str()) <= 0) {
+    if (snprintf_s(buffer, length, length - 1, "%s", dir.c_str()) <= 0) {
         return -1;
     }
     return 0;

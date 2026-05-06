@@ -52,6 +52,8 @@ ohos_shared_library("hilog_ani") {
   } else if (is_linux) {
     deps += [ "../../../native/innerkits:libhilog_linux" ]
     defines += [ "__LINUX__" ]
+  } else {
+    defines = [ "__OHOS__" ]
   }
 
   subsystem_name = "hiviewdfx"

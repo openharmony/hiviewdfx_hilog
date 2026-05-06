@@ -28,15 +28,15 @@
 namespace OHOS {
 namespace HiviewDFX {
 namespace {
-    const std::string PRIVATE_APP_LOG_DIR = "/data/storage/el2/base/hiapplog";
-    const std::string PUBLIC_APP_LOG_DIR = "/data/storage/el2/log/hiapplog";
+    const std::string PRIVATE_APP_LOG_DIR = "/data/storage/el2/base/hiapplog/";
+    const std::string PUBLIC_APP_LOG_DIR = "/data/storage/el2/log/hiapplog/";
     const std::string LOG_FILE_PREFIX = "hiapplog";
     const std::string LOG_FILE_SUFFIX = ".log";
-    const std::string PRIVATE_APP_PERSIST_FILE = PRIVATE_APP_LOG_DIR + "/.persist_sandbox_log_";
-    const std::string PUBLIC_APP_PERSIST_FILE = PUBLIC_APP_LOG_DIR + "/.persist_sandbox_log_";
+    const std::string PRIVATE_APP_PERSIST_FILE = PRIVATE_APP_LOG_DIR + ".persist_sandbox_log_";
+    const std::string PUBLIC_APP_PERSIST_FILE = PUBLIC_APP_LOG_DIR + ".persist_sandbox_log_";
     constexpr int MAX_SANDBOX_LOG_NUM = 50;
-    constexpr size_t MAX_SANDBOX_LOG_FILE_SIZE = 128 * 1024;
-    constexpr size_t SANDBOX_LOG_MMAP_SIZE = 8 * 1024;
+    constexpr size_t MAX_SANDBOX_LOG_FILE_SIZE = 2 * 1024 * 1024;
+    constexpr size_t SANDBOX_LOG_MMAP_SIZE = 16 * 1024;
     constexpr size_t MAX_LOG_LEN = 1024;
     constexpr int SUCCESS = 0;
     constexpr int ERROR_DISABLED = 50;
@@ -72,7 +72,7 @@ AppboxLogger::~AppboxLogger()
     }
 }
 
-void AppboxLogger::AsyncWriteLog(std::string log)
+void AppboxLogger::AsyncWriteLog(std::string& log)
 {
     {
         std::lock_guard<std::mutex> lock(initMutex_);

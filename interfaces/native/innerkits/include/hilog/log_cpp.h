@@ -67,11 +67,11 @@ public:
 bool HiLogIsAppLogLoggable();
 bool HiLogFlushAppLog();
 bool HiLogCleanAppLog();
-int HiLogGetAppLogFile(int seconds, char* buffer);
+int HiLogGetAppLogFile(int seconds, char* buffer, unsigned length);
 OutputType HiLogSetOutputType(OutputType type);
 OutputType HiLogSetOutputTypeByDomainId(OutputType type, int* domains, int length, bool isExclude);
 OutputType HiLogGetOutputType();
-int HiLogGetOutputDir(char* buffer);
+int HiLogGetOutputDir(char* buffer, unsigned length);
 } // namespace HiviewDFX
 } // namespace OHOS
 
