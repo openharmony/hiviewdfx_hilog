@@ -49,7 +49,7 @@ public:
             return nullptr;
         }
         T *t = nullptr;
-        napi_status status = napi_unwrap(env, objStat, (void **)&t);
+        napi_status status = napi_unwrap(env, objStat, reinterpret_cast<void**>(&t));
         if (status != napi_ok) {
             return nullptr;
         }

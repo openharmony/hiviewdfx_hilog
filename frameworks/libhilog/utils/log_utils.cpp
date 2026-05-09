@@ -145,7 +145,7 @@ static const KVMap<int16_t, string> g_ErrorMsgs({
 
 string ErrorCode2Str(int16_t errorCode)
 {
-    return g_ErrorMsgs.GetValue((uint16_t)errorCode) + " [CODE: " + to_string(errorCode) + "]";
+    return g_ErrorMsgs.GetValue(static_cast<uint16_t>(errorCode)) + " [CODE: " + to_string(errorCode) + "]";
 }
 
 // Log Types&Strings Map
