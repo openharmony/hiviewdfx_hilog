@@ -36,6 +36,9 @@ constexpr char CLASS_NAME_BIGINT[] = "std.core.BigInt";
 constexpr char CLASS_NAME_OBJECT[] = "std.core.Object";
 constexpr char FUNCTION_TOSTRING[] = "toString";
 constexpr char MANGLING_TOSTRING[] = ":C{std.core.String}";
+constexpr char FUNCTION_TOINT[] = "toInt";
+constexpr char MANGLING_TOINT[] = ":i";
+constexpr char OUTPUTTYPE_STRING[] = "ohos.hilog.hilog.OutputType";
 const std::pair<const char*, AniArgsType> OBJECT_TYPE[] = {
     {CLASS_NAME_INT, AniArgsType::ANI_INT},
     {CLASS_NAME_BOOLEAN, AniArgsType::ANI_BOOLEAN},
@@ -115,6 +118,61 @@ std::string AniUtil::AniArgToString(ani_env *env, ani_object arg)
         return "";
     }
     return AniStringToStdString(env, static_cast<ani_string>(argStrRef));
+}
+
+bool AniUtil::AniInt32ToEnumOutputType(ani_env *env, int32_t value, ani_enum_item& enumItem)
+{
+    if (value < 0) {
+        return false;
+    }
+    enumItem = EnumNativeToETSByValue(env, OUTPUTTYPE_STRING, static_cast<size_t>(value));
+    return true;
+}
+
+static size_t TransformOutputTypeIndex(const size_t index)
+{
+    return index + 1; // 0->CONSOLE_ONLY, 1->PRIVATE_SANDBOX_ONLY
+}
+
+ani_enum_item AniUtil::EnumNativeToETSByValue(ani_env *env, const char* enumClassName, const size_t value)
+{
+    if (env == nullptr) {
+        HiLog::Info(LABEL, "null env");
+        return nullptr;
+    }
+    ani_enum aniEnum = nullptr;
+    ani_status status = env->FindEnum(enumClassName, &aniEnum);
+    if (status != ANI_OK) {
+        HiLog::Info(LABEL, "FindEnum failed %{public}d", status);
+        return nullptr;
+    }
+
+    size_t index = TransformOutputTypeIndex(value);
+    ani_enum_item enumItem = nullptr;
+    status = env->Enum_GetEnumItemByIndex(aniEnum, index, &enumItem);
+    if (status != ANI_OK) {
+        HiLog::Info(LABEL, "Enum_GetEnumItemByIndex failed %{public}d", status);
+        return nullptr;
+    }
+    return enumItem;
+}
+
+ani_string AniUtil::StdStringToAniString(ani_env *env, std::string& str)
+{
+    ani_string result{};
+    env->String_NewUTF8(str.c_str(), str.size(), &result);
+    return result;
+}
+
+bool AniUtil::AniArgToInt(ani_env *env, ani_object arg, int& result)
+{
+    ani_int value;
+    if (ANI_OK != env->Object_CallMethodByName_Int(arg, FUNCTION_TOINT, MANGLING_TOINT, &value)) {
+        HiLog::Info(LABEL, "Call ets method toString() failed.");
+        return false;
+    }
+    result = static_cast<int>(value);
+    return true;
 }
 }  // namespace HiviewDFX
 }  // namespace OHOS

@@ -43,6 +43,14 @@ public:
     static ani_boolean IsLoggable(ani_env *env, ani_int domain, ani_string tag, ani_enum_item level);
     static void SetMinLogLevel(ani_env *env, ani_enum_item level);
     static void SetLogLevel(ani_env *env, ani_enum_item level, ani_enum_item prefer);
+    static ani_enum_item SetOutputType(ani_env *env, ani_enum_item type);
+    static ani_enum_item SetOutputTypeByDomainID(ani_env *env, ani_enum_item type,
+                                                ani_array domainIDs, ani_boolean isExclude);
+    static void Clean(ani_env *env);
+    static void Flush(ani_env *env);
+    static ani_enum_item GetOutputType(ani_env *env);
+    static ani_string GetOutputDir(ani_env *env);
+    static ani_array GetLogFile(ani_env *env, ani_int latestSeconds);
     
 private:
     static void ParseAniValue(ani_env *env, ani_ref element, std::vector<AniParam> &params);

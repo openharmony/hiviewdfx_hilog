@@ -79,6 +79,8 @@ public:
 
     static NVal CreateNull(napi_env env);
 
+    static NVal CreateInt32(napi_env env, int32_t val);
+
     static NVal CreateInt64(napi_env env, int64_t val);
 
     static NVal CreateObject(napi_env env);

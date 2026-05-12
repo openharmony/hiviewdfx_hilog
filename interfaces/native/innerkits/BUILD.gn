@@ -46,7 +46,7 @@ if (is_mingw || is_mac || is_linux || is_ohos) {
       output_extension = "so"
       version_script = "libhilog.map"
       innerapi_tags = [
-        "chipsetsdk",
+        "llndk",
         "platformsdk",
         "sasdk",
       ]
@@ -101,7 +101,7 @@ template("libhilog") {
 
       if (platform == "ohos") {
         innerapi_tags = [
-          "chipsetsdk",
+          "llndk",
           "platformsdk",
           "sasdk",
         ]

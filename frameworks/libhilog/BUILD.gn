@@ -113,6 +113,7 @@ template("libhilog_source") {
 
     if (platform != "windows" && platform != "mac" && platform != "linux") {
       external_deps += [ "init:libbegetutil" ]
+      deps = [ "../../interfaces/sandbox_log:libsandboxlog" ]
     }
 
     part_name = "hilog"

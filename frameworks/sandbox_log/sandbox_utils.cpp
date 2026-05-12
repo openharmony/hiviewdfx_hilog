@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <securec.h>
 
-#include "hilog/log.h"
+#include "hilog_base/log_base.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -27,7 +27,7 @@ bool LockFile(const std::string& filePath, int& fd)
 {
     fd = open(filePath.c_str(), O_WRONLY | O_APPEND | O_CREAT, 0644); // 0644 : file permission rw-r--r--
     if (fd == -1) {
-        HILOG_ERROR(LOG_CORE, "Failed to open file: %{public}s, errno=%{public}d", filePath.c_str(), errno);
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to open file: %{public}s, errno=%{public}d", filePath.c_str(), errno);
         return false;
     }
     fdsan_exchange_owner_tag(fd, 0, HILOG_FDSAN_TAG);
@@ -43,7 +43,7 @@ bool LockFile(const std::string& filePath, int& fd)
     if (fcntl(fd, F_OFD_SETLK, &fl) == -1) {
         fdsan_close_with_tag(fd, HILOG_FDSAN_TAG);
         fd = -1;
-        HILOG_ERROR(LOG_CORE, "Failed to lock file: %{public}s, errno=%{public}d.", filePath.c_str(), errno);
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to lock file: %{public}s, errno=%{public}d.", filePath.c_str(), errno);
         return false;
     }
     return true;
@@ -93,7 +93,7 @@ bool IsFileWriteLocked(const std::string& filePath)
 {
     int fd = open(filePath.c_str(), O_RDWR);
     if (fd == -1) {
-        HILOG_ERROR(LOG_CORE, "errno=%{public}d, open failed : %{public}s", errno, filePath.c_str());
+        HILOG_BASE_ERROR(LOG_CORE, "errno=%{public}d, open failed : %{public}s", errno, filePath.c_str());
         return true; // file not found or permission denied
     }
     fdsan_exchange_owner_tag(fd, 0, HILOG_FDSAN_TAG);
@@ -148,14 +148,14 @@ std::string GetTimeString(uint64_t time)
 uint64_t TimeStrToTimestamp(const std::string& timeStr)
 {
     if (timeStr.length() != 17) { // 17 : the length of the time string
-        HILOG_ERROR(LOG_CORE, "The length of the time string is not 17 characters.");
+        HILOG_BASE_ERROR(LOG_CORE, "The length of the time string is not 17 characters.");
         return 0;
     }
     std::tm t = {};
     int msec = 0;
     if (sscanf_s(timeStr.c_str(), "%4d%2d%2d%2d%2d%2d%3d", &t.tm_year, &t.tm_mon, &t.tm_mday,
                  &t.tm_hour, &t.tm_min, &t.tm_sec, &msec) != 7) { // 7 : number of matches
-        HILOG_ERROR(LOG_CORE, "Failed to parse time string %{public}s.", timeStr.c_str());
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to parse time string %{public}s.", timeStr.c_str());
         return 0;
     }
     t.tm_year -= TM_YEAR_BASE;
@@ -163,7 +163,7 @@ uint64_t TimeStrToTimestamp(const std::string& timeStr)
 
     time_t seconds = std::mktime(&t);
     if (seconds == -1) {
-        HILOG_ERROR(LOG_CORE, "Time conversion failed: invalid time.");
+        HILOG_BASE_ERROR(LOG_CORE, "Time conversion failed: invalid time.");
         return 0;
     }
     uint64_t ms = static_cast<uint64_t>(seconds * 1000LL + msec); // 1000LL : 1000ms = 1s
