@@ -25,6 +25,17 @@
         "OHOS::HiviewDFX::CreatePageSwitchSnapshot(unsigned long long, bool, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
         "OHOS::HiviewDFX::CreatePageSwitchSnapshot(unsigned long, bool, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
         "OHOS::HiviewDFX::FlushPageSwitchLog()";
+        "OHOS::HiviewDFX::WritePageSwitchStr(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::WritePrivateSandboxStr(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::WriteShareSandboxStr(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::HiviewDFX::FlushPrivateSandboxLog()";
+        "OHOS::HiviewDFX::FlushShareSandboxLog()";
+        "OHOS::HiviewDFX::CleanPrivateSandboxLog()";
+        "OHOS::HiviewDFX::CleanShareSandboxLog()";
+        "OHOS::HiviewDFX::GetPrivateSandboxLogFile(int)";
+        "OHOS::HiviewDFX::GetShareSandboxLogFile(int)";
+        "OHOS::HiviewDFX::SetPrivateSandboxStatus(bool)";
+        "OHOS::HiviewDFX::SetPublicSandboxStatus(bool)";
     };
 
   local:

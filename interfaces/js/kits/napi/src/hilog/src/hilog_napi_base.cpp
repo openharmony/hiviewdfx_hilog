@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include "properties.h"
 #include "hilog_common.h"
 #include "hilog/log.h"
@@ -37,6 +38,8 @@ static constexpr int PUBLIC_LEN = 6;
 static constexpr int PRIVATE_LEN = 7;
 static constexpr int PROPERTY_POS = 2;
 static const string PRIV_STR = "<private>";
+static constexpr unsigned SANDBOX_NAPI_OUTPUT_DIR_SIZE = 128;
+static constexpr unsigned SANDBOX_NAPI_LOG_FILE_SIZE = 4096;
 
 void ParseLogContent(string& formatStr, vector<napiParam>& params, string& logContent)
 {
@@ -331,6 +334,158 @@ napi_value HilogNapiBase::HilogImpl(napi_env env, napi_callback_info info, int l
     HiLogPrint((isAppLog ? LOG_APP : LOG_CORE),
         static_cast<LogLevel>(level), domain, tag.get(), "%{public}s", logContent.c_str());
     return nullptr;
+}
+
+napi_value HilogNapiBase::SetOutputType(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::ONE)) {
+        return nullptr;
+    }
+    bool succ = false;
+    int type = OutputType::SANDBOXLOG_DEFAULT;
+    std::tie(succ, type) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
+    if (!succ) {
+        return nullptr;
+    }
+#ifdef __OHOS__
+    OutputType lastType = HiLogSetOutputType(static_cast<OutputType>(type));
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
+    return NVal::CreateInt32(env, static_cast<int32_t>(lastType)).val_;
+}
+
+napi_value HilogNapiBase::SetOutputTypeByDomainId(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::THREE)) {
+        return nullptr;
+    }
+    bool succ = false;
+    int type = OutputType::SANDBOXLOG_DEFAULT;
+    std::tie(succ, type) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
+    if (!succ) {
+        return nullptr;
+    }
+    std::vector<int> domains;
+    napi_value array = funcArg[NARG_POS::SECOND];
+    uint32_t length;
+    napi_status lengthStatus = napi_get_array_length(env, array, &length);
+    if (lengthStatus != napi_ok) {
+        return nullptr;
+    }
+    for (uint32_t i = 0; i < length; ++i) {
+        napi_value element;
+        napi_status eleStatus = napi_get_element(env, array, i, &element);
+        if (eleStatus != napi_ok) {
+            return nullptr;
+        }
+        int32_t item = 0;
+        napi_status status = napi_get_value_int32(env, element, &item);
+        if (status != napi_ok) {
+            return nullptr;
+        }
+        domains.push_back(item);
+    }
+    succ = false;
+    bool isExclude = false;
+    std::tie(succ, isExclude) = NVal(env, funcArg[NARG_POS::THIRD]).ToBool();
+    if (!succ) {
+        return nullptr;
+    }
+    int* domainBuffer = new int[domains.size()];
+    for (int i = 0; i < domains.size(); ++i) {
+        domainBuffer[i] = domains[i];
+    }
+#ifdef __OHOS__
+    OutputType lastType = HiLogSetOutputTypeByDomainId(static_cast<OutputType>(type),
+        domainBuffer, domains.size(), isExclude);
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
+    delete[] domainBuffer;
+    return NVal::CreateInt32(env, lastType).val_;
+}
+
+napi_value HilogNapiBase::GetOutputType(napi_env env, napi_callback_info info)
+{
+#ifdef __OHOS__
+    OutputType type = HiLogGetOutputType();
+#else
+    OutputType type = OutputType::SANDBOXLOG_DEFAULT;
+#endif
+    return NVal::CreateInt32(env, static_cast<int32_t>(type)).val_;
+}
+napi_value HilogNapiBase::GetOutputDir(napi_env env, napi_callback_info info)
+{
+    char buffer[SANDBOX_NAPI_OUTPUT_DIR_SIZE];
+#ifdef __OHOS__
+    HiLogGetOutputDir(buffer, SANDBOX_NAPI_OUTPUT_DIR_SIZE);
+#endif
+    std::string dir(buffer);
+    return NVal::CreateUTF8String(env, dir).val_;
+}
+napi_value HilogNapiBase::Clean(napi_env env, napi_callback_info info)
+{
+#ifdef __OHOS__
+    HiLogCleanAppLog();
+#endif
+    return nullptr;
+}
+napi_value HilogNapiBase::Flush(napi_env env, napi_callback_info info)
+{
+#ifdef __OHOS__
+    HiLogFlushAppLog();
+#endif
+    return nullptr;
+}
+
+static std::vector<std::string> SpiltString(const std::string& str, char delimiter)
+{
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = str.find(delimiter);
+
+    while (end != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + 1;
+        end = str.find(delimiter, start);
+    }
+
+    tokens.push_back(str.substr(start));
+    return tokens;
+}
+
+napi_value HilogNapiBase::GetLogFile(napi_env env, napi_callback_info info)
+{
+    NFuncArg funcArg(env, info);
+    if (!funcArg.InitArgs(NARG_CNT::ONE)) {
+        return nullptr;
+    }
+    bool succ = false;
+    int seconds = 0;
+    std::tie(succ, seconds) = NVal(env, funcArg[NARG_POS::FIRST]).ToInt32();
+    if (!succ) {
+        return nullptr;
+    }
+    char fileStr[SANDBOX_NAPI_LOG_FILE_SIZE];
+#ifdef __OHOS__
+    HiLogGetAppLogFile(seconds, fileStr, SANDBOX_NAPI_LOG_FILE_SIZE);
+#endif
+    std::string files(fileStr);
+    std::vector<std::string> fileList = SpiltString(files, ',');
+    napi_value arrayResult;
+    napi_create_array_with_length(env, fileList.size(), &arrayResult);
+    for (size_t i = 0; i != fileList.size(); ++i) {
+        napi_value item = nullptr;
+        napi_create_string_utf8(env, fileList[i].c_str(), fileList[i].length(), &item);
+        napi_status status = napi_set_element(env, arrayResult, i, item);
+        if (status != napi_ok) {
+            return nullptr;
+        }
+    }
+    return arrayResult;
 }
 }  // namespace HiviewDFX
 }  // namespace OHOS

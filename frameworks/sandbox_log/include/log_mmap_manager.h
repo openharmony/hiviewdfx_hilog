@@ -33,10 +33,10 @@ public:
     size_t GetSize() const { return (mmapSize_ > METADATA_SIZE) ? mmapSize_ - METADATA_SIZE : 0; }
     size_t GetOffset() const { return currentOffset_; }
     void Reset();
+    static constexpr size_t METADATA_SIZE = sizeof(size_t); // Reserve for currentOffset_
 private:
     void UpdateMetadata();
     bool IsParentDirExists(const std::string& path);
-    static constexpr size_t METADATA_SIZE = sizeof(size_t); // Reserve for currentOffset_
     char* mmapPtr_ = nullptr;
     FILE* mmapFp_ = nullptr;
     size_t mmapSize_ = 0;

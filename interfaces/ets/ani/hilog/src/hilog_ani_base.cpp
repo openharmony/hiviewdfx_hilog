@@ -34,6 +34,8 @@ static constexpr int PUBLIC_LEN = 6;
 static constexpr int PRIVATE_LEN = 7;
 static constexpr int PROPERTY_POS = 2;
 static const std::string PRIV_STR = "<private>";
+static constexpr unsigned SANDBOX_ANI_OUTPUT_DIR_SIZE = 128;
+static constexpr unsigned SANDBOX_ANI_LOG_FILE_SIZE = 4096;
 
 static void HandleFormatFlags(const std::string& formatStr, uint32_t& pos, bool& showPriv)
 {
@@ -241,5 +243,155 @@ void HilogAniBase::SetLogLevel(ani_env *env, ani_enum_item level, ani_enum_item 
 
     HiLogSetAppLogLevel(static_cast<LogLevel>(levelVal), static_cast<PreferStrategy>(preferVal));
 }
+
+ani_enum_item HilogAniBase::SetOutputType(ani_env *env, ani_enum_item type)
+{
+    int32_t typeVal = OutputType::SANDBOXLOG_DEFAULT;
+    if (!AniUtil::AniEnumToInt32(env, type, typeVal)) {
+        return nullptr;
+    }
+#ifdef __OHOS__
+    OutputType lastType = HiLogSetOutputType(static_cast<OutputType>(typeVal));
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
+    ani_enum_item item;
+    if (!AniUtil::AniInt32ToEnumOutputType(env, static_cast<int32_t>(lastType), item)) {
+        HiLog::Warn(LABEL, "Int32 To Enum OutputType failed");
+        return nullptr;
+    }
+    return item;
+}
+
+ani_enum_item HilogAniBase::SetOutputTypeByDomainID(ani_env *env, ani_enum_item type,
+                                                    ani_array domainIDs, ani_boolean isExclude)
+{
+    int32_t typeVal = OutputType::SANDBOXLOG_DEFAULT;
+    if (!AniUtil::AniEnumToInt32(env, type, typeVal)) {
+        return nullptr;
+    }
+    ani_size length = 0;
+    if (ANI_OK != env->Array_GetLength(domainIDs, &length)) {
+        HiLog::Warn(LABEL, "Get array length failed");
+        return nullptr;
+    }
+    std::string logContent;
+    std::vector<int> domains;
+    for (ani_size i = 0; i < length; ++i) {
+        ani_ref element;
+        if (ANI_OK != env->Array_Get(domainIDs, i, &element)) {
+            HiLog::Warn(LABEL, "Get element at index %{public}zu from array failed", i);
+            return nullptr;
+        }
+        int domain = 0;
+        if (AniUtil::AniArgToInt(env, static_cast<ani_object>(element), domain)) {
+            domains.push_back(domain);
+        }
+    }
+
+    int* domainBuffer = new int[domains.size()];
+    for (int i = 0; i < domains.size(); ++i) {
+        domainBuffer[i] = domains[i];
+    }
+#ifdef __OHOS__
+    OutputType lastType = HiLogSetOutputTypeByDomainId(static_cast<OutputType>(typeVal),
+                                                       domainBuffer, domains.size(), static_cast<bool>(isExclude));
+#else
+    OutputType lastType = OutputType::SANDBOXLOG_DEFAULT;
+#endif
+    delete[] domainBuffer;
+    ani_enum_item item;
+    if (!AniUtil::AniInt32ToEnumOutputType(env, static_cast<int32_t>(lastType), item)) {
+        HiLog::Warn(LABEL, "Int32 To Enum OutputType failed");
+        return nullptr;
+    }
+    return item;
+}
+
+void HilogAniBase::Clean(ani_env *env)
+{
+#ifdef __OHOS__
+    HiLogCleanAppLog();
+#endif
+}
+
+void HilogAniBase::Flush(ani_env *env)
+{
+#ifdef __OHOS__
+    HiLogFlushAppLog();
+#endif
+}
+
+ani_enum_item HilogAniBase::GetOutputType(ani_env *env)
+{
+#ifdef __OHOS__
+    OutputType type = HiLogGetOutputType();
+#else
+    OutputType type = OutputType::SANDBOXLOG_DEFAULT;
+#endif
+    ani_enum_item item;
+    if (!AniUtil::AniInt32ToEnumOutputType(env, static_cast<int32_t>(type), item)) {
+        HiLog::Warn(LABEL, "Int32 To Enum OutputType failed");
+        return nullptr;
+    }
+    return item;
+}
+
+ani_string HilogAniBase::GetOutputDir(ani_env *env)
+{
+    char buffer[SANDBOX_ANI_OUTPUT_DIR_SIZE];
+#ifdef __OHOS__
+    HiLogGetOutputDir(buffer, SANDBOX_ANI_OUTPUT_DIR_SIZE);
+#endif
+    std::string dir(buffer);
+    return AniUtil::StdStringToAniString(env, dir);
+}
+
+static std::vector<std::string> SpiltString(const std::string& str, char delimiter)
+{
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = str.find(delimiter);
+
+    while (end != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + 1;
+        end = str.find(delimiter, start);
+    }
+
+    tokens.push_back(str.substr(start));
+    return tokens;
+}
+
+ani_array HilogAniBase::GetLogFile(ani_env *env, ani_int latestSeconds)
+{
+    char fileBuf[SANDBOX_ANI_LOG_FILE_SIZE];
+#ifdef __OHOS__
+    HiLogGetAppLogFile(static_cast<int32_t>(latestSeconds), fileBuf, SANDBOX_ANI_LOG_FILE_SIZE);
+#endif
+    std::string fileGroup(fileBuf);
+    std::vector<std::string> files = SpiltString(fileGroup, ',');
+    ani_ref undefinedRef{};
+    ani_status status = env->GetUndefined(&undefinedRef);
+    if (status != ANI_OK) {
+        HiLog::Warn(LABEL, "ani get undefined error. status = %{public}d", static_cast<int32_t>(status));
+        return nullptr;
+    }
+    ani_array resultArray {};
+    size_t arraySize = files.size();
+    if ((status = env->Array_New(arraySize, undefinedRef, &resultArray)) != ANI_OK) {
+        HiLog::Warn(LABEL, "ani new array error, status = %{public}d", static_cast<int32_t>(status));
+        return nullptr;
+    }
+    for (size_t i = 0; i < arraySize; i++) {
+        ani_string fileStr = AniUtil::StdStringToAniString(env, files[i]);
+        if (env->Array_Set(resultArray, i, fileStr) != ANI_OK) {
+            HiLog::Warn(LABEL, "Array_Set failed.");
+            return nullptr;
+        }
+    }
+    return resultArray;
+}
+
 }  // namespace HiviewDFX
 }  // namespace OHOS
