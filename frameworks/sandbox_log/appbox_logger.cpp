@@ -28,7 +28,7 @@
 namespace OHOS {
 namespace HiviewDFX {
 namespace {
-    const std::string PRIVATE_APP_LOG_DIR = "/data/storage/el2/base/hiapplog/";
+    const std::string PRIVATE_APP_LOG_DIR = "/data/storage/el2/base/files/hiapplog/";
     const std::string PUBLIC_APP_LOG_DIR = "/data/storage/el2/log/hiapplog/";
     const std::string LOG_FILE_PREFIX = "hiapplog";
     const std::string LOG_FILE_SUFFIX = ".log";
