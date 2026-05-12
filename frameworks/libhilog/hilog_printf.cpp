@@ -614,7 +614,7 @@ static OutputType InnerGetOutputType()
 static std::string InnerGetOutputDir()
 {
     if (IsPrivateSandboxEnable()) {
-        return "/data/storage/el2/base/hiapplog";
+        return "/data/storage/el2/base/files/hiapplog";
     } else if (IsShareSandboxEnable()) {
         return "/data/storage/el2/log/hiapplog";
     }
