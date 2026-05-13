@@ -41,7 +41,7 @@ export default namespace hilog {
 
     export native function setOutputType(type: OutputType): OutputType;
 
-    export native function setOutputTypeByDomainID(type: OutputType, domains: Array<int>, isExclude: boolean): OutputType;
+    export native function setOutputTypeByDomainID(type: OutputType, domainIDs: Array<int>, isExclude: boolean): OutputType;
 
     export native function clean(): void;
 

@@ -38,7 +38,7 @@ constexpr char FUNCTION_TOSTRING[] = "toString";
 constexpr char MANGLING_TOSTRING[] = ":C{std.core.String}";
 constexpr char FUNCTION_TOINT[] = "toInt";
 constexpr char MANGLING_TOINT[] = ":i";
-constexpr char OUTPUTTYPE_STRING[] = "ohos.hilog.hilog.OutputType";
+constexpr char OUTPUTTYPE_STRING[] = "@ohos.hilog.hilog.OutputType";
 const std::pair<const char*, AniArgsType> OBJECT_TYPE[] = {
     {CLASS_NAME_INT, AniArgsType::ANI_INT},
     {CLASS_NAME_BOOLEAN, AniArgsType::ANI_BOOLEAN},

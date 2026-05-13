@@ -356,7 +356,7 @@ napi_value HilogNapiBase::SetOutputType(napi_env env, napi_callback_info info)
     return NVal::CreateInt32(env, static_cast<int32_t>(lastType)).val_;
 }
 
-napi_value HilogNapiBase::SetOutputTypeByDomainId(napi_env env, napi_callback_info info)
+napi_value HilogNapiBase::SetOutputTypeByDomainID(napi_env env, napi_callback_info info)
 {
     NFuncArg funcArg(env, info);
     if (!funcArg.InitArgs(NARG_CNT::THREE)) {
