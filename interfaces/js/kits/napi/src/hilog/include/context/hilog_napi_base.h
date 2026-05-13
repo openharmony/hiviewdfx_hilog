@@ -45,7 +45,7 @@ public:
     static napi_value SetMinLogLevel(napi_env env, napi_callback_info info);
     static napi_value SetLogLevel(napi_env env, napi_callback_info info);
     static napi_value SetOutputType(napi_env env, napi_callback_info info);
-    static napi_value SetOutputTypeByDomainId(napi_env env, napi_callback_info info);
+    static napi_value SetOutputTypeByDomainID(napi_env env, napi_callback_info info);
     static napi_value GetOutputType(napi_env env, napi_callback_info info);
     static napi_value Clean(napi_env env, napi_callback_info info);
     static napi_value Flush(napi_env env, napi_callback_info info);
