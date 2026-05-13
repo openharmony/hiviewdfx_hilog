@@ -141,7 +141,7 @@ bool HilogNapi::Export(napi_env env, napi_value exports)
         NVal::DeclareNapiFunction("setMinLogLevel", HilogNapiBase::SetMinLogLevel),
         NVal::DeclareNapiFunction("setLogLevel", HilogNapiBase::SetLogLevel),
         NVal::DeclareNapiFunction("setOutputType", HilogNapiBase::SetOutputType),
-        NVal::DeclareNapiFunction("setOutputTypeByDomainId", HilogNapiBase::SetOutputTypeByDomainId),
+        NVal::DeclareNapiFunction("setOutputTypeByDomainID", HilogNapiBase::SetOutputTypeByDomainID),
         NVal::DeclareNapiFunction("getOutputType", HilogNapiBase::GetOutputType),
         NVal::DeclareNapiFunction("clean", HilogNapiBase::Clean),
         NVal::DeclareNapiFunction("flush", HilogNapiBase::Flush),

@@ -42,7 +42,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"setMinLogLevel", nullptr, reinterpret_cast<void *>(HilogAniBase::SetMinLogLevel)},
         ani_native_function {"setLogLevel", nullptr, reinterpret_cast<void *>(HilogAniBase::SetLogLevel)},
         ani_native_function {"setOutputType", nullptr, reinterpret_cast<void *>(HilogAniBase::SetOutputType)},
-        ani_native_function {"setOutputTypeByDomainId", nullptr,
+        ani_native_function {"setOutputTypeByDomainID", nullptr,
             reinterpret_cast<void *>(HilogAniBase::SetOutputTypeByDomainID)},
         ani_native_function {"getOutputType", nullptr, reinterpret_cast<void *>(HilogAniBase::GetOutputType)},
         ani_native_function {"clean", nullptr, reinterpret_cast<void *>(HilogAniBase::Clean)},
