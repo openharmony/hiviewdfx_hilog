@@ -127,7 +127,34 @@
         "//base/hiviewdfx/hilog/test:hilog_unittest",
         "//base/hiviewdfx/hilog/test:hilog_moduletest",
         "//base/hiviewdfx/hilog/test:fuzztest"
-      ]
+      ],
+      "conditions": {
+        "//base/hiviewdfx/hilog/services/hilogtool:hilog": {
+          "compile_mode": [
+            "cross"
+          ]
+        },
+        "//base/hiviewdfx/hilog/services/hilogd:hilogd": {
+          "compile_mode": [
+            "cross"
+          ]
+        },
+        "//base/hiviewdfx/hilog/test:hilog_unittest": {
+          "compile_mode": [
+            "cross"
+          ]
+        },
+        "//base/hiviewdfx/hilog/test:hilog_moduletest": {
+          "compile_mode": [
+            "cross"
+          ]
+        },
+        "//base/hiviewdfx/hilog/test:fuzztest": {
+          "compile_mode": [
+            "cross"
+          ]
+        }
+      }
     }
   }
 }

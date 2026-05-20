@@ -75,6 +75,9 @@ template("libhilog_source") {
       "hilog.cpp",
       "hilog_printf.cpp",
     ]
+    if (is_host_product) {
+      sources += [ "../../platform/hilog_utils.cpp" ]
+    }
     if (platform != "windows" && platform != "mac" && platform != "linux") {
       sources += param_sources
       sources += ioctl_sources
@@ -111,7 +114,7 @@ template("libhilog_source") {
 
     external_deps = [ "bounds_checking_function:libsec_shared" ]
 
-    if (platform != "windows" && platform != "mac" && platform != "linux") {
+    if (platform != "windows" && platform != "mac" && platform != "linux" && !is_host_product) {
       external_deps += [ "init:libbegetutil" ]
       deps = [ "../../interfaces/sandbox_log:libsandboxlog" ]
     }

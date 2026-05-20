@@ -32,6 +32,7 @@ config("libsandboxlog_config") {
 ohos_shared_library("libsandboxlog") {
   public_configs = [ ":libsandboxlog_pub_config" ]
   configs = [ ":libsandboxlog_config" ]
+  deps = [ "../native/innerkits:libhilog_base" ]
 
   sources = [
     "$sandbox_log_root/page_switch_log.cpp",
@@ -74,7 +75,9 @@ ohos_shared_library("libsandboxlog") {
     cfi_cross_dso = true
     debug = false
     boundary_sanitize = true
-    integer_overflow = true
+  }
+  if (!is_host_product) {
+    sanitize.integer_overflow = true
   }
 
   # 标签配置（内部接口）

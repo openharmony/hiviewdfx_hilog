@@ -14,6 +14,7 @@
  */
 #ifndef LOG_PRINT_H
 #define LOG_PRINT_H
+#include <cstdint>
 #include <iostream>
 
 #include "hilog_cmd.h"

@@ -16,6 +16,7 @@
 #ifndef PROPERTIES_H
 #define PROPERTIES_H
 
+#include <cstdint>
 #include <string>
 
 namespace OHOS {
