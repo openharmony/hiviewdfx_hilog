@@ -196,7 +196,7 @@ static int HiLogFlowCtrlProcess(int len, const struct timespec &ts)
         atomic_store(&gSumLen, len);
         return dropped;
     } else {
-        uint32_t sumLen = (uint32_t)atomic_load(&gSumLen);
+        uint32_t sumLen = static_cast<uint32_t>(atomic_load(&gSumLen));
         if (sumLen > processQuota) { /* over quota, -1 means don't print */
             atomic_fetch_add_explicit(&gDropped, 1, memory_order_relaxed);
             return -1;
