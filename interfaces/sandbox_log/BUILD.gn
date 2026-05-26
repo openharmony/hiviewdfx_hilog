@@ -32,7 +32,6 @@ config("libsandboxlog_config") {
 ohos_shared_library("libsandboxlog") {
   public_configs = [ ":libsandboxlog_pub_config" ]
   configs = [ ":libsandboxlog_config" ]
-  deps = [ "../native/innerkits:libhilog_base" ]
 
   sources = [
     "$sandbox_log_root/page_switch_log.cpp",
