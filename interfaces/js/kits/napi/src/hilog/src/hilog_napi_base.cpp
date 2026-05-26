@@ -394,7 +394,7 @@ napi_value HilogNapiBase::SetOutputTypeByDomainID(napi_env env, napi_callback_in
     if (!succ) {
         return nullptr;
     }
-    int* domainBuffer = new int[domains.size()];
+    int* domainBuffer = new int[domains.size()]();
     for (int i = 0; i < domains.size(); ++i) {
         domainBuffer[i] = domains[i];
     }
@@ -419,7 +419,7 @@ napi_value HilogNapiBase::GetOutputType(napi_env env, napi_callback_info info)
 }
 napi_value HilogNapiBase::GetOutputDir(napi_env env, napi_callback_info info)
 {
-    char buffer[SANDBOX_NAPI_OUTPUT_DIR_SIZE];
+    char buffer[SANDBOX_NAPI_OUTPUT_DIR_SIZE] = {0};
 #ifdef __OHOS__
     HiLogGetOutputDir(buffer, SANDBOX_NAPI_OUTPUT_DIR_SIZE);
 #endif
@@ -443,6 +443,9 @@ napi_value HilogNapiBase::Flush(napi_env env, napi_callback_info info)
 
 static std::vector<std::string> SpiltString(const std::string& str, char delimiter)
 {
+    if (str.empty()) {
+        return std::vector<std::string>();
+    }
     std::vector<std::string> tokens;
     size_t start = 0;
     size_t end = str.find(delimiter);
@@ -469,7 +472,7 @@ napi_value HilogNapiBase::GetLogFile(napi_env env, napi_callback_info info)
     if (!succ) {
         return nullptr;
     }
-    char fileStr[SANDBOX_NAPI_LOG_FILE_SIZE];
+    char fileStr[SANDBOX_NAPI_LOG_FILE_SIZE] = {0};
 #ifdef __OHOS__
     HiLogGetAppLogFile(seconds, fileStr, SANDBOX_NAPI_LOG_FILE_SIZE);
 #endif

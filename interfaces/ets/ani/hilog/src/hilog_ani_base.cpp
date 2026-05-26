@@ -289,7 +289,7 @@ ani_enum_item HilogAniBase::SetOutputTypeByDomainID(ani_env *env, ani_enum_item 
         }
     }
 
-    int* domainBuffer = new int[domains.size()];
+    int* domainBuffer = new int[domains.size()]();
     for (int i = 0; i < domains.size(); ++i) {
         domainBuffer[i] = domains[i];
     }
@@ -339,7 +339,7 @@ ani_enum_item HilogAniBase::GetOutputType(ani_env *env)
 
 ani_string HilogAniBase::GetOutputDir(ani_env *env)
 {
-    char buffer[SANDBOX_ANI_OUTPUT_DIR_SIZE];
+    char buffer[SANDBOX_ANI_OUTPUT_DIR_SIZE] = {0};
 #ifdef __OHOS__
     HiLogGetOutputDir(buffer, SANDBOX_ANI_OUTPUT_DIR_SIZE);
 #endif
@@ -349,6 +349,9 @@ ani_string HilogAniBase::GetOutputDir(ani_env *env)
 
 static std::vector<std::string> SpiltString(const std::string& str, char delimiter)
 {
+    if (str.empty()) {
+        return std::vector<std::string>();
+    }
     std::vector<std::string> tokens;
     size_t start = 0;
     size_t end = str.find(delimiter);
@@ -365,7 +368,7 @@ static std::vector<std::string> SpiltString(const std::string& str, char delimit
 
 ani_array HilogAniBase::GetLogFile(ani_env *env, ani_int latestSeconds)
 {
-    char fileBuf[SANDBOX_ANI_LOG_FILE_SIZE];
+    char fileBuf[SANDBOX_ANI_LOG_FILE_SIZE] = {0};
 #ifdef __OHOS__
     HiLogGetAppLogFile(static_cast<int32_t>(latestSeconds), fileBuf, SANDBOX_ANI_LOG_FILE_SIZE);
 #endif
