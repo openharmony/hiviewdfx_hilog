@@ -373,8 +373,10 @@ int AppFileManager::DeleteOldestFiles(const fs::path& dirPath, size_t keepCount)
         [](const FileInfo& a, const FileInfo& b) {
             return a.lastWriteTime > b.lastWriteTime;
         });
+    
+    int toDelete = files.size() - keepCount + 1;
     int deleted = 0;
-    for (size_t i = keepCount; i < files.size(); i++) {
+    for (size_t i = files.size() - 1; (deleted < toDelete) && (i >= 0); --i) {
         if (IsFileWriteLocked(files[i].path.string())) {
             continue;
         }
