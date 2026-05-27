@@ -15,6 +15,7 @@
 
 #ifndef LOG_TIME_STAMP_H
 #define LOG_TIME_STAMP_H
+#include <cstdint>
 #include <ctime>
 
 namespace OHOS {

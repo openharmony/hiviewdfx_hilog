@@ -15,9 +15,11 @@
 #ifndef LOG_UTILS_H
 #define LOG_UTILS_H
 
+#include <cstdint>
+#include <functional>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {
