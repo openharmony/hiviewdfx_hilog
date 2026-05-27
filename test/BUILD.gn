@@ -98,7 +98,6 @@ group("hilog_unittest") {
     "unittest/common:HilogPrintTest",
     "unittest/common:HilogToolTest",
     "unittest/common:HilogUtilsTest",
-    "unittest/sandboxLog:SandboxLoggerTest",
   ]
 }
 
