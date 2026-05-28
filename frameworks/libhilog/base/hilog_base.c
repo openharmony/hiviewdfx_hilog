@@ -27,6 +27,8 @@
 #include <sys/un.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
 
 #define LOG_LEN 3
 #define ERROR_FD 2
@@ -152,7 +154,11 @@ int HiLogBasePrintArgs(
 #ifndef __RECV_MSG_WITH_UCRED_
     header.pid = getprocpid();
 #endif
+#if defined(__OHOS__)
     header.tid = (uint32_t)(gettid());
+#else
+    header.tid = (uint32_t)(syscall(SYS_gettid));
+#endif
     header.domain = domain;
 
     return SendMessage(&header, tag, tagLen + 1, buf, logLen + 1);

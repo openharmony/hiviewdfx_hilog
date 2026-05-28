@@ -18,10 +18,8 @@
 
 #ifdef __cplusplus
 
-#include <cstdint>
 #include <stddef.h>
 #include <string>
-#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {
