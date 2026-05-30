@@ -15,8 +15,6 @@
 
 #ifndef HIVIEWDFX_APP_FILE_MANAGER_H
 #define HIVIEWDFX_APP_FILE_MANAGER_H
-#include <cstdint>
-#include <filesystem>
 #include <fstream>
 #include <mutex>
 #include <string>

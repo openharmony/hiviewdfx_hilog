@@ -74,9 +74,7 @@ ohos_shared_library("libsandboxlog") {
     cfi_cross_dso = true
     debug = false
     boundary_sanitize = true
-  }
-  if (!is_host_product) {
-    sanitize.integer_overflow = true
+    integer_overflow = true
   }
 
   # 标签配置（内部接口）

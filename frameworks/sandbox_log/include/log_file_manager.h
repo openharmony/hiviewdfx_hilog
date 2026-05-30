@@ -17,10 +17,8 @@
 #define HIVIEWDFX_LOG_FILE_MANAGER_H
 
 #include <fstream>
-#include <filesystem>
 #include <mutex>
 #include <string>
-#include <vector>
 
 #include "log_mmap_manager.h"
 

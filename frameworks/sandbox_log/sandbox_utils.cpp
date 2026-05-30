@@ -15,13 +15,9 @@
  
 #include "sandbox_utils.h"
 
-#include <chrono>
 #include <charconv>
-#include <ctime>
-#include <cerrno>
 #include <fcntl.h>
 #include <securec.h>
-#include <unistd.h>
 
 #include "hilog_base/log_base.h"
 
@@ -34,9 +30,7 @@ bool LockFile(const std::string& filePath, int& fd)
         HILOG_BASE_ERROR(LOG_CORE, "Failed to open file: %{public}s, errno=%{public}d", filePath.c_str(), errno);
         return false;
     }
-#if defined(__OHOS__)
     fdsan_exchange_owner_tag(fd, 0, HILOG_FDSAN_TAG);
-#endif
 
     struct flock fl;
     fl.l_type = F_WRLCK;
@@ -47,11 +41,7 @@ bool LockFile(const std::string& filePath, int& fd)
 
     // F_OFD_SETLK is non-blocking; if the lock cannot be acquired immediately, it returns -1
     if (fcntl(fd, F_OFD_SETLK, &fl) == -1) {
-#if defined(__OHOS__)
         fdsan_close_with_tag(fd, HILOG_FDSAN_TAG);
-#else
-        close(fd);
-#endif
         fd = -1;
         HILOG_BASE_ERROR(LOG_CORE, "Failed to lock file: %{public}s, errno=%{public}d.", filePath.c_str(), errno);
         return false;
@@ -76,11 +66,7 @@ bool UnlockAndCloseFd(int fd)
     if (fcntl(fd, F_OFD_SETLK, &fl) == -1) {
         ret = false;
     }
-#if defined(__OHOS__)
     fdsan_close_with_tag(fd, HILOG_FDSAN_TAG);
-#else
-    close(fd);
-#endif
     return ret;
 }
 
@@ -110,15 +96,9 @@ bool IsFileWriteLocked(const std::string& filePath)
         HILOG_BASE_ERROR(LOG_CORE, "errno=%{public}d, open failed : %{public}s", errno, filePath.c_str());
         return true; // file not found or permission denied
     }
-#if defined(__OHOS__)
     fdsan_exchange_owner_tag(fd, 0, HILOG_FDSAN_TAG);
-#endif
     bool ret = IsFdWriteLocked(fd);
-#if defined(__OHOS__)
     fdsan_close_with_tag(fd, HILOG_FDSAN_TAG);
-#else
-    close(fd);
-#endif
     return ret;
 }
 
