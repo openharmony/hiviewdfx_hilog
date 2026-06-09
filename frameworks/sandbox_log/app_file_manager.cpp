@@ -92,7 +92,7 @@ bool AppFileManager::OpenCurrentLogFile()
 std::string AppFileManager::GetLogFilePath(uint16_t fileIndex)
 {
     char buf[INDEX_BUFFER_SIZE];
-    if (snprintf_s(buf, INDEX_BUFFER_SIZE, INDEX_BUFFER_SIZE - 1, "%03d", fileIndex) <= 0) {
+    if (snprintf_s(buf, INDEX_BUFFER_SIZE, INDEX_BUFFER_SIZE - 1, "%03hu", fileIndex) <= 0) {
         return "";
     }
     std::string indexStr(buf);
@@ -195,7 +195,7 @@ std::string AppFileManager::GetNewestLogFileByPid(const fs::path& dirPath, int p
     fs::file_time_type minTime;
     bool isFirst = true;
     for (const auto& entry : fs::directory_iterator(dirPath, ecTemp)) {
-        if (fs::is_regular_file(entry.path(), ecTemp)) {
+        if (!fs::is_regular_file(entry.path(), ecTemp)) {
             continue;
         }
         std::string fileName = entry.path().filename().string();
@@ -374,9 +374,9 @@ int AppFileManager::DeleteOldestFiles(const fs::path& dirPath, size_t keepCount)
             return a.lastWriteTime > b.lastWriteTime;
         });
     
-    int toDelete = files.size() - keepCount + 1;
+    int toDelete = static_cast<int>(files.size()) - static_cast<int>(keepCount) + 1;
     int deleted = 0;
-    for (size_t i = files.size() - 1; (deleted < toDelete) && (i >= 0); --i) {
+    for (int i = static_cast<int>(files.size()) - 1; (deleted < toDelete) && (i >= 0); --i) {
         if (IsFileWriteLocked(files[i].path.string())) {
             continue;
         }
