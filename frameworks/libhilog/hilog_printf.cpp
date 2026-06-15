@@ -316,6 +316,31 @@ static bool IsSandboxValidDomain(int domain)
     return g_sandboxIsExclude ? !contained : contained;
 }
 
+static int PrintSandboxLogTraceId(char *buf, size_t bufSize)
+{
+    if (g_registerFunc == nullptr) {
+        return 0;
+    }
+    uint64_t chainId = 0;
+    uint32_t flag = 0;
+    uint64_t spanId = 0;
+    uint64_t parentSpanId = 0;
+    int ret = -1;
+    RegisterFunc func = g_registerFunc;
+    if (func != nullptr) {
+        ret = func(&chainId, &flag, &spanId, &parentSpanId);
+    }
+    int traceBufLen = 0;
+    if (ret == 0) {
+        traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx, %llx, %llx] ",
+            (unsigned long long)chainId, (unsigned long long)spanId, (unsigned long long)parentSpanId);
+    } else if (ret != -1) {
+        traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx] ",
+            (unsigned long long)chainId);
+    }
+    return (traceBufLen > 0) ? traceBufLen : 0;
+}
+
 static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const unsigned int domain, const char* tag,
     const char* fmt, va_list ap)
 {
@@ -323,7 +348,9 @@ static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const
         return;
     }
     char buf[MAX_LOG_LEN] = {0};
-    vsnprintfp_s(buf, MAX_LOG_LEN, MAX_LOG_LEN - 1, HiLogIsPrivacyOn(), fmt, ap);
+    int traceBufLen = PrintSandboxLogTraceId(buf, MAX_LOG_LEN);
+    char *logBuf = buf + traceBufLen;
+    vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, HiLogIsPrivacyOn(), fmt, ap);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     LogContent content = {
