@@ -123,7 +123,7 @@ bool IsValidHilogByType(const std::string& logLine, LogType type)
     if (type == LOG_KMSG) {
         // /dev/kmsg节点 kmsg日志格式：月-日 时:分:秒.毫秒  级别,行数,单调时间,-;日志字符串
         // 01-14 15:35:11.003  3,110004,982198542,-;[QOS_CTRL] do_qos_ctrl_ioctl: pid not authorized
-        std::string devKmsgPattern = "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} +\\d+,\\d+,\\d+,-;(.*)\\s*$";
+        std::string devKmsgPattern = "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} +\\d+,\\d+,\\d+,-[;,](.*)\\s*$";
         std::regex devKmsgRegex(devKmsgPattern);
         // /proc/kmsg节点 kmsg日志格式：月-日 时:分:秒.毫秒  <级别>[单调秒数.微秒] 日志字符串
         // 01-14 15:50:40.251  <3>[ 1907.925748] [AUTH_CTRL] no auth data for this pid = 14000
