@@ -426,7 +426,7 @@ HWTEST_F(HilogToolTest, HandleTest_010, TestSize.Level1)
     struct tm *tmNow = localtime(&tnow);
     char clearTime[32] = {0};
     if (tmNow != nullptr) {
-        strftime(clearTime, sizeof(clearTime), "%m-%d %H:%M:%S.%s", tmNow);
+        strftime(clearTime, sizeof(clearTime), "%m-%d %H:%M:%S.%3N", tmNow);
     }
     std::string cmd = "hilog -r";
     std::string str = "Log type core,app,only_prerelease buffer clear successfully\n";
