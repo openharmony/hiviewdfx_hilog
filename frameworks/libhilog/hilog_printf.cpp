@@ -295,27 +295,6 @@ int HiLogPrintComm(const LogLevel level, const unsigned int domain, const char *
     return ret;
 }
 
-#ifdef __OHOS__
-static bool IsPrivateSandboxEnable()
-{
-    return g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE;
-}
-static bool IsShareSandboxEnable()
-{
-    return g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
-        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE;
-}
-static bool IsSandboxValidDomain(int domain)
-{
-    std::lock_guard<std::mutex> lock(g_sandboxMutex);
-    if (g_sandboxDomains.empty()) {
-        return true;
-    }
-    bool contained = std::find(g_sandboxDomains.begin(), g_sandboxDomains.end(), domain) != g_sandboxDomains.end();
-    return g_sandboxIsExclude ? !contained : contained;
-}
-
 static int PrintTraceId(char *buf, size_t bufSize)
 {
     if (g_registerFunc == nullptr) {
@@ -346,6 +325,26 @@ static int PrintTraceId(char *buf, size_t bufSize)
         traceBufLen = 0;
     }
     return traceBufLen;
+}
+#ifdef __OHOS__
+static bool IsPrivateSandboxEnable()
+{
+    return g_sandboxStatus == OutputType::PRIVATE_SANDBOX_ONLY ||
+        g_sandboxStatus == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE;
+}
+static bool IsShareSandboxEnable()
+{
+    return g_sandboxStatus == OutputType::SHARE_SANDBOX_ONLY ||
+        g_sandboxStatus == OutputType::SHARE_SANDBOX_WITH_CONSOLE;
+}
+static bool IsSandboxValidDomain(int domain)
+{
+    std::lock_guard<std::mutex> lock(g_sandboxMutex);
+    if (g_sandboxDomains.empty()) {
+        return true;
+    }
+    bool contained = std::find(g_sandboxDomains.begin(), g_sandboxDomains.end(), domain) != g_sandboxDomains.end();
+    return g_sandboxIsExclude ? !contained : contained;
 }
 
 static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const unsigned int domain, const char* tag,
