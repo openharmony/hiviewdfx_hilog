@@ -436,7 +436,6 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
     int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
-    int ret;
 
 /* format log string */
 #ifdef __clang__
@@ -495,7 +494,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 #if not (defined( __WINDOWS__ ) || defined( __MAC__ ) || defined( __LINUX__ ))
     /* flow control */
     if (!IsDebugOn() && IsNeedProcFlowCtr(type)) {
-        ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono);
+        int ret = HiLogFlowCtrlProcess(tagLen + logLen - traceBufLen, ts_mono);
         if (ret < 0) {
             return ret;
         } else if (ret > 0) {
