@@ -316,7 +316,7 @@ static bool IsSandboxValidDomain(int domain)
     return g_sandboxIsExclude ? !contained : contained;
 }
 
-static int PrintSandboxLogTraceId(char *buf, size_t bufSize)
+static int PrintTraceId(char *buf, size_t bufSize)
 {
     if (g_registerFunc == nullptr) {
         return 0;
@@ -325,20 +325,26 @@ static int PrintSandboxLogTraceId(char *buf, size_t bufSize)
     uint32_t flag = 0;
     uint64_t spanId = 0;
     uint64_t parentSpanId = 0;
-    int ret = -1;
+    ret = -1;  /* default value -1: invalid trace id */
+    atomic_fetch_add_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
     RegisterFunc func = g_registerFunc;
     if (func != nullptr) {
         ret = func(&chainId, &flag, &spanId, &parentSpanId);
     }
-    int traceBufLen = 0;
-    if (ret == 0) {
+    atomic_fetch_sub_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
+    if (ret == 0) {  /* 0: trace id with span id */
         traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx, %llx, %llx] ",
             (unsigned long long)chainId, (unsigned long long)spanId, (unsigned long long)parentSpanId);
-    } else if (ret != -1) {
+    } else if (ret != -1) {  /* trace id without span id, -1: invalid trace id */
         traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx] ",
             (unsigned long long)chainId);
     }
-    return (traceBufLen > 0) ? traceBufLen : 0;
+    if (traceBufLen > 0) {
+        buf += traceBufLen;
+    } else {
+        traceBufLen = 0;
+    }
+    return traceBufLen;
 }
 
 static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const unsigned int domain, const char* tag,
@@ -348,8 +354,8 @@ static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const
         return;
     }
     char buf[MAX_LOG_LEN] = {0};
-    int traceBufLen = PrintSandboxLogTraceId(buf, MAX_LOG_LEN);
-    char *logBuf = buf + traceBufLen;
+    char *logBuf = buf;
+    int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
     vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, HiLogIsPrivacyOn(), fmt, ap);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
@@ -429,34 +435,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
 
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
-    int traceBufLen = 0;
-    int ret;
-    /* print traceid */
-    if (g_registerFunc != nullptr) {
-        uint64_t chainId = 0;
-        uint32_t flag = 0;
-        uint64_t spanId = 0;
-        uint64_t parentSpanId = 0;
-        ret = -1;  /* default value -1: invalid trace id */
-        atomic_fetch_add_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
-        RegisterFunc func = g_registerFunc;
-        if (func != nullptr) {
-            ret = func(&chainId, &flag, &spanId, &parentSpanId);
-        }
-        atomic_fetch_sub_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
-        if (ret == 0) {  /* 0: trace id with span id */
-            traceBufLen = snprintf_s(logBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "[%llx, %llx, %llx] ",
-                (unsigned long long)chainId, (unsigned long long)spanId, (unsigned long long)parentSpanId);
-        } else if (ret != -1) {  /* trace id without span id, -1: invalid trace id */
-            traceBufLen = snprintf_s(logBuf, MAX_LOG_LEN, MAX_LOG_LEN - 1, "[%llx] ",
-                (unsigned long long)chainId);
-        }
-        if (traceBufLen > 0) {
-            logBuf += traceBufLen;
-        } else {
-            traceBufLen = 0;
-        }
-    }
+    int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
 
 /* format log string */
 #ifdef __clang__
@@ -599,6 +578,9 @@ static std::vector<std::string> InnerGetAppLogFile(int seconds)
 static OutputType InnerSetOutputType(OutputType type)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
+    if (type < OutputType::SANDBOXLOG_DEFAULT || type > OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
+        return g_sandboxStatus;
+    }
     g_sandboxDomains.clear();
     OutputType temp = g_sandboxStatus;
     g_sandboxStatus = type;
@@ -617,6 +599,9 @@ static OutputType InnerSetOutputType(OutputType type)
 static OutputType InnerSetOutputTypeByDomainId(OutputType type, std::vector<int>& domains, bool isExclude)
 {
     std::lock_guard<std::mutex> lock(g_sandboxMutex);
+    if (type < OutputType::SANDBOXLOG_DEFAULT || type > OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
+        return g_sandboxStatus;
+    }
     OutputType temp = g_sandboxStatus;
     g_sandboxStatus = type;
     g_sandboxDomains = domains;

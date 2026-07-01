@@ -395,7 +395,7 @@ napi_value HilogNapiBase::SetOutputTypeByDomainID(napi_env env, napi_callback_in
         return nullptr;
     }
     int* domainBuffer = new int[domains.size()]();
-    for (int i = 0; i < domains.size(); ++i) {
+    for (unsigned i = 0; i < domains.size(); ++i) {
         domainBuffer[i] = domains[i];
     }
 #ifdef __OHOS__
