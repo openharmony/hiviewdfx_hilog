@@ -325,7 +325,8 @@ static int PrintTraceId(char *buf, size_t bufSize)
     uint32_t flag = 0;
     uint64_t spanId = 0;
     uint64_t parentSpanId = 0;
-    ret = -1;  /* default value -1: invalid trace id */
+    int ret = -1;  /* default value -1: invalid trace id */
+    int traceBufLen = 0;
     atomic_fetch_add_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
     RegisterFunc func = g_registerFunc;
     if (func != nullptr) {
@@ -436,6 +437,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
     int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
+    int ret;
 
 /* format log string */
 #ifdef __clang__

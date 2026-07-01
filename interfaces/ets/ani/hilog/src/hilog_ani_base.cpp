@@ -290,7 +290,7 @@ ani_enum_item HilogAniBase::SetOutputTypeByDomainID(ani_env *env, ani_enum_item 
     }
 
     int* domainBuffer = new int[domains.size()]();
-    for (unsigned i = 0; i < domains.size(); ++i) {
+    for (size_t i = 0; i < domains.size(); ++i) {
         domainBuffer[i] = domains[i];
     }
 #ifdef __OHOS__
