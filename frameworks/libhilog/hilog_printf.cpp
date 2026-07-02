@@ -319,12 +319,7 @@ static int PrintTraceId(char *buf, size_t bufSize)
         traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx] ",
             (unsigned long long)chainId);
     }
-    if (traceBufLen > 0) {
-        buf += traceBufLen;
-    } else {
-        traceBufLen = 0;
-    }
-    return traceBufLen;
+    return (traceBufLen > 0) ? traceBufLen : 0;
 }
 #ifdef __OHOS__
 static bool IsPrivateSandboxEnable()
@@ -356,6 +351,7 @@ static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
     int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
+    logBuf += traceBufLen;
     vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, HiLogIsPrivacyOn(), fmt, ap);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
@@ -436,6 +432,7 @@ int HiLogPrintArgs(const LogType type, const LogLevel level, const unsigned int 
     char buf[MAX_LOG_LEN] = {0};
     char *logBuf = buf;
     int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
+    logBuf += traceBufLen;
 
 /* format log string */
 #ifdef __clang__
