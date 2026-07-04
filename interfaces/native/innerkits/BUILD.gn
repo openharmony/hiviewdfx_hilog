@@ -167,6 +167,12 @@ ohos_static_library("libhilog_base_for_musl") {
 }
 
 ohos_static_library("libhilog_base") {
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   public_configs = [ ":libhilog_base_pub_cfg" ]
 
   include_dirs = [

@@ -16,6 +16,7 @@ import("//build/ohos.gni")
 
 ohos_shared_library("cj_hilog_ffi") {
   defines = []
+  branch_protector_ret = "pac_ret"
   sanitize = {
     cfi = true
     cfi_cross_dso = true
