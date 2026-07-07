@@ -15,6 +15,12 @@ import("//base/hiviewdfx/hilog/hilog.gni")
 import("//build/ohos.gni")
 
 ohos_source_set("libhilognapi_src") {
+  branch_protector_ret = "pac_ret"
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
   defines = []
   include_dirs = [
     "//base/hiviewdfx/hilog/frameworks/libhilog/param/include",
@@ -67,6 +73,7 @@ config("libhilog_js_cfg") {
 }
 
 ohos_shared_library("libhilognapi") {
+  branch_protector_ret = "pac_ret"
   sanitize = {
     cfi = true
     cfi_cross_dso = true
