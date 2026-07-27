@@ -314,10 +314,11 @@ static int PrintTraceId(char *buf, size_t bufSize)
     atomic_fetch_sub_explicit(&g_hiLogGetIdCallCount, 1, memory_order_relaxed);
     if (ret == 0) {  /* 0: trace id with span id */
         traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx, %llx, %llx] ",
-            (unsigned long long)chainId, (unsigned long long)spanId, (unsigned long long)parentSpanId);
+            static_cast<unsigned long long>(chainId), static_cast<unsigned long long>(spanId),
+            static_cast<unsigned long long>(parentSpanId));
     } else if (ret != -1) {  /* trace id without span id, -1: invalid trace id */
         traceBufLen = snprintf_s(buf, bufSize, bufSize - 1, "[%llx] ",
-            (unsigned long long)chainId);
+            static_cast<unsigned long long>(chainId));
     }
     return (traceBufLen > 0) ? traceBufLen : 0;
 }
