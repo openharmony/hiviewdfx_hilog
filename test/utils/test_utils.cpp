@@ -130,7 +130,16 @@ bool IsValidHilogByType(const std::string& logLine, LogType type)
         std::string procKmsgPattern =
             "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} +<\\d+>\\[ +\\d+\\.\\d+\\] (.*)\\s*$";
         std::regex procKmsgRegex(procKmsgPattern);
-        return (std::regex_match(logLine, devKmsgRegex) || std::regex_match(logLine, procKmsgRegex));
+        // 07-03 16:17:23.961    SUBSYSTEM=platform
+        std::string subsystemPattern =
+            "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} +SUBSYSTEM(.*)\\s*$";
+        std::regex subsystemRegex(subsystemPattern);
+        // 07-03 16:17:23.961    DEVICE=+platform:64400000.spi:pmic@0:fgu@800
+        std::string devicePattern =
+            "^\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3} +DEVICE(.*)\\s*$";
+        std::regex deviceRegex(devicePattern);
+        return (std::regex_match(logLine, devKmsgRegex) || std::regex_match(logLine, procKmsgRegex) ||
+                std::regex_match(logLine, subsystemRegex) || std::regex_match(logLine, deviceRegex));
     }
 
     // hilog 日志格式：月-日 时:分:秒.毫秒 PID TID 级别 日志类型domain/tag: 日志字符串
