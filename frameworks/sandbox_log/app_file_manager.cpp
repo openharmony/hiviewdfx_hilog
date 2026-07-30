@@ -136,10 +136,6 @@ void AppFileManager::WriteLog(const std::string& log)
 
 bool AppFileManager::FlushMmapToFile()
 {
-    if (!RotateFiles()) {
-        HILOG_BASE_ERROR(LOG_CORE, "Failed to rotate log files");
-        return false;
-    }
     if (mmapManager_.GetPtr() == nullptr) {
         HILOG_BASE_ERROR(LOG_CORE, "Mmap pointer is null");
         return false;
