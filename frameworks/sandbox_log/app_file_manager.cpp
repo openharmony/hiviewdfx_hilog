@@ -60,6 +60,7 @@ bool AppFileManager::Initialize(const AppFileConfig& config)
     if (!CreateDirectory()) {
         return false;
     }
+    currentDay_ = GetDay();
     if (currentFileName_.empty()) {
         OpenCurrentLogFile();
     }
@@ -67,6 +68,13 @@ bool AppFileManager::Initialize(const AppFileConfig& config)
         return false;
     }
     return LockFile(config_.persistFile, persistFd_);
+}
+int AppFileManager::GetDay()
+{
+    time_t now = time(nullptr);
+    struct tm local;
+    localtime_r(&now, &local);
+    return local.tm_mday;
 }
 bool AppFileManager::CreateDirectory()
 {
@@ -153,7 +161,14 @@ bool AppFileManager::FlushMmapToFile()
         result = true;
     } while (false);
     mmapManager_.Reset();
-    return result;
+    if (!result) {
+        return false;
+    }
+    if (!RotateFiles()) {
+        HILOG_BASE_ERROR(LOG_CORE, "Failed to rotate log files");
+        return false;
+    }
+    return true;
 }
 
 bool AppFileManager::RotateFiles()
@@ -165,8 +180,12 @@ bool AppFileManager::RotateFiles()
         HILOG_BASE_ERROR(LOG_CORE, "Failed to get file size, index: %{public}d", currentFileIndex_);
         return false;
     }
-    if (fileSize + config_.mmapSize < config_.maxLogFileSize) {
+    int day = GetDay();
+    if ((fileSize + config_.mmapSize < config_.maxLogFileSize) && (day == currentDay_)) {
         return true;
+    }
+    if (day != currentDay_) {
+        currentDay_ = day;
     }
     if (currentFileIndex_ < config_.maxLogNum) {
         ++currentFileIndex_;
