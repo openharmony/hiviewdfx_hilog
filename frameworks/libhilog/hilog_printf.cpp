@@ -585,12 +585,14 @@ static OutputType InnerSetOutputType(OutputType type)
     if (type == OutputType::PRIVATE_SANDBOX_ONLY ||
         type == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
         SetPrivateSandboxStatus(true);
+        SetPublicSandboxStatus(false);
     } else if (type == OutputType::SHARE_SANDBOX_ONLY ||
         type == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
         SetPublicSandboxStatus(true);
+        SetPrivateSandboxStatus(false);
     } else {
         SetPrivateSandboxStatus(false);
-        SetPublicSandboxStatus(true);
+        SetPublicSandboxStatus(false);
     }
     return temp;
 }
@@ -607,12 +609,14 @@ static OutputType InnerSetOutputTypeByDomainId(OutputType type, std::vector<int>
     if (type == OutputType::PRIVATE_SANDBOX_ONLY ||
         type == OutputType::PRIVATE_SANDBOX_WITH_CONSOLE) {
         SetPrivateSandboxStatus(true);
+        SetPublicSandboxStatus(false);
     } else if (type == OutputType::SHARE_SANDBOX_ONLY ||
         type == OutputType::SHARE_SANDBOX_WITH_CONSOLE) {
         SetPublicSandboxStatus(true);
+        SetPrivateSandboxStatus(false);
     } else {
         SetPrivateSandboxStatus(false);
-        SetPublicSandboxStatus(true);
+        SetPublicSandboxStatus(false);
     }
     return temp;
 }
