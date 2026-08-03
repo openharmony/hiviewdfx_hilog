@@ -24,6 +24,7 @@ ohos_shared_library("hilog_ani") {
   ]
   configs = [ "../../../../frameworks/libhilog:libhilog_config" ]
 
+  branch_protector_ret = "pac_ret"
   sanitize = {
     cfi = true
     cfi_cross_dso = true

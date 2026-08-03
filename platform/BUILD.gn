@@ -18,6 +18,12 @@ import("//build/ohos.gni")
 template("libhilog_platform_source") {
   forward_variables_from(invoker, "*")
   ohos_source_set(target_name) {
+    branch_protector_ret = "pac_ret"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
     defines = [ "DFX_PLATFORM_LOG_TAG=\"Ace\"" ]
     include_dirs = [
       "${PLATFORM_HILOG_PATH}/frameworks/libhilog/param/include",
