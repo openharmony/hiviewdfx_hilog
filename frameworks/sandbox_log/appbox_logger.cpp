@@ -166,6 +166,9 @@ void AppboxLogger::SetStatus(bool status)
     if (oldStatus != status) {
         HILOG_BASE_INFO(LOG_CORE, "AppboxLogger status changed to %{public}d", status);
     }
+    if (!status && oldStatus) {
+        FlushLog();
+    }
 }
 
 bool AppboxLogger::FlushLog()

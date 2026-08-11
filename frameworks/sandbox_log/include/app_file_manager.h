@@ -65,6 +65,7 @@ private:
     std::string GetNewestLogFileByPid(const fs::path& dirPath, int pid);
     void FlushPersistFile(const std::string& filePath, int pid);
     void FlushAbondonedPersistFiles(const fs::path& dirPath);
+    int GetDay();
 
     std::mutex mutex_;
     AppFileConfig config_;
@@ -74,6 +75,7 @@ private:
     int pid_ = 0;
     std::string currentFileName_ = "";
     int persistFd_ = -1;
+    int currentDay_ = 0;
 };
 }
 }
