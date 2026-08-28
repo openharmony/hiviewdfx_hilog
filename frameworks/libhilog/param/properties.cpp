@@ -16,6 +16,8 @@
 #include <atomic>
 #include <cassert>
 #include <climits>
+#include <cerrno>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -495,6 +497,22 @@ static string GetBufferSizePropName(uint16_t type, bool persist)
     return name + GetPropertyName(PropType::PROP_BUFFER_SIZE) + suffix;
 }
 
+
+static bool ParseIntValue(const char *value, int &out)
+{
+    if (value == nullptr || value[0] == '\0') {
+        return false;
+    }
+    char *end = nullptr;
+    errno = 0;
+    long parsed = strtol(value, &end, 10);
+    if (end == value || *end != '\0' || errno == ERANGE || parsed < INT_MIN || parsed > INT_MAX) {
+        return false;
+    }
+    out = static_cast<int>(parsed);
+    return true;
+}
+
 size_t GetBufferSize(uint16_t type, bool persist)
 {
     char value[HILOG_PROP_VALUE_MAX] = {0};
@@ -508,7 +526,11 @@ size_t GetBufferSize(uint16_t type, bool persist)
         return 0;
     }
 
-    return std::stoi(value);
+    int parsed = 0;
+    if (!ParseIntValue(value, parsed) || parsed < 0) {
+        return 0;
+    }
+    return static_cast<size_t>(parsed);
 }
 
 bool IsStatsEnable()
@@ -540,7 +562,11 @@ int GetProcessQuota(const string& proc)
     if (ret == RET_FAIL || value[0] == 0) {
         return DEFAULT_QUOTA;
     }
-    return std::stoi(value);
+    int parsed = 0;
+    if (!ParseIntValue(value, parsed) || parsed < 0) {
+        return DEFAULT_QUOTA;
+    }
+    return parsed;
 }
 
 int GetDomainQuota(uint32_t domain)
@@ -552,7 +578,11 @@ int GetDomainQuota(uint32_t domain)
     if (ret == RET_FAIL || value[0] == 0) {
         return DEFAULT_QUOTA;
     }
-    return std::stoi(value);
+    int parsed = 0;
+    if (!ParseIntValue(value, parsed) || parsed < 0) {
+        return DEFAULT_QUOTA;
+    }
+    return parsed;
 }
 
 static int SetBoolValue(PropType type, bool val)
