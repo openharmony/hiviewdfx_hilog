@@ -19,31 +19,31 @@
 
 ### 按任务类型定位代码
 
-| 任务类型 | 首选目录 | 关键文件 |
-| --- | --- | --- |
-| 修改日志写入主链路 | `frameworks/libhilog/` | `hilog_printf.cpp`, `hilog.cpp` |
-| 修改隐私格式化逻辑 | `frameworks/libhilog/vsnprintf/` | `vsnprintf_s_p.c`, `output_p.inl` |
-| 修改 socket 通信协议 | `frameworks/libhilog/socket/` | `hilog_input_socket_client.cpp`, `hilog_input_socket_server.cpp` |
-| 修改控制面命令 | `frameworks/libhilog/ioctl/` | `log_ioctl.h`, `log_ioctl.cpp` |
-| 修改系统参数缓存 | `frameworks/libhilog/param/` | `properties.h`, `properties.cpp` |
-| 修改环形缓冲区 | `services/hilogd/` | `log_buffer.cpp`, `log_buffer.h` |
-| 修改流控机制 | `frameworks/libhilog/`, `services/hilogd/` | `hilog_printf.cpp`（进程流控）, `flow_control.cpp`（domain 流控） |
-| 修改落盘/轮转/压缩 | `services/hilogd/` | `log_persister.cpp`, `log_persister_rotator.cpp`, `log_compress.cpp` |
-| 修改内核日志采集 | `services/hilogd/` | `log_kmsg.cpp`, `kmsg_parser.cpp` |
-| 修改日志统计 | `services/hilogd/` | `log_stats.cpp`, `log_stats.h` |
-| 修改 domain 校验 | `services/hilogd/` | `log_domains.cpp`, `log_domains.h` |
-| 修改命令分发 | `services/hilogd/` | `service_controller.cpp`, `cmd_executor.cpp` |
-| 修改 hilog 命令行工具 | `services/hilogtool/` | `main.cpp`, `log_display.cpp` |
-| 修改日志输出格式 | `frameworks/libhilog/utils/` | `log_print.cpp`, `log_print.h` |
-| 修改应用沙箱日志 | `frameworks/sandbox_log/` | `appbox_logger.cpp`, `app_file_manager.cpp` |
-| 修改页面切换日志 | `frameworks/sandbox_log/` | `sandbox_logger.cpp`, `log_file_manager.cpp` |
-| 修改 NAPI 绑定 | `interfaces/js/kits/napi/` | `hilog_napi.cpp`, `hilog_napi_base.cpp` |
-| 修改 ETS/ANI 绑定 | `interfaces/ets/ani/hilog/` | `hilog_ani.cpp`, `hilog_ani_base.cpp` |
-| 修改 Rust 绑定 | `interfaces/rust/` | `src/lib.rs`, `src/macros.rs` |
-| 修改 Native 内部 API | `interfaces/native/innerkits/` | `include/hilog/log_c.h`, `log_cpp.h` |
-| 修改 NDK 应用 API | `interfaces/native/kits/` | `include/hilog/log.h` |
-| 修改公共导出符号 | `interfaces/native/innerkits/` | `libhilog.map`, `interfaces/native/kits/libhilog.ndk.json` |
-| 修改非 OHOS 平台适配 | `platform/` | `hilog_printf.cpp`, `interface/native/log.cpp` |
+| 任务类型 | 首选目录 |
+| --- | --- |
+| 修改日志写入主链路 | `frameworks/libhilog/` |
+| 修改隐私格式化逻辑 | `frameworks/libhilog/vsnprintf/` |
+| 修改 socket 通信协议 | `frameworks/libhilog/socket/` |
+| 修改控制面命令 | `frameworks/libhilog/ioctl/` |
+| 修改系统参数缓存 | `frameworks/libhilog/param/` |
+| 修改环形缓冲区 | `services/hilogd/` |
+| 修改流控机制 | `frameworks/libhilog/`, `services/hilogd/` |
+| 修改落盘/轮转/压缩 | `services/hilogd/` |
+| 修改内核日志采集 | `services/hilogd/` |
+| 修改日志统计 | `services/hilogd/` |
+| 修改 domain 校验 | `services/hilogd/` |
+| 修改命令分发 | `services/hilogd/` |
+| 修改 hilog 命令行工具 | `services/hilogtool/` |
+| 修改日志输出格式 | `frameworks/libhilog/utils/` |
+| 修改应用沙箱日志 | `frameworks/sandbox_log/` |
+| 修改页面切换日志 | `frameworks/sandbox_log/` |
+| 修改 NAPI 绑定 | `interfaces/js/kits/napi/` |
+| 修改 ETS/ANI 绑定 | `interfaces/ets/ani/hilog/` |
+| 修改 Rust 绑定 | `interfaces/rust/` |
+| 修改 Native 内部 API | `interfaces/native/innerkits/` |
+| 修改 NDK 应用 API | `interfaces/native/kits/` |
+| 修改公共导出符号 | `interfaces/native/innerkits/` |
+| 修改非 OHOS 平台适配 | `platform/` |
 
 ### 嵌套指引
 
