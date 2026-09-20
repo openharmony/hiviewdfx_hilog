@@ -353,7 +353,10 @@ static void HiLogPrintSandboxLog(const LogType type, const LogLevel level, const
     char *logBuf = buf;
     int traceBufLen = PrintTraceId(logBuf, MAX_LOG_LEN);
     logBuf += traceBufLen;
-    vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, HiLogIsPrivacyOn(), fmt, ap);
+    va_list apCopy;
+    va_copy(apCopy, ap);
+    vsnprintfp_s(logBuf, MAX_LOG_LEN - traceBufLen, MAX_LOG_LEN - traceBufLen - 1, HiLogIsPrivacyOn(), fmt, apCopy);
+    va_end(apCopy);
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     LogContent content = {
