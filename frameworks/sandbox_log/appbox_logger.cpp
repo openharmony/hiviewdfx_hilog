@@ -106,8 +106,8 @@ bool AppboxLogger::InitFileManager()
 {
     AppFileConfig config = {
         .logDir = (type_ == AppboxLoggerType::PRIVATE_SANDBOX) ? PRIVATE_APP_LOG_DIR : PUBLIC_APP_LOG_DIR,
-        .persistFile = (type_ == AppboxLoggerType::PRIVATE_SANDBOX) ?
-            PRIVATE_APP_PERSIST_FILE : PUBLIC_APP_PERSIST_FILE + std::to_string(getpid()),
+        .persistFile = ((type_ == AppboxLoggerType::PRIVATE_SANDBOX) ?
+            PRIVATE_APP_PERSIST_FILE : PUBLIC_APP_PERSIST_FILE) + std::to_string(getpid()),
         .filePrefix = LOG_FILE_PREFIX,
         .fileSuffix = LOG_FILE_SUFFIX,
         .maxLogNum = MAX_SANDBOX_LOG_NUM,
